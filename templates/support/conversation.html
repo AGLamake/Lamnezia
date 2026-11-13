@@ -1,0 +1,17 @@
+{% extends "layouts/portal.html" %}
+{% load i18n %}
+{% block title %}{% translate "Request" %} #{{ conversation.pk }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}
+  <li><a href="{% url 'support:index' %}">{% translate "Support" %}</a></li>
+  <li><span aria-current="page">#{{ conversation.pk }}</span></li>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title break-words">{% include "support/_subject.html" %}</h1>
+  <p class="help-text">#{{ conversation.pk }} · {{ conversation.get_type_display }} · {{ conversation.created_at|date:"SHORT_DATETIME_FORMAT" }}</p>
+</div>
+{% if conversation.type == "server_down" %}{% include "support/_check.html" %}{% endif %}
+{% include "support/_thread.html" %}
+{% endblock %}

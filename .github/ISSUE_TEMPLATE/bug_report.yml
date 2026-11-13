@@ -1,0 +1,50 @@
+name: Bug report / Ошибка
+description: Something does not work as expected / Что-то работает не так
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security issues: see SECURITY.md, do not report them here.
+        Уязвимости — по SECURITY.md, не здесь.
+        Do not paste real SSH credentials, private keys or vpn:// keys.
+        Не вставляйте настоящие SSH-креды, приватные ключи и ключи vpn://.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened / Что произошло
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Шаги воспроизведения
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / Ожидаемое поведение
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Lamnezia version or commit / Версия или коммит Lamnezia
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / Окружение
+      description: Panel host OS, docker version, VPN server OS, protocol (AWG 2.0, …), Amnezia app version
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Логи
+      description: Remove secrets before pasting / Уберите секреты перед вставкой
+      render: text

@@ -1,0 +1,39 @@
+{% extends "guides/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Suggest an article" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<div>
+  <h1 class="page-title">{% translate "Suggest an article" %}</h1>
+  <p class="help-text">{% translate "Send a link to a good article or write your own text in Markdown. The staff read it, may edit it and publish it in Useful materials or the FAQ." %}</p>
+</div>
+{% if accepting %}
+  <form method="post" class="card space-y-4">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" class="btn btn-primary w-full sm:w-auto">{% translate "Send" %}</button>
+  </form>
+{% else %}
+  <p class="card help-text">{% translate "Suggestions are not accepted now." %}</p>
+{% endif %}
+
+{% if mine %}
+  <section class="card space-y-3">
+    <h2 class="text-lg font-semibold">{% translate "My suggestions" %}</h2>
+    <ul class="divide-y divide-border">
+      {% for suggestion in mine %}
+        <li class="space-y-1 py-3">
+          <p class="font-medium">{{ suggestion.title }}</p>
+          <p class="help-text">{{ suggestion.created_at|date:"SHORT_DATE_FORMAT" }} · {{ suggestion.get_status_display }}</p>
+          {% if suggestion.article and suggestion.article.is_published %}
+            <p><a href="{% url 'guides:faq-article' suggestion.article.slug %}" class="link">{% translate "Open the article" %}</a></p>
+          {% elif suggestion.material %}
+            <p><a href="{% url 'guides:materials' %}" class="link">{% translate "Open Useful materials" %}</a></p>
+          {% endif %}
+          {% if suggestion.reject_reason %}<p>{% translate "Reason:" %} {{ suggestion.reject_reason }}</p>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+{% endblock %}

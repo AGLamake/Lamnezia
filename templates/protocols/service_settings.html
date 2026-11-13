@@ -1,0 +1,22 @@
+{% extends "servers/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Service settings" %} · {{ service.server.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li><a href="{% url 'servers:detail' service.server.pk %}">{{ service.server.name }}</a></li><li aria-current="page">{% translate "Service settings" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Service settings" %} · {{ service.title }}</h1>
+</div>
+
+{% translate "The service restarts on the server and its clients reconnect. A new port, domain or transport mode changes the address users connect to: give them the new one." as warning %}
+{% include "components/alert.html" with level="warning" text=warning %}
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {{ form.port.as_field_group }}
+  {% for field in form.extra_fields %}{{ field.as_field_group }}{% endfor %}
+  <div><button type="submit" class="btn btn-primary">{% translate "Apply" %}</button></div>
+</form>
+{% endblock %}

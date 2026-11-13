@@ -1,0 +1,9 @@
+{% load i18n static %}{# One warning per server of `probes` that does not answer the browser; see static/js/reachability.js. #}
+{% for probe in probes.servers %}
+  <div data-probe="{{ probe.urls|join:' ' }}" hidden class="space-y-2">
+    {% blocktranslate with server=probe.server asvar text %}Server {{ server }} cannot be reached from your network. Try another server or protocol, or write to support.{% endblocktranslate %}
+    {% include "components/alert.html" with level="warning" text=text %}
+    {% if probe.server_id %}{% include "support/_server_down.html" with server_id=probe.server_id %}{% endif %}
+  </div>
+{% endfor %}
+{% if probes %}<script src="{% static 'js/reachability.js' %}" defer></script>{% endif %}

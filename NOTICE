@@ -1,0 +1,80 @@
+Lamnezia
+Copyright (C) 2026 Lamnezia contributors
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License version 3 as published by
+the Free Software Foundation. See the LICENSE file for the full text.
+
+Lamnezia is an independent project. It is not affiliated with, endorsed by or
+supported by the Amnezia VPN team. "Amnezia" and "AmneziaWG" are names of their
+respective owners and are used here only to describe compatibility.
+
+Third-party material
+--------------------
+
+Parts of this project are derived from amnezia-client
+(https://github.com/amnezia-vpn/amnezia-client),
+Copyright (C) Amnezia VPN contributors, licensed under GPL-3.0.
+
+Files taken or adapted from amnezia-client (server installation scripts,
+Dockerfiles, configuration templates) keep the original copyright notice in
+their header and are listed below with their upstream path.
+
+  amnezia_core/awg_export.py (_CLIENT_TEMPLATE)
+      <- client/server_scripts/awg/template.conf
+  apps/protocols/services/host_scripts.py
+      <- client/server_scripts/install_docker.sh, prepare_host.sh,
+         setup_host_firewall.sh
+  apps/protocols/upstream/awg/ (Dockerfile, configure_container.sh, start.sh)
+      <- client/server_scripts/awg/ (verbatim)
+  apps/protocols/upstream/awg_legacy/ (Dockerfile, configure_container.sh, start.sh)
+      <- client/server_scripts/awg_legacy/ (verbatim)
+  apps/protocols/upstream/wireguard/ (Dockerfile, configure_container.sh, start.sh)
+      <- client/server_scripts/wireguard/ (verbatim)
+  apps/protocols/upstream/xray/ (Dockerfile, configure_container.sh, start.sh)
+      <- client/server_scripts/xray/ (verbatim)
+  apps/protocols/services/xray_installer.py, amnezia_core/xray.py
+      <- client/server_scripts/xray/run_container.sh,
+         client/core/configurators/xrayConfigurator.cpp,
+         client/core/controllers/selfhosted/exportController.cpp (vless:// link)
+  apps/protocols/upstream/openvpn/ (Dockerfile, configure_container.sh, start.sh)
+      <- client/server_scripts/openvpn/ (verbatim)
+  apps/protocols/services/openvpn_installer.py, apps/keys/services/openvpn_clients.py,
+  amnezia_core/openvpn.py
+      <- client/server_scripts/openvpn/run_container.sh, template.ovpn (verbatim),
+         client/core/configurators/openVpnConfigurator.cpp,
+         client/core/models/protocols/openVpnProtocolConfig.cpp
+  apps/protocols/upstream/ipsec/ (Dockerfile, configure_container.sh, start.sh)
+      <- client/server_scripts/ipsec/ (verbatim)
+  apps/protocols/services/ipsec_installer.py, apps/keys/services/ipsec_clients.py,
+  amnezia_core/ipsec.py, amnezia_core/ipsec_profile.py
+      <- client/server_scripts/ipsec/run_container.sh,
+         client/core/configurators/ikev2_configurator.cpp,
+         client/core/models/protocols/ikev2ProtocolConfig.cpp
+  apps/protocols/upstream/dns/ (Dockerfile), apps/protocols/upstream/sftp/ (Dockerfile),
+  apps/protocols/upstream/website_tor/ (Dockerfile, configure_container.sh)
+      <- client/server_scripts/dns/, sftp/, website_tor/ (verbatim; dns/Dockerfile
+         changed: query and reply logs of Unbound are turned off)
+  apps/protocols/services/service_installers.py, amnezia_core/services.py
+      <- client/server_scripts/{dns,sftp,website_tor}/run_container.sh,
+         client/core/installers/sftpInstaller.cpp, client/core/installers/torInstaller.cpp
+  apps/protocols/upstream/socks5_proxy/, mtproxy/, telemt/, tproxy/
+  (Dockerfile, configure_container.sh, start.sh)
+      <- client/server_scripts/socks5_proxy/, mtproxy/, telemt/, tproxy/ (verbatim;
+         socks5_proxy/configure_container.sh changed: no 3proxy log)
+  apps/protocols/services/proxy_installers.py, amnezia_core/proxies.py
+      <- client/server_scripts/{socks5_proxy,mtproxy,telemt,tproxy}/run_container.sh,
+         client/core/installers/socks5Installer.cpp, mtProxyInstaller.cpp,
+         telemtInstaller.cpp, tProxyInstaller.cpp
+  apps/protocols/services/awg_installer.py (docker run options)
+      <- client/server_scripts/awg/run_container.sh
+  apps/protocols/upstream/remove_container.sh
+      <- client/server_scripts/remove_container.sh (verbatim)
+  apps/protocols/services/container.py (port check, data volume removal)
+  apps/protocols/services/installer.py (installation steps, start.sh run)
+      <- client/core/controllers/serverController.cpp, installController.cpp
+
+Bundled front-end libraries (unmodified, in static/vendor/):
+
+  htmx 2.0.11      https://htmx.org            0BSD
+  Alpine.js 3.17.5 https://alpinejs.dev        MIT, Copyright (c) Caleb Porzio and contributors

@@ -1,0 +1,24 @@
+{% load i18n ui %}{% comment %} The offer to link a messenger, first on «My access» and in the chat widget. `link_offer` holds the messengers the panel
+   can link (accounts.services.link_offer.LinkOffer); `prefix` sets the ids apart in the widget. «Not now» removes the card with HTMX. {% endcomment %}
+{% if link_offer %}
+<section class="card space-y-3{% if prefix %} m-3 shrink-0 p-4{% endif %}" aria-labelledby="{{ prefix }}link-offer-title" data-link-offer>
+  <div class="flex items-start gap-3">
+    <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-soft-fg">{% icon "message" %}</span>
+    <div class="min-w-0 space-y-1">
+      <h2 id="{{ prefix }}link-offer-title" class="font-semibold">{% blocktranslate with names=link_offer_names %}Link {{ names }}{% endblocktranslate %}</h2>
+      <p class="help-text">{% blocktranslate with names=link_offer_names trimmed %}
+        Sign in with one tap, get keys and notifications (access ending, the limit, answers of support) and manage keys right in {{ names }}.
+      {% endblocktranslate %}</p>
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    {% if "telegram" in link_offer %}
+      <form method="post" action="{% url 'accounts:telegram-code' %}">{% csrf_token %}<button type="submit" class="btn btn-telegram btn-sm">{% icon "telegram" %}{% translate "Link Telegram" %}</button></form>
+    {% endif %}
+    {% if "discord" in link_offer %}
+      <a href="{% url 'accounts:discord-connect' %}" class="btn btn-discord btn-sm">{% icon "discord" %}{% translate "Link Discord" %}</a>
+    {% endif %}
+    <form method="post" action="{% url 'accounts:link-offer-dismiss' %}" hx-post="{% url 'accounts:link-offer-dismiss' %}" hx-target="closest [data-link-offer]" hx-swap="outerHTML" data-optimistic="remove">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm">{% translate "Not now" %}</button></form>
+  </div>
+</section>
+{% endif %}

@@ -1,0 +1,416 @@
+# Russian translation of Lamnezia (apps.notifications).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#, python-format
+msgid "%(address)s is an address in a private network. Allow such addresses in the panel settings if the receiver is in your own network."
+msgstr "%(address)s — адрес в частной сети. Разрешите такие адреса в настройках панели, если получатель в вашей собственной сети."
+
+msgid "A number, e.g. -1001234567890, or @channel_name."
+msgstr "Число, например -1001234567890, или @имя_канала."
+
+msgid "A test message is on its way. The result is in the log."
+msgstr "Тестовое сообщение отправляется. Результат — в журнале."
+
+msgid "Access ends soon"
+msgstr "Доступ скоро закончится"
+
+msgid "Addresses"
+msgstr "Адреса"
+
+msgid "Answer from support"
+msgstr "Ответ поддержки"
+
+#, python-brace-format
+msgid "Answer to your request: {topic}"
+msgstr "Ответ на ваше обращение: {topic}"
+
+msgid "Any"
+msgstr "Любой"
+
+msgid "Article suggestion declined"
+msgstr "Предложенная статья отклонена"
+
+#, python-brace-format
+msgid "Article suggestion from {user}: {title}"
+msgstr "Предложение статьи от {user}: {title}"
+
+msgid "Article suggestion published"
+msgstr "Предложенная статья опубликована"
+
+msgid "Bot token"
+msgstr "Токен бота"
+
+msgid "Channel settings → Integrations → Webhooks → Copy Webhook URL."
+msgstr "Настройки канала → Интеграция → Вебхуки → Копировать URL вебхука."
+
+msgid "Chat ID"
+msgstr "Chat ID"
+
+msgid "Developer mode in Discord, then right click the user and Copy User ID. The user must share a server with the panel bot."
+msgstr "Включите режим разработчика в Discord, нажмите на пользователя правой кнопкой и выберите «Копировать ID». У пользователя должен быть общий сервер с ботом панели."
+
+msgid "Discord direct message"
+msgstr "Личное сообщение в Discord"
+
+msgid "Discord user ID"
+msgstr "ID пользователя Discord"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Empty: the bot from the panel settings. The bot must be in the chat."
+msgstr "Пусто — бот из настроек панели. Бот должен состоять в чате."
+
+msgid "Enter at least one address."
+msgstr "Укажите хотя бы один адрес."
+
+msgid "Enter the chat ID."
+msgstr "Укажите chat ID."
+
+msgid "Events"
+msgstr "События"
+
+msgid "Failed"
+msgstr "Ошибка"
+
+msgid "Incident closed"
+msgstr "Инцидент закрыт"
+
+#, python-brace-format
+msgid "Incident on {server}"
+msgstr "Инцидент на {server}"
+
+#, python-brace-format
+msgid "Incident on {server} is closed"
+msgstr "Инцидент на {server} закрыт"
+
+msgid "Incident opened"
+msgstr "Открыт инцидент"
+
+msgid "Keys moved to AmneziaWG 3.1"
+msgstr "Ключи переведены на AmneziaWG 3.1"
+
+msgid "Keys must be imported again"
+msgstr "Ключи нужно импортировать заново"
+
+msgid "Keys revoked"
+msgstr "Ключи отозваны"
+
+msgid "Limit reached"
+msgstr "Достигнут лимит"
+
+#, python-brace-format
+msgid "Limit reached: {user}"
+msgstr "Достигнут лимит: {user}"
+
+msgid "Menu"
+msgstr "Меню"
+
+#, python-brace-format
+msgid "Message from {user}, chat #{number}"
+msgstr "Сообщение от {user}, чат №{number}"
+
+#, python-brace-format
+msgid "New VPN keys on {server}"
+msgstr "Новые ключи VPN на {server}"
+
+#, python-brace-format
+msgid "New VPN settings on {server}"
+msgstr "Новые настройки VPN на {server}"
+
+msgid "New answer to your request"
+msgstr "Новый ответ на ваше обращение"
+
+msgid "New article suggestion"
+msgstr "Новое предложение статьи"
+
+msgid "New chat message"
+msgstr "Новое сообщение в чате"
+
+msgid "New message from support"
+msgstr "Новое сообщение от поддержки"
+
+msgid "New registration request"
+msgstr "Новая заявка на регистрацию"
+
+#, python-brace-format
+msgid "New registration request: {user}"
+msgstr "Новая заявка на регистрацию: {user}"
+
+#, python-brace-format
+msgid "New request #{number} from {user}: {subject}"
+msgstr "Новое обращение №{number} от {user}: {subject}"
+
+msgid "New support request"
+msgstr "Новое обращение в поддержку"
+
+#, python-brace-format
+msgid "Notifications from Lamnezia reach the channel {channel}."
+msgstr "Уведомления Lamnezia доходят до канала {channel}."
+
+msgid "One or more, separated by commas."
+msgstr "Один или несколько через запятую."
+
+msgid "Payment received"
+msgstr "Оплата получена"
+
+#, python-brace-format
+msgid "Payment received: {user}"
+msgstr "Оплата получена: {user}"
+
+msgid "Request answered in a messenger"
+msgstr "Ответ на обращение в мессенджер"
+
+msgid "Request status changed"
+msgstr "Статус обращения изменился"
+
+msgid "Saved. Leave empty to keep it."
+msgstr "Сохранено. Оставьте пустым, чтобы не менять."
+
+msgid "Sending"
+msgstr "Отправляется"
+
+msgid "Sent"
+msgstr "Отправлено"
+
+msgid "Server is down"
+msgstr "Сервер недоступен"
+
+msgid "Server works again"
+msgstr "Сервер снова работает"
+
+#, python-brace-format
+msgid "Server {server} is down"
+msgstr "Сервер {server} недоступен"
+
+msgid "Signing secret"
+msgstr "Секрет подписи"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Support answered"
+msgstr "Ответ поддержки"
+
+msgid "Support answered a request"
+msgstr "Ответ поддержки на обращение"
+
+msgid "Support answered in a messenger"
+msgstr "Ответ поддержки в мессенджер"
+
+msgid "Test"
+msgstr "Тест"
+
+msgid "Test notification"
+msgstr "Тестовое уведомление"
+
+#, python-brace-format
+msgid "Thank you! The staff published your suggestion in the guides: {title}"
+msgstr "Спасибо! Персонал опубликовал ваше предложение в инструкциях: {title}"
+
+msgid "The Discord user ID is a number."
+msgstr "ID пользователя Discord — это число."
+
+#, python-brace-format
+msgid "The VPN access of {user} ends on {until}."
+msgstr "Доступ к VPN пользователя {user} заканчивается {until}."
+
+#, python-brace-format
+msgid "The VPN protocol is removed from {server}, and your keys on it no longer connect. Open the personal account to see the keys you have."
+msgstr "VPN-протокол удалён с сервера {server}, и ваши ключи на нём больше не подключаются. Откройте личный кабинет, чтобы увидеть свои ключи."
+
+msgid "The body is signed with it in the X-Lamnezia-Signature header."
+msgstr "Им подписывается тело запроса в заголовке X-Lamnezia-Signature."
+
+msgid "The channel is deleted."
+msgstr "Канал удалён."
+
+#, python-brace-format
+msgid "The incident on {server} is closed."
+msgstr "Инцидент на {server} закрыт."
+
+#, python-brace-format
+msgid "The keys of {user} are turned off: {reason}."
+msgstr "Ключи пользователя {user} отключены: {reason}."
+
+#, python-brace-format
+msgid "The problem with {server} you reported is fixed. Thank you for telling us."
+msgstr "Проблема с {server}, о которой вы сообщили, устранена. Спасибо, что рассказали."
+
+#, python-brace-format
+msgid "The request is now {status}."
+msgstr "Статус обращения: {status}."
+
+#, python-brace-format
+msgid "The server {server} ({host}) does not answer. Last answer: {last_seen}."
+msgstr "Сервер {server} ({host}) не отвечает. Последний ответ: {last_seen}."
+
+#, python-brace-format
+msgid "The settings of {server} have changed. Open your keys in the personal account and import them into the Amnezia app again: the old ones no longer connect."
+msgstr "Настройки сервера {server} изменились. Откройте свои ключи в личном кабинете и заново импортируйте их в приложение Amnezia: старые больше не подключаются."
+
+#, python-brace-format
+msgid ""
+"The staff declined your suggestion: {title}\n"
+"Reason: {reason}"
+msgstr ""
+"Персонал отклонил ваше предложение: {title}\n"
+"Причина: {reason}"
+
+#, python-brace-format
+msgid "There is a new answer to your request: {topic}."
+msgstr "На ваше обращение пришёл новый ответ: {topic}."
+
+msgid "There is a new message in your support chat."
+msgstr "В чате поддержки новое сообщение."
+
+msgid "URL"
+msgstr "URL"
+
+#, python-brace-format
+msgid "Users report that {server} does not work: {reports} so far."
+msgstr "Пользователи сообщают, что {server} не работает: пока сообщений — {reports}."
+
+#, python-brace-format
+msgid "VPN keys on {server} are revoked"
+msgstr "Ключи VPN на {server} отозваны"
+
+msgid "Waiting"
+msgstr "Ожидает"
+
+msgid "Webhook"
+msgstr "Вебхук"
+
+msgid "Webhook URL"
+msgstr "Webhook URL"
+
+#, python-brace-format
+msgid "Your VPN keys on {server} are moved to AmneziaWG 3.1. Open the personal account and import the new keys into the Amnezia app: the old ones stop working soon."
+msgstr "Ваши ключи VPN на {server} переведены на AmneziaWG 3.1. Откройте личный кабинет и импортируйте новые ключи в приложение Amnezia: старые скоро перестанут работать."
+
+#, python-brace-format
+msgid "Your request: {topic}"
+msgstr "Ваше обращение: {topic}"
+
+#, python-brace-format
+msgid "Your suggestion is declined: {title}"
+msgstr "Ваше предложение отклонено: {title}"
+
+#, python-brace-format
+msgid "Your suggestion is published: {title}"
+msgstr "Ваше предложение опубликовано: {title}"
+
+msgid "added at"
+msgstr "добавлен"
+
+msgid "address"
+msgstr "адрес"
+
+msgid "attempts"
+msgstr "попытки"
+
+msgid "channel"
+msgstr "канал"
+
+msgid "deliveries"
+msgstr "доставки"
+
+msgid "delivery"
+msgstr "доставка"
+
+msgid "details"
+msgstr "подробности"
+
+msgid "enabled"
+msgstr "включён"
+
+msgid "error"
+msgstr "ошибка"
+
+msgid "event"
+msgstr "событие"
+
+msgid "kind"
+msgstr "вид"
+
+msgid "name"
+msgstr "название"
+
+msgid "notification"
+msgstr "уведомление"
+
+msgid "notification channel"
+msgstr "канал уведомлений"
+
+msgid "notification channels"
+msgstr "каналы уведомлений"
+
+msgid "notifications"
+msgstr "уведомления"
+
+msgid "secret"
+msgstr "секрет"
+
+msgid "sent at"
+msgstr "отправлено"
+
+msgid "status"
+msgstr "статус"
+
+msgid "time"
+msgstr "время"
+
+msgid "to the user"
+msgstr "пользователю"
+
+msgid "user"
+msgstr "пользователь"
+
+#, python-brace-format
+msgid "{server} works again"
+msgstr "{server} снова работает"
+
+#, python-brace-format
+msgid ""
+"{text}\n"
+"\n"
+"To answer, open My requests (/requests)."
+msgstr ""
+"{text}\n"
+"\n"
+"Чтобы ответить, откройте «Мои обращения» (/requests)."
+
+#, python-brace-format
+msgid ""
+"{text}\n"
+"\n"
+"Write here to answer."
+msgstr ""
+"{text}\n"
+"\n"
+"Чтобы ответить, напишите сюда."
+
+#, python-brace-format
+msgid "{user} ({email}) waits for approval."
+msgstr "{user} ({email}) ждёт одобрения."
+
+#, python-brace-format
+msgid "{user} opened a request ({type}): {subject}"
+msgstr "{user} открыл обращение ({type}): {subject}"
+
+#, python-brace-format
+msgid "{user} paid {amount} {currency} for the plan {plan} ({provider})."
+msgstr "Оплата от {user}: {amount} {currency} за тариф {plan} ({provider})."
+
+#, python-brace-format
+msgid "{user} suggested for the guides ({kind}): {title}"
+msgstr "{user} предлагает для инструкций ({kind}): {title}"
+
+#, python-brace-format
+msgid "{user}: {text}"
+msgstr "{user}: {text}"

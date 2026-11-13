@@ -1,0 +1,170 @@
+[
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "install-windows",
+      "title_ru": "Установка на Windows",
+      "title_en": "Installing on Windows",
+      "body_ru": "Нужна 64-битная Windows 10 или 11.\n\n1. Откройте [инструкцию для Windows](/guides/windows/) и скачайте установщик `.exe`.\n2. Запустите его и разрешите изменения, когда Windows спросит права администратора.\n3. Если появится окно «Windows защитила ваш компьютер», нажмите «Подробнее» → «Выполнить\n   в любом случае». Скачивайте установщик только по ссылке из панели — она ведёт на официальный\n   релиз Amnezia на GitHub.\n4. Пройдите шаги установщика и запустите Amnezia VPN.\n\nДальше — [добавьте ключ](/guides/faq/import-key/).",
+      "body_en": "You need 64-bit Windows 10 or 11.\n\n1. Open the [Windows guide](/guides/windows/) and download the `.exe` installer.\n2. Run it and allow changes when Windows asks for administrator rights.\n3. If you see \"Windows protected your PC\", press \"More info\" → \"Run anyway\". Download the\n   installer only from the panel link: it points to the official Amnezia release on GitHub.\n4. Follow the installer steps and start Amnezia VPN.\n\nNext, [add your key](/guides/faq/import-key/).",
+      "position": 10,
+      "updated_at": "2026-11-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "install-macos",
+      "title_ru": "Установка на macOS",
+      "title_en": "Installing on macOS",
+      "body_ru": "1. Откройте [инструкцию для macOS](/guides/macos/) и скачайте файл `.pkg`.\n2. Откройте его двойным щелчком и пройдите шаги установщика. macOS попросит пароль\n   администратора.\n3. Если macOS не даёт открыть файл, зайдите в «Системные настройки» → «Конфиденциальность\n   и безопасность» и нажмите «Всё равно открыть» рядом с сообщением об AmneziaVPN.\n4. Запустите Amnezia VPN из папки «Программы». При первом подключении разрешите всё, что\n   спросит система.\n\nДальше — [добавьте ключ](/guides/faq/import-key/).",
+      "body_en": "1. Open the [macOS guide](/guides/macos/) and download the `.pkg` file.\n2. Double-click it and follow the installer. macOS asks for an administrator password.\n3. If macOS refuses to open the file, go to System Settings → Privacy & Security and press\n   \"Open Anyway\" next to the AmneziaVPN message.\n4. Start Amnezia VPN from Applications. On the first connection allow whatever the system asks.\n\nNext, [add your key](/guides/faq/import-key/).",
+      "position": 20,
+      "updated_at": "2026-11-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "install-linux",
+      "title_ru": "Установка на Linux",
+      "title_en": "Installing on Linux",
+      "body_ru": "Нужен 64-битный Linux с графическим рабочим столом.\n\n1. Откройте [инструкцию для Linux](/guides/linux/) и скачайте файл `.run`.\n2. Откройте терминал в папке с файлом и выполните:\n\n```\nchmod +x AmneziaVPN_*.run\n./AmneziaVPN_*.run\n```\n\n3. Пройдите шаги установщика. Для установки службы VPN он попросит пароль администратора.\n4. Запустите Amnezia VPN из меню приложений.\n\nДальше — [добавьте ключ](/guides/faq/import-key/).",
+      "body_en": "You need 64-bit Linux with a graphical desktop.\n\n1. Open the [Linux guide](/guides/linux/) and download the `.run` file.\n2. Open a terminal in the folder with the file and run:\n\n```\nchmod +x AmneziaVPN_*.run\n./AmneziaVPN_*.run\n```\n\n3. Follow the installer. It asks for an administrator password to install the VPN service.\n4. Start Amnezia VPN from the applications menu.\n\nNext, [add your key](/guides/faq/import-key/).",
+      "position": 30,
+      "updated_at": "2026-11-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "install-android",
+      "title_ru": "Установка на Android",
+      "title_en": "Installing on Android",
+      "body_ru": "Проще всего — установить Amnezia VPN из Google Play по ссылке на\n[странице Android](/guides/android/).\n\nЕсли Google Play недоступен, скачайте APK там же:\n\n1. Выберите версию Android и процессор. Версия — в «Настройках» → «О телефоне». Почти всем\n   телефонам последних лет подходит **Android 11+** и **arm64-v8a**. Если приложение не\n   устанавливается, попробуйте `armeabi-v7a`.\n2. Откройте скачанный файл. Android попросит разрешить установку из этого источника\n   (браузера) — разрешите и вернитесь назад.\n3. Нажмите «Установить».\n4. При первом подключении Android спросит разрешение на VPN-подключение — нажмите «ОК».\n\nДальше — [добавьте ключ](/guides/faq/import-key/).",
+      "body_en": "The easiest way is Google Play: use the link on the\n[Android page](/guides/android/).\n\nIf Google Play is not available, download the APK on the same page:\n\n1. Choose the Android version and the processor. The version is in Settings → About phone.\n   Almost every phone of recent years needs **Android 11+** and **arm64-v8a**. If the app does\n   not install, try `armeabi-v7a`.\n2. Open the downloaded file. Android asks to allow installs from this source (the browser):\n   allow it and go back.\n3. Press \"Install\".\n4. On the first connection Android asks to allow the VPN connection: press \"OK\".\n\nNext, [add your key](/guides/faq/import-key/).",
+      "position": 40,
+      "updated_at": "2026-11-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "install-ios",
+      "title_ru": "Установка на iPhone и iPad",
+      "title_en": "Installing on iPhone and iPad",
+      "body_ru": "Amnezia VPN нет в российском App Store: его убрали по требованию Роскомнадзора. С аккаунтом\nдругого региона приложение скачивается как обычно.\n\n## Установка\n\n1. Откройте [страницу iOS](/guides/ios/) и установите Amnezia VPN из App Store. Если App Store\n   пишет, что приложения нет, — выберите один из способов ниже.\n2. Запустите приложение и добавьте ключ.\n3. При первом подключении iOS спросит, можно ли добавить конфигурацию VPN, — нажмите\n   «Разрешить» и подтвердите код-паролем или Face ID.\n\nКак добавить ключ — в статье [«Как добавить ключ в Amnezia»](/guides/faq/import-key/).\n\n## Если приложения нет в App Store\n\n### Второй аккаунт Apple только для App Store (удобнее всего)\n\nОсновной аккаунт, iCloud, подписки и российские приложения остаются как были.\n\n1. Создайте новый аккаунт на [account.apple.com](https://account.apple.com/account) и выберите\n   страну, где Amnezia есть в App Store (например, США). Нужна почта, которая ещё не привязана к\n   аккаунту Apple; номер телефона можно указать российский.\n2. На iPhone: «Настройки» → ваше имя → «Контент и покупки» → «Выйти». Снова нажмите «Контент и\n   покупки» и войдите новым аккаунтом. iCloud и остальное на телефоне остаются на старом аккаунте.\n3. Скачайте Amnezia VPN. При первой загрузке Apple попросит принять условия и указать адрес и\n   способ оплаты — выберите «Нет».\n4. После установки можно вернуться в App Store на основной аккаунт. Приложение продолжит работать;\n   обновлять его нужно, снова войдя вторым аккаунтом.\n\n### Смена региона своего аккаунта\n\n1. Обнулите баланс на счёте Apple, отмените платные подписки («Настройки» → ваше имя →\n   «Подписки») и отключите семейный доступ.\n2. «Настройки» → ваше имя → «Контент и покупки» → «Просмотреть» → «Страна/регион» → «Изменить\n   страну или регион». Выберите другую страну, примите условия, способ оплаты — «Нет». Если\n   варианта «Нет» нет, понадобится карта банка выбранной страны.\n3. Укажите любой адрес и телефон выбранной страны — Apple их не проверяет.\n4. Скачайте Amnezia VPN. Регион можно вернуть на российский, но пока он российский, приложения из\n   другого региона не обновляются.\n\n### Приложение уже стоит, но не обновляется\n\n«Настройки» → «Основные» → «Хранилище iPhone» → Amnezia VPN → «Сгрузить приложение», затем\n«Переустановить». Ключи и настройки сохранятся, приложение обновится до последней версии.\n\nПодробнее — в [документации Amnezia](https://docs.amnezia.org/ru/documentation/instructions/installing-amneziavpn-on-ios/).\n\nНе входите в App Store чужим аккаунтом, логин и пароль которого вам дали: владелец видит покупки\nи может управлять устройством через iCloud. Используйте только свой аккаунт.",
+      "body_en": "Amnezia VPN is not in the Russian App Store: it was removed at the request of Roskomnadzor.\nWith an account of another region the app installs as usual.\n\n## Installing\n\n1. Open the [iOS page](/guides/ios/) and install Amnezia VPN from the App Store. If the App Store\n   says the app is not available, use one of the ways below.\n2. Start the app and add your key.\n3. On the first connection iOS asks whether to add a VPN configuration: press \"Allow\" and\n   confirm with your passcode or Face ID.\n\nSee [How to add a key to Amnezia](/guides/faq/import-key/).\n\n## If the app is not in the App Store\n\n### A second Apple account for the App Store only (the easiest)\n\nYour main account, iCloud, subscriptions and Russian apps stay as they are.\n\n1. Create a new account at [account.apple.com](https://account.apple.com/account) and choose a\n   country where Amnezia is in the App Store (for example, the US). You need an email that is not\n   linked to an Apple account yet; a Russian phone number is fine.\n2. On the iPhone: Settings → your name → Media & Purchases → Sign Out. Tap Media & Purchases again\n   and sign in with the new account. iCloud and everything else on the phone stay on the old one.\n3. Download Amnezia VPN. On the first download Apple asks you to accept the terms and enter an\n   address and a payment method: choose \"None\".\n4. After installing, you can switch the App Store back to your main account. The app keeps working;\n   to update it, sign in with the second account again.\n\n### Changing the region of your own account\n\n1. Bring your Apple balance to zero, cancel paid subscriptions (Settings → your name →\n   Subscriptions) and turn off Family Sharing.\n2. Settings → your name → Media & Purchases → View Account → Country/Region → Change Country or\n   Region. Pick another country, accept the terms, choose \"None\" as the payment method. If there is\n   no \"None\", you need a card from a bank of that country.\n3. Enter any address and phone number of that country: Apple does not check them.\n4. Download Amnezia VPN. You can switch the region back to Russia, but while it is Russian, apps\n   from the other region do not update.\n\n### The app is installed but does not update\n\nSettings → General → iPhone Storage → Amnezia VPN → Offload App, then Reinstall App. Keys and\nsettings are kept and the app updates to the latest version.\n\nMore in the [Amnezia documentation](https://docs.amnezia.org/documentation/instructions/installing-amneziavpn-on-ios/).\n\nDo not sign in to the App Store with someone else's account whose login and password you were\ngiven: its owner sees the purchases and can manage the device through iCloud. Use only your own\naccount.",
+      "position": 50,
+      "updated_at": "2026-11-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "import-key",
+      "title_ru": "Как добавить ключ в Amnezia",
+      "title_en": "How to add a key to Amnezia",
+      "body_ru": "Ключ выдаётся в панели: выберите сервер и устройство, и вы получите ссылку `vpn://`, QR-код и файл.\n\n1. Откройте Amnezia. При первом запуске нажмите «Приступим» — откроется экран\n   «Вставьте ключ». Если серверы уже есть — нажмите внизу «Добавить».\n2. Выберите способ:\n    - **Ключ `vpn://`** — скопируйте его в панели, вставьте в поле (кнопка «Вставить») и нажмите\n      «Продолжить».\n    - **QR-код** — нажмите «QR-код» и наведите камеру на код из панели. Если QR-кодов несколько,\n      отсканируйте их все по очереди.\n    - **Файл** — нажмите «Файл с настройками подключения» и выберите скачанный файл.\n3. Нажмите большую кнопку подключения на главном экране.\n\nКлюч — как пароль: не пересылайте его другим людям. Каждому устройству лучше выпустить свой ключ.",
+      "body_en": "You get a key in the panel: choose a server and your device, and you get a `vpn://` link, a QR code and a file.\n\n1. Open Amnezia. On the first launch press \"Let's get started\" to open the\n   \"Insert key\" screen. If you already have servers, press \"Add\" at the bottom.\n2. Pick a way:\n    - **`vpn://` key** — copy it in the panel, paste it into the field (\"Insert\" button) and press\n      \"Continue\".\n    - **QR code** — press \"QR code\" and point the camera at the code in the panel. If there are\n      several QR codes, scan all of them one by one.\n    - **File** — press \"File with connection settings\" and choose the downloaded file.\n3. Press the big connect button on the home screen.\n\nA key is like a password: do not share it. Better issue a separate key for each device.",
+      "position": 60,
+      "updated_at": "2026-11-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "no-connection",
+      "title_ru": "Не подключается",
+      "title_en": "Cannot connect",
+      "body_ru": "Проверьте по порядку:\n\n1. **Интернет без VPN работает?** Отключите VPN и откройте любой сайт.\n2. **Ключ действует?** Откройте панель: ключ не должен быть отозван, срок доступа и лимит\n   трафика не должны закончиться.\n3. **Сервер работает?** Посмотрите статус серверов в панели. Если идут работы — подождите.\n4. **Приложение свежее?** Обновите Amnezia со [страницы инструкций](/guides/).\n5. **Другая сеть.** Попробуйте мобильный интернет вместо Wi-Fi или наоборот. Некоторые сети\n   (на работе, в гостиницах) блокируют VPN.\n6. **Перевыпустите ключ** в панели, удалите старое подключение в Amnezia и добавьте новый ключ.\n\nНе помогло — напишите администратору: какое устройство, какая сеть, что пишет приложение.\n\nНе работает у многих сразу или в одной сети — см. [«Протокол заблокирован»](/guides/faq/protocol-blocked/).",
+      "body_en": "Check in this order:\n\n1. **Does the internet work without VPN?** Turn VPN off and open any website.\n2. **Is the key valid?** Open the panel: the key must not be revoked, the access period and\n   traffic limit must not be over.\n3. **Is the server up?** Check the server status in the panel. If there is maintenance, wait.\n4. **Is the app up to date?** Update Amnezia from the [guides page](/guides/).\n5. **Another network.** Try mobile data instead of Wi-Fi or the other way round. Some networks\n   (offices, hotels) block VPN.\n6. **Reissue the key** in the panel, delete the old connection in Amnezia and add the new key.\n\nStill nothing? Write to the administrator: which device, which network, what the app says.\n\nFails for many users at once or in one network? See [The protocol is blocked](/guides/faq/protocol-blocked/).",
+      "position": 70,
+      "updated_at": "2026-11-07T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "protocol-blocked",
+      "title_ru": "Протокол заблокирован",
+      "title_en": "The protocol is blocked",
+      "body_ru": "Признаки: VPN перестал подключаться у многих пользователей сразу или только в одной\nсети (у одного мобильного оператора), хотя сервер работает и ключи действуют.\n\nПроверьте по порядку:\n\n1. **Белые списки.** Некоторые мобильные операторы временно пускают только к разрешённым\n   сайтам. Тогда не работает ни один VPN — подождите или используйте Wi-Fi.\n2. **Доступен ли сервер.** Если панель не может подключиться к серверу по SSH из этой сети\n   или вообще — скорее всего, заблокирован IP сервера. Помогает только новый IP или другой\n   хостинг.\n3. **Порт.** Если порт AmneziaWG выше 9999, смените его — см.\n   [«Порт ниже 10000»](/guides/faq/port-below-10000/).\n4. **Параметры протокола.** Если сервер доступен, а VPN нет — провайдер мог научиться узнавать\n   параметры маскировки. Поменяйте их в **«Настройках»** протокола или переустановите протокол;\n   после этого пользователям нужно заново добавить ключи.\n5. **Другой протокол.** Если на сервере есть второй протокол — дайте пользователям ключ к нему\n   на время.\n\nПодробные разборы — в [подборке материалов о блокировках](/guides/materials/).",
+      "body_en": "Symptoms: the VPN stopped connecting for many users at once, or only in one network\n(one mobile operator), while the server is up and the keys are valid.\n\nCheck in this order:\n\n1. **Whitelists.** Some mobile operators temporarily let through only approved sites. Then no\n   VPN works at all: wait or use Wi-Fi.\n2. **Can the server be reached?** If the panel cannot reach the server over SSH from that\n   network, or at all, the server IP is most likely blocked. Only a new IP or another hosting\n   provider helps.\n3. **Port.** If the AmneziaWG port is above 9999, change it, see\n   [A port below 10000](/guides/faq/port-below-10000/).\n4. **Protocol parameters.** If the server can be reached but the VPN cannot, the provider may\n   have learned to spot the disguise parameters. Change them in the protocol's **Settings** or\n   reinstall the protocol; users then have to add their keys again.\n5. **Another protocol.** If the server has a second protocol, give users a key for it for a\n   while.\n\nIn-depth articles are in the [useful materials on blocking](/guides/materials/).",
+      "position": 72,
+      "updated_at": "2026-11-07T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "port-below-10000",
+      "title_ru": "Порт ниже 10000",
+      "title_en": "A port below 10000",
+      "body_ru": "Некоторые провайдеры, чаще мобильные, режут UDP на портах выше 9999. Тогда AmneziaWG\nне подключается или работает очень медленно только в этих сетях, а, например, на домашнем Wi-Fi\nвсё в порядке. Приложение Amnezia по умолчанию даёт AmneziaWG порт 55424; документация Amnezia\nсоветует порт не выше 9999.\n\n**Новые протоколы.** Если при установке AmneziaWG через панель оставить поле порта пустым, панель\nсама выберет свободный порт до 9999.\n\n**Уже установленный протокол на высоком порту:**\n\n1. Откройте в панели сервер → у протокола ссылка **«Настройки»**. Форма предупредит, если порт\n   выше 9999.\n2. Укажите порт от 1024 до 9999, который не занят на сервере, и сохраните.\n3. Если у хостинга есть свой файрвол — откройте новый порт для UDP.\n\n**Важно:** после смены порта старые ключи перестают работать. Пользователям нужно заново\nполучить ключ в панели и добавить его в Amnezia — см.\n[«Как добавить ключ в Amnezia»](/guides/faq/import-key/).\n\n**Как убедиться, что дело в порте.** Под полем порта есть ссылка **«Замер скорости по портам»**:\nпанель временно запускает на сервере `iperf3` на нескольких портах, а вы с устройства в нужной\nсети, с выключенным VPN, сравниваете скорость на низком и высоком порту.",
+      "body_en": "Some providers, mostly mobile ones, cut UDP on ports above 9999. Then AmneziaWG does\nnot connect, or is very slow, only in those networks, while home Wi-Fi, for example, works fine.\nThe Amnezia app gives AmneziaWG port 55424 by default; the Amnezia documentation recommends a port\nup to 9999.\n\n**New protocols.** If you leave the port field empty when installing AmneziaWG from the panel,\nthe panel picks a free port up to 9999 by itself.\n\n**A protocol already installed on a high port:**\n\n1. In the panel open the server → the protocol's **Settings** link. The form warns when the port\n   is above 9999.\n2. Set a port from 1024 to 9999 that is free on the server and save.\n3. If the hosting provider has its own firewall, open the new port for UDP there.\n\n**Important:** after the port changes, old keys stop working. Users have to get their key in the\npanel again and add it to Amnezia, see [How to add a key to Amnezia](/guides/faq/import-key/).\n\n**How to make sure the port is the cause.** Under the port field there is a **Speed test by\nport** link: the panel briefly runs `iperf3` on several ports of the server, and from a device in\nthe network in question, with the VPN off, you compare the speed on a low and a high port.",
+      "position": 74,
+      "updated_at": "2026-11-07T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "no-internet",
+      "title_ru": "Подключено, но интернета нет",
+      "title_en": "Connected, but no internet",
+      "body_ru": "Amnezia показывает «подключено», а сайты не открываются.\n\n1. **Переподключитесь**: отключите VPN, подождите несколько секунд и включите снова.\n2. **DNS.** В Amnezia откройте «Настройки» → «Соединение» → «DNS-серверы» и нажмите\n   «Восстановить по умолчанию». Если меняли DNS вручную — верните прежние значения.\n3. **KillSwitch.** Если включён «Strict KillSwitch», интернет блокируется всегда, когда VPN не\n   работает. Выключите его в «Настройки» → «Соединение» → «KillSwitch» на время проверки.\n4. **Раздельное туннелирование.** Проверьте, что нужные сайты или приложения не исключены\n   в «Настройки» → «Соединение».\n5. **Лимит трафика.** Если лимит закончился, подключение может устанавливаться, но трафик\n   не пойдёт. Посмотрите использование в панели.\n6. **Другой ключ.** Удалите подключение в Amnezia и добавьте ключ заново.\n\nЕсли интернет пропал и без VPN — перезагрузите устройство.",
+      "body_en": "Amnezia says \"connected\" but websites do not open.\n\n1. **Reconnect**: turn VPN off, wait a few seconds and turn it on again.\n2. **DNS.** In Amnezia open Settings → Connection → DNS servers and press \"Restore default\".\n   If you changed DNS by hand, put the old values back.\n3. **KillSwitch.** With \"Strict KillSwitch\" the internet is blocked whenever VPN is not\n   working. Turn it off in Settings → Connection → KillSwitch while you check.\n4. **Split tunneling.** Make sure the sites or apps you need are not excluded in Settings →\n   Connection.\n5. **Traffic limit.** When the limit is used up, the connection may come up but no traffic\n   goes through. Check your usage in the panel.\n6. **Add the key again.** Delete the connection in Amnezia and add the key again.\n\nIf the internet is gone even without VPN, restart the device.",
+      "position": 80,
+      "updated_at": "2026-11-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "slow",
+      "title_ru": "Медленно работает",
+      "title_en": "VPN is slow",
+      "body_ru": "Скорость через VPN всегда немного ниже: трафик идёт через сервер.\nЕсли стало заметно медленнее:\n\n1. **Сравните без VPN.** Если и без VPN медленно — дело в вашей сети.\n2. **Выберите другой сервер**, если в панели их несколько. Ближний к вам обычно быстрее.\n3. **Смените сеть**: мобильный интернет вместо Wi-Fi или наоборот. Некоторые провайдеры\n   замедляют VPN.\n4. **Раздельное туннелирование.** Пустите через VPN только нужные сайты или приложения\n   («Настройки» → «Соединение»), остальное пойдёт напрямую.\n5. **Обновите Amnezia** со [страницы инструкций](/guides/).\n\nЕсли медленно у всех и всегда — сообщите администратору, возможно, сервер перегружен.\n\nВыгрузка намного медленнее скачивания — см. [«Медленная выгрузка через VPN»](/guides/faq/slow-upload/).",
+      "body_en": "VPN is always a little slower: traffic goes through the server.\nIf it got noticeably slower:\n\n1. **Compare without VPN.** If it is slow without VPN too, the problem is your network.\n2. **Choose another server** if the panel has several. The nearest one is usually faster.\n3. **Change the network**: mobile data instead of Wi-Fi or the other way round. Some\n   providers slow VPN down.\n4. **Split tunneling.** Send only the sites or apps you need through VPN (Settings →\n   Connection); everything else goes directly.\n5. **Update Amnezia** from the [guides page](/guides/).\n\nIf it is slow for everyone all the time, tell the administrator: the server may be overloaded.\n\nUpload much slower than download? See [Slow upload through the VPN](/guides/faq/slow-upload/).",
+      "position": 90,
+      "updated_at": "2026-11-07T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "slow-upload",
+      "title_ru": "Медленная выгрузка через VPN",
+      "title_en": "Slow upload through the VPN",
+      "body_ru": "Признак: скачивание через VPN быстрое, а выгрузка (отправка файлов, видеозвонки,\nбэкапы) в разы медленнее, чем без VPN — например, 3–4 Мбит/с вместо 90.\n\n**Причина.** На части VPS сетевой интерфейс контейнера AmneziaWG или WireGuard склеивает\nTCP-пакеты в большие (TSO/GSO), и такие пакеты теряются по дороге. Скачивания это почти не\nкасается, поэтому проблема заметна только в одну сторону.\n\n**Что делать администратору:**\n\n1. Откройте карточку сервера в панели, блок **«Скорость отдачи через VPN (TSO/GSO)»**, и\n   нажмите **«Проверить»** — панель покажет, включены ли TSO и GSO на интерфейсах контейнеров.\n2. Если обходной путь выключен — нажмите **«Включить»**. Панель отключит TSO/GSO на\n   интерфейсе контейнера и поставит на сервер таймер systemd, который держит их выключенными\n   после перезапуска контейнера и перезагрузки сервера.\n3. Конфиги и ключи не меняются: пользователям ничего переимпортировать не нужно.\n\nПри установке протокола через панель обходной путь включается сам.\n\n**Как проверить скорость.** Сравните одно и то же измерение с VPN и без: speedtest в обе\nстороны или `iperf3` (ключ `-R` меряет скачивание, без него — выгрузку). Если выгрузка\nвыросла — дело было в TSO/GSO. Если нет — см. [«Медленно работает»](/guides/faq/slow/) и\n[подборку материалов о скорости](/guides/materials/).",
+      "body_en": "Symptom: downloads through the VPN are fast, but upload (sending files, video calls,\nbackups) is several times slower than without the VPN, for example 3–4 Mbit/s instead of 90.\n\n**Cause.** On some VPS the network interface of the AmneziaWG or WireGuard container glues\nTCP packets into big ones (TSO/GSO), and those packets are lost on the way. Downloads are\nhardly affected, so the problem shows in one direction only.\n\n**What the administrator does:**\n\n1. Open the server card in the panel, the **Upload speed through the VPN (TSO/GSO)** block,\n   and press **Check**: the panel shows whether TSO and GSO are on for the container interfaces.\n2. If the workaround is off, press **Turn on**. The panel turns TSO/GSO off on the container\n   interface and puts a systemd timer on the server that keeps them off after container\n   restarts and reboots.\n3. Configs and keys do not change: users do not need to import anything again.\n\nWhen a protocol is installed from the panel, the workaround is turned on by itself.\n\n**How to measure.** Compare the same test with and without the VPN: a speed test both ways or\n`iperf3` (`-R` measures download, without it upload). If upload went up, TSO/GSO was the cause.\nIf not, see [VPN is slow](/guides/faq/slow/) and the\n[useful materials on speed](/guides/materials/).",
+      "position": 92,
+      "updated_at": "2026-11-07T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "key-not-imported",
+      "title_ru": "Ключ не добавляется",
+      "title_en": "The key is not accepted",
+      "body_ru": "Amnezia пишет об ошибке или ничего не происходит после вставки ключа.\n\n1. **Ключ скопирован целиком?** Ссылка начинается с `vpn://` и очень длинная. Скопируйте её\n   кнопкой копирования в панели, а не выделением текста — так ничего не потеряется.\n2. **Нет лишнего.** Мессенджеры иногда добавляют пробелы, переносы строк или превращают ссылку\n   в превью. Вставьте ключ сначала в заметку и проверьте.\n3. **QR-код.** Увеличьте яркость экрана и отсканируйте все коды, если их несколько.\n4. **Обновите Amnezia.** Старые версии не понимают ключи новых протоколов, в том числе\n   AmneziaWG 2.0. Скачайте свежую версию со [страницы инструкций](/guides/).\n5. **Файл вместо ссылки.** Скачайте файл ключа в панели и добавьте его через «Файл\n   с настройками подключения».\n6. **Подходящее приложение.** Файл `.conf` для AmneziaWG открывается в приложении AmneziaWG,\n   а ключ `vpn://` — в Amnezia VPN.\n\nКлюч показывается не всегда повторно — если его уже нельзя посмотреть, перевыпустите ключ\nв панели.",
+      "body_en": "Amnezia shows an error or nothing happens after you paste the key.\n\n1. **Is the whole key copied?** The link starts with `vpn://` and is very long. Use the copy\n   button in the panel instead of selecting the text, so nothing gets lost.\n2. **Nothing extra.** Messengers sometimes add spaces or line breaks, or turn the link into a\n   preview. Paste the key into a note first and check it.\n3. **QR code.** Turn up the screen brightness and scan all codes if there are several.\n4. **Update Amnezia.** Old versions do not understand keys of new protocols, AmneziaWG 2.0\n   among them. Get the latest version from the [guides page](/guides/).\n5. **A file instead of the link.** Download the key file in the panel and add it with\n   \"File with connection settings\".\n6. **The right app.** An AmneziaWG `.conf` file opens in the AmneziaWG app, a `vpn://` key\n   in Amnezia VPN.\n\nA key is not always shown again. If you cannot see it any more, reissue the key in the panel.",
+      "position": 100,
+      "updated_at": "2026-11-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "guides.faqarticle",
+    "fields": {
+      "slug": "app-update",
+      "title_ru": "Приложение просит обновиться",
+      "title_en": "The app asks for an update",
+      "body_ru": "Amnezia сообщает о новой версии или пишет, что конфигурация создана в более\nновой версии приложения.\n\n- **Обновление внутри приложения.** Нажмите «Обновить приложение» и затем «Установить\n  обновление». На телефонах из магазина обновите Amnezia в Google Play или App Store.\n- **Вручную.** Скачайте свежую версию со [страницы инструкций](/guides/) — ссылки там всегда\n  ведут на последний релиз — и установите поверх старой. Ключи и настройки сохранятся.\n- **Android с APK.** Скачайте новый APK на [странице Android](/guides/android/) и установите\n  поверх старого.\n\nКлючи из панели обновлять не нужно: после обновления приложения они продолжат работать.",
+      "body_en": "Amnezia reports a new version or says the configuration was created in a\nnewer version of the app.\n\n- **In-app update.** Press \"Update app\" and then \"Install update\". On phones with the store\n  version, update Amnezia in Google Play or the App Store.\n- **By hand.** Download the latest version from the [guides page](/guides/) (its links always\n  point to the latest release) and install it over the old one. Keys and settings are kept.\n- **Android APK.** Download the new APK on the [Android page](/guides/android/) and install it\n  over the old one.\n\nKeys from the panel do not need updating: they keep working after the app update.",
+      "position": 110,
+      "updated_at": "2026-11-02T00:00:00Z"
+    }
+  }
+]

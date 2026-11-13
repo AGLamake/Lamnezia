@@ -1,0 +1,82 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Settings" %} · {{ site_name }}{% endblock %}
+
+{% block nav %}{% include "components/admin_nav.html" with active="settings" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Settings" %}</h1>
+    <p class="page-lead">{% translate "How the panel works for everyone: registration, mail and the messengers." %}</p>
+  </div>
+</div>
+
+<form method="post" class="min-w-0 space-y-6">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+
+  <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "settings" "icon-sm text-muted" %}{% translate "Panel" %}</h2>
+    <div class="form-section-body">
+    {{ form.site_name.as_field_group }}
+    </div>
+  </section>
+
+  <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "users" "icon-sm text-muted" %}{% translate "Users and keys" %}</h2>
+    <div class="form-section-body">
+    {{ form.registration_mode.as_field_group }}
+    {{ form.default_plan.as_field_group }}
+    {{ form.require_email_confirmation.as_field_group }}
+    {{ form.key_reveal_policy.as_field_group }}
+    {{ form.bot_key_delivery.as_field_group }}
+    {{ form.guide_suggestions.as_field_group }}
+    </div>
+  </section>
+
+  <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "message" "icon-sm text-muted" %}{% translate "Email" %}</h2>
+    <div class="form-section-body">
+    <p class="help-text">{% translate "Without an SMTP server the panel uses LAMNEZIA_EMAIL_URL from the server settings." %}</p>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <div class="sm:col-span-2">{{ form.smtp_host.as_field_group }}</div>
+      {{ form.smtp_port.as_field_group }}
+    </div>
+    {{ form.smtp_security.as_field_group }}
+    {{ form.smtp_username.as_field_group }}
+    {{ form.smtp_password.as_field_group }}
+    {% if form.clear_smtp_password %}{{ form.clear_smtp_password.as_field_group }}{% endif %}
+    {{ form.from_email.as_field_group }}
+    </div>
+  </section>
+
+  <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "zap" "icon-sm text-muted" %}{% translate "Integrations" %}</h2>
+    <div class="form-section-body">
+    {{ form.telegram_bot_token.as_field_group }}
+    {% if form.clear_telegram_bot_token %}{{ form.clear_telegram_bot_token.as_field_group }}{% endif %}
+    {{ form.telegram_bot_username.as_field_group }}
+    {{ form.telegram_login.as_field_group }}
+    <p class="help-text">{% blocktranslate with domain=telegram_domain %}For signing in with Telegram send <code>/setdomain</code> to @BotFather and give the panel domain <code class="break-all">{{ domain }}</code>, otherwise Telegram answers “Bot domain invalid”.{% endblocktranslate %}</p>
+    {{ form.discord_client_id.as_field_group }}
+    {{ form.discord_client_secret.as_field_group }}
+    {% if form.clear_discord_client_secret %}{{ form.clear_discord_client_secret.as_field_group }}{% endif %}
+    <p class="help-text">{% translate "Discord OAuth2 redirect:" %} <code class="break-all">{{ discord_redirect }}</code></p>
+    {{ form.discord_login.as_field_group }}
+    {{ form.discord_bot_token.as_field_group }}
+    {% if form.clear_discord_bot_token %}{{ form.clear_discord_bot_token.as_field_group }}{% endif %}
+    {{ form.github_token.as_field_group }}
+    {% if form.clear_github_token %}{{ form.clear_github_token.as_field_group }}{% endif %}
+    {{ form.webhooks_private_networks.as_field_group }}
+    </div>
+  </section>
+
+  <div class="sticky bottom-0 -mx-4 border-t border-border bg-canvas/90 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-card sm:border">
+    <button type="submit" class="btn btn-primary">{% icon "check" %}{% translate "Save" %}</button>
+  </div>
+</form>
+
+{# The bots app fills this in and keeps it current. #}
+<div hx-get="{% url 'bots:status' %}" hx-trigger="load" hx-swap="outerHTML"></div>
+{% endblock %}

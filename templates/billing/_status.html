@@ -1,0 +1,1 @@
+<span class="badge {% if order.status == 'paid' %}badge-success{% elif order.status == 'failed' %}badge-danger{% else %}badge-muted{% endif %}">{{ order.get_status_display }}</span>

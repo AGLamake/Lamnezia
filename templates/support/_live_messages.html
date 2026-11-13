@@ -1,0 +1,3 @@
+{# What an open page fetches when the thread changes: the messages, and the form gone once the request is closed. #}
+{% include "support/_messages.html" %}
+{% if not conversation.is_open %}{% include "support/_closed.html" with oob=True %}{% endif %}

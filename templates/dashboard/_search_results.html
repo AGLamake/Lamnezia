@@ -1,0 +1,17 @@
+{% load i18n %}{# Results of the command palette (components/command_palette.html). #}
+{% if short %}
+  <p class="palette-hint">{% translate "Type a server, user or key name." %}</p>
+{% elif groups %}
+  {% for group in groups %}
+    <section class="space-y-1">
+      <h3 class="palette-group">{{ group.title }}</h3>
+      <ul>
+        {% for hit in group.hits %}
+          <li><a href="{{ hit.url }}" class="palette-item" data-palette-item><span class="truncate font-medium">{{ hit.title }}</span>{% if hit.detail %}<span class="truncate text-sm text-muted">{{ hit.detail }}</span>{% endif %}</a></li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endfor %}
+{% else %}
+  <p class="palette-hint">{% blocktranslate with text=text %}Nothing found for «{{ text }}».{% endblocktranslate %}</p>
+{% endif %}

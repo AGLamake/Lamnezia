@@ -1,0 +1,10 @@
+{% load i18n ports %}{# Under a port field inside x-data="{ port: ... }", with `server`: the recommendation and a warning for a high port. #}
+<p class="help-text">
+  {% translate "Some providers block or throttle UDP on ports above 9999, so the panel suggests a port up to 10000." %}
+  <a href="{% ports_wiki_url %}" target="_blank" rel="noopener" class="underline">{% translate "Details" %}</a> ·
+  <a href="{% url 'protocols:speed-test' server.pk %}" class="underline">{% translate "Speed test by port" %}</a>
+</p>
+<div x-show="port > {% low_port_limit %}" x-cloak>
+  {% translate "The port is above 9999: some providers block or throttle UDP on it and the VPN may not connect or be slow." as high %}
+  {% include "components/alert.html" with level="warning" text=high %}
+</div>

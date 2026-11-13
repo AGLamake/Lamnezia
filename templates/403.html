@@ -1,0 +1,6 @@
+{% extends "errors/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Access denied" %}{% endblock %}
+{% block code %}403{% endblock %}
+{% block heading %}{% translate "Access denied" %}{% endblock %}
+{% block text %}{% translate "You do not have the rights to open this page." %}{% endblock %}

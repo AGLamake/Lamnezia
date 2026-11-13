@@ -1,0 +1,415 @@
+# Russian translation of Lamnezia (apps.keys).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#, python-format
+msgid "%(count)d key was skipped: its status does not allow it."
+msgid_plural "%(count)d keys were skipped: their status does not allow it."
+msgstr[0] "%(count)d ключ пропущен: его статус этого не позволяет."
+msgstr[1] "%(count)d ключа пропущено: их статус этого не позволяет."
+msgstr[2] "%(count)d ключей пропущено: их статус этого не позволяет."
+
+#, python-format
+msgid "%(count)d operation started."
+msgid_plural "%(count)d operations started."
+msgstr[0] "Запущена %(count)d операция."
+msgstr[1] "Запущено %(count)d операции."
+msgstr[2] "Запущено %(count)d операций."
+
+#, python-format
+msgid "%(name)s: not reissued: %(reason)s"
+msgstr "%(name)s: не перевыпущен: %(reason)s"
+
+#, python-format
+msgid "%(name)s: reissued."
+msgstr "%(name)s: перевыпущен."
+
+msgid "A client was probably added in the Amnezia app. Revoke this key and issue a new one."
+msgstr "Вероятно, клиента добавили в приложении Amnezia. Отзовите этот ключ и выдайте новый."
+
+msgid "Add to the panel"
+msgstr "Добавить в панель"
+
+msgid "Added in the Amnezia app"
+msgstr "Добавлен в приложении Amnezia"
+
+msgid "Any"
+msgstr "Любой"
+
+msgid "Apply the revocation list"
+msgstr "Применить список отзыва"
+
+msgid "Bring back the previous revocation list"
+msgstr "Возврат предыдущего списка отзыва"
+
+msgid "Check the server again and choose an action for what it shows now."
+msgstr "Проверьте сервер ещё раз и выберите действие для того, что он показывает сейчас."
+
+msgid "Choose a user to give the key to."
+msgstr "Выберите пользователя, которому передать ключ."
+
+msgid "Compare keys with the server"
+msgstr "Сверка ключей с сервером"
+
+msgid "Compare with the panel"
+msgstr "Сравнить с панелью"
+
+msgid "Device name"
+msgstr "Имя устройства"
+
+#, python-format
+msgid "Differences: %(count)d."
+msgstr "Расхождений: %(count)d."
+
+msgid "Disable"
+msgstr "Отключить"
+
+msgid "Disable a key"
+msgstr "Отключение ключа"
+
+msgid "Disable a key over the limit"
+msgstr "Отключение ключа по лимиту"
+
+msgid "Download .conf for AmneziaWG"
+msgstr "Скачать .conf для AmneziaWG"
+
+msgid "Download .mobileconfig for iPhone, iPad and Mac"
+msgstr "Скачать .mobileconfig для iPhone, iPad и Mac"
+
+msgid "Download .ovpn for OpenVPN"
+msgstr "Скачать .ovpn для OpenVPN"
+
+msgid "Download .sswan for strongSwan on Android"
+msgstr "Скачать .sswan для strongSwan на Android"
+
+msgid "Enable"
+msgstr "Включить"
+
+msgid "Enable a key"
+msgstr "Включение ключа"
+
+msgid "Enable a key within the limits"
+msgstr "Включение ключа в пределах лимитов"
+
+msgid "End the sessions of the client"
+msgstr "Завершить сеансы клиента"
+
+msgid "For XRay the panel supports VLESS Reality over TCP, the Amnezia app default."
+msgstr "Для XRay панель поддерживает VLESS Reality поверх TCP — так его ставит приложение Amnezia."
+
+msgid "Give a key to a user"
+msgstr "Передача ключа пользователю"
+
+msgid "IP address"
+msgstr "IP-адрес"
+
+msgid "Issue key"
+msgstr "Выдача ключа"
+
+msgid "It was probably revoked in the Amnezia app. Revoke this key and issue a new one."
+msgstr "Вероятно, его отозвали в приложении Amnezia. Отзовите этот ключ и выдайте новый."
+
+#, python-format
+msgid "Key %(key)s is not reissued: %(reason)s"
+msgstr "Ключ %(key)s не перевыпущен: %(reason)s"
+
+#, python-format
+msgid "Keys ready to be shown: %(count)d."
+msgstr "Ключей готово к показу: %(count)d."
+
+#, python-format
+msgid "Keys reissued: %(count)d."
+msgstr "Перевыпущено ключей: %(count)d."
+
+msgid "Lock the server"
+msgstr "Блокировка сервера"
+
+msgid "Mark as active"
+msgstr "Считать активным"
+
+msgid "Mark as revoked"
+msgstr "Считать отозванным"
+
+msgid "OpenVPN did not start again after the revocation list changed."
+msgstr "OpenVPN не запустился снова после изменения списка отзыва."
+
+msgid "OpenVPN did not start with the previous list either."
+msgstr "OpenVPN не запустился и с предыдущим списком."
+
+msgid "OpenVPN serves with the previous revocation list."
+msgstr "OpenVPN работает с предыдущим списком отзыва."
+
+msgid "Owner"
+msgstr "Владелец"
+
+#, python-format
+msgid "Peers on %(interface)s: %(count)d."
+msgstr "Пиров на %(interface)s: %(count)d."
+
+msgid "Prepare imported XRay keys for showing"
+msgstr "Подготовить импортированные ключи XRay к показу"
+
+msgid "Read the protocol configuration"
+msgstr "Чтение конфигурации протокола"
+
+msgid "Read the server settings"
+msgstr "Чтение настроек сервера"
+
+msgid "Reissue keys"
+msgstr "Перевыпуск ключей"
+
+msgid "Remove from the server"
+msgstr "Удалить с сервера"
+
+msgid "Removing it would lock the server owner out. Manage it in the Amnezia app."
+msgstr "Если его удалить, владелец сервера потеряет доступ. Управляйте им в приложении Amnezia."
+
+msgid "Rename a key"
+msgstr "Переименование ключа"
+
+msgid "Replace the client certificates"
+msgstr "Заменить сертификаты клиентов"
+
+msgid "Resolve a difference with the server"
+msgstr "Устранение расхождения с сервером"
+
+msgid "Restart the protocol container and run the operation again."
+msgstr "Перезапустите контейнер протокола и повторите операцию."
+
+msgid "Restarting openvpn: all OpenVPN clients reconnect."
+msgstr "Перезапуск openvpn: все клиенты OpenVPN переподключатся."
+
+msgid "Restarting the container: all XRay clients reconnect."
+msgstr "Перезапуск контейнера: все клиенты XRay переподключатся."
+
+msgid "Restore on the server"
+msgstr "Вернуть на сервер"
+
+msgid "Revoke"
+msgstr "Отозвать"
+
+msgid "Revoke a key"
+msgstr "Отзыв ключа"
+
+msgid "Revoke the client certificate"
+msgstr "Отозвать сертификат клиента"
+
+msgid "Revoke unused keys or move clients to another server."
+msgstr "Отзовите неиспользуемые ключи или перенесите клиентов на другой сервер."
+
+msgid "Run the operation again. If it repeats, restart the protocol container."
+msgstr "Запустите операцию ещё раз. Если ошибка повторится, перезапустите контейнер протокола."
+
+msgid "Save the keys"
+msgstr "Сохранить ключи"
+
+msgid "Server"
+msgstr "Сервер"
+
+msgid "Sign the client certificate"
+msgstr "Подписать сертификат клиента"
+
+msgid "Some keys were not reissued; they keep their old keys."
+msgstr "Часть ключей не перевыпущена: у них остались старые ключи."
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "The OpenVPN certificate authority refused the change."
+msgstr "Центр сертификации OpenVPN отклонил изменение."
+
+msgid "The PKI in the container may have been edited by hand. Check the operation log."
+msgstr "Возможно, PKI в контейнере меняли вручную. Проверьте журнал операции."
+
+msgid "The certificate database of IPsec refused the change."
+msgstr "База сертификатов IPsec отклонила изменение."
+
+msgid "The certificate is already gone."
+msgstr "Сертификата уже нет."
+
+msgid "The certificate is already revoked."
+msgstr "Сертификат уже отозван."
+
+msgid "The client certificate is no longer on the server."
+msgstr "Сертификата клиента больше нет на сервере."
+
+msgid "The configuration on the server may have been edited by hand. Check server.json."
+msgstr "Возможно, конфигурацию на сервере правили вручную. Проверьте server.json."
+
+msgid "The database in the container may have been edited by hand. Check the operation log."
+msgstr "Возможно, базу в контейнере правили вручную. Посмотрите журнал операции."
+
+msgid "The difference is already gone."
+msgstr "Расхождения уже нет."
+
+msgid "The difference with the server has changed since it was found."
+msgstr "Расхождение с сервером изменилось с момента, как его нашли."
+
+msgid "The files may have been edited by hand. Check awg0.conf and clientsTable."
+msgstr "Возможно, файлы правили вручную. Проверьте awg0.conf и clientsTable."
+
+msgid "The key cannot be turned back on: its address now belongs to another client."
+msgstr "Ключ нельзя включить снова: его адрес теперь занят другим клиентом."
+
+msgid "The key is no longer active."
+msgstr "Ключ уже не активен."
+
+msgid "The key is no longer disabled by the limits."
+msgstr "Ключ уже не отключён по лимиту."
+
+msgid "The owner can open the key again."
+msgstr "Владелец снова может открыть ключ."
+
+msgid "The panel does not support this protocol setup."
+msgstr "Панель не поддерживает такую настройку протокола."
+
+msgid "The previous configuration was put back. Check the container log and try again."
+msgstr "Прежняя конфигурация восстановлена. Проверьте журнал контейнера и повторите попытку."
+
+msgid "The protocol configuration on the server cannot be read."
+msgstr "Не удалось прочитать конфигурацию протокола на сервере."
+
+msgid "The server did not apply the new client list."
+msgstr "Сервер не применил новый список клиентов."
+
+msgid "The step log names them and why. Run the operation again: it retries only them."
+msgstr "Какие и почему — в журнале шага. Запустите операцию снова: она повторит только их."
+
+msgid "There are no free addresses left in the server subnet."
+msgstr "В подсети сервера не осталось свободных адресов."
+
+msgid "There is no previous revocation list."
+msgstr "Предыдущего списка отзыва нет."
+
+msgid "This client belongs to the Amnezia app that installed the server."
+msgstr "Этот клиент принадлежит приложению Amnezia, которое установило сервер."
+
+msgid "Tick the keys and choose what to do with them."
+msgstr "Отметьте ключи и выберите, что с ними сделать."
+
+msgid "Update the certificate list"
+msgstr "Обновить список сертификатов"
+
+msgid "Update the client list"
+msgstr "Обновление списка клиентов"
+
+msgid "Update the server configuration"
+msgstr "Обновление конфигурации сервера"
+
+msgid "User"
+msgstr "Пользователь"
+
+msgid "With the ticked keys"
+msgstr "С отмеченными ключами"
+
+msgid "Without owner"
+msgstr "Без владельца"
+
+msgid "XRay did not start with the new configuration."
+msgstr "XRay не запустился с новой конфигурацией."
+
+msgid "XRay rejected the new configuration; the server was not changed."
+msgstr "XRay отклонил новую конфигурацию, сервер не изменён."
+
+msgid "Your users hold as many keys as your quota allows."
+msgstr "У ваших пользователей уже столько ключей, сколько позволяет ваша квота."
+
+msgid "access key"
+msgstr "ключ доступа"
+
+msgid "access keys"
+msgstr "ключи доступа"
+
+msgid "active"
+msgstr "активен"
+
+msgid "added outside the panel"
+msgstr "добавлен вне панели"
+
+msgid "created at"
+msgstr "создан"
+
+msgid "device name"
+msgstr "имя устройства"
+
+msgid "difference"
+msgstr "расхождение"
+
+msgid "difference with the server"
+msgstr "расхождение с сервером"
+
+msgid "differences with the server"
+msgstr "расхождения с сервером"
+
+msgid "disabled"
+msgstr "отключён"
+
+msgid "disabled by limit"
+msgstr "отключён по лимиту"
+
+msgid "first viewed at"
+msgstr "впервые открыт"
+
+msgid "found at"
+msgstr "найдено"
+
+msgid "imported"
+msgstr "импортирован"
+
+msgid "instance"
+msgstr "сервер и протокол"
+
+msgid "issuing"
+msgstr "выдаётся"
+
+msgid "key"
+msgstr "ключ"
+
+msgid "name"
+msgstr "имя"
+
+msgid "off in the panel, but on the server"
+msgstr "выключен в панели, но есть на сервере"
+
+msgid "private key"
+msgstr "приватный ключ"
+
+msgid "profile"
+msgstr "профиль"
+
+msgid "public key"
+msgstr "публичный ключ"
+
+msgid "removed outside the panel"
+msgstr "удалён вне панели"
+
+msgid "revoked"
+msgstr "отозван"
+
+msgid "revoked at"
+msgstr "отозван"
+
+msgid "revoking"
+msgstr "отзывается"
+
+msgid "status"
+msgstr "статус"
+
+msgid "subscription link"
+msgstr "ссылка-подписка"
+
+msgid "subscription links"
+msgstr "ссылки-подписки"
+
+msgid "token"
+msgstr "токен"
+
+msgid "token digest"
+msgstr "хэш токена"
+
+msgid "user"
+msgstr "пользователь"

@@ -1,0 +1,19 @@
+{% load i18n ui %}{# Django messages as toasts; errors and warnings stay until closed. ui.js adds toasts from HTMX (#toast-template). #}
+<div id="toasts" class="toast-region">
+  {% for message in messages %}
+    <div class="alert alert-{{ message.level_tag }} toast" x-data="toast" x-show="shown" x-transition.opacity
+         @mouseenter="pause" @mouseleave="resume" @focusin="pause" @focusout="resume"
+         {% if message.level_tag == "error" or message.level_tag == "warning" %}data-sticky role="alert"{% else %}role="status"{% endif %}>
+      {% icon message.level_tag|default:"info" "icon mt-px" %}
+      <p class="min-w-0 flex-1 break-words">{{ message }}</p>
+      <button type="button" class="-m-1 rounded p-1 opacity-70 hover:opacity-100" @click="dismiss" aria-label="{% translate 'Close' %}">{% icon "close" "icon-sm" %}</button>
+    </div>
+  {% endfor %}
+</div>
+<template id="toast-template">
+  <div class="alert toast" x-data="toast" x-show="shown" x-transition.opacity role="status"
+       @mouseenter="pause" @mouseleave="resume" @focusin="pause" @focusout="resume">
+    <p class="min-w-0 flex-1 break-words" data-toast-text></p>
+    <button type="button" class="-m-1 rounded p-1 opacity-70 hover:opacity-100" @click="dismiss" aria-label="{% translate 'Close' %}">{% icon "close" "icon-sm" %}</button>
+  </div>
+</template>

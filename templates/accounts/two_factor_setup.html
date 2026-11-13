@@ -1,0 +1,24 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Two-factor authentication" %} · Lamnezia{% endblock %}
+{% block heading %}{% translate "Two-factor authentication" %}{% endblock %}
+
+{% block content %}
+{% if required %}
+  <p>{% translate "Administrators sign in with a code from a phone app. Set it up to continue." %}</p>
+{% endif %}
+<ol class="list-decimal space-y-2 pl-5 text-sm">
+  <li>{% translate "Install an authenticator app: Google Authenticator, Microsoft Authenticator, Aegis, 2FAS or another one." %}</li>
+  <li>{% translate "Scan the QR code with the app or enter the key by hand." %}</li>
+  <li>{% translate "Enter the code that the app shows." %}</li>
+</ol>
+<img src="{{ enrollment.qr_data_uri }}" alt="{% translate 'QR code for the authenticator app' %}" class="mx-auto rounded bg-white p-2">
+<p class="help-text break-all">{% translate "Key:" %} <code>{{ enrollment.secret }}</code></p>
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  {{ form }}
+  <input type="hidden" name="next" value="{{ next }}">
+  <button type="submit" class="btn btn-primary w-full">{% translate "Turn on" %}</button>
+</form>
+{% include "accounts/_logout.html" %}
+{% endblock %}

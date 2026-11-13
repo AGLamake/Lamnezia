@@ -1,0 +1,134 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui servers %}
+{% block title %}{% translate "Overview" %} · Lamnezia{% endblock %}
+
+{% block nav %}{% include "components/admin_nav.html" with active="dashboard" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Overview" %}</h1>
+    <p class="page-lead">{% translate "How the servers and clients are doing and what needs you now." %}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'keys:issue' %}" class="btn btn-secondary">{% icon "key" %}{% translate "Issue a key" %}</a>
+    {% if user.is_admin %}<a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>{% endif %}
+  </div>
+</div>
+
+<div class="kpis">
+  {% if user.is_admin %}
+    {% with count=overview.servers %}
+      <a href="{% url 'servers:list' %}" class="stat">
+        <span class="stat-label">{% icon "server" "icon-sm" %}{% translate "Servers online" %}</span>
+        <span class="stat-value">{{ count.online }}<span class="text-base font-normal text-muted"> / {{ count.total }}</span></span>
+      </a>
+    {% endwith %}
+  {% endif %}
+  <a href="{% url 'dashboard:users' %}?status=active" class="stat">
+    <span class="stat-label">{% icon "users" "icon-sm" %}{% if user.is_admin %}{% translate "Clients" %}{% else %}{% translate "My clients" %}{% endif %}</span>
+    <span class="stat-value">{{ overview.users }}</span>
+  </a>
+  <a href="{% url 'keys:list' %}?status=active" class="stat">
+    <span class="stat-label">{% icon "key" "icon-sm" %}{% translate "Active keys" %}</span>
+    <span class="stat-value">{{ overview.active_keys }}</span>
+  </a>
+  {% if not user.is_admin %}
+    <a href="{% url 'dashboard:users' %}?status=active" class="stat">
+      <span class="stat-label">{% icon "calendar" "icon-sm" %}{% translate "Access ends in 7 days" %}</span>
+      <span class="stat-value">{{ overview.access_ending }}</span>
+    </a>
+  {% endif %}
+  <a href="{% url 'dashboard:stats' %}?period=day" class="stat">
+    <span class="stat-label">{% icon "signal" "icon-sm" %}{% translate "Online now" %}</span>
+    <span class="stat-value">{{ overview.online }}</span>
+  </a>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-5">
+  <section class="card card-flush lg:col-span-3" aria-labelledby="overview-traffic">
+    <div class="card-head">
+      <h2 id="overview-traffic" class="card-title">{% icon "chart" "icon-sm" %}{% translate "Traffic for 7 days" %}</h2>
+      <a href="{% url 'dashboard:stats' %}" class="text-sm text-link hover:underline">{% translate "Statistics" %}</a>
+    </div>
+    <div class="card-body space-y-4">
+      <dl class="flex flex-wrap gap-x-8 gap-y-2">
+        <div><dt class="help-text">{% translate "Today" %}</dt><dd class="text-lg font-semibold tabular-nums">{{ overview.today|filesizeformat }}</dd></div>
+        <div><dt class="help-text">{% translate "In 7 days" %}</dt><dd class="text-lg font-semibold tabular-nums">{{ overview.week_total|filesizeformat }}</dd></div>
+      </dl>
+      {% translate "Traffic for 7 days" as traffic_label %}
+      {% bar_chart chart.labels chart.series chart.names traffic_label %}
+    </div>
+  </section>
+
+  <section class="card card-flush lg:col-span-2" aria-labelledby="overview-attention">
+    <div class="card-head">
+      <h2 id="overview-attention" class="card-title">{% icon "warning" "icon-sm" %}{% translate "Needs attention" %}</h2>
+      {% if notices %}<span class="nav-count">{{ notices|length }}</span>{% endif %}
+    </div>
+    {% if notices %}
+      <ul class="rows">
+        {% for notice in notices %}
+          <li class="flex items-center">
+            <a href="{{ notice.url }}" class="row min-w-0 flex-1">
+              <span class="row-lead row-lead-{{ notice.level }}">{% icon notice.icon "icon-sm" %}</span>
+              <span class="row-main row-title whitespace-normal">{{ notice.text }}</span>
+              {% icon "chevron-right" "icon-sm text-muted" %}
+            </a>
+            <form method="post" action="{% url 'dashboard:notice-hide' %}" class="pr-2 sm:pr-3">
+              {% csrf_token %}
+              <input type="hidden" name="key" value="{{ notice.key }}">
+              <button type="submit" class="btn btn-ghost btn-icon btn-sm" title="{% translate 'Hide until tomorrow' %}"
+                      aria-label="{% blocktranslate with text=notice.text %}Hide until tomorrow: {{ text }}{% endblocktranslate %}">{% icon "eye-off" "icon-sm" %}</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="flex items-center gap-3 px-4 py-6 sm:px-5">
+        <span class="row-lead row-lead-success">{% icon "check" "icon-sm" %}</span>
+        <p class="text-sm">{% if hidden_notices %}{% translate "Nothing else waits for you today." %}{% else %}{% translate "All good: servers answer, nothing waits for you." %}{% endif %}</p>
+      </div>
+    {% endif %}
+    {% if hidden_notices %}
+      <form method="post" action="{% url 'dashboard:notices-show' %}" class="border-t border-border px-4 py-2 sm:px-5">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost btn-sm">{% icon "eye" "icon-sm" %}{% blocktranslate count counter=hidden_notices %}Show {{ counter }} hidden until tomorrow{% plural %}Show {{ counter }} hidden until tomorrow{% endblocktranslate %}</button>
+      </form>
+    {% endif %}
+  </section>
+</div>
+
+<section class="space-y-3" aria-labelledby="overview-servers">
+  <div class="section-head">
+    <h2 id="overview-servers" class="section-title">{% translate "Servers" %}</h2>
+    {% if user.is_admin and servers %}<a href="{% url 'servers:list' %}" class="text-sm text-link hover:underline">{% translate "All servers" %}</a>{% endif %}
+  </div>
+  {% if servers %}
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {% for server in servers %}
+        <article id="server-{{ server.pk }}" class="card space-y-4">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              {% if user.is_admin %}<a href="{% url 'servers:detail' server.pk %}" class="block truncate font-semibold hover:underline">{{ server.name }}</a>{% else %}<span class="block truncate font-semibold">{{ server.name }}</span>{% endif %}
+              <p class="help-text truncate">{{ server.location|default:server.host }}</p>
+            </div>
+            {% include "servers/_online.html" %}
+          </div>
+          {% include "servers/_meters.html" %}
+          <div class="flex items-center justify-between gap-2 border-t border-border pt-3 text-xs text-muted">
+            <span class="min-w-0">{% if user.is_admin and server.paid_until %}{% translate "VPS paid until" %} {{ server.paid_until|date:"SHORT_DATE_FORMAT" }} {% include "servers/_paid_days.html" %}{% elif server.latest_sample.booted_at %}{% translate "Uptime" %} {{ server.latest_sample.booted_at|timesince:server.latest_sample.at }}{% endif %}</span>
+            {% if user.is_admin %}{% include "servers/_quick_actions.html" %}{% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-state-icon">{% icon "server" %}</span>
+      <p>{% translate "No servers yet." %}</p>
+      {% if user.is_admin %}<a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>{% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

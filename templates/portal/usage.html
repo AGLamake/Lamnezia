@@ -1,0 +1,93 @@
+{% extends "layouts/portal.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Usage" %} · Lamnezia{% endblock %}
+{% block subnav %}{% include "portal/_access_tabs.html" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Usage" %}</h1>
+    <p class="page-lead">{% translate "How much traffic your keys used and how long your limit lasts." %}</p>
+  </div>
+</div>
+
+<nav class="segmented" aria-label="{% translate 'Period' %}">
+  {% for link in periods %}<a href="?{{ link.query }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title }}</a>{% endfor %}
+</nav>
+{% if traffic.key %}
+  <p class="alert alert-info">
+    {% icon "filter" "icon-sm" %}
+    <span class="flex-1">{% blocktranslate with name=traffic.key.name %}Key: {{ name }}{% endblocktranslate %}
+    · <a href="?period={{ traffic.period }}">{% translate "Show all keys" %}</a></span>
+  </p>
+{% endif %}
+
+<div class="kpis">
+  <div class="stat">
+    <span class="stat-label">{% icon "arrow-down" "icon-sm" %}{% translate "Downloaded" %}</span>
+    <span class="stat-value">{{ traffic.downloaded|filesizeformat }}</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% icon "arrow-up" "icon-sm" %}{% translate "Uploaded" %}</span>
+    <span class="stat-value">{{ traffic.uploaded|filesizeformat }}</span>
+  </div>
+</div>
+
+<section class="card space-y-3" aria-labelledby="usage-chart">
+  <h2 id="usage-chart" class="card-title">{% icon "chart" "icon-sm" %}{% translate "Traffic" %}</h2>
+  {% translate "Traffic" as traffic_label %}
+  {% bar_chart chart.labels chart.series chart.names traffic_label %}
+</section>
+
+<div class="grid items-start gap-6 lg:grid-cols-2">
+  <section class="card card-flush" aria-labelledby="usage-keys">
+    <div class="card-head"><h2 id="usage-keys" class="card-title">{% icon "key" "icon-sm" %}{% translate "By key" %}</h2></div>
+    {% if rows %}
+      <ul class="rows">
+        {% for row, title in rows %}
+          <li><a href="?period={{ traffic.period }}&amp;key={{ row.key.pk }}" class="row"{% if row.key == traffic.key %} aria-current="true"{% endif %}>
+            <span class="row-main space-y-1.5">
+              <span class="flex items-baseline justify-between gap-3">
+                <span class="min-w-0">
+                  <span class="row-title">{{ row.key.name }}{% if row.key.is_gone %} <span class="badge badge-muted">{% translate "deleted" %}</span>{% endif %}</span>
+                  {% if title %}<span class="row-sub">{{ title }}</span>{% endif %}
+                </span>
+                <span class="row-value">{% if row.has_data %}{{ row.total|filesizeformat }}{% else %}<span class="text-muted">{% translate "no data" %}</span>{% endif %}</span>
+              </span>
+              {% if row.has_data and traffic.busiest %}<span class="progress block" aria-hidden="true"><span class="progress-bar block" style="width: {% widthratio row.total traffic.busiest 100 %}%"></span></span>{% endif %}
+            </span>
+          </a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="card-body help-text">{% translate "You have no keys yet." %}</p>
+    {% endif %}
+  </section>
+
+  <section class="card space-y-3" aria-labelledby="usage-limit">
+    <h2 id="usage-limit" class="card-title">{% icon "zap" "icon-sm" %}{% translate "Limit" %}</h2>
+    {% if usage.period_limit is None %}
+      <p class="text-lg font-semibold tabular-nums">{{ usage.period_used|filesizeformat }}</p>
+      <p class="help-text">{% translate "No traffic limit" %}</p>
+    {% else %}
+      <p class="text-lg font-semibold tabular-nums">{% blocktranslate with used=usage.period_used|filesizeformat limit=usage.period_limit|filesizeformat %}{{ used }} of {{ limit }}{% endblocktranslate %}</p>
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ usage.period_percent }}" aria-labelledby="usage-limit">
+        <div class="progress-bar {% if usage.period_percent >= 95 %}progress-bar-danger{% elif usage.period_percent >= 80 %}progress-bar-warning{% endif %}" style="width: {{ usage.period_percent }}%"></div>
+      </div>
+      {% if usage.resets_at %}<p class="help-text">{% blocktranslate with date=usage.resets_at|date:"DATE_FORMAT" %}resets on {{ date }}{% endblocktranslate %}</p>{% endif %}
+      {% if forecast.reached %}
+        {% translate "The limit is reached: the keys are off until the period resets." as text %}
+        {% include "components/alert.html" with level="error" text=text %}
+      {% elif forecast %}
+        {% blocktranslate with when=forecast.at|date:"SHORT_DATETIME_FORMAT" asvar text %}At this pace the limit runs out on {{ when }}, before the period resets.{% endblocktranslate %}
+        {% include "components/alert.html" with level="warning" text=text %}
+      {% else %}
+        <p class="flex items-center gap-2 text-sm">{% icon "check" "icon-sm text-success" %}{% translate "At this pace the traffic lasts until the period resets." %}</p>
+      {% endif %}
+    {% endif %}
+    {% if usage.total_limit is not None %}
+      <p class="help-text">{% blocktranslate with used=usage.total_used|filesizeformat limit=usage.total_limit|filesizeformat %}In total: {{ used }} of {{ limit }}{% endblocktranslate %}</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

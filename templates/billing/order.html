@@ -1,0 +1,24 @@
+{% extends "layouts/portal.html" %}
+{% load i18n %}
+{% block title %}{% translate "Payment" %} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'billing:index' %}">{% translate "Payment" %}</a></li><li aria-current="page">{{ order.plan.name }}</li>{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap items-center gap-3">
+  <h1 class="page-title">{{ order.plan.name }}</h1>
+  {% include "billing/_status.html" %}
+</div>
+<p class="help-text">{{ order.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ order.amount }} {{ order.currency }}</p>
+{% if order.status == "paid" %}
+  {% translate "The payment is received and your access is renewed." as text %}
+  {% include "components/alert.html" with level="success" text=text %}
+  <p><a href="{% url 'portal:index' %}" class="btn btn-primary">{% translate "My access" %}</a></p>
+{% elif order.status == "failed" %}
+  {% translate "The payment did not go through. You can try again." as text %}
+  {% include "components/alert.html" with level="error" text=text %}
+{% else %}
+  {% translate "Waiting for the payment service to confirm the payment. Refresh the page in a minute." as text %}
+  {% include "components/alert.html" with level="info" text=text %}
+{% endif %}
+{% endblock %}

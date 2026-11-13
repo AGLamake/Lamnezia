@@ -1,0 +1,28 @@
+{% extends "layouts/portal.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Servers" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% translate "Servers" %}</h1>
+{% if servers %}
+  <ul class="space-y-2">
+    {% for server in servers %}
+      <li class="card flex items-center justify-between gap-3">
+        <span class="min-w-0">
+          <span class="block truncate font-medium">{{ server.name }}</span>
+          {% if server.location %}<span class="help-text block truncate">{{ server.location }}</span>{% endif %}
+        </span>
+        <span class="flex shrink-0 items-center gap-2">
+          <span class="badge {% if server.health == 'working' %}badge-success{% elif server.health == 'problems' %}badge-danger{% else %}badge-muted{% endif %}">{{ server.health.label }}</span>
+          {% include "support/_server_down.html" with server_id=server.pk %}
+        </span>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty-state">
+    <span class="empty-state-icon">{% icon "server" %}</span>
+    <p class="font-medium">{% translate "No servers are available to you yet." %}</p>
+  </div>
+{% endif %}
+{% endblock %}

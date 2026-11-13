@@ -1,0 +1,75 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{{ key.name }} · Lamnezia{% endblock %}
+{% block nav %}{% include "keys/_nav.html" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'keys:list' %}">{% translate "Keys" %}</a></li><li aria-current="page">{{ key.name }}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="min-w-0">
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="page-title break-words">{{ key.name }}</h1>
+      <span class="badge {% if key.status == 'active' %}badge-success{% elif key.status == 'revoked' %}badge-danger{% else %}badge-muted{% endif %}">{{ key.get_status_display }}</span>
+    </div>
+    <p class="page-lead">{{ key.user|default:_("No owner") }} · {{ instance_title }}</p>
+  </div>
+  <div class="page-actions">
+    {% if user.is_admin %}<a href="{% url 'dashboard:stats' %}?key={{ key.pk }}" class="btn btn-ghost">{% icon "chart" %}{% translate "Statistics" %}</a>{% endif %}
+    {% if key.status == "active" %}
+      <form method="post" action="{% url 'keys:action' key.pk 'disable' %}">{% csrf_token %}<button class="btn btn-secondary">{% translate "Disable" %}</button></form>
+    {% elif key.is_disabled %}
+      <form method="post" action="{% url 'keys:action' key.pk 'enable' %}">{% csrf_token %}<button class="btn btn-secondary">{% translate "Enable" %}</button></form>
+    {% endif %}
+    {% if key.can_export %}<a href="{% url 'keys:reveal' key.pk %}" class="btn btn-primary">{% icon "key" %}{% translate "Show key" %}</a>{% endif %}
+  </div>
+</div>
+
+{% if key.can_export %}
+{% elif profile_pending %}
+  {% translate "The panel is reading the key's settings from the server. Refresh the page in a few seconds to show the key." as notice %}
+  {% include "components/alert.html" with level="info" text=notice %}
+{% elif key.awaits_profile %}
+  {% translate "The panel could not read the key's settings from the server. Open the page again later." as notice %}
+  {% include "components/alert.html" with level="warning" text=notice %}
+{% elif not key.is_gone %}
+  {% translate "This key was imported without its private part: it cannot be shown, only re-issued." as notice %}
+  {% include "components/alert.html" with level="info" text=notice %}
+{% endif %}
+
+<div class="grid items-start gap-6 lg:grid-cols-3">
+  <section class="card space-y-3 lg:col-span-2">
+    <h2 class="section-title flex items-center gap-2">{% icon "key" "icon-sm text-muted" %}{% translate "Key" %}</h2>
+    <dl class="facts">
+      <div><dt>{% translate "Owner" %}</dt><dd>{% if key.user %}<a href="{% url 'dashboard:user' key.user.pk %}" class="hover:underline">{{ key.user }}</a>{% else %}—{% endif %}</dd></div>
+      <div><dt>{% translate "Server" %}</dt><dd>{{ instance_title }}</dd></div>
+      <div><dt>{% translate "IP address" %}</dt><dd class="font-mono">{{ key.client_ip|default:"—" }}</dd></div>
+      <div><dt>{% translate "Created" %}</dt><dd>{{ key.created_at|date:"SHORT_DATETIME_FORMAT" }}</dd></div>
+      <div><dt>{% translate "First viewed by the owner" %}</dt><dd>{{ key.first_viewed_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }}</dd></div>
+      <div><dt>{% translate "Public key" %}</dt><dd class="w-full break-all text-left font-mono text-xs sm:w-auto sm:text-right">{{ key.public_key }}</dd></div>
+    </dl>
+  </section>
+
+  {% if not key.is_gone %}
+    <div class="space-y-6">
+      <section class="card space-y-3">
+        <h2 class="section-title flex items-center gap-2">{% icon "user" "icon-sm text-muted" %}{% if key.user %}{% translate "Give to another user" %}{% else %}{% translate "Give to a user" %}{% endif %}</h2>
+        <form method="post" action="{% url 'keys:assign' key.pk %}" class="grid gap-4">
+          {% csrf_token %}
+          {{ assign_form }}
+          <div><button type="submit" class="btn btn-secondary">{% translate "Give" %}</button></div>
+        </form>
+      </section>
+
+      <section class="card space-y-3">
+        <h2 class="section-title flex items-center gap-2">{% icon "warning" "icon-sm text-muted" %}{% translate "Careful" %}</h2>
+        {% if key.first_viewed_at %}
+          <form method="post" action="{% url 'keys:reset-view' key.pk %}">{% csrf_token %}<button class="btn btn-ghost w-full justify-start">{% icon "refresh" "icon-sm" %}{% translate "Allow the owner to open it again" %}</button></form>
+        {% endif %}
+        <form method="post" action="{% url 'keys:action' key.pk 'revoke' %}" data-confirm="{% translate "Revoke this key? It stops working at once." %}">{% csrf_token %}<button class="btn btn-danger w-full">{% icon "trash" "icon-sm" %}{% translate "Revoke" %}</button></form>
+        <p class="help-text">{% translate "A revoked key stops working at once and cannot be turned back on." %}</p>
+      </section>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

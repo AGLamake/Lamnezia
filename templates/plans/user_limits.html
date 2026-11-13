@@ -1,0 +1,39 @@
+{% extends "plans/base.html" %}
+{% load i18n %}
+{% block title %}{{ limits.user }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'dashboard:users' %}">{% translate "Users" %}</a></li><li><a href="{% url 'dashboard:user' limits.user.pk %}">{{ limits.user }}</a></li><li aria-current="page">{% translate "Plan and limits" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% blocktranslate with user=limits.user %}Plan and limits of {{ user }}{% endblocktranslate %}</h1>
+</div>
+
+<dl class="card grid gap-3 sm:grid-cols-2">
+  {% if effective.has_plan %}
+    <div><dt class="help-text">{% translate "Traffic per period" %}</dt><dd>{% if effective.traffic_limit is None %}{% translate "no limit" %}{% else %}{{ effective.traffic_limit|filesizeformat }}{% endif %} · {% blocktranslate count days=effective.period_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</dd></div>
+    <div><dt class="help-text">{% translate "Traffic in total" %}</dt><dd>{% if effective.total_traffic_limit is None %}{% translate "no limit" %}{% else %}{{ effective.total_traffic_limit|filesizeformat }}{% endif %}</dd></div>
+    <div><dt class="help-text">{% translate "Keys at most" %}</dt><dd>{{ effective.max_keys|default_if_none:"∞" }}</dd></div>
+    <div><dt class="help-text">{% translate "Speed" %}</dt><dd>{% if effective.speed_limit is None %}{% translate "no limit" %}{% else %}{% blocktranslate with speed=effective.speed_limit %}{{ speed }} Mbit/s{% endblocktranslate %}{% endif %}</dd></div>
+    <div><dt class="help-text">{% translate "Access until" %}</dt><dd>{{ effective.access_until|date:"SHORT_DATETIME_FORMAT"|default:_("no end") }}</dd></div>
+  {% else %}
+    <p class="help-text sm:col-span-2">{% translate "No plan: the user cannot get keys." %}</p>
+  {% endif %}
+</dl>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {{ form.plan.as_field_group }}
+  <h2 class="text-lg font-semibold">{% translate "Personal limits" %}</h2>
+  <div class="grid gap-4 sm:grid-cols-2">
+    {{ form.traffic_limit.as_field_group }}
+    {{ form.period_days.as_field_group }}
+    {{ form.total_traffic_limit.as_field_group }}
+    {{ form.max_keys.as_field_group }}
+    {{ form.speed_limit.as_field_group }}
+    {{ form.access_until.as_field_group }}
+  </div>
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+</form>
+{% endblock %}

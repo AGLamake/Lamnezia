@@ -1,0 +1,25 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{% if template %}{{ template.title }}{% else %}{% translate "Add a template" %}{% endif %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="inbox" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'support:inbox' %}">{% translate "Inbox" %}</a></li><li><a href="{% url 'support:templates' %}">{% translate "Reply templates" %}</a></li><li aria-current="page">{% if template %}{{ template.title }}{% else %}{% translate "Add a template" %}{% endif %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% if template %}{% translate "Edit the template" %}{% else %}{% translate "Add a template" %}{% endif %}</h1>
+</div>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {{ form.title.as_field_group }}
+  {{ form.text.as_field_group }}
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+</form>
+
+{% if template %}
+  <form method="post" action="{% url 'support:template-delete' template.pk %}" data-confirm="{% translate "Delete this template?" %}">
+    {% csrf_token %}<button class="btn btn-danger">{% translate "Delete the template" %}</button>
+  </form>
+{% endif %}
+{% endblock %}

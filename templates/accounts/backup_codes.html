@@ -1,0 +1,16 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Backup codes" %} · Lamnezia{% endblock %}
+{% block heading %}{% translate "Backup codes" %}{% endblock %}
+
+{% block content %}
+<p>{% blocktranslate count left=left %}{{ left }} backup code is left.{% plural %}{{ left }} backup codes are left.{% endblocktranslate %}</p>
+<p class="help-text">{% translate "New codes replace all the previous ones. To get them, enter the code from the app." %}</p>
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  {{ form }}
+  <input type="hidden" name="next" value="{{ next }}">
+  <button type="submit" class="btn btn-primary w-full">{% translate "Get new codes" %}</button>
+</form>
+<p class="help-text"><a href="{% url 'accounts:profile' %}#two-factor" class="link">{% translate "Back" %}</a></p>
+{% endblock %}

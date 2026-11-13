@@ -1,0 +1,22 @@
+{% extends "layouts/admin.html" %}
+{% load i18n operations %}
+{% block title %}{{ operation.kind|operation_title }} · Lamnezia{% endblock %}
+
+{% block nav %}
+  {% include "components/admin_nav.html" with active="operations" %}
+{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'operations:list' %}">{% translate "Operations" %}</a></li><li aria-current="page">{{ operation.kind|operation_title }}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="min-w-0">
+    <h1 class="page-title break-words">{{ operation.kind|operation_title }}</h1>
+    <p class="page-lead">
+      {% if operation.subject %}{% with url=operation|subject_url %}{% if url %}<a href="{{ url }}" class="font-medium text-fg hover:underline">{{ operation.subject }}</a>{% else %}{{ operation.subject }}{% endif %} · {% endwith %}{% endif %}
+      {{ operation.created_at|date:"SHORT_DATETIME_FORMAT" }}{% if operation.created_by %} · {{ operation.created_by }}{% endif %}
+    </p>
+  </div>
+</div>
+{% include "operations/_progress.html" %}
+{% endblock %}

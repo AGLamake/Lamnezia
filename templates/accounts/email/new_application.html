@@ -1,0 +1,7 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+{% block heading %}{% translate "A new user waits for a plan" %}{% endblock %}
+{% block content %}
+<p style="margin:0;">{% blocktranslate with username=user.get_username email=user.email trimmed %}{{ username }} ({{ email }}) registered and waits for a plan.{% endblocktranslate %}</p>
+{% translate "Approve or reject" as action %}{% include "email/_button.html" %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% load i18n %}{# A thread of the user: the messages scroll, the reply box stays under them. `prefix` sets the ids apart in the chat widget, which the thread fills. #}
+<section id="{{ prefix }}thread" class="chat{% if not prefix %} chat-page{% else %} h-full{% endif %}">
+  {% if prefix %}{% include "accounts/_link_offer.html" %}{% endif %}
+  <div id="{{ prefix }}thread-scroll" class="chat-scroll" data-chat-scroll>{% include "support/_messages.html" %}</div>
+  {% if not conversation or conversation.is_open %}
+    {% include "support/_composer.html" %}
+  {% else %}
+    <div class="chat-foot">{% include "support/_closed.html" %}</div>
+  {% endif %}
+</section>

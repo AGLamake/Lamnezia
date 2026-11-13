@@ -1,0 +1,16 @@
+{% load i18n ui %}
+{% comment %} Command palette of the admin layout: Ctrl+K (⌘K) or the search button opens it, the results
+   come from dashboard:search as the staff member types; arrows move between them and Enter opens
+   the first one (static/js/ui.js). {% endcomment %}
+<dialog id="palette" class="dialog palette" aria-label="{% translate 'Quick search' %}" data-palette>
+  <div role="search" class="palette-field">
+    {% icon "search" %}
+    <input type="search" name="q" class="palette-input" placeholder="{% translate 'Server, user or key' %}" autocomplete="off" spellcheck="false" autofocus
+           hx-get="{% url 'dashboard:search' %}" hx-trigger="input changed delay:200ms, search" hx-target="#palette-results" hx-sync="this:replace"
+           aria-label="{% translate 'Server, user or key' %}" aria-controls="palette-results" data-palette-input>
+    <button type="button" class="btn btn-ghost btn-icon btn-sm" data-dialog-close aria-label="{% translate 'Close' %}">{% icon "close" %}</button>
+  </div>
+  <div id="palette-results" class="palette-results" aria-live="polite">
+    <p class="palette-hint">{% translate "Type a server, user or key name." %}</p>
+  </div>
+</dialog>

@@ -1,0 +1,25 @@
+{% load i18n %}
+  <div class="space-y-2">
+    {{ form.transport.as_field_group }}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {{ form.port.as_field_group }}
+      {{ form.subnet.as_field_group }}
+    </div>
+    {% include "protocols/_port_hint.html" with server=instance.server %}
+  </div>
+  <fieldset class="space-y-3">
+    <legend class="font-semibold">{% translate "Encryption" %}</legend>
+    {{ form.auto_negotiate.as_field_group }}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {{ form.hash.as_field_group }}
+      {{ form.cipher.as_field_group }}
+    </div>
+    {{ form.tls_auth.as_field_group }}
+  </fieldset>
+  <fieldset class="space-y-3">
+    <legend class="font-semibold">{% translate "Additional settings" %}</legend>
+    {{ form.block_outside_dns.as_field_group }}
+    {{ form.additional_client_config.as_field_group }}
+    {{ form.additional_server_config.as_field_group }}
+  </fieldset>
+  <p class="help-text">{% translate "The container is replaced by a new one with the same certificate authority and client certificates; every OpenVPN client reconnects." %}</p>

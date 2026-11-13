@@ -1,0 +1,26 @@
+{% load i18n %}{# The chat's user as they are now: plan, access, keys and open requests. #}
+<section class="card space-y-3" aria-labelledby="client-title">
+  <h2 id="client-title" class="font-semibold">{% translate "Client" %}</h2>
+  <dl class="facts">
+    <div><dt>{% translate "User" %}</dt><dd>{% if user.is_admin %}<a href="{% url 'dashboard:user' client.user.pk %}" class="link">{{ client.user.username }}</a>{% else %}{{ client.user.username }}{% endif %}</dd></div>
+    <div><dt>{% translate "Status" %}</dt><dd>{{ client.user.get_status_display }}</dd></div>
+    <div><dt>{% translate "Plan" %}</dt><dd>{{ client.plan.name|default:"—" }}</dd></div>
+    {% if client.plan %}<div><dt>{% translate "Access until" %}</dt><dd>{% if client.access_until %}{{ client.access_until|date:"SHORT_DATE_FORMAT" }}{% if client.expired %} <span class="badge badge-danger">{% translate "Ended" %}</span>{% endif %}{% else %}{% translate "No end date" %}{% endif %}</dd></div>{% endif %}
+  </dl>
+  <div class="space-y-1">
+    <h3 class="text-sm font-medium">{% translate "Keys" %}</h3>
+    {% for key in client.keys %}
+      <p class="help-text">{{ key.name }} · {{ key.server }} · {% translate "last seen online" %}: {% if key.seen %}{{ key.seen|date:"SHORT_DATETIME_FORMAT" }}{% else %}—{% endif %}</p>
+    {% empty %}
+      <p class="help-text">{% translate "No keys." %}</p>
+    {% endfor %}
+  </div>
+  <div class="space-y-1">
+    <h3 class="text-sm font-medium">{% translate "Open requests" %}</h3>
+    {% for request in client.open_requests %}
+      <p class="help-text"><a href="{% url 'support:inbox-conversation' request.pk %}" class="link">#{{ request.pk }} {% include "support/_subject.html" with conversation=request %}</a> · {{ request.get_status_display }}</p>
+    {% empty %}
+      <p class="help-text">{% translate "None." %}</p>
+    {% endfor %}
+  </div>
+</section>

@@ -1,0 +1,14 @@
+{% load i18n %}{% autoescape off %}{% blocktranslate with username=user.get_username trimmed %}
+Account {{ username }} was registered with this email.
+{% endblocktranslate %}
+
+{% translate "To confirm the email, open this link:" %}
+{{ link }}
+{% if messengers %}
+{% blocktranslate trimmed %}
+In the profile you can link {{ messengers }}: sign in with one tap and get keys and notifications there.
+{% endblocktranslate %}
+{{ profile }}
+{% endif %}
+{% translate "If it was not you, ignore this letter: the account stays inactive." %}
+{% endautoescape %}

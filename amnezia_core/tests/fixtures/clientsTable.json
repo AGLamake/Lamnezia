@@ -1,0 +1,19 @@
+[
+    {
+        "clientId": "jhkQdvDcgDYudvey3hItwkaQoDy/bLT6QnsyYHwCIlo=",
+        "userData": {
+            "allowed_ips": "10.8.1.1/32",
+            "clientName": "Ноутбук Анны",
+            "creationDate": "Mon Nov 2 13:56:07 2026",
+            "dataReceived": "1.25 MiB",
+            "dataSent": "15.40 MiB",
+            "latestHandshake": "1m 5s ago"
+        }
+    },
+    {
+        "clientId": "Q2+/5jIlpVjLMKDArTagVYSPsI5fcqPNpSem9NMi50s=",
+        "userData": {
+            "clientName": "Client 1"
+        }
+    }
+]

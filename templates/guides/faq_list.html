@@ -1,0 +1,17 @@
+{% extends "guides/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "FAQ" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% translate "Frequently asked questions" %}</h1>
+{% if articles %}
+  <ul class="card divide-y divide-border">
+    {% for article in articles %}
+      <li><a href="{% url 'guides:faq-article' article.slug %}" class="block py-3 font-medium hover:text-link hover:underline">{{ article.title }}</a></li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="help-text">{% translate "No articles yet." %}</p>
+{% endif %}
+<p><a href="{% url 'guides:materials' %}" class="btn btn-secondary">{% translate "Useful materials" %}</a></p>
+{% endblock %}

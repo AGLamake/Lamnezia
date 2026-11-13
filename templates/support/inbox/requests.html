@@ -1,0 +1,41 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{% translate "Requests" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="inbox" %}{% endblock %}
+
+{% block content %}
+{% include "support/inbox/_tabs.html" with tab="requests" %}
+{% include "support/inbox/_filters.html" %}
+{% if object_list %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>{% translate "Request" %}</th><th>{% translate "User" %}</th><th>{% translate "Status" %}</th>
+          <th>{% translate "Assignee" %}</th><th>{% translate "Opened at" %}</th><th>{% translate "Last message" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for conversation in object_list %}
+          <tr>
+            <td class="cell-title">
+              <a href="{% url 'support:inbox-conversation' conversation.pk %}" class="font-medium hover:underline">#{{ conversation.pk }} {% include "support/_subject.html" %}</a>
+              {% if conversation.unread %}<span class="badge badge-danger">{{ conversation.unread }}</span>{% endif %}
+              <div class="help-text">{{ conversation.get_type_display }}{% if conversation.server %} · {{ conversation.server.name }}{% endif %}</div>
+            </td>
+            <td data-label="{% translate 'User' %}">{{ conversation.user.username }}</td>
+            <td data-label="{% translate 'Status' %}"><span class="badge {% if conversation.is_open %}badge-success{% else %}badge-muted{% endif %}">{{ conversation.get_status_display }}</span></td>
+            <td data-label="{% translate 'Assignee' %}">{{ conversation.assignee.username|default:"—" }}</td>
+            <td data-label="{% translate 'Opened at' %}">{{ conversation.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+            <td data-label="{% translate 'Last message' %}">{{ conversation.updated_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "support/inbox/_pages.html" %}
+{% else %}
+  {% translate "No requests found." as empty_title %}
+  {% include "components/empty_state.html" with icon="message" title=empty_title %}
+{% endif %}
+{% endblock %}

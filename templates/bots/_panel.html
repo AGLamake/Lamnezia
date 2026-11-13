@@ -1,0 +1,63 @@
+{% load i18n %}{# The Bots block of Settings: polls itself, the bots service reports every few seconds. #}
+<section id="bots-panel" class="card space-y-4" aria-live="polite"
+         hx-get="{% url 'bots:status' %}" hx-trigger="every {{ bots_poll_seconds }}s" hx-swap="outerHTML">
+  <h2 class="text-lg font-semibold">{% translate "Bots" %}</h2>
+  {% for card in bot_cards %}
+    {% with runtime=card.runtime %}
+    <div class="space-y-2 {% if not forloop.first %}border-t border-border pt-4{% endif %}">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="font-medium">{{ card.messenger.label }}{% if runtime.identity %} · {{ runtime.identity }}{% endif %}</span>
+        <span class="badge {{ card.badge }}">{% if runtime is None %}{% translate "unknown" %}{% elif not card.responding %}{% translate "not responding" %}{% else %}{{ runtime.get_status_display }}{% endif %}</span>
+      </div>
+
+      {% if runtime is None %}
+        <p class="help-text">{% translate "No report from the bots service about this bot yet." %}</p>
+      {% else %}
+        {% if not card.responding %}
+          <p class="help-text">{% if runtime.seen_at %}{% blocktranslate with ago=runtime.seen_at|timesince %}The bots service last reported {{ ago }} ago. Is the bots container running?{% endblocktranslate %}{% else %}{% translate "No report from the bots service about this bot yet." %}{% endif %}</p>
+        {% elif runtime.status == "running" and runtime.started_at %}
+          <p class="help-text">{% blocktranslate with ago=runtime.started_at|timesince %}Running for {{ ago }}.{% endblocktranslate %}</p>
+        {% elif runtime.status == "no_token" %}
+          <p class="help-text">{% translate "Set the bot token above to start the bot." %}</p>
+        {% endif %}
+        {% if runtime.error %}<p class="text-sm text-danger-soft-fg">{{ runtime.error }}</p>{% endif %}
+        <p class="help-text">{% blocktranslate count n=card.linked_users %}{{ n }} linked user{% plural %}{{ n }} linked users{% endblocktranslate %}</p>
+
+        {% if runtime.servers %}
+          <ul class="space-y-1">
+            {% for server in runtime.servers %}
+              <li class="flex items-center justify-between gap-2">
+                <span>{{ server.name }} <span class="help-text">{% blocktranslate count n=server.members %}{{ n }} member{% plural %}{{ n }} members{% endblocktranslate %}</span></span>
+                <form method="post" action="{% url 'bots:leave' runtime.messenger server.id %}"
+                      data-confirm="{% translate "Make the bot leave this server?" %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-ghost btn-sm">{% translate "Leave" %}</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        <div class="flex flex-wrap gap-2">
+          <form method="post" action="{% url 'bots:turn' runtime.messenger %}">
+            {% csrf_token %}
+            {% if runtime.enabled %}
+              <input type="hidden" name="on" value="0">
+              <button type="submit" class="btn btn-secondary btn-sm">{% translate "Turn off" %}</button>
+            {% else %}
+              <input type="hidden" name="on" value="1">
+              <button type="submit" class="btn btn-primary btn-sm">{% translate "Turn on" %}</button>
+            {% endif %}
+          </form>
+          {% if runtime.enabled %}
+            <form method="post" action="{% url 'bots:restart' runtime.messenger %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary btn-sm">{% translate "Restart" %}</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+    {% endwith %}
+  {% endfor %}
+</section>

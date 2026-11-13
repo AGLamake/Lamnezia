@@ -1,0 +1,9 @@
+{% load i18n %}
+<section class="card space-y-3" x-data="copy">
+  <h2 class="text-lg font-semibold">{% translate "vless:// link for other XRay clients" %}</h2>
+  <p class="help-text">{% translate "For v2rayNG, Streisand, Hiddify and other clients that read VLESS links." %}</p>
+  <textarea x-ref="source" readonly rows="3" class="input font-mono text-xs">{{ vless_link }}</textarea>
+  <button type="button" class="btn btn-secondary" @click="copy">
+    <span x-show="!copied">{% translate "Copy" %}</span><span x-show="copied" x-cloak>{% translate "Copied" %}</span>
+  </button>
+</section>

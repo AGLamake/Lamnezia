@@ -1,0 +1,13 @@
+{% extends "layouts/portal.html" %}
+{% load i18n %}
+{# Guides keep the portal tabs; their own sections are second-level tabs on the page. #}
+{% block subnav %}
+{% with page=request.resolver_match.url_name %}
+<nav class="tabs" aria-label="{% translate 'Guides' %}">
+  <a href="{% url 'guides:index' %}" class="tab"{% if page == 'index' or page == 'platform' %} aria-current="page"{% endif %}>{% translate "Devices" %}</a>
+  <a href="{% url 'guides:faq' %}" class="tab"{% if page == 'faq' or page == 'faq-article' %} aria-current="page"{% endif %}>{% translate "FAQ" %}</a>
+  <a href="{% url 'guides:materials' %}" class="tab"{% if page == 'materials' %} aria-current="page"{% endif %}>{% translate "Useful materials" %}</a>
+  {% if user.is_authenticated %}<a href="{% url 'guides:suggest' %}" class="tab"{% if page == 'suggest' %} aria-current="page"{% endif %}>{% translate "Suggest an article" %}</a>{% endif %}
+</nav>
+{% endwith %}
+{% endblock %}

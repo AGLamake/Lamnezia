@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability / Уязвимость
+    url: https://github.com/AGLamake/Lamnezia/security/advisories/new
+    about: Report privately, see SECURITY.md / Сообщите приватно, см. SECURITY.md

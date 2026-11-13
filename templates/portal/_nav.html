@@ -1,0 +1,9 @@
+{% load i18n support billing ui %}
+{# Portal tabs, shown on every portal page by layouts/portal.html. #}
+{% with page=request.resolver_match.url_name app=request.resolver_match.app_name %}
+<a href="{% url 'portal:index' %}" class="nav-link"{% if app == 'portal' and page != 'servers' %} aria-current="page"{% endif %}>{% icon "key" %}<span class="truncate">{% translate "My access" %}</span></a>
+<a href="{% url 'portal:servers' %}" class="nav-link"{% if page == 'servers' %} aria-current="page"{% endif %}>{% icon "server" %}<span class="truncate">{% translate "Servers" %}</span></a>
+{% billing_enabled as billing %}{% if billing %}<a href="{% url 'billing:index' %}" class="nav-link"{% if app == 'billing' %} aria-current="page"{% endif %}>{% icon "wallet" %}<span class="truncate">{% translate "Payment" %}</span></a>{% endif %}
+{% support_unread as unread %}<a href="{% url 'support:index' %}" class="nav-link"{% if app == 'support' %} aria-current="page"{% endif %}>{% icon "message" %}<span class="inline-flex items-center gap-1 truncate">{% translate "Support" %}{% url 'support:unread' as unread_url %}{% include "support/_badge.html" %}</span></a>
+<a href="{% url 'guides:index' %}" class="nav-link"{% if app == 'guides' %} aria-current="page"{% endif %}>{% icon "book" %}<span class="truncate">{% translate "Guides" %}</span></a>
+{% endwith %}

@@ -1,0 +1,14 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Turn off two-factor authentication" %} · Lamnezia{% endblock %}
+{% block heading %}{% translate "Turn off two-factor authentication" %}{% endblock %}
+
+{% block content %}
+<p class="help-text">{% translate "Signing in will ask only for the password. Confirm with a current code from the app." %}</p>
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  {{ form }}
+  <button type="submit" class="btn btn-danger w-full">{% translate "Turn off" %}</button>
+</form>
+<p class="help-text"><a href="{% url 'accounts:profile' %}#two-factor" class="link">{% translate "Back" %}</a></p>
+{% endblock %}

@@ -1,0 +1,3325 @@
+# Russian translation of Lamnezia (templates and apps without their own catalog).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#, python-format
+msgid "%(count)d entry is restored."
+msgid_plural "%(count)d entries are restored."
+msgstr[0] "Возвращена %(count)d запись."
+msgstr[1] "Возвращены %(count)d записи."
+msgstr[2] "Возвращено %(count)d записей."
+
+#, python-format
+msgid "%(count)d session ended."
+msgid_plural "%(count)d sessions ended."
+msgstr[0] "Завершён %(count)d сеанс."
+msgstr[1] "Завершено %(count)d сеанса."
+msgstr[2] "Завершено %(count)d сеансов."
+
+#, python-format
+msgid "%(count)s key imported from the server can only be reissued."
+msgid_plural "%(count)s keys imported from the server can only be reissued."
+msgstr[0] "%(count)s ключ, импортированный с сервера, можно только перевыдать."
+msgstr[1] "%(count)s ключа, импортированных с сервера, можно только перевыдать."
+msgstr[2] "%(count)s ключей, импортированных с сервера, можно только перевыдать."
+
+#, python-format
+msgid "%(count)s key issued by the panel is moved to the new address."
+msgid_plural "%(count)s keys issued by the panel are moved to the new address."
+msgstr[0] "%(count)s ключ, выданный панелью, переносится на новый адрес."
+msgstr[1] "%(count)s ключа, выданных панелью, переносятся на новый адрес."
+msgstr[2] "%(count)s ключей, выданных панелью, переносятся на новый адрес."
+
+#, python-format
+msgid "%(counter)s key in total."
+msgid_plural "%(counter)s keys in total."
+msgstr[0] "Всего %(counter)s ключ."
+msgstr[1] "Всего %(counter)s ключа."
+msgstr[2] "Всего %(counter)s ключей."
+
+#, python-format
+msgid "%(days)s day"
+msgid_plural "%(days)s days"
+msgstr[0] "%(days)s день"
+msgstr[1] "%(days)s дня"
+msgstr[2] "%(days)s дней"
+
+#, python-format
+msgid "%(days)s day left"
+msgid_plural "%(days)s days left"
+msgstr[0] "остался %(days)s день"
+msgstr[1] "осталось %(days)s дня"
+msgstr[2] "осталось %(days)s дней"
+
+#, python-format
+msgid "%(first)s or %(second)s"
+msgstr "%(first)s или %(second)s"
+
+#, python-format
+msgid "%(keys)s key"
+msgid_plural "%(keys)s keys"
+msgstr[0] "%(keys)s ключ"
+msgstr[1] "%(keys)s ключа"
+msgstr[2] "%(keys)s ключей"
+
+#, python-format
+msgid "%(keys)s key was imported from the server."
+msgid_plural "%(keys)s keys were imported from the server."
+msgstr[0] "%(keys)s ключ импортирован с сервера."
+msgstr[1] "%(keys)s ключа импортированы с сервера."
+msgstr[2] "%(keys)s ключей импортированы с сервера."
+
+#, python-format
+msgid "%(left)s backup code is left for signing in without the phone."
+msgid_plural "%(left)s backup codes are left for signing in without the phone."
+msgstr[0] "Для входа без телефона остался %(left)s резервный код."
+msgstr[1] "Для входа без телефона осталось %(left)s резервных кода."
+msgstr[2] "Для входа без телефона осталось %(left)s резервных кодов."
+
+#, python-format
+msgid "%(left)s backup code is left."
+msgid_plural "%(left)s backup codes are left."
+msgstr[0] "Остался %(left)s резервный код."
+msgstr[1] "Осталось %(left)s резервных кода."
+msgstr[2] "Осталось %(left)s резервных кодов."
+
+#, python-format
+msgid "%(left)s key left"
+msgid_plural "%(left)s keys left"
+msgstr[0] "остался %(left)s ключ"
+msgstr[1] "осталось %(left)s ключа"
+msgstr[2] "осталось %(left)s ключей"
+
+#, python-format
+msgid "%(moved)s key moved"
+msgid_plural "%(moved)s keys moved"
+msgstr[0] "переведён %(moved)s ключ"
+msgstr[1] "переведено %(moved)s ключа"
+msgstr[2] "переведено %(moved)s ключей"
+
+#, python-format
+msgid "%(n)s linked user"
+msgid_plural "%(n)s linked users"
+msgstr[0] "%(n)s привязанный пользователь"
+msgstr[1] "%(n)s привязанных пользователя"
+msgstr[2] "%(n)s привязанных пользователей"
+
+#, python-format
+msgid "%(n)s member"
+msgid_plural "%(n)s members"
+msgstr[0] "%(n)s участник"
+msgstr[1] "%(n)s участника"
+msgstr[2] "%(n)s участников"
+
+#, python-format
+msgid "%(name)s by email"
+msgstr "%(name)s на почту"
+
+#, python-format
+msgid "%(removed)s row removed"
+msgid_plural "%(removed)s rows removed"
+msgstr[0] "удалена %(removed)s строка"
+msgstr[1] "удалено %(removed)s строки"
+msgstr[2] "удалено %(removed)s строк"
+
+#, python-format
+msgid "%(reports)s person reported"
+msgid_plural "%(reports)s people reported"
+msgstr[0] "сообщил %(reports)s человек"
+msgstr[1] "сообщили %(reports)s человека"
+msgstr[2] "сообщили %(reports)s человек"
+
+#, python-format
+msgid "%(size)s per %(days)s days"
+msgstr "%(size)s за %(days)s дн."
+
+#, python-format
+msgid "%(speed)s Mbit/s"
+msgstr "%(speed)s Мбит/с"
+
+#, python-format
+msgid "%(used)s of %(limit)s"
+msgstr "%(used)s из %(limit)s"
+
+#, python-format
+msgid "%(user)s can use the panel now."
+msgstr "%(user)s теперь может пользоваться панелью."
+
+#, python-format
+msgid "%(user)s is blocked."
+msgstr "%(user)s заблокирован."
+
+#, python-format
+msgid "%(username)s (%(email)s) registered and waits for a plan."
+msgstr "%(username)s (%(email)s) зарегистрировался и ждёт тариф."
+
+msgid "1. Install the app"
+msgstr "1. Установите приложение"
+
+msgid "2. Get a key"
+msgstr "2. Получите ключ"
+
+msgid "3. Add the key to Amnezia"
+msgstr "3. Добавьте ключ в Amnezia"
+
+#, python-format
+msgid "3proxy.log of the app: %(size)s"
+msgstr "3proxy.log приложения: %(size)s"
+
+msgid "A link"
+msgstr "Ссылка"
+
+msgid "A new subscription link is ready."
+msgstr "Новая ссылка-подписка готова."
+
+msgid "A new user waits for a plan"
+msgstr "Новый пользователь ждёт тарифа"
+
+msgid "A new user waits for approval"
+msgstr "Новый пользователь ждёт подтверждения"
+
+msgid "A plan sets the servers, protocols and limits of its users."
+msgstr "Тариф задаёт серверы, протоколы и лимиты своих пользователей."
+
+msgid "A revoked key stops working at once and cannot be turned back on."
+msgstr "Отозванный ключ сразу перестаёт работать, вернуть его нельзя."
+
+msgid "A small STUN responder on a UDP port. Users' browsers ask it and warn when the server cannot be reached from their network. It keeps no logs."
+msgstr "Маленький STUN-ответчик на UDP-порту. Браузеры пользователей обращаются к нему и предупреждают, если сервер недоступен из их сети. Журналов он не ведёт."
+
+msgid "A user cannot be their own moderator."
+msgstr "Пользователь не может быть своим же модератором."
+
+msgid "Access"
+msgstr "Доступ"
+
+msgid "Access denied"
+msgstr "Доступ запрещён"
+
+msgid "Access ends in 7 days"
+msgstr "Доступ кончается за 7 дней"
+
+msgid "Access until"
+msgstr "Доступ до"
+
+msgid "Account"
+msgstr "Аккаунт"
+
+#, python-format
+msgid "Account %(username)s asked to use this email from now on."
+msgstr "Аккаунт %(username)s попросил использовать эту почту."
+
+#, python-format
+msgid "Account %(username)s was registered with this email."
+msgstr "На этот email зарегистрирован аккаунт %(username)s."
+
+msgid "Account ID"
+msgstr "ID аккаунта"
+
+msgid "Action"
+msgstr "Действие"
+
+msgid "Actions"
+msgstr "Действия"
+
+msgid "Active"
+msgstr "Активен"
+
+msgid "Active keys"
+msgstr "Активных ключей"
+
+msgid "Add a channel"
+msgstr "Добавить канал"
+
+msgid "Add a plan"
+msgstr "Добавить тариф"
+
+msgid "Add a server"
+msgstr "Добавить сервер"
+
+msgid "Add a template"
+msgstr "Добавить шаблон"
+
+msgid "Add and check"
+msgstr "Добавить и проверить"
+
+msgid "Add one and choose the events it should get."
+msgstr "Добавьте канал и выберите, о каких событиях он будет сообщать."
+
+msgid "Add the key to the app"
+msgstr "Добавьте ключ в приложение"
+
+msgid "Add the link to v2rayN, v2RayTun, Hiddify, Streisand or another XRay client as a subscription. The client fetches your active XRay keys by it and updates them itself: a re-issued key or a changed server reaches it without a new link. The Amnezia app does not read subscription links: add keys to it one by one."
+msgstr "Добавьте ссылку в v2rayN, v2RayTun, Hiddify, Streisand или другой клиент XRay как подписку. Клиент забирает по ней ваши действующие ключи XRay и обновляет их сам: перевыпущенный ключ или изменённый сервер приходят без новой ссылки. Приложение Amnezia ссылки-подписки не читает: в него ключи добавляются по одному."
+
+msgid "Added"
+msgstr "Добавлен"
+
+msgid "Additional settings"
+msgstr "Дополнительные настройки"
+
+msgid "Address"
+msgstr "Адрес"
+
+msgid "Address in Tor"
+msgstr "Адрес в Tor"
+
+msgid "Admin layout"
+msgstr "Макет админки"
+
+msgid "Administrator"
+msgstr "Администратор"
+
+msgid "Administrators sign in with a code from a phone app. Set it up to continue."
+msgstr "Администраторы входят с кодом из приложения на телефоне. Настройте его, чтобы продолжить."
+
+msgid "After saving the panel connects to the server and checks it. Nothing is changed on the server."
+msgstr "После сохранения панель подключится к серверу и проверит его. На сервере ничего не меняется."
+
+msgid "After the password, signing in will also ask for a code from an app on your phone."
+msgstr "После пароля вход будет спрашивать ещё код из приложения на телефоне."
+
+msgid "Alerts and toasts"
+msgstr "Уведомления и всплывающие сообщения"
+
+msgid "All downloads"
+msgstr "Все загрузки"
+
+msgid "All good: servers answer, nothing waits for you."
+msgstr "Всё в порядке: серверы отвечают, ничего не ждёт вас."
+
+msgid "All servers"
+msgstr "Все серверы"
+
+msgid "Allow the owner to open it again"
+msgstr "Разрешить владельцу открыть ещё раз"
+
+msgid "Already have an account?"
+msgstr "Уже есть аккаунт?"
+
+#, python-format
+msgid "Amnezia VPN for %(device)s"
+msgstr "Amnezia VPN для %(device)s"
+
+msgid "Amnezia containers"
+msgstr "Контейнеры Amnezia"
+
+msgid "AmneziaWG version, as the Amnezia app determines it from the parameters"
+msgstr "Версия AmneziaWG, как её определяет по параметрам приложение Amnezia"
+
+msgid "Amount"
+msgstr "Сумма"
+
+msgid "An account with this email already exists."
+msgstr "Аккаунт с этим email уже есть."
+
+msgid "An administrator will open access soon. Meanwhile, install the app: keys appear here once access opens."
+msgstr "Администратор скоро откроет доступ. Пока установите приложение: ключи появятся здесь, когда доступ откроется."
+
+#, python-format
+msgid "An empty field keeps port %(default_port)s of the Amnezia app, which is above 9999. Where UDP on high ports is throttled, enter a port up to 9999, for example %(low_port)s."
+msgstr "Пустое поле оставляет порт %(default_port)s приложения Amnezia, он выше 9999. Если провайдер режет UDP на высоких портах, укажите порт до 9999, например %(low_port)s."
+
+msgid "An empty parameter is left out of awg0.conf, as the Amnezia app does it."
+msgstr "Пустой параметр не записывается в awg0.conf — так же, как это делает приложение Amnezia."
+
+msgid "An invite gives its plan right away, in any registration mode."
+msgstr "Приглашение сразу выдаёт свой тариф при любом режиме регистрации."
+
+msgid "Android version"
+msgstr "Версия Android"
+
+msgid "Anyone with the link gets your keys. If it leaked, make a new one: the old link stops working."
+msgstr "Кто знает ссылку, тот получает ваши ключи. Если она утекла, сделайте новую: старая перестанет работать."
+
+msgid "Appearance"
+msgstr "Оформление"
+
+msgid "Apply"
+msgstr "Применить"
+
+msgid "Apply the action to the ticked keys?"
+msgstr "Применить действие к отмеченным ключам?"
+
+msgid "Approve"
+msgstr "Подтвердить"
+
+msgid "Approve or reject"
+msgstr "Подтвердить или отклонить"
+
+msgid "Approve or reject:"
+msgstr "Подтвердить или отклонить:"
+
+msgid "Are you sure?"
+msgstr "Вы уверены?"
+
+msgid "Article suggestions"
+msgstr "Предложения статей"
+
+msgid "Articles and fixes the users sent for the guides: read, accept or decline."
+msgstr "Статьи и правки инструкций от пользователей: прочитайте, примите или отклоните."
+
+msgid "Articles on other sites that we picked and checked. Each one opens on its own site."
+msgstr "Статьи на других сайтах, которые мы отобрали и проверили. Каждая открывается на своём сайте."
+
+msgid "As on the device"
+msgstr "Как на устройстве"
+
+msgid "As the author sent it"
+msgstr "Как прислал автор"
+
+msgid "Ask anything: the answer appears here. If you are not on the site, we let you know by mail."
+msgstr "Спросите что угодно: ответ появится здесь. Если вас не будет на сайте, мы сообщим по почте."
+
+msgid "Ask the administrator to give you one."
+msgstr "Попросите администратора назначить его."
+
+msgid "Assignee"
+msgstr "Исполнитель"
+
+msgid "At the current pace nobody reaches the limit before the period ends."
+msgstr "При текущем темпе никто не исчерпает лимит до конца периода."
+
+#, python-format
+msgid "At this pace the limit runs out on %(when)s, before the period resets."
+msgstr "При таком темпе лимит кончится %(when)s, раньше сброса периода."
+
+msgid "At this pace the traffic lasts until the period resets."
+msgstr "При таком темпе трафика хватит до сброса периода."
+
+msgid "Attach a screenshot"
+msgstr "Прикрепить скриншот"
+
+msgid "Attempts"
+msgstr "Попытки"
+
+msgid "Audit log"
+msgstr "Журнал действий"
+
+msgid "Author"
+msgstr "Автор"
+
+msgid "Availability"
+msgstr "Доступность"
+
+msgid "Availability by day"
+msgstr "Доступность по дням"
+
+#, python-format
+msgid "Availability by day since %(since)s"
+msgstr "Доступность по дням с %(since)s"
+
+msgid "Average CPU"
+msgstr "Процессор, в среднем"
+
+msgid "Average CPU by day"
+msgstr "Средняя загрузка CPU по дням"
+
+#, python-format
+msgid "Average CPU by day since %(since)s"
+msgstr "Средняя загрузка CPU по дням с %(since)s"
+
+msgid "Back"
+msgstr "Назад"
+
+msgid "Back to sign in"
+msgstr "Назад ко входу"
+
+msgid "Background tasks delete old records and fold old traffic by day; the terms are set in the LAMNEZIA_*_DAYS settings."
+msgstr "Фоновые задачи удаляют старые записи и сворачивают старый трафик по дням; сроки задаются настройками LAMNEZIA_*_DAYS."
+
+msgid "Backup"
+msgstr "Резервная копия"
+
+msgid "Backup codes"
+msgstr "Резервные коды"
+
+msgid "Bad request"
+msgstr "Неверный запрос"
+
+msgid "Block this user?"
+msgstr "Заблокировать этого пользователя?"
+
+msgid "Blocked"
+msgstr "Заблокирован"
+
+msgid "Blocking"
+msgstr "Блокировки"
+
+msgid "Body text for descriptions and table cells."
+msgstr "Основной текст описаний и ячеек таблиц."
+
+msgid "Bots"
+msgstr "Боты"
+
+msgid "Breadcrumbs"
+msgstr "Навигационная цепочка"
+
+msgid "Browsers signed in to your account. Only the browser, the system and the sign-in time are kept."
+msgstr "Браузеры, в которых выполнен вход в ваш аккаунт. Хранятся только браузер, система и время входа."
+
+msgid "Buttons"
+msgstr "Кнопки"
+
+msgid "By"
+msgstr "Кем"
+
+msgid "By day"
+msgstr "По дням"
+
+msgid "By key"
+msgstr "По ключам"
+
+msgid "CPU"
+msgstr "Процессор"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Careful"
+msgstr "Осторожно"
+
+msgid "Change"
+msgstr "Изменить"
+
+msgid "Change email"
+msgstr "Сменить почту"
+
+msgid "Changes apply within five minutes."
+msgstr "Изменения применятся в течение пяти минут."
+
+#, python-format
+msgid "Changing the port or the protocol parameters restarts the protocol on the server and breaks the connection of %(keys)s key until its owner imports it into the Amnezia app again."
+msgid_plural "Changing the port or the protocol parameters restarts the protocol on the server and breaks the connection of %(keys)s keys until their owners import them into the Amnezia app again."
+msgstr[0] "Смена порта или параметров протокола перезапускает протокол на сервере и обрывает подключение %(keys)s ключа, пока владелец не импортирует его в приложение Amnezia заново."
+msgstr[1] "Смена порта или параметров протокола перезапускает протокол на сервере и обрывает подключение %(keys)s ключей, пока владельцы не импортируют их в приложение Amnezia заново."
+msgstr[2] "Смена порта или параметров протокола перезапускает протокол на сервере и обрывает подключение %(keys)s ключей, пока владельцы не импортируют их в приложение Amnezia заново."
+
+msgid "Channel"
+msgstr "Канал"
+
+#, python-format
+msgid "Chat with %(user)s"
+msgstr "Чат с %(user)s"
+
+msgid "Chat with support"
+msgstr "Чат с поддержкой"
+
+msgid "Chats"
+msgstr "Чаты"
+
+msgid "Check"
+msgstr "Проверить"
+
+#, python-format
+msgid "Check %(name)s again"
+msgstr "Проверить %(name)s ещё раз"
+
+#, python-format
+msgid "Check %(title)s now"
+msgstr "Проверить %(title)s сейчас"
+
+msgid "Check again"
+msgstr "Проверить снова"
+
+msgid "Check now"
+msgstr "Проверить сейчас"
+
+msgid "Check your email"
+msgstr "Проверьте почту"
+
+msgid "Checked"
+msgstr "Проверен"
+
+#, python-format
+msgid "Checked %(date)s."
+msgstr "Проверено %(date)s."
+
+#, python-format
+msgid "Checked at %(at)s."
+msgstr "Проверено %(at)s."
+
+msgid "Checking the Telegram account…"
+msgstr "Проверяем аккаунт Telegram…"
+
+msgid "Checking the server…"
+msgstr "Проверяем сервер…"
+
+msgid "Choose a plan."
+msgstr "Выберите тариф."
+
+msgid "Choose your device. Download links always point to the latest Amnezia release."
+msgstr "Выберите устройство. Ссылки на загрузку всегда ведут на последний релиз Amnezia."
+
+msgid "Choose your device: the key and the guide take a minute."
+msgstr "Выберите устройство: ключ и инструкция займут минуту."
+
+msgid "Client"
+msgstr "Клиент"
+
+msgid "Clients"
+msgstr "Клиенты"
+
+msgid "Clients and staff: access, plan and keys. Tick users to extend or change many at once."
+msgstr "Клиенты и сотрудники: доступ, тариф и ключи. Отметьте пользователей, чтобы продлить или изменить сразу нескольких."
+
+msgid "Close"
+msgstr "Закрыть"
+
+msgid "Close menu"
+msgstr "Закрыть меню"
+
+msgid "Close the incident"
+msgstr "Закрыть инцидент"
+
+msgid "Closes every request of the incident and tells the users the server works again."
+msgstr "Закрывает все обращения инцидента и сообщает пользователям, что сервер снова работает."
+
+msgid "Code for the bot"
+msgstr "Код для бота"
+
+msgid "Code from the app"
+msgstr "Код из приложения"
+
+msgid "Code from the app or a backup code"
+msgstr "Код из приложения или резервный код"
+
+msgid "Colours and type"
+msgstr "Цвета и шрифт"
+
+msgid "Comment:"
+msgstr "Комментарий:"
+
+msgid "Confirm"
+msgstr "Подтвердить"
+
+msgid "Confirm the email"
+msgstr "Подтвердить email"
+
+msgid "Confirm the new email"
+msgstr "Подтвердите новую почту"
+
+msgid "Confirm your email"
+msgstr "Подтвердите email"
+
+msgid "Connect"
+msgstr "Подключение"
+
+msgid "Container"
+msgstr "Контейнер"
+
+msgid "Continue"
+msgstr "Продолжить"
+
+msgid "Control panel"
+msgstr "Панель управления"
+
+msgid "Copied"
+msgstr "Скопировано"
+
+msgid "Copy"
+msgstr "Скопировать"
+
+#, python-format
+msgid "Copy of the files from %(date)s."
+msgstr "Копия файлов от %(date)s."
+
+msgid "Copy the link and paste it in Amnezia VPN: «+» → «Insert key»."
+msgstr "Скопируйте ссылку и вставьте её в Amnezia VPN: «+» → «Вставить ключ»."
+
+msgid "Create"
+msgstr "Создать"
+
+msgid "Create an account"
+msgstr "Зарегистрироваться"
+
+msgid "Create an invite"
+msgstr "Создать инвайт"
+
+msgid "Create link"
+msgstr "Создать ссылку"
+
+msgid "Created"
+msgstr "Создан"
+
+msgid "Current password"
+msgstr "Текущий пароль"
+
+msgid "DNS goes only into client profiles: changing it alone does not touch the server, but clients get it after importing the key again."
+msgstr "DNS попадает только в профили клиентов: его смена сама по себе не трогает сервер, но клиенты получат его после повторного импорта ключа."
+
+msgid "Danger"
+msgstr "Опасная"
+
+msgid "Dangerous action"
+msgstr "Опасное действие"
+
+msgid "Dark"
+msgstr "Тёмная"
+
+msgid "Data"
+msgstr "Данные"
+
+msgid "Day"
+msgstr "День"
+
+msgid "Days"
+msgstr "Дней"
+
+msgid "Decision"
+msgstr "Решение"
+
+msgid "Decline"
+msgstr "Отклонить"
+
+msgid "Declined"
+msgstr "Отклонено"
+
+msgid "Declined. The author is notified."
+msgstr "Отклонено. Автор уведомлён."
+
+msgid "Delete"
+msgstr "Удалить"
+
+msgid "Delete 3proxy.log? The proxy restarts for a moment; its account stays."
+msgstr "Удалить 3proxy.log? Прокси ненадолго перезапустится, учётная запись сохранится."
+
+msgid "Delete all backups"
+msgstr "Удалить все бэкапы"
+
+msgid "Delete link"
+msgstr "Удалить ссылку"
+
+msgid "Delete the channel"
+msgstr "Удалить канал"
+
+msgid "Delete the key? It stops working at once."
+msgstr "Удалить ключ? Он сразу перестанет работать."
+
+msgid "Delete the link? The clients stop getting your keys by it."
+msgstr "Удалить ссылку? Клиенты перестанут получать по ней ваши ключи."
+
+msgid "Delete the log"
+msgstr "Удалить журнал"
+
+msgid "Delete the plan"
+msgstr "Удалить тариф"
+
+msgid "Delete the subscription link?"
+msgstr "Удалить ссылку-подписку?"
+
+msgid "Delete the template"
+msgstr "Удалить шаблон"
+
+msgid "Delete this channel?"
+msgstr "Удалить этот канал?"
+
+msgid "Delete this invite?"
+msgstr "Удалить этот инвайт?"
+
+msgid "Delete this plan?"
+msgstr "Удалить этот тариф?"
+
+msgid "Delete this template?"
+msgstr "Удалить этот шаблон?"
+
+msgid "Deleted built-in FAQ articles and materials"
+msgstr "Удалённые встроенные статьи FAQ и материалы"
+
+msgid "Delivery log"
+msgstr "Журнал доставки"
+
+msgid "Describe the material in at least one language."
+msgstr "Опишите материал хотя бы на одном языке."
+
+msgid "Details"
+msgstr "Подробнее"
+
+msgid "Development"
+msgstr "Разработка"
+
+msgid "Device"
+msgstr "Устройство"
+
+msgid "Devices"
+msgstr "Устройства"
+
+msgid "Devices of the users on the servers. Tick keys to change many at once."
+msgstr "Устройства пользователей на серверах. Отметьте ключи, чтобы изменить сразу несколько."
+
+msgid "Dialogs"
+msgstr "Диалоги"
+
+msgid "Difference"
+msgstr "Расхождение"
+
+msgid "Differences with servers"
+msgstr "Расхождения с серверами"
+
+msgid "Disable"
+msgstr "Отключить"
+
+msgid "Disabled"
+msgstr "Неактивная"
+
+msgid "Discord OAuth2 redirect:"
+msgstr "Redirect для Discord OAuth2:"
+
+msgid "Discord did not confirm the account. Try again."
+msgstr "Discord не подтвердил аккаунт. Попробуйте ещё раз."
+
+msgid "Disk"
+msgstr "Диск"
+
+msgid "Docker"
+msgstr "Docker"
+
+msgid "Does not work"
+msgstr "Не работает"
+
+msgid "Done"
+msgstr "Готово"
+
+msgid "Download"
+msgstr "Скачать"
+
+msgid "Downloaded"
+msgstr "Скачано"
+
+msgid "Each key changes on its server in a separate operation; the operations list shows their progress."
+msgstr "Каждый ключ меняется на своём сервере отдельной операцией; ход виден в списке операций."
+
+msgid "Edit"
+msgstr "Изменить"
+
+#, python-format
+msgid "Edit %(name)s"
+msgstr "Изменить %(name)s"
+
+msgid "Edit the channel"
+msgstr "Изменить канал"
+
+msgid "Edit the plan"
+msgstr "Изменить тариф"
+
+msgid "Edit the server"
+msgstr "Изменение сервера"
+
+msgid "Edit the template"
+msgstr "Изменить шаблон"
+
+msgid "Edit the text before publishing if needed."
+msgstr "При необходимости поправьте текст перед публикацией."
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Email changed."
+msgstr "Почта изменена."
+
+msgid "Email confirmed."
+msgstr "Email подтверждён."
+
+msgid "Empty state and loading"
+msgstr "Пустое состояние и загрузка"
+
+msgid "Empty: no end date."
+msgstr "Пусто — бессрочно."
+
+msgid "Empty: the language of the site."
+msgstr "Пусто — язык сайта."
+
+msgid "Enable"
+msgstr "Включить"
+
+msgid "Encryption"
+msgstr "Шифрование"
+
+msgid "Ended"
+msgstr "Закончился"
+
+msgid "English"
+msgstr "Английский"
+
+msgid "Enter a name."
+msgstr "Введите название."
+
+msgid "Enter the code that the app shows."
+msgstr "Введите код, который показывает приложение."
+
+msgid "Enter the email of your account and we will send a link that signs you in without a password."
+msgstr "Введите email аккаунта, и мы пришлём ссылку для входа без пароля."
+
+msgid "Enter the email of your account and we will send a link to set a new password."
+msgstr "Укажите email учётной записи, и мы пришлём ссылку для нового пароля."
+
+msgid "Enter the six digits shown in the app."
+msgstr "Введите шесть цифр, которые показывает приложение."
+
+msgid "Error"
+msgstr "Ошибка"
+
+msgid "Error toast"
+msgstr "Сообщение об ошибке"
+
+msgid "Event"
+msgstr "Событие"
+
+msgid "Events"
+msgstr "События"
+
+msgid "Every active key had traffic."
+msgstr "Трафик был у всех активных ключей."
+
+msgid "Every notification the panel sent, where to and whether it arrived."
+msgstr "Все уведомления панели: куда отправлены и дошли ли."
+
+msgid "Every server matches the panel"
+msgstr "Все серверы совпадают с панелью"
+
+msgid "Everything the panel can install is already on this server."
+msgstr "Всё, что панель умеет устанавливать, на этом сервере уже есть."
+
+msgid "Everything the panel does on the servers in the background: progress, log and errors."
+msgstr "Всё, что панель делает на серверах в фоне: ход, журнал и ошибки."
+
+msgid "Export CSV"
+msgstr "Выгрузить CSV"
+
+msgid "FAQ"
+msgstr "FAQ"
+
+msgid "FAQ article"
+msgstr "статья FAQ"
+
+msgid "FAQ articles"
+msgstr "статьи FAQ"
+
+msgid "Failed"
+msgstr "С ошибкой"
+
+msgid "Failed in the last day"
+msgstr "Ошибки за сутки"
+
+msgid "Fill in the title and text in at least one language."
+msgstr "Заполните заголовок и текст хотя бы на одном языке."
+
+msgid "Filters"
+msgstr "Фильтры"
+
+msgid "Filters and details that do not need a page of their own."
+msgstr "Фильтры и подробности, которым не нужна отдельная страница."
+
+msgid "Finish the move and remove the old container"
+msgstr "Завершить перевод и удалить старый контейнер"
+
+msgid "Finish the move? The old container is removed and its keys stop working. Do it once the clients have imported their new keys."
+msgstr "Завершить перевод? Старый контейнер будет удалён, его ключи перестанут работать. Делайте это, когда клиенты импортируют новые ключи."
+
+msgid "First viewed by the owner"
+msgstr "Владелец впервые открыл"
+
+msgid "For a moderator: how many keys their users may hold. Empty: no limit."
+msgstr "Для модератора: сколько ключей может быть у его пользователей. Пусто — без ограничения."
+
+msgid "For a moderator: how many users they may serve. Empty: no limit."
+msgstr "Для модератора: сколько пользователей он может обслуживать. Пусто — без ограничения."
+
+#, python-format
+msgid "For signing in with Telegram send <code>/setdomain</code> to @BotFather and give the panel domain <code class=\"break-all\">%(domain)s</code>, otherwise Telegram answers “Bot domain invalid”."
+msgstr "Для входа через Telegram отправьте <code>/setdomain</code> боту @BotFather и укажите домен панели <code class=\"break-all\">%(domain)s</code>, иначе Telegram ответит «Bot domain invalid»."
+
+msgid "For v2rayNG, Streisand, Hiddify and other clients that read VLESS links."
+msgstr "Для v2rayNG, Streisand, Hiddify и других клиентов, которые понимают ссылки VLESS."
+
+msgid "Forget"
+msgstr "Забыть"
+
+msgid "Forget the SSH fingerprint? Do it only if the server was reinstalled: the next connection trusts whatever key the server shows."
+msgstr "Забыть отпечаток SSH? Делайте это, только если сервер переустанавливали: следующее подключение доверится любому ключу, который покажет сервер."
+
+msgid "Forgot your password?"
+msgstr "Забыли пароль?"
+
+msgid "Form"
+msgstr "Форма"
+
+msgid "Free disk space"
+msgstr "Свободно на диске"
+
+msgid "Frequently asked questions"
+msgstr "Частые вопросы"
+
+msgid "Get a key"
+msgstr "Получить ключ"
+
+msgid "Get new codes"
+msgstr "Получить новые коды"
+
+msgid "Ghost"
+msgstr "Прозрачная"
+
+msgid "GitHub cannot be reached right now. Download the app from the releases page."
+msgstr "GitHub сейчас недоступен. Скачайте приложение со страницы релизов."
+
+msgid "GitHub response"
+msgstr "ответ GitHub"
+
+msgid "Give"
+msgstr "Передать"
+
+msgid "Give the clients new keys on AmneziaWG 3.1? The owners are told to import them; the old keys keep working until you finish the move."
+msgstr "Выдать клиентам новые ключи на AmneziaWG 3.1? Владельцы получат уведомление их импортировать; старые ключи работают, пока вы не завершите перевод."
+
+msgid "Give the link to the article."
+msgstr "Укажите ссылку на статью."
+
+msgid "Give the reason: the author gets it."
+msgstr "Укажите причину: её получит автор."
+
+msgid "Give to a user"
+msgstr "Передать пользователю"
+
+msgid "Give to another user"
+msgstr "Передать другому пользователю"
+
+msgid "Guides"
+msgstr "Инструкции"
+
+msgid "Help text under fields."
+msgstr "Подсказка под полем."
+
+msgid "Hide until tomorrow"
+msgstr "Скрыть до завтра"
+
+#, python-format
+msgid "Hide until tomorrow: %(text)s"
+msgstr "Скрыть до завтра: %(text)s"
+
+msgid "How much traffic your keys used and how long your limit lasts."
+msgstr "Сколько трафика израсходовали ваши ключи и на сколько хватит лимита."
+
+msgid "How the panel works for everyone: registration, mail and the messengers."
+msgstr "Как панель работает для всех: регистрация, почта и мессенджеры."
+
+msgid "How the servers and clients are doing and what needs you now."
+msgstr "Как дела у серверов и клиентов и что требует вашего внимания."
+
+msgid "How to test and read the results"
+msgstr "Как замерить и читать результат"
+
+msgid "I saved the codes"
+msgstr "Коды сохранены"
+
+msgid "IP address"
+msgstr "IP-адрес"
+
+msgid "IPsec server certificate"
+msgstr "Сертификат сервера IPsec"
+
+msgid "If an account has this email, a link to set a new password is on its way. Check the spam folder too."
+msgstr "Если такой email есть у учётной записи, ссылка для нового пароля уже в пути. Загляните и в папку «Спам»."
+
+msgid "If it was not you, ignore this letter."
+msgstr "Если это были не вы, просто проигнорируйте письмо."
+
+msgid "If it was not you, ignore this letter: nothing changes."
+msgstr "Если это были не вы, не обращайте внимания на письмо: ничего не изменится."
+
+msgid "If it was not you, ignore this letter: the account stays inactive."
+msgstr "Если это были не вы, просто не отвечайте на письмо: аккаунт останется неактивным."
+
+msgid "If it was not you, ignore this letter: the password stays the same."
+msgstr "Если это были не вы, не обращайте внимания на письмо: пароль не изменится."
+
+msgid "If the account exists, a sign-in link is on its way."
+msgstr "Если такой аккаунт есть, ссылка для входа уже отправлена."
+
+msgid "If the button does not work, open this link:"
+msgstr "Если кнопка не работает, откройте ссылку:"
+
+msgid "If the phone is lost, sign in with one of these codes instead of the code from the app. Each code works once."
+msgstr "Если телефон потерян, войдите по одному из этих кодов вместо кода из приложения. Каждый код срабатывает один раз."
+
+msgid "Import from the server"
+msgstr "Импорт с сервера"
+
+msgid "Import reads the Amnezia containers and clients of a server set up in the Amnezia app. Nothing is changed on the server."
+msgstr "Импорт читает контейнеры Amnezia и клиентов сервера, настроенного в приложении Amnezia. На сервере ничего не меняется."
+
+msgid "Important dates"
+msgstr "Важные даты"
+
+msgid "In 7 days"
+msgstr "За 7 дней"
+
+msgid "In effect"
+msgstr "Действует"
+
+#, python-format
+msgid "In the <a href=\"%(profile)s\">profile</a> you can link %(messengers)s: sign in with one tap and get keys and notifications there."
+msgstr "В <a href=\"%(profile)s\">профиле</a> можно привязать %(messengers)s: входите в одно нажатие и получайте там ключи и уведомления."
+
+msgid "In the app press «Add» («Let's get started» on the first launch), paste the vpn:// link or scan the QR code, and connect."
+msgstr "В приложении нажмите «Добавить» («Приступим» при первом запуске), вставьте ссылку vpn:// или отсканируйте QR-код и подключитесь."
+
+msgid "In the plan"
+msgstr "В тарифе"
+
+#, python-format
+msgid "In the profile you can link %(messengers)s: sign in with one tap and get keys and notifications there."
+msgstr "В профиле можно привязать %(messengers)s: входите в одно нажатие и получайте там ключи и уведомления."
+
+msgid "In total"
+msgstr "Всего"
+
+#, python-format
+msgid "In total: %(used)s of %(limit)s"
+msgstr "Всего: %(used)s из %(limit)s"
+
+msgid "Inactive keys"
+msgstr "Неактивные ключи"
+
+msgid "Inbox"
+msgstr "Входящие"
+
+msgid "Inbox sections"
+msgstr "Разделы обращений"
+
+msgid "Incidents"
+msgstr "Инциденты"
+
+msgid "Info toast"
+msgstr "Информационное сообщение"
+
+msgid "Infrastructure"
+msgstr "Инфраструктура"
+
+msgid "Install"
+msgstr "Установить"
+
+msgid "Install Amnezia VPN"
+msgstr "Установка Amnezia VPN"
+
+#, python-format
+msgid "Install Amnezia VPN for %(device)s"
+msgstr "Установите Amnezia VPN для %(device)s"
+
+msgid "Install an authenticator app: Google Authenticator, Microsoft Authenticator, Aegis, 2FAS or another one."
+msgstr "Установите приложение-аутентификатор: Google Authenticator, Microsoft Authenticator, Aegis, 2FAS или другое."
+
+msgid "Install the app"
+msgstr "Установите приложение"
+
+msgid "Install the protocol on this server with the saved keys?"
+msgstr "Установить протокол на этот сервер с сохранёнными ключами?"
+
+msgid "Install the service on this server from the saved copy?"
+msgstr "Установить сервис на этот сервер из сохранённой копии?"
+
+msgid "Installation"
+msgstr "Установка"
+
+#, python-format
+msgid "Installed on UDP port %(port)s."
+msgstr "Установлена на UDP-порту %(port)s."
+
+msgid "Integrations"
+msgstr "Интеграции"
+
+msgid "Interface"
+msgstr "Интерфейс"
+
+msgid "Invites"
+msgstr "Инвайты"
+
+msgid "Issue"
+msgstr "Выдать"
+
+msgid "Issue a key"
+msgstr "Выдать ключ"
+
+msgid "Issue the first key: it appears here with its traffic."
+msgstr "Выдайте первый ключ: он появится здесь вместе с трафиком."
+
+#, python-format
+msgid "Issued for %(ip)s"
+msgstr "Выпущен для %(ip)s"
+
+msgid "Its config does not turn the query logs off: they stay as the image has them."
+msgstr "Его конфиг не выключает журнал запросов: он остаётся таким, как в образе."
+
+msgid "Key"
+msgstr "Ключ"
+
+msgid "Key name"
+msgstr "Название ключа"
+
+msgid "Key operations"
+msgstr "Операции с ключами"
+
+msgid "Key operations done"
+msgstr "Операций выполнено"
+
+msgid "Key:"
+msgstr "Ключ:"
+
+#, python-format
+msgid "Key: %(name)s"
+msgstr "Ключ: %(name)s"
+
+msgid "Keys"
+msgstr "Ключи"
+
+msgid "Keys after the address change"
+msgstr "Ключи после смены адреса"
+
+msgid "Keys at most"
+msgstr "Ключей не больше"
+
+msgid "Keys change on the servers in the background; the report shows every operation."
+msgstr "Ключи меняются на серверах в фоне; в отчёте видна каждая операция."
+
+msgid "Kind"
+msgstr "Вид"
+
+msgid "Lamnezia password reset"
+msgstr "Сброс пароля Lamnezia"
+
+msgid "Language"
+msgstr "Язык"
+
+msgid "Large"
+msgstr "Крупная"
+
+#, python-format
+msgid "Last answered %(ago)s ago."
+msgstr "Последний ответ — %(ago)s назад."
+
+msgid "Last cleanup"
+msgstr "Последняя чистка"
+
+msgid "Last message"
+msgstr "Последнее сообщение"
+
+msgid "Later"
+msgstr "Позже"
+
+msgid "Latest operation"
+msgstr "Последняя операция"
+
+msgid "Least free disk"
+msgstr "Минимум свободного места"
+
+#, python-format
+msgid "Least free disk by day since %(since)s"
+msgstr "Минимум свободного диска по дням с %(since)s"
+
+msgid "Leave"
+msgstr "Покинуть"
+
+msgid "Light"
+msgstr "Светлая"
+
+msgid "Limit"
+msgstr "Лимит"
+
+msgid "Limit runs out"
+msgstr "Когда кончится лимит"
+
+msgid "Link"
+msgstr "Ссылка"
+
+#, python-format
+msgid "Link %(names)s"
+msgstr "Привяжите %(names)s"
+
+msgid "Link Discord"
+msgstr "Привязать Discord"
+
+msgid "Link Telegram"
+msgstr "Привязать Telegram"
+
+msgid "Link account"
+msgstr "Привязать"
+
+msgid "Link by account ID"
+msgstr "Привязать по ID аккаунта"
+
+msgid "Link check"
+msgstr "Проверка ссылки"
+
+msgid "Link for the Amnezia app"
+msgstr "Ссылка для приложения Amnezia"
+
+msgid "Link for the user"
+msgstr "Ссылка для пользователя"
+
+msgid "Link to an article"
+msgstr "Ссылка на статью"
+
+msgid "Linked accounts"
+msgstr "Привязанные аккаунты"
+
+msgid "Linked."
+msgstr "Привязано."
+
+msgid "Load"
+msgstr "Нагрузка"
+
+msgid "Loading…"
+msgstr "Загрузка…"
+
+msgid "Log"
+msgstr "Лог"
+
+msgid "Log out"
+msgstr "Выйти"
+
+msgid "Login with"
+msgstr "Вход"
+
+msgid "Lost the key or think someone else has it?"
+msgstr "Потеряли ключ или думаете, что он попал к кому-то ещё?"
+
+msgid "Main menu"
+msgstr "Главное меню"
+
+msgid "Make a new link? The old one stops working, and the clients need the new one."
+msgstr "Сделать новую ссылку? Старая перестанет работать, в клиенты нужно будет добавить новую."
+
+msgid "Make a new secret? The links given out so far stop working."
+msgstr "Выпустить новый секрет? Выданные ранее ссылки перестанут работать."
+
+msgid "Make the bot leave this server?"
+msgstr "Бот покинет этот сервер. Продолжить?"
+
+msgid "Markdown."
+msgstr "Markdown."
+
+msgid "Memory"
+msgstr "Память"
+
+msgid "Messengers"
+msgstr "Мессенджеры"
+
+msgid "Moderator"
+msgstr "Модератор"
+
+msgid "Moderator's zone"
+msgstr "Зона модератора"
+
+msgid "Most phones need arm64-v8a. Your Android version is in Settings → About phone."
+msgstr "Большинству телефонов подходит arm64-v8a. Версия Android — в Настройках → О телефоне."
+
+msgid "Move the clients to AmneziaWG 3.1"
+msgstr "Перевести клиентов на AmneziaWG 3.1"
+
+msgid "Move the server to AmneziaWG 3.1? The container is rebuilt, clients are cut off for a few minutes and then import their keys again. If something fails, the server stays on 2.0."
+msgstr "Перевести сервер на AmneziaWG 3.1? Контейнер пересоберётся, клиенты отключатся на несколько минут, а затем заново импортируют свои ключи. Если что-то пойдёт не так, сервер останется на 2.0."
+
+msgid "Move to AmneziaWG 3.1"
+msgstr "Перевести на AmneziaWG 3.1"
+
+msgid "My access"
+msgstr "Мой доступ"
+
+msgid "My clients"
+msgstr "Мои клиенты"
+
+msgid "My keys"
+msgstr "Мои ключи"
+
+msgid "My own text"
+msgstr "Свой текст"
+
+msgid "My payments"
+msgstr "Мои платежи"
+
+msgid "My suggestions"
+msgstr "Мои предложения"
+
+msgid "Name in the messenger"
+msgstr "Имя в мессенджере"
+
+msgid "Needs attention"
+msgstr "Требует внимания"
+
+msgid "New codes replace all the previous ones. To get them, enter the code from the app."
+msgstr "Новые коды заменяют все прежние. Чтобы получить их, введите код из приложения."
+
+msgid "New email"
+msgstr "Новая почта"
+
+msgid "New link"
+msgstr "Новая ссылка"
+
+msgid "New password"
+msgstr "Новый пароль"
+
+msgid "New password saved. Sign in with it."
+msgstr "Новый пароль сохранён. Войдите с ним."
+
+msgid "New secret"
+msgstr "Новый секрет"
+
+msgid "New users come here in the open registration with approval by an administrator."
+msgstr "Сюда попадают новые пользователи при открытой регистрации с подтверждением администратором."
+
+msgid "New users waiting for approval and the invite links you gave out."
+msgstr "Новые пользователи, ждущие подтверждения, и выданные вами ссылки-приглашения."
+
+msgid "Next page"
+msgstr "Следующая страница"
+
+msgid "No account of the panel is linked to this one. Sign in with a password."
+msgstr "К этому аккаунту не привязан ни один пользователь панели. Войдите по паролю."
+
+msgid "No account yet?"
+msgstr "Ещё нет аккаунта?"
+
+msgid "No articles yet."
+msgstr "Статей пока нет."
+
+msgid "No channels yet."
+msgstr "Каналов пока нет."
+
+msgid "No chats found."
+msgstr "Чатов не найдено."
+
+msgid "No connection"
+msgstr "Нет связи"
+
+msgid "No copy of the files yet: the panel saves it every hour while the container runs."
+msgstr "Копии файлов пока нет: панель сохраняет её каждый час, пока работает контейнер."
+
+msgid "No copy of the files yet: the restore uses the keys and settings in the panel."
+msgstr "Копии файлов ещё нет: восстановление возьмёт ключи и настройки из панели."
+
+msgid "No differences"
+msgstr "Расхождений нет"
+
+msgid "No end date"
+msgstr "Без срока"
+
+msgid "No events found."
+msgstr "Событий не найдено."
+
+msgid "No incidents yet."
+msgstr "Инцидентов пока нет."
+
+msgid "No invites yet."
+msgstr "Приглашений пока нет."
+
+msgid "No keys found."
+msgstr "Ключей не найдено."
+
+msgid "No keys yet"
+msgstr "Ключей пока нет"
+
+msgid "No keys yet."
+msgstr "Ключей пока нет."
+
+msgid "No keys."
+msgstr "Ключей нет."
+
+msgid "No materials yet."
+msgstr "Материалов пока нет."
+
+msgid "No operations found."
+msgstr "Операции не найдены."
+
+msgid "No operations yet."
+msgstr "Операций пока нет."
+
+msgid "No orders found."
+msgstr "Заказов не найдено."
+
+msgid "No owner"
+msgstr "Без владельца"
+
+msgid "No plan: the user cannot get keys."
+msgstr "Нет тарифа: пользователь не может получать ключи."
+
+msgid "No plans are on sale yet."
+msgstr "Тарифов в продаже пока нет."
+
+msgid "No plans yet."
+msgstr "Тарифов пока нет."
+
+msgid "No readings yet: the panel reads the server load in the background."
+msgstr "Данных пока нет: панель снимает нагрузку сервера в фоне."
+
+msgid "No report from the bots service about this bot yet."
+msgstr "Сервис ботов ещё не присылал отчёт об этом боте."
+
+msgid "No requests found."
+msgstr "Обращений не найдено."
+
+msgid "No server can issue keys yet. Add a server and install a protocol on it."
+msgstr "Пока ни один сервер не может выдавать ключи. Добавьте сервер и установите на него протокол."
+
+msgid "No server is available to you yet. Ask the administrator."
+msgstr "Пока вам не доступен ни один сервер. Обратитесь к администратору."
+
+msgid "No servers are available to you yet."
+msgstr "Вам пока не доступен ни один сервер."
+
+msgid "No servers found."
+msgstr "Серверы не найдены."
+
+msgid "No servers with protocols yet. Import a server first."
+msgstr "Серверов с протоколами пока нет. Сначала импортируйте сервер."
+
+msgid "No servers yet."
+msgstr "Серверов пока нет."
+
+msgid "No servers yet. Add a VPS you can log in to over SSH as root or a user with sudo."
+msgstr "Серверов пока нет. Добавьте VPS, на который можно войти по SSH как root или пользователь с sudo."
+
+msgid "No suggestions are waiting."
+msgstr "Нет предложений, ждущих проверки."
+
+msgid "No templates yet."
+msgstr "Шаблонов пока нет."
+
+msgid "No traffic in this period."
+msgstr "За этот период трафика не было."
+
+msgid "No traffic limit"
+msgstr "Без ограничения трафика"
+
+msgid "No users found."
+msgstr "Пользователи не найдены."
+
+msgid "Nobody is online."
+msgstr "Сейчас никого нет в сети."
+
+msgid "Nobody is waiting."
+msgstr "Никто не ждёт."
+
+msgid "None."
+msgstr "Нет."
+
+msgid "Normal"
+msgstr "Обычная"
+
+msgid "Not answering"
+msgstr "Не отвечают"
+
+msgid "Not checked yet."
+msgstr "Ещё не проверялось."
+
+msgid "Not linked"
+msgstr "Не привязан"
+
+msgid "Not now"
+msgstr "Не сейчас"
+
+msgid "Nothing else waits for you today."
+msgstr "На сегодня больше ничего не ждёт вас."
+
+#, python-format
+msgid "Nothing found for «%(text)s»."
+msgstr "По запросу «%(text)s» ничего не найдено."
+
+msgid "Nothing was sent yet."
+msgstr "Пока ничего не отправлялось."
+
+msgid "Notifications"
+msgstr "Уведомления"
+
+msgid "Numbers and trends"
+msgstr "Числа и динамика"
+
+msgid "Object"
+msgstr "Объект"
+
+msgid "On some VPS upload through the VPN drops several times: the network interface of the AmneziaWG or WireGuard container glues TCP packets together (TSO/GSO) and the glued packets are lost on the way. The workaround turns TSO/GSO off on that interface and a systemd timer on the server keeps it off after container restarts and reboots. Configs and keys do not change."
+msgstr "На некоторых VPS отдача через VPN падает в разы: сетевой интерфейс контейнера AmneziaWG или WireGuard склеивает TCP-пакеты (TSO/GSO), и склеенные пакеты теряются по дороге. Обход выключает TSO/GSO на этом интерфейсе, а таймер systemd на сервере держит их выключенными после перезапуска контейнеров и сервера. Конфиги и ключи не меняются."
+
+msgid "On the client, for every port: download over UDP, upload over UDP, then download over TCP."
+msgstr "На клиенте для каждого порта: скачивание по UDP, отдача по UDP, затем скачивание по TCP."
+
+msgid "One link for v2rayN, v2RayTun, Hiddify and other XRay clients: they update your XRay keys themselves."
+msgstr "Одна ссылка для v2rayN, v2RayTun, Hiddify и других клиентов XRay: они сами обновляют ваши ключи XRay."
+
+msgid "Online now"
+msgstr "Сейчас онлайн"
+
+msgid "Only the staff see it."
+msgstr "Его видит только персонал."
+
+msgid "Open"
+msgstr "Открыть"
+
+msgid "Open Telegram"
+msgstr "Открыть Telegram"
+
+msgid "Open Useful materials"
+msgstr "Открыть полезные материалы"
+
+msgid "Open a failed operation to see what went wrong and run it again."
+msgstr "Откройте операцию с ошибкой, чтобы увидеть причину и запустить её снова."
+
+msgid "Open in App Store"
+msgstr "Открыть в App Store"
+
+msgid "Open in Google Play"
+msgstr "Открыть в Google Play"
+
+msgid "Open menu"
+msgstr "Открыть меню"
+
+msgid "Open modal"
+msgstr "Открыть окно"
+
+msgid "Open requests"
+msgstr "Открытые обращения"
+
+msgid "Open side panel"
+msgstr "Открыть боковую панель"
+
+msgid "Open the article"
+msgstr "Открыть статью"
+
+msgid "Open the authenticator app on your phone and enter the code for Lamnezia."
+msgstr "Откройте приложение-аутентификатор на телефоне и введите код для Lamnezia."
+
+msgid "Open the bot and press Start. The link works once."
+msgstr "Откройте бота и нажмите «Старт». Ссылка работает один раз."
+
+msgid "Open the link while signed in to the account. Until then the old email stays."
+msgstr "Откройте ссылку, войдя в аккаунт. До тех пор остаётся старая почта."
+
+msgid "Open the panel, choose a server and your device. You get a vpn:// link and a QR code."
+msgstr "Откройте панель, выберите сервер и устройство. Вы получите ссылку vpn:// и QR-код."
+
+msgid "Open the retry"
+msgstr "Открыть повтор"
+
+msgid "Open the server"
+msgstr "Открыть сервер"
+
+msgid "Opened at"
+msgstr "Открыто"
+
+msgid "Operating system"
+msgstr "Операционная система"
+
+msgid "Operation"
+msgstr "Операция"
+
+msgid "Operations"
+msgstr "Операции"
+
+msgid "Or scan the QR code"
+msgstr "Или отсканируйте QR-код"
+
+msgid "Orders"
+msgstr "Заказы"
+
+msgid "Other sessions are signed out when the password changes."
+msgstr "При смене пароля остальные сеансы завершаются."
+
+msgid "Our description"
+msgstr "Наше описание"
+
+msgid "Outcome"
+msgstr "Итог"
+
+msgid "Overview"
+msgstr "Обзор"
+
+msgid "Owner"
+msgstr "Владелец"
+
+#, python-format
+msgid "Page %(number)s of %(total)s"
+msgstr "Страница %(number)s из %(total)s"
+
+msgid "Page blocks"
+msgstr "Блоки страниц"
+
+msgid "Page not found"
+msgstr "Страница не найдена"
+
+msgid "Page title"
+msgstr "Заголовок страницы"
+
+msgid "Page width"
+msgstr "Ширина страницы"
+
+msgid "Pages"
+msgstr "Страницы"
+
+msgid "Panel"
+msgstr "Панель"
+
+msgid "Password"
+msgstr "Пароль"
+
+msgid "Password changed. Other sessions are signed out."
+msgstr "Пароль изменён. Остальные сеансы завершены."
+
+msgid "Password reset"
+msgstr "Сброс пароля"
+
+msgid "Paying for your current plan moves the end of access later. Another plan replaces the current one and its term starts today."
+msgstr "Оплата текущего тарифа отодвигает конец доступа. Другой тариф заменяет текущий, и его срок начинается сегодня."
+
+msgid "Payment"
+msgstr "Оплата"
+
+msgid "Payment method"
+msgstr "Способ оплаты"
+
+msgid "Payment opens once an administrator approves your account."
+msgstr "Оплата откроется, когда администратор одобрит вашу учётную запись."
+
+msgid "Payments of the plans: who paid, how much and how."
+msgstr "Оплаты тарифов: кто, сколько и как заплатил."
+
+msgid "Peak memory"
+msgstr "Память, пик"
+
+#, python-format
+msgid "Peak memory by day since %(since)s"
+msgstr "Пик памяти по дням с %(since)s"
+
+msgid "Period"
+msgstr "Период"
+
+msgid "Period, days"
+msgstr "Период, дней"
+
+msgid "Personal"
+msgstr "Личные"
+
+msgid "Personal info"
+msgstr "Личные данные"
+
+msgid "Personal limits"
+msgstr "Личные лимиты"
+
+msgid "Plan"
+msgstr "Тариф"
+
+msgid "Plan and limits"
+msgstr "Тариф и лимиты"
+
+#, python-format
+msgid "Plan and limits of %(user)s"
+msgstr "Тариф и лимиты: %(user)s"
+
+msgid "Plan of a user"
+msgstr "Тариф пользователя"
+
+msgid "Plans"
+msgstr "Тарифы"
+
+msgid "Port"
+msgstr "Порт"
+
+msgid "Portal layout"
+msgstr "Макет портала"
+
+msgid "Preview"
+msgstr "Предпросмотр"
+
+msgid "Previous page"
+msgstr "Предыдущая страница"
+
+msgid "Primary"
+msgstr "Основная"
+
+msgid "Processor"
+msgstr "Процессор"
+
+msgid "Profile"
+msgstr "Профиль"
+
+msgid "Profile sections"
+msgstr "Разделы профиля"
+
+msgid "Protocol or service"
+msgstr "Протокол или сервис"
+
+msgid "Protocol settings"
+msgstr "Параметры протокола"
+
+msgid "Protocols and services"
+msgstr "Протоколы и сервисы"
+
+msgid "Public key"
+msgstr "Публичный ключ"
+
+msgid "Publish"
+msgstr "Опубликовать"
+
+msgid "Publish as"
+msgstr "Опубликовать как"
+
+msgid "Publish as a useful material"
+msgstr "Опубликовать как полезный материал"
+
+msgid "Publish as an FAQ article"
+msgstr "Опубликовать как статью FAQ"
+
+msgid "Published"
+msgstr "Опубликовано"
+
+msgid "Published. The author is notified."
+msgstr "Опубликовано. Автор уведомлён."
+
+msgid "QR code"
+msgstr "QR-код"
+
+msgid "QR code for the authenticator app"
+msgstr "QR-код для приложения-аутентификатора"
+
+msgid "Quick search"
+msgstr "Быстрый поиск"
+
+msgid "Re-issue"
+msgstr "Перевыпустить"
+
+msgid "Re-issue the key? The old one stops working at once."
+msgstr "Перевыпустить ключ? Старый сразу перестанет работать."
+
+msgid "Re-issuing gives you a new key; the old one stops working at once."
+msgstr "Перевыпуск даст новый ключ, а старый сразу перестанет работать."
+
+msgid "Reachability probe"
+msgstr "Проверка доступности"
+
+msgid "Ready answers the staff put into a reply with one click."
+msgstr "Готовые ответы, которые сотрудники вставляют в ответ одним щелчком."
+
+msgid "Reason"
+msgstr "Причина"
+
+msgid "Reason:"
+msgstr "Причина:"
+
+msgid "Rebuild"
+msgstr "Пересобрать"
+
+msgid "Rebuild AmneziaDNS? Clients lose DNS for a moment; if the new container does not start, the old one comes back."
+msgstr "Пересобрать AmneziaDNS? Клиенты ненадолго останутся без DNS; если новый контейнер не запустится, вернётся старый."
+
+msgid "Recent decisions"
+msgstr "Последние решения"
+
+msgid "Refund"
+msgstr "Вернуть деньги"
+
+msgid "Registered"
+msgstr "Зарегистрирован"
+
+msgid "Registration"
+msgstr "Регистрация"
+
+msgid "Registration failed."
+msgstr "Не удалось зарегистрироваться."
+
+msgid "Registration is by invitation only."
+msgstr "Регистрация только по приглашению."
+
+msgid "Registrations"
+msgstr "Регистрации"
+
+msgid "Reinstall"
+msgstr "Переустановить"
+
+msgid "Reissue"
+msgstr "Перевыпустить"
+
+msgid "Reissue the IPsec server certificate for the server IP? IPsec restarts, and the clients import their keys again."
+msgstr "Перевыпустить сертификат сервера IPsec для IP сервера? IPsec перезапустится, а клиентам нужно заново импортировать ключи."
+
+msgid "Reissue the keys imported from the server"
+msgstr "Перевыпустить ключи, импортированные с сервера"
+
+msgid "Reject"
+msgstr "Отклонить"
+
+msgid "Release notes"
+msgstr "Что нового"
+
+msgid "Remove"
+msgstr "Удалить"
+
+msgid "Remove the container"
+msgstr "Удалить контейнер"
+
+msgid "Remove the service? What it keeps on the server is deleted with the container."
+msgstr "Удалить сервис? Всё, что он хранит на сервере, удалится вместе с контейнером."
+
+msgid "Rename"
+msgstr "Переименовать"
+
+msgid "Reply templates"
+msgstr "Шаблоны ответов"
+
+msgid "Report a problem"
+msgstr "Сообщить о проблеме"
+
+msgid "Reports of the server"
+msgstr "Обращения по серверу"
+
+msgid "Reports that a server does not work, grouped by server. While an incident is open, users see the server as having problems."
+msgstr "Сообщения о том, что сервер не работает, сгруппированные по серверу. Пока инцидент открыт, пользователи видят, что у сервера проблемы."
+
+msgid "Request"
+msgstr "Обращение"
+
+#, python-format
+msgid "Request #%(number)s: %(event)s"
+msgstr "Обращение №%(number)s: %(event)s"
+
+msgid "Requests"
+msgstr "Обращения"
+
+msgid "Requests and chats of the users; the unanswered ones come first."
+msgstr "Обращения и чаты пользователей; неотвеченные — первыми."
+
+msgid "Reset"
+msgstr "Сбросить"
+
+msgid "Restart"
+msgstr "Перезапустить"
+
+msgid "Restart the container? Clients reconnect in a few seconds."
+msgstr "Перезапустить контейнер? Клиенты переподключатся через несколько секунд."
+
+msgid "Restore on this server"
+msgstr "Восстановить на этом сервере"
+
+msgid "Restore the selected entries"
+msgstr "Вернуть выбранные записи"
+
+msgid "Retry"
+msgstr "Повторить"
+
+msgid "Return the money of this order? The plan of the user stays as it is."
+msgstr "Вернуть деньги за этот заказ? Тариф пользователя останется как есть."
+
+msgid "Reviewed"
+msgstr "Проверено"
+
+msgid "Reviewed by"
+msgstr "Проверил"
+
+msgid "Revoke"
+msgstr "Отозвать"
+
+msgid "Revoke key?"
+msgstr "Отозвать ключ?"
+
+msgid "Revoke this key? It stops working at once."
+msgstr "Отозвать ключ? Он сразу перестанет работать."
+
+msgid "Routing"
+msgstr "Маршруты"
+
+msgid "Rows"
+msgstr "Строк"
+
+msgid "Rows per page"
+msgstr "Строк на странице"
+
+msgid "Running"
+msgstr "Выполняются"
+
+#, python-format
+msgid "Running for %(ago)s."
+msgstr "Работает %(ago)s."
+
+msgid "Russian"
+msgstr "Русский"
+
+msgid "SSH connection failed."
+msgstr "Не удалось подключиться по SSH."
+
+msgid "SSH fingerprint"
+msgstr "Отпечаток SSH"
+
+msgid "Save"
+msgstr "Сохранить"
+
+msgid "Save the password"
+msgstr "Сохранить пароль"
+
+msgid "Saved."
+msgstr "Сохранено."
+
+msgid "Saving…"
+msgstr "Сохраняем…"
+
+msgid "Scan all codes one after another in the Amnezia app."
+msgstr "Отсканируйте все коды по очереди в приложении Amnezia."
+
+msgid "Scan the QR code with the app or enter the key by hand."
+msgstr "Отсканируйте QR-код в приложении или введите ключ вручную."
+
+msgid "Screenshot"
+msgstr "Скриншот"
+
+msgid "Secondary"
+msgstr "Вторичная"
+
+msgid "Section title"
+msgstr "Заголовок раздела"
+
+msgid "Sections"
+msgstr "Разделы"
+
+msgid "Security"
+msgstr "Безопасность"
+
+msgid "Send"
+msgstr "Отправить"
+
+msgid "Send a link to a good article or write your own text in Markdown. The staff read it, may edit it and publish it in Useful materials or the FAQ."
+msgstr "Пришлите ссылку на хорошую статью или напишите свой текст в Markdown. Персонал прочитает его, при необходимости поправит и опубликует в полезных материалах или FAQ."
+
+msgid "Send a test"
+msgstr "Отправить тест"
+
+msgid "Send the link"
+msgstr "Отправить ссылку"
+
+msgid "Send this command to the panel bot in Discord. The code works once."
+msgstr "Отправьте эту команду боту панели в Discord. Код работает один раз."
+
+msgid "Send this command to the user: they send it to the panel bot in Discord. It works once."
+msgstr "Отправьте команду пользователю: он отправляет её боту панели в Discord. Код срабатывает один раз."
+
+msgid "Send this link to the user: they open it and press Start in the bot. It works once."
+msgstr "Отправьте ссылку пользователю: он открывает её и нажимает «Старт» в боте. Ссылка срабатывает один раз."
+
+msgid "Sent"
+msgstr "Отправлено"
+
+msgid "Server"
+msgstr "Сервер"
+
+#, python-format
+msgid "Server %(server)s cannot be reached from your network. Try another server or protocol, or write to support."
+msgstr "Сервер %(server)s недоступен из вашей сети. Попробуйте другой сервер или протокол или напишите в поддержку."
+
+#, python-format
+msgid "Server %(server)s does not work"
+msgstr "Не работает сервер %(server)s"
+
+msgid "Server added."
+msgstr "Сервер добавлен."
+
+msgid "Server check"
+msgstr "Проверка сервера"
+
+msgid "Server error"
+msgstr "Ошибка сервера"
+
+msgid "Server, user or key"
+msgstr "Сервер, пользователь или ключ"
+
+#, python-format
+msgid "Server: %(title)s"
+msgstr "Сервер: %(title)s"
+
+msgid "Servers"
+msgstr "Серверы"
+
+msgid "Servers online"
+msgstr "Серверов онлайн"
+
+msgid "Service settings"
+msgstr "Параметры сервиса"
+
+msgid "Sessions"
+msgstr "Сеансы"
+
+msgid "Set a new password"
+msgstr "Задать новый пароль"
+
+msgid "Set the bot token above to start the bot."
+msgstr "Задайте токен бота выше, чтобы запустить его."
+
+msgid "Settings"
+msgstr "Настройки"
+
+msgid "Share"
+msgstr "Поделиться"
+
+msgid "Show"
+msgstr "Показать"
+
+#, python-format
+msgid "Show %(counter)s hidden until tomorrow"
+msgid_plural "Show %(counter)s hidden until tomorrow"
+msgstr[0] "Показать %(counter)s скрытое до завтра"
+msgstr[1] "Показать %(counter)s скрытых до завтра"
+msgstr[2] "Показать %(counter)s скрытых до завтра"
+
+msgid "Show all keys"
+msgstr "Показать все ключи"
+
+msgid "Show everyone"
+msgstr "Показать всех"
+
+msgid "Show key"
+msgstr "Показать ключ"
+
+msgid "Show the key"
+msgstr "Показать ключ"
+
+msgid "Show the key and add it to the app: copy the vpn:// link or scan the QR code."
+msgstr "Покажите ключ и добавьте его в приложение: скопируйте ссылку vpn:// или отсканируйте QR-код."
+
+msgid "Show the links for Telegram"
+msgstr "Показать ссылки для Telegram"
+
+msgid "Side panel"
+msgstr "Боковая панель"
+
+msgid "Sign in"
+msgstr "Вход"
+
+#, python-format
+msgid "Sign in as %(username)s?"
+msgstr "Войти как %(username)s?"
+
+msgid "Sign in by email"
+msgstr "Вход по email"
+
+msgid "Sign in by email link"
+msgstr "Войти по ссылке на email"
+
+msgid "Sign in with Discord"
+msgstr "Войти через Discord"
+
+msgid "Sign in with Telegram"
+msgstr "Войти через Telegram"
+
+#, python-format
+msgid "Sign in with one tap, get keys and notifications (access ending, the limit, answers of support) and manage keys right in %(names)s."
+msgstr "Входите в одно нажатие, получайте ключи и уведомления (конец доступа, лимит, ответы поддержки) и управляйте ключами прямо в %(names)s."
+
+msgid "Sign in without a password"
+msgstr "Вход без пароля"
+
+msgid "Sign out"
+msgstr "Выйти"
+
+msgid "Sign out everywhere else"
+msgstr "Выйти на всех остальных"
+
+msgid "Sign-in link"
+msgstr "Ссылка для входа"
+
+msgid "Signing in will ask only for the password. Confirm with a current code from the app."
+msgstr "Вход будет спрашивать только пароль. Подтвердите текущим кодом из приложения."
+
+msgid "Since the plan was assigned"
+msgstr "С назначения тарифа"
+
+msgid "Size"
+msgstr "Объём"
+
+msgid "Skip to content"
+msgstr "К содержимому"
+
+msgid "Skipped"
+msgstr "Пропущено"
+
+msgid "Small"
+msgstr "Маленькая"
+
+msgid "Some providers block or throttle UDP on ports above 9999, so the panel suggests a port up to 10000."
+msgstr "Часть провайдеров блокирует или режет UDP на портах выше 9999, поэтому панель предлагает порт до 10000."
+
+msgid "Some providers block or throttle UDP on ports above 9999. The panel starts a temporary iperf3 server on several ports; run the iperf3 client on a device in the network of that provider, without the VPN, and compare the ports."
+msgstr "Часть провайдеров блокирует или режет UDP на портах выше 9999. Панель запускает временный сервер iperf3 на нескольких портах; запустите клиент iperf3 на устройстве в сети этого провайдера, без VPN, и сравните порты."
+
+#, python-format
+msgid "Someone asked to reset the password of account %(username)s on %(domain)s."
+msgstr "Кто-то запросил сброс пароля учётной записи %(username)s на %(domain)s."
+
+#, python-format
+msgid "Someone asked to sign in to account %(username)s without a password."
+msgstr "Кто-то запросил вход в аккаунт %(username)s без пароля."
+
+#, python-format
+msgid "Something does not work? See the <a href=\"%(faq_url)s\" class=\"underline\">FAQ</a>."
+msgstr "Что-то не работает? Загляните в <a href=\"%(faq_url)s\" class=\"underline\">FAQ</a>."
+
+msgid "Something went wrong"
+msgstr "Что-то пошло не так"
+
+msgid "Speed"
+msgstr "Скорость"
+
+msgid "Speed test by port"
+msgstr "Замер скорости по портам"
+
+msgid "Start"
+msgstr "Запустить"
+
+msgid "Start again"
+msgstr "Запустить заново"
+
+msgid "Started"
+msgstr "Запущена"
+
+msgid "Statistics"
+msgstr "Статистика"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Status badges"
+msgstr "Бейджи статусов"
+
+#, python-format
+msgid "Step «%(step)s» failed."
+msgstr "Ошибка на шаге «%(step)s»."
+
+msgid "Stop"
+msgstr "Остановить"
+
+msgid "Stop now"
+msgstr "Остановить сейчас"
+
+msgid "Stop the container? Clients cannot connect until it is restarted."
+msgstr "Остановить контейнер? Клиенты не смогут подключиться, пока его не перезапустят."
+
+msgid "Storage"
+msgstr "Хранение"
+
+msgid "Submit empty to see validation errors."
+msgstr "Отправьте пустой, чтобы увидеть ошибки проверки."
+
+msgid "Subscription link"
+msgstr "Ссылка-подписка"
+
+msgid "Success toast"
+msgstr "Сообщение об успехе"
+
+msgid "Suggest an article"
+msgstr "Предложить статью"
+
+#, python-format
+msgid "Suggested by %(name)s"
+msgstr "Предложил(а): %(name)s"
+
+msgid "Suggestions are not accepted now."
+msgstr "Сейчас предложения не принимаются."
+
+msgid "Support"
+msgstr "Поддержка"
+
+msgid "Support:"
+msgstr "Поддержка:"
+
+msgid "Switch the theme and narrow the window: every block must stay readable from 360 px."
+msgstr "Переключите тему и сузьте окно: каждый блок должен читаться от 360 px."
+
+msgid "System"
+msgstr "Система"
+
+msgid "Table"
+msgstr "Таблица"
+
+msgid "Telegram and Discord: the bots and your notifications."
+msgstr "Telegram и Discord: боты и ваши уведомления."
+
+msgid "Telegram did not confirm the account. Try again."
+msgstr "Telegram не подтвердил аккаунт. Попробуйте ещё раз."
+
+msgid "Template"
+msgstr "Шаблон"
+
+msgid "Thank you! The staff will review your suggestion."
+msgstr "Спасибо! Персонал рассмотрит ваше предложение."
+
+msgid "The Amnezia app calls AmneziaWG 2.0 outdated and offers to reinstall the container, which removes all its clients. Move it to 3.1 here instead: the keys stay."
+msgstr "Приложение Amnezia называет AmneziaWG 2.0 устаревшим и предлагает переустановить контейнер, а это удаляет всех его клиентов. Вместо этого переведите его на 3.1 здесь: ключи сохранятся."
+
+msgid "The Amnezia app logs every host users visit through the proxy."
+msgstr "Приложение Amnezia записывает каждый адрес, который пользователи открывают через прокси."
+
+msgid "The Amnezia app no longer develops legacy AmneziaWG. Move its clients to AmneziaWG 3.1: every client gets a new key on AmneziaWG 2.0 and is told to import it, while this container keeps working."
+msgstr "Приложение Amnezia больше не развивает старый AmneziaWG. Переведите его клиентов на AmneziaWG 3.1: каждый получит новый ключ на AmneziaWG 2.0 и уведомление его импортировать, а этот контейнер пока продолжит работать."
+
+#, python-format
+msgid "The IPsec server certificate is issued for %(ip)s, but the server address is %(host)s: IPsec clients are refused. Reissue the certificate below."
+msgstr "Сертификат сервера IPsec выпущен для %(ip)s, а адрес сервера — %(host)s: клиенты IPsec не подключатся. Перевыпустите сертификат ниже."
+
+#, python-format
+msgid "The IPsec server certificate is issued for %(ip)s. If the server IP changed, IPsec clients are refused until the certificate is reissued for the new IP; the clients then import their keys again."
+msgstr "Сертификат сервера IPsec выпущен для %(ip)s. Если IP сервера сменился, клиенты IPsec не подключатся, пока сертификат не перевыпущен для нового IP; после этого клиентам нужно заново импортировать ключи."
+
+#, python-format
+msgid "The IPsec server certificate is issued for %(ip)s. On a VPS with another IP, reissue it on this card after the restore, or IPsec clients are refused."
+msgstr "Сертификат сервера IPsec выпущен для %(ip)s. На VPS с другим IP перевыпустите его на этой карточке после восстановления, иначе клиенты IPsec не подключатся."
+
+msgid "The VPN service is stopped."
+msgstr "VPN-сервис остановлен."
+
+msgid "The VPN service runs."
+msgstr "VPN-сервис работает."
+
+msgid "The VPS the panel manages: their state, payment and quick actions."
+msgstr "VPS под управлением панели: состояние, оплата и быстрые действия."
+
+msgid "The administrator has not set up the Discord application."
+msgstr "Администратор не настроил приложение Discord."
+
+msgid "The administrator has not set up the Telegram bot."
+msgstr "Администратор не настроил Telegram-бота."
+
+msgid "The author asks not to be named."
+msgstr "Автор просит не указывать его имя."
+
+msgid "The author asks to be named."
+msgstr "Автор просит указать его имя."
+
+msgid "The author gets it in the notification."
+msgstr "Автор получит её в уведомлении."
+
+#, python-format
+msgid "The bots service last reported %(ago)s ago. Is the bots container running?"
+msgstr "Сервис ботов последний раз присылал отчёт %(ago)s назад. Запущен ли контейнер bots?"
+
+msgid "The check did not finish. We will look at the server ourselves."
+msgstr "Проверка не завершилась. Мы посмотрим сервер сами."
+
+msgid "The code is wrong or expired. Get a new one in your profile."
+msgstr "Код неверный или устарел. Получите новый в профиле."
+
+msgid "The codes are shown only now. Save them in a password manager or print them; the previous codes no longer work."
+msgstr "Коды показываются только сейчас. Сохраните их в менеджере паролей или распечатайте; прежние коды больше не действуют."
+
+msgid "The confirmation link is wrong or has expired."
+msgstr "Ссылка для подтверждения неверна или устарела."
+
+#, python-format
+msgid "The container %(container)s is removed from the server with its configuration and clients, as the Amnezia app does it. %(keys)s key stops working until the protocol is restored from the backup. If you tick Delete all backups, the key is revoked and the panel forgets the protocol and its backup; this cannot be undone."
+msgid_plural "The container %(container)s is removed from the server with its configuration and clients, as the Amnezia app does it. %(keys)s keys stop working until the protocol is restored from the backup. If you tick Delete all backups, the keys are revoked and the panel forgets the protocol and its backup; this cannot be undone."
+msgstr[0] "Контейнер %(container)s будет удалён с сервера вместе с конфигурацией и клиентами, как это делает приложение Amnezia. %(keys)s ключ не будет работать, пока протокол не восстановят из бэкапа. Если отметить «Удалить все бэкапы?», ключ будет отозван и панель забудет протокол и его резервную копию; отменить это нельзя."
+msgstr[1] "Контейнер %(container)s будет удалён с сервера вместе с конфигурацией и клиентами, как это делает приложение Amnezia. %(keys)s ключа не будут работать, пока протокол не восстановят из бэкапа. Если отметить «Удалить все бэкапы?», ключи будут отозваны и панель забудет протокол и его резервную копию; отменить это нельзя."
+msgstr[2] "Контейнер %(container)s будет удалён с сервера вместе с конфигурацией и клиентами, как это делает приложение Amnezia. %(keys)s ключей не будут работать, пока протокол не восстановят из бэкапа. Если отметить «Удалить все бэкапы?», ключи будут отозваны и панель забудет протокол и его резервную копию; отменить это нельзя."
+
+msgid "The container did not answer. Check on the server page that it is running and start it if it is not."
+msgstr "Контейнер не ответил. Проверьте на странице сервера, что он запущен, и запустите его, если нет."
+
+msgid "The container is replaced by a new one with the same certificate authority and client certificates; every OpenVPN client reconnects."
+msgstr "Контейнер заменяется новым с тем же центром сертификации и сертификатами клиентов; все клиенты OpenVPN переподключаются."
+
+#, python-format
+msgid "The container removes itself at %(date)s."
+msgstr "Контейнер удалится сам в %(date)s."
+
+msgid "The current link will stop working. Continue?"
+msgstr "Текущая ссылка перестанет работать. Продолжить?"
+
+msgid "The device loses access right away. This cannot be undone."
+msgstr "Устройство сразу потеряет доступ. Это нельзя отменить."
+
+msgid "The device name"
+msgstr "Название устройства"
+
+msgid "The form is out of date"
+msgstr "Форма устарела"
+
+msgid "The invite is deleted."
+msgstr "Инвайт удалён."
+
+msgid "The key cannot be prepared right now. Open this page again later or ask the administrator."
+msgstr "Сейчас не удаётся подготовить ключ. Откройте страницу позже или обратитесь к администратору."
+
+msgid "The key could not be created. Try re-issuing it or ask the administrator."
+msgstr "Не удалось создать ключ. Попробуйте перевыпустить его или обратитесь к администратору."
+
+msgid "The key does not connect?"
+msgstr "Ключ не подключается?"
+
+msgid "The key has already been shown. If you lost it, re-issue it."
+msgstr "Ключ уже был показан. Если вы его потеряли, перевыпустите."
+
+msgid "The key is being created on the server, this takes a few seconds…"
+msgstr "Ключ создаётся на сервере, это займёт несколько секунд…"
+
+msgid "The key is being prepared on the server, this takes a few seconds…"
+msgstr "Ключ готовится на сервере, это займёт несколько секунд…"
+
+msgid "The key is deleted and stops working in a moment."
+msgstr "Ключ удалён и через мгновение перестанет работать."
+
+msgid "The key is off. It comes back on when your access or traffic is renewed."
+msgstr "Ключ выключен. Он снова заработает, когда продлят доступ или обновится трафик."
+
+msgid "The key is shown only once: add it to the app right away."
+msgstr "Ключ показывается только один раз: сразу добавьте его в приложение."
+
+msgid "The key will be renamed in a moment."
+msgstr "Ключ будет переименован через мгновение."
+
+msgid "The keys and the backup are kept: restore the protocol in the Backup section."
+msgstr "Ключи и бэкап сохранены: восстановите протокол в разделе «Резервная копия»."
+
+msgid "The limit is reached: the keys are off until the period resets."
+msgstr "Лимит исчерпан: ключи отключены до сброса периода."
+
+msgid "The link is out of date or is for another account."
+msgstr "Ссылка устарела или относится к другому аккаунту."
+
+msgid "The link is wrong or the page was removed."
+msgstr "Ссылка неверна или страницу удалили."
+
+msgid "The link works once and not for long."
+msgstr "Ссылка работает один раз и недолго."
+
+msgid "The moderator has as many users as allowed."
+msgstr "У модератора уже столько пользователей, сколько разрешено."
+
+msgid "The moderator who serves the user. Empty: only administrators."
+msgstr "Модератор, который обслуживает пользователя. Пусто — только администраторы."
+
+msgid "The monitor did not find the probe running. Users are not warned about this server until it runs again: reinstall it."
+msgstr "Монитор не нашёл запущенный пробник. Пока он не заработает снова, пользователей не предупреждают о недоступности этого сервера: установите его заново."
+
+msgid "The new email gets a link; the email changes when you open it."
+msgstr "На новую почту придёт ссылка; почта сменится, когда вы её откроете."
+
+msgid "The old key is revoked. The new one will be ready in a moment."
+msgstr "Старый ключ отозван. Новый будет готов через мгновение."
+
+msgid "The owners are notified that their keys must be imported again."
+msgstr "Владельцы получат уведомление, что ключи нужно импортировать заново."
+
+msgid "The page was open too long or cookies are blocked. Reload the page and send the form again."
+msgstr "Страница была открыта слишком долго или заблокированы cookie. Обновите страницу и отправьте форму ещё раз."
+
+msgid "The panel cannot be reached. Check the internet connection and try again."
+msgstr "Панель недоступна. Проверьте подключение к интернету и попробуйте ещё раз."
+
+msgid "The panel compares its keys with the server files regularly. A difference appears when clients are added or removed in the Amnezia app or by hand."
+msgstr "Панель регулярно сравнивает свои ключи с файлами на серверах. Расхождение появляется, когда клиентов добавляют или удаляют в приложении Amnezia или вручную."
+
+msgid "The panel could not finish the request. Try again in a minute; if it repeats, tell the administrator."
+msgstr "Панель не смогла выполнить запрос. Попробуйте через минуту; если повторится, сообщите администратору."
+
+msgid "The panel could not read the key's settings from the server. Open the page again later."
+msgstr "Панели не удалось прочитать настройки ключа с сервера. Откройте страницу позже."
+
+msgid "The panel could not read the traffic counters there, so the traffic of their keys is unknown (not zero) and the limits do not grow. Counting resumes by itself after the cause is fixed."
+msgstr "Панель не смогла прочитать там счётчики трафика, поэтому трафик их ключей неизвестен (а не равен нулю) и лимиты не растут. Учёт возобновится сам, когда причина будет устранена."
+
+msgid "The panel has no backup of this protocol yet. It copies the container files before removing it; if the copy fails, the keys cannot work again, even if the protocol is installed anew."
+msgstr "В панели пока нет бэкапа этого протокола. Перед удалением она скопирует файлы контейнера; если копия не получится, ключи больше не заработают, даже если установить протокол заново."
+
+msgid "The panel is reading the key's settings from the server. Refresh the page in a few seconds to show the key."
+msgstr "Панель читает настройки ключа с сервера. Обновите страницу через несколько секунд, чтобы показать ключ."
+
+msgid "The panel keeps the server keys and a copy of the protocol files. If the VPS is lost, change the address and login of this server to a new VPS and restore: clients keep their keys and need nothing new while the server address stays the same."
+msgstr "Панель хранит ключи сервера и копию файлов протокола. Если VPS потерян, укажите у этого сервера адрес и логин нового VPS и восстановите: клиенты сохранят свои ключи, и им ничего не нужно менять, пока адрес сервера прежний."
+
+msgid "The panel prepares the server and installs the container the same way the Amnezia app does, so the app keeps working with it."
+msgstr "Панель готовит сервер и устанавливает контейнер так же, как приложение Amnezia, поэтому приложение продолжает с ним работать."
+
+msgid "The password is wrong."
+msgstr "Неверный пароль."
+
+#, python-format
+msgid "The password was wrong %(limit)s time in a row, so signing in to this account from your address is paused."
+msgid_plural "The password was wrong %(limit)s times in a row, so signing in to this account from your address is paused."
+msgstr[0] "Пароль %(limit)s раз подряд введён неверно, поэтому вход в эту учётную запись с вашего адреса приостановлен."
+msgstr[1] "Пароль %(limit)s раза подряд введён неверно, поэтому вход в эту учётную запись с вашего адреса приостановлен."
+msgstr[2] "Пароль %(limit)s раз подряд введён неверно, поэтому вход в эту учётную запись с вашего адреса приостановлен."
+
+msgid "The payment did not go through. You can try again."
+msgstr "Оплата не прошла. Можно попробовать ещё раз."
+
+msgid "The payment is received and your access is renewed."
+msgstr "Оплата получена, доступ продлён."
+
+msgid "The port is above 9999: some providers block or throttle UDP on it and the VPN may not connect or be slow."
+msgstr "Порт выше 9999: часть провайдеров блокирует или режет на нём UDP, VPN может не подключиться или работать медленно."
+
+msgid "The ports are opened for TCP and UDP. Open them in the firewall of the hosting provider if it has one."
+msgstr "Порты открываются для TCP и UDP. Если у хостинга есть свой файрвол, откройте их и там."
+
+msgid "The preview failed. Save the article to see it."
+msgstr "Предпросмотр не удался. Сохраните статью, чтобы увидеть её."
+
+msgid "The request is closed. If the problem comes back, open a new one."
+msgstr "Обращение закрыто. Если проблема вернётся, откройте новое."
+
+msgid "The request is closed: only internal notes can be added."
+msgstr "Обращение закрыто: можно добавить только внутреннюю заметку."
+
+#, python-format
+msgid "The server address is now <strong>%(host)s</strong>. The vpn:// link of every key carries the address, so the clients must import their keys again."
+msgstr "Теперь адрес сервера — <strong>%(host)s</strong>. Адрес входит в ссылку vpn:// каждого ключа, поэтому клиентам нужно заново импортировать ключи."
+
+msgid "The server answers."
+msgstr "Сервер отвечает."
+
+msgid "The server could not understand the request. Go back and try again."
+msgstr "Сервер не понял запрос. Вернитесь назад и попробуйте ещё раз."
+
+msgid "The server does not answer."
+msgstr "Сервер не отвечает."
+
+msgid "The server has not answered yet."
+msgstr "Сервер ещё ни разу не ответил."
+
+msgid "The service restarts on the server and its clients reconnect. A new port, domain or transport mode changes the address users connect to: give them the new one."
+msgstr "Сервис перезапустится на сервере, его клиенты переподключатся. Новый порт, домен или режим транспорта меняют адрес подключения — передайте пользователям новый."
+
+msgid "The sign-in link is wrong, used or has expired."
+msgstr "Ссылка для входа неверна, уже использована или устарела."
+
+msgid "The subscription link is deleted."
+msgstr "Ссылка-подписка удалена."
+
+msgid "The user has no subscription link yet."
+msgstr "У пользователя пока нет ссылки-подписки."
+
+msgid "The vpn:// link"
+msgstr "Ссылка vpn://"
+
+msgid "Theme"
+msgstr "Тема"
+
+msgid "This account is already linked to another user of the panel."
+msgstr "Этот аккаунт уже привязан к другому пользователю панели."
+
+msgid "This invite cannot take new users now."
+msgstr "По этому инвайту сейчас нельзя зарегистрироваться."
+
+msgid "This invite has expired or has been used up."
+msgstr "Срок инвайта истёк или он уже использован."
+
+msgid "This is your email already."
+msgstr "Это уже ваша почта."
+
+msgid "This key cannot be re-issued. Delete it and get a new one."
+msgstr "Этот ключ нельзя перевыпустить. Удалите его и получите новый."
+
+msgid "This key cannot be shown again. Re-issue it to get a new one."
+msgstr "Этот ключ нельзя показать снова. Перевыпустите его, чтобы получить новый."
+
+msgid "This key was added without its private part and cannot be shown. Re-issue it to get one you can add to the app."
+msgstr "Этот ключ добавлен без закрытой части, и его нельзя показать. Перевыпустите его, чтобы получить ключ для приложения."
+
+msgid "This key was imported without its private part: it cannot be shown, only re-issued."
+msgstr "Ключ импортирован без приватной части: его нельзя показать, только перевыпустить."
+
+msgid "This link is invalid or already used. Ask for a new one."
+msgstr "Ссылка неверна или уже использована. Запросите новую."
+
+msgid "This period"
+msgstr "Этот период"
+
+msgid "This server is not available to you."
+msgstr "Этот сервер вам недоступен."
+
+msgid "Tick all"
+msgstr "Отметить все"
+
+msgid "Title"
+msgstr "Название"
+
+msgid "To confirm it, open this link while signed in to the account:"
+msgstr "Чтобы подтвердить её, откройте ссылку, войдя в аккаунт:"
+
+msgid "To confirm the email, open this link:"
+msgstr "Чтобы подтвердить email, откройте ссылку:"
+
+#, python-format
+msgid "To confirm, type the server name: <strong>%(name)s</strong>"
+msgstr "Для подтверждения введите имя сервера: <strong>%(name)s</strong>"
+
+msgid "To set a new password, open this link:"
+msgstr "Чтобы задать новый пароль, откройте ссылку:"
+
+msgid "To sign in, open this link. It works once and not for long:"
+msgstr "Чтобы войти, откройте ссылку. Она работает один раз и недолго:"
+
+msgid "To tell your devices apart, for example «Anna's phone»."
+msgstr "Чтобы различать устройства, например «Телефон Анны»."
+
+msgid "To the home page"
+msgstr "На главную"
+
+msgid "Today"
+msgstr "Сегодня"
+
+msgid "Too many attempts"
+msgstr "Слишком много попыток"
+
+msgid "Too many registrations from your address. Try again in an hour."
+msgstr "Слишком много регистраций с вашего адреса. Попробуйте через час."
+
+msgid "Too many suggestions. Try again tomorrow."
+msgstr "Слишком много предложений. Попробуйте завтра."
+
+msgid "Top consumers"
+msgstr "Больше всех потребляют"
+
+msgid "Topic"
+msgstr "Тема"
+
+msgid "Total"
+msgstr "Всего"
+
+msgid "Traffic"
+msgstr "Трафик"
+
+msgid "Traffic by day"
+msgstr "Трафик по дням"
+
+msgid "Traffic for 7 days"
+msgstr "Трафик за 7 дней"
+
+msgid "Traffic in total"
+msgstr "Трафик всего"
+
+msgid "Traffic is not counted on some servers"
+msgstr "На некоторых серверах трафик не учитывается"
+
+msgid "Traffic is running out. When it ends, the keys go off until the next period."
+msgstr "Трафик заканчивается. Когда он кончится, ключи выключатся до следующего периода."
+
+msgid "Traffic limit is close."
+msgstr "Лимит трафика почти исчерпан."
+
+msgid "Traffic of the keys, who uses the most and whose limit runs out."
+msgstr "Трафик ключей: кто тратит больше всех и у кого кончается лимит."
+
+msgid "Traffic per period"
+msgstr "Трафик за период"
+
+msgid "Traffic this period"
+msgstr "Трафик за период"
+
+msgid "Try again"
+msgstr "Попробовать ещё раз"
+
+#, python-format
+msgid "Try again in %(minutes)s minute."
+msgid_plural "Try again in %(minutes)s minutes."
+msgstr[0] "Попробуйте снова через %(minutes)s минуту."
+msgstr[1] "Попробуйте снова через %(minutes)s минуты."
+msgstr[2] "Попробуйте снова через %(minutes)s минут."
+
+msgid "Turn off"
+msgstr "Выключить"
+
+msgid "Turn off two-factor authentication"
+msgstr "Выключить двухфакторную аутентификацию"
+
+msgid "Turn on"
+msgstr "Включить"
+
+msgid "Turn on JavaScript to sign in with Telegram."
+msgstr "Включите JavaScript, чтобы войти через Telegram."
+
+msgid "Turn the workaround off? TSO/GSO are turned back on and the timer is removed from the server."
+msgstr "Выключить обход? TSO/GSO снова включатся, таймер будет удалён с сервера."
+
+msgid "Two-factor"
+msgstr "Двухфакторная"
+
+msgid "Two-factor authentication"
+msgstr "Двухфакторная аутентификация"
+
+msgid "Two-factor authentication is off."
+msgstr "Двухфакторная аутентификация выключена."
+
+msgid "Two-factor authentication is on."
+msgstr "Двухфакторная аутентификация включена."
+
+msgid "Two-factor authentication is required for administrators."
+msgstr "Для администраторов двухфакторная аутентификация обязательна."
+
+msgid "Type a server, user or key name."
+msgstr "Введите имя сервера, пользователя или ключа."
+
+msgid "UDP port of AmneziaWG 2.0"
+msgstr "UDP-порт AmneziaWG 2.0"
+
+msgid "UI components"
+msgstr "Компоненты интерфейса"
+
+msgid "Unknown browser"
+msgstr "Неизвестный браузер"
+
+msgid "Unlink"
+msgstr "Отвязать"
+
+msgid "Unlink this account?"
+msgstr "Отвязать этот аккаунт?"
+
+msgid "Unlinked."
+msgstr "Отвязано."
+
+msgid "Update the keys"
+msgstr "Обновить ключи"
+
+msgid "Upload speed through the VPN (TSO/GSO)"
+msgstr "Скорость отдачи через VPN (TSO/GSO)"
+
+msgid "Uploaded"
+msgstr "Отправлено"
+
+msgid "Uptime"
+msgstr "Работает без перезагрузки"
+
+msgid "Usage"
+msgstr "Расход"
+
+msgid "Usage by key and forecast"
+msgstr "Расход по ключам и прогноз"
+
+msgid "Use another phone"
+msgstr "Другой телефон"
+
+msgid "Useful materials"
+msgstr "Полезные материалы"
+
+msgid "User"
+msgstr "Пользователь"
+
+msgid "User name"
+msgstr "Имя пользователя"
+
+#, python-format
+msgid "User: %(name)s"
+msgstr "Пользователь: %(name)s"
+
+msgid "Username"
+msgstr "Имя пользователя"
+
+msgid "Users"
+msgstr "Пользователи"
+
+msgid "Users also get their own notifications by email: the limit is reached, the access ends soon."
+msgstr "Пользователи также получают свои уведомления на почту: достигнут лимит, доступ скоро закончится."
+
+msgid "Users and keys"
+msgstr "Пользователи и ключи"
+
+msgid "Users done"
+msgstr "Пользователей обработано"
+
+msgid "Users who register by your invites are yours to serve, while your user quota allows."
+msgstr "Пользователи, зарегистрированные по вашим инвайтам, переходят к вам, пока позволяет квота пользователей."
+
+msgid "VPS paid until"
+msgstr "VPS оплачен до"
+
+#, python-format
+msgid "Valid for %(minutes)s minute."
+msgid_plural "Valid for %(minutes)s minutes."
+msgstr[0] "Действует %(minutes)s минуту."
+msgstr[1] "Действует %(minutes)s минуты."
+msgstr[2] "Действует %(minutes)s минут."
+
+msgid "Valid until"
+msgstr "Действует до"
+
+#, python-format
+msgid "Version %(version)s from %(date)s."
+msgstr "Версия %(version)s от %(date)s."
+
+msgid "Waiting"
+msgstr "Ждёт ответа"
+
+msgid "Waiting for a background worker…"
+msgstr "Ждём фоновый обработчик…"
+
+msgid "Waiting for approval"
+msgstr "Ждёт подтверждения"
+
+msgid "Waiting for review"
+msgstr "Ждёт проверки"
+
+msgid "Waiting for the payment service to confirm the payment. Refresh the page in a minute."
+msgstr "Ждём, пока платёжный сервис подтвердит оплату. Обновите страницу через минуту."
+
+#, python-format
+msgid "We sent a confirmation link to %(email)s. Open it to finish the registration. Check the spam folder too."
+msgstr "Мы отправили ссылку для подтверждения на %(email)s. Откройте её, чтобы закончить регистрацию. Проверьте и папку «Спам»."
+
+#, python-format
+msgid "We sent a link to %(email)s. The email changes when you open it."
+msgstr "Мы отправили ссылку на %(email)s. Почта сменится, когда вы её откроете."
+
+msgid "What"
+msgstr "Что"
+
+msgid "What users get: servers, protocols, traffic and how long the access lasts."
+msgstr "Что получают пользователи: серверы, протоколы, трафик и срок доступа."
+
+msgid "When opened"
+msgstr "На момент обращения"
+
+msgid "Where"
+msgstr "Куда"
+
+msgid "Where the panel reports events: chats, mail and webhooks."
+msgstr "Куда панель сообщает о событиях: чаты, почта и вебхуки."
+
+msgid "Which device is the key for?"
+msgstr "Для какого устройства ключ?"
+
+msgid "Who"
+msgstr "Кто"
+
+msgid "Who changed what in the panel and when."
+msgstr "Кто, что и когда менял в панели."
+
+msgid "Who suggested it; shown under the text. Empty: nobody is named."
+msgstr "Кто предложил; показывается под текстом. Пусто — автор не указан."
+
+msgid "Wide"
+msgstr "Широкая"
+
+msgid "With an icon"
+msgstr "С иконкой"
+
+msgid "With table-cards, rows turn into cards on phones."
+msgstr "С классом table-cards строки на телефоне становятся карточками."
+
+msgid "With the ticked users"
+msgstr "С отмеченными"
+
+msgid "Without an SMTP server the panel uses LAMNEZIA_EMAIL_URL from the server settings."
+msgstr "Без SMTP-сервера панель берёт LAMNEZIA_EMAIL_URL из настроек сервера."
+
+msgid "Without an end date"
+msgstr "Бессрочно"
+
+msgid "Without traffic"
+msgstr "Без трафика"
+
+msgid "Write the text."
+msgstr "Напишите текст."
+
+msgid "Write to support"
+msgstr "Написать в поддержку"
+
+msgid "Wrong code. Check that the phone shows the right time."
+msgstr "Неверный код. Проверьте, что время на телефоне точное."
+
+msgid "XRay clients fetch the user's XRay keys by this link and keep them up to date. Anyone with the link gets the keys."
+msgstr "Клиенты XRay получают по этой ссылке ключи XRay пользователя и сами их обновляют. Любой, у кого есть ссылка, получит ключи."
+
+msgid "XRay gives no counters: its configuration lacks the statistics blocks. Open the protocol settings and save them: the panel adds the blocks, the container restarts and the clients reconnect."
+msgstr "XRay не отдаёт счётчики: в его конфигурации нет блоков статистики. Откройте настройки протокола и сохраните их: панель добавит блоки, контейнер перезапустится, а клиенты переподключатся."
+
+msgid "XRay has no live reload: the container restarts and every XRay client reconnects. Clients, traffic statistics and speed limits are kept."
+msgstr "XRay не умеет перечитывать настройки на ходу: контейнер перезапускается, и все клиенты XRay переподключаются. Клиенты, статистика трафика и ограничения скорости сохраняются."
+
+msgid "You"
+msgstr "Вы"
+
+msgid "You cannot get another key now."
+msgstr "Сейчас нельзя получить ещё один ключ."
+
+msgid "You do not have the rights to open this page."
+msgstr "У вас нет прав открывать эту страницу."
+
+msgid "You have an invite: its plan comes without waiting for approval."
+msgstr "У вас есть инвайт: тариф выдаётся сразу, без ожидания одобрения."
+
+msgid "You have as many keys as your plan allows. Delete one to get another."
+msgstr "У вас столько ключей, сколько разрешает тариф. Удалите один, чтобы получить другой."
+
+msgid "You have no keys yet."
+msgstr "У вас пока нет ключей."
+
+msgid "You have no plan yet"
+msgstr "Тарифа пока нет"
+
+msgid "You have no requests yet. If something does not work, tell us."
+msgstr "Обращений пока нет. Если что-то не работает — напишите нам."
+
+#, python-format
+msgid "You signed in with a backup code. Backup codes left: %(left)d."
+msgstr "Вы вошли по резервному коду. Осталось резервных кодов: %(left)d."
+
+msgid "Your access ends soon. Ask the administrator to extend it."
+msgstr "Ваш доступ скоро закончится. Попросите администратора продлить его."
+
+msgid "Your access has ended, the keys are off. Ask the administrator to extend it."
+msgstr "Ваш доступ закончился, ключи выключены. Попросите администратора продлить его."
+
+msgid "Your account waits for approval"
+msgstr "Аккаунт ждёт подтверждения"
+
+msgid "Your account, how you sign in and where the notifications go."
+msgstr "Ваш аккаунт, способы входа и куда приходят уведомления."
+
+#, python-format
+msgid "Your device last connected at %(at)s."
+msgstr "Ваше устройство последний раз подключалось %(at)s."
+
+msgid "Your devices have not connected to this server yet."
+msgstr "Ваши устройства ещё не подключались к этому серверу."
+
+msgid "Your key"
+msgstr "Ваш ключ"
+
+msgid "Your name is shown with the published text."
+msgstr "Ваше имя будет показано при публикации."
+
+msgid "Your plan, keys and browser are attached to the request, so you need not describe them."
+msgstr "Тариф, ключи и браузер прикладываются к обращению сами — описывать их не нужно."
+
+msgid "a useful material"
+msgstr "полезный материал"
+
+msgid "account id"
+msgstr "ID аккаунта"
+
+msgid "active"
+msgstr "активен"
+
+msgid "address"
+msgstr "адрес"
+
+msgid "an FAQ article"
+msgstr "статья FAQ"
+
+msgid "as in the plan"
+msgstr "как в тарифе"
+
+msgid "author"
+msgstr "автор"
+
+msgid "broken link"
+msgstr "битая ссылка"
+
+msgid "built by the app"
+msgstr "собран приложением"
+
+msgid "built-in entries"
+msgstr "встроенные записи"
+
+msgid "built-in entry"
+msgstr "встроенная запись"
+
+msgid "can be installed"
+msgstr "можно установить"
+
+msgid "check error"
+msgstr "ошибка проверки"
+
+#, python-format
+msgid "checked %(when)s ago"
+msgstr "проверено %(when)s назад"
+
+#, python-format
+msgid "closed at %(at)s"
+msgstr "закрыт %(at)s"
+
+msgid "comment"
+msgstr "комментарий"
+
+msgid "container removed"
+msgstr "контейнер удалён"
+
+msgid "created at"
+msgstr "создан"
+
+msgid "created by"
+msgstr "создал"
+
+msgid "deleted"
+msgstr "удалён"
+
+msgid "description (English)"
+msgstr "описание (английский)"
+
+msgid "description (Russian)"
+msgstr "описание (русский)"
+
+msgid "device"
+msgstr "устройство"
+
+msgid "disabled"
+msgstr "отключён"
+
+msgid "due today"
+msgstr "сегодня"
+
+msgid "expires soon"
+msgstr "скоро истекает"
+
+msgid "fetched at"
+msgstr "получено"
+
+msgid "found, not supported"
+msgstr "найден, не поддерживается"
+
+#, python-format
+msgid "in %(days)s day"
+msgid_plural "in %(days)s days"
+msgstr[0] "через %(days)s день"
+msgstr[1] "через %(days)s дня"
+msgstr[2] "через %(days)s дней"
+
+msgid "in progress"
+msgstr "выполняется"
+
+msgid "in the panel"
+msgstr "в панели"
+
+msgid "internal note"
+msgstr "внутренняя заметка"
+
+msgid "invite"
+msgstr "инвайт"
+
+msgid "invites"
+msgstr "инвайты"
+
+msgid "keys at most"
+msgstr "ключей не больше"
+
+msgid "kind"
+msgstr "вид"
+
+msgid "language"
+msgstr "язык"
+
+msgid "last seen online"
+msgstr "последний раз в сети"
+
+#, python-format
+msgid "last sign-in %(date)s"
+msgstr "последний вход %(date)s"
+
+msgid "link"
+msgstr "ссылка"
+
+msgid "link checked"
+msgstr "ссылка проверена"
+
+#, python-format
+msgid "linked %(date)s"
+msgstr "привязан %(date)s"
+
+msgid "linked account"
+msgstr "привязанный аккаунт"
+
+msgid "linked accounts"
+msgstr "привязанные аккаунты"
+
+msgid "linked at"
+msgstr "привязан"
+
+msgid "maintenance"
+msgstr "обслуживание"
+
+msgid "messenger"
+msgstr "мессенджер"
+
+msgid "model"
+msgstr "модель"
+
+msgid "moderator"
+msgstr "модератор"
+
+msgid "name in the messenger"
+msgstr "имя в мессенджере"
+
+msgid "name me as the author"
+msgstr "указать меня автором"
+
+msgid "new"
+msgstr "новый"
+
+msgid "no data"
+msgstr "нет данных"
+
+msgid "no data yet"
+msgstr "нет данных"
+
+msgid "no email"
+msgstr "нет email"
+
+msgid "no end"
+msgstr "без срока"
+
+msgid "no end date"
+msgstr "без срока"
+
+msgid "no limit"
+msgstr "без ограничения"
+
+msgid "not imported yet"
+msgstr "ещё не импортирован"
+
+msgid "not installed"
+msgstr "не установлен"
+
+msgid "not linked"
+msgstr "не привязан"
+
+msgid "not responding"
+msgstr "не отвечает"
+
+msgid "not running"
+msgstr "не запущен"
+
+msgid "not running:"
+msgstr "не запущены:"
+
+msgid "not yet"
+msgstr "ещё не было"
+
+msgid "note"
+msgstr "заметка"
+
+msgid "notification language"
+msgstr "язык уведомлений"
+
+msgid "notifications"
+msgstr "уведомления"
+
+msgid "nowhere"
+msgstr "никуда"
+
+#, python-format
+msgid "of %(limit)s"
+msgstr "из %(limit)s"
+
+msgid "off"
+msgstr "выключен"
+
+msgid "offered at"
+msgstr "предложена"
+
+msgid "offline"
+msgstr "офлайн"
+
+msgid "on"
+msgstr "включена"
+
+msgid "on: the interface glues packets; off: the workaround works; -: ethtool is not installed on the server."
+msgstr "on — интерфейс склеивает пакеты; off — обход работает; - — на сервере нет ethtool."
+
+msgid "online"
+msgstr "онлайн"
+
+msgid "open"
+msgstr "открыт"
+
+msgid "optional"
+msgstr "необязательно"
+
+msgid "or"
+msgstr "или"
+
+#, python-format
+msgid "overdue by %(days)s day"
+msgid_plural "overdue by %(days)s days"
+msgstr[0] "просрочено на %(days)s день"
+msgstr[1] "просрочено на %(days)s дня"
+msgstr[2] "просрочено на %(days)s дней"
+
+msgid "part of an incident"
+msgstr "входит в инцидент"
+
+msgid "plain"
+msgstr "простой"
+
+msgid "plan"
+msgstr "тариф"
+
+#, python-format
+msgid "port %(port)s"
+msgstr "порт %(port)s"
+
+msgid "position"
+msgstr "порядок"
+
+msgid "problems"
+msgstr "проблемы"
+
+msgid "published"
+msgstr "опубликована"
+
+msgctxt "material"
+msgid "published"
+msgstr "опубликован"
+
+msgid "reached"
+msgstr "исчерпан"
+
+msgid "reason"
+msgstr "причина"
+
+#, python-format
+msgid "registered %(date)s"
+msgstr "регистрация %(date)s"
+
+msgid "registrations"
+msgstr "регистраций"
+
+msgid "registrations at most"
+msgstr "регистраций не больше"
+
+msgid "release"
+msgstr "релиз"
+
+msgid "releases"
+msgstr "релизы"
+
+msgid "repository"
+msgstr "репозиторий"
+
+#, python-format
+msgid "resets on %(date)s"
+msgstr "обнулится %(date)s"
+
+msgid "retry of an earlier attempt"
+msgstr "повтор прошлой попытки"
+
+msgid "reviewed at"
+msgstr "проверено"
+
+msgid "reviewed by"
+msgstr "проверил"
+
+msgid "revoked"
+msgstr "отозван"
+
+msgid "role"
+msgstr "роль"
+
+msgid "running"
+msgstr "идёт"
+
+msgid "seen"
+msgstr "прочитано"
+
+msgid "sent at"
+msgstr "отправлено"
+
+msgid "servers of the moderator"
+msgstr "серверы модератора"
+
+#, python-format
+msgid "signed in %(when)s"
+msgstr "вход %(when)s"
+
+msgid "signed in at"
+msgstr "время входа"
+
+#, python-format
+msgid "since %(date)s"
+msgstr "с %(date)s"
+
+msgid "source"
+msgstr "источник"
+
+msgid "status"
+msgstr "статус"
+
+msgid "suggested by"
+msgstr "предложил"
+
+msgid "suggestion"
+msgstr "предложение"
+
+msgid "suggestions"
+msgstr "предложения"
+
+msgid "text"
+msgstr "текст"
+
+msgid "text (English)"
+msgstr "текст (английский)"
+
+msgid "text (Russian)"
+msgstr "текст (русский)"
+
+msgid "this one"
+msgstr "этот"
+
+msgid "title"
+msgstr "название"
+
+msgid "title (English)"
+msgstr "заголовок (английский)"
+
+msgid "title (Russian)"
+msgstr "заголовок (русский)"
+
+msgid "topic"
+msgstr "тема"
+
+msgid "trial"
+msgstr "пробный"
+
+msgid "unknown"
+msgstr "неизвестно"
+
+#, python-format
+msgid "until %(date)s"
+msgstr "до %(date)s"
+
+msgid "updated at"
+msgstr "обновлена"
+
+msgid "useful material"
+msgstr "полезный материал"
+
+msgid "useful materials"
+msgstr "полезные материалы"
+
+msgid "user"
+msgstr "пользователь"
+
+msgid "users"
+msgstr "пользователи"
+
+msgid "users at most"
+msgstr "пользователей не больше"
+
+msgid "valid until"
+msgstr "действует до"
+
+#, python-format
+msgid "version %(version)s"
+msgstr "версия %(version)s"
+
+msgid "vless:// link for other XRay clients"
+msgstr "Ссылка vless:// для других клиентов XRay"
+
+msgid "what"
+msgstr "что"
+
+msgid "workaround off"
+msgstr "обход выключен"
+
+msgid "workaround on"
+msgstr "обход включён"
+
+msgid "working"
+msgstr "работает"
+
+msgid "your device"
+msgstr "ваше устройство"

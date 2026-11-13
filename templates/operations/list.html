@@ -1,0 +1,55 @@
+{% extends "layouts/admin.html" %}
+{% load i18n operations %}
+{% block title %}{% translate "Operations" %} · Lamnezia{% endblock %}
+
+{% block nav %}
+  {% include "components/admin_nav.html" with active="operations" %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Operations" %}</h1>
+    <p class="page-lead">{% translate "Everything the panel does on the servers in the background: progress, log and errors." %}</p>
+  </div>
+</div>
+
+{% include "components/filters.html" with form=filter_form %}
+
+{% comment %} While an operation of the page runs, the block reloads itself from the same URL and stops
+   once all of them are finished. {% endcomment %}
+<div id="operations-table"{% if running %} hx-get="{{ request.get_full_path }}" hx-trigger="every {{ poll_seconds }}s" hx-select="#operations-table" hx-swap="outerHTML"{% endif %} class="space-y-4">
+  {% if operations %}
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead>
+          <tr>
+            <th>{% translate "Operation" %}</th><th>{% translate "Started" %}</th>
+            <th>{% translate "By" %}</th><th>{% translate "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for operation in operations %}
+            <tr>
+              <td class="cell-title">
+                <a href="{% url 'operations:detail' operation.pk %}" class="font-medium hover:underline">{{ operation.kind|operation_title }}</a>
+                {% if operation.subject %}
+                  {% with url=operation|subject_url %}
+                    <span class="help-text">· {% if url %}<a href="{{ url }}" class="hover:underline">{{ operation.subject }}</a>{% else %}{{ operation.subject }}{% endif %}</span>
+                  {% endwith %}
+                {% endif %}
+              </td>
+              <td data-label="{% translate 'Started' %}">{{ operation.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+              <td data-label="{% translate 'By' %}">{{ operation.created_by|default:"—" }}</td>
+              <td data-label="{% translate 'Status' %}"><span class="badge {{ operation.status|status_badge }}">{{ operation.get_status_display }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="help-text">{% if filter_form.has_changed %}{% translate "No operations found." %}{% else %}{% translate "No operations yet." %}{% endif %}</p>
+  {% endif %}
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

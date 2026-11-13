@@ -1,0 +1,16 @@
+{% extends "guides/base.html" %}
+{% load i18n %}
+{% block title %}{{ article.title }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}
+  <li><a href="{% url 'guides:faq' %}">{% translate "FAQ" %}</a></li>
+  <li><span aria-current="page">{{ article.title }}</span></li>
+{% endblock %}
+
+{% block content %}
+<article class="card space-y-4">
+  <h1 class="page-title">{{ article.title }}</h1>
+  <div class="markdown">{{ article.body_html }}</div>
+  {% if article.credit %}<p class="help-text">{% blocktranslate with name=article.credit %}Suggested by {{ name }}{% endblocktranslate %}</p>{% endif %}
+</article>
+{% endblock %}

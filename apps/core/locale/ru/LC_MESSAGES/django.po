@@ -1,0 +1,166 @@
+# Russian translation of Lamnezia (apps.core).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "A bot username: 5 to 32 Latin letters, digits and _."
+msgstr "Имя бота: от 5 до 32 латинских букв, цифр и _."
+
+msgid "Any time"
+msgstr "В любое время"
+
+msgid "Bot page of the Discord application. The bot sends keys and notifications."
+msgstr "Страница Bot приложения Discord. Бот выдаёт ключи и присылает уведомления."
+
+msgid "By invitation only"
+msgstr "Только по приглашению"
+
+msgid "Discord application ID"
+msgstr "ID приложения Discord"
+
+msgid "Discord bot token"
+msgstr "Токен Discord-бота"
+
+msgid "Discord client secret"
+msgstr "Секрет клиента Discord"
+
+msgid "From @BotFather."
+msgstr "Выдаёт @BotFather."
+
+msgid "From the Discord Developer Portal; users link their Discord through it."
+msgstr "Из Discord Developer Portal; через это приложение пользователи привязывают Discord."
+
+msgid "GitHub token"
+msgstr "Токен GitHub"
+
+msgid "Given to new users in open registration with automatic approval."
+msgstr "Выдаётся новым пользователям при открытой регистрации с автоматическим допуском."
+
+msgid "None"
+msgstr "Нет"
+
+msgid "OAuth2 page of the Discord application."
+msgstr "Страница OAuth2 приложения Discord."
+
+msgid "Only a link to the portal"
+msgstr "Только ссылку на портал"
+
+msgid "Only once"
+msgstr "Только один раз"
+
+msgid "Open, an administrator approves"
+msgstr "Открытая, с одобрением администратора"
+
+msgid "Open, the default plan right away"
+msgstr "Открытая, сразу тариф по умолчанию"
+
+msgid "Remove the saved value"
+msgstr "Удалить сохранённое значение"
+
+msgid "SMTP password"
+msgstr "Пароль SMTP"
+
+msgid "SMTP port"
+msgstr "порт SMTP"
+
+msgid "SMTP server"
+msgstr "SMTP-сервер"
+
+msgid "SMTP user"
+msgstr "пользователь SMTP"
+
+msgid "Saved. Leave empty to keep it."
+msgstr "Сохранён. Оставьте пустым, чтобы не менять."
+
+msgid "Settings saved."
+msgstr "Настройки сохранены."
+
+msgid "Signed-in users send links and texts for the guides; the staff review them."
+msgstr "Вошедшие пользователи присылают ссылки и тексты для инструкций; персонал их проверяет."
+
+msgid "Telegram and Discord keep chats on their servers without end-to-end encryption."
+msgstr "Telegram и Discord хранят чаты на своих серверах без сквозного шифрования."
+
+msgid "Telegram bot token"
+msgstr "Токен Telegram-бота"
+
+msgid "Telegram bot username"
+msgstr "Имя Telegram-бота"
+
+msgid "The key itself"
+msgstr "Сам ключ"
+
+msgid "Users with a linked Discord can sign in with it."
+msgstr "Пользователи с привязанным Discord смогут входить через него."
+
+msgid "Users with a linked Telegram can sign in with it."
+msgstr "Пользователи с привязанным Telegram могут входить через него."
+
+msgid "Users with a linked Telegram can sign in with it. Set the domain in @BotFather."
+msgstr "Пользователи с привязанным Telegram смогут входить через него. Укажите домен панели в @BotFather."
+
+msgid "Webhooks may go to addresses such as 127.0.0.1, 10.0.0.0/8 or 192.168.0.0/16. Turn on only for a receiver in your own network."
+msgstr "Вебхуки могут уходить на адреса вроде 127.0.0.1, 10.0.0.0/8 или 192.168.0.0/16. Включайте, только если получатель в вашей собственной сети."
+
+msgid "Without @. Users link their Telegram through this bot."
+msgstr "Без @. Через этого бота пользователи привязывают свой Telegram."
+
+msgid "Without scopes. Raises the GitHub limit for Amnezia app download links."
+msgstr "Без прав доступа. Повышает лимит GitHub для ссылок на загрузку приложения Amnezia."
+
+msgid "cleanup"
+msgstr "чистка"
+
+msgid "cleanups"
+msgstr "чистки"
+
+msgid "confirm email on registration"
+msgstr "подтверждать email при регистрации"
+
+msgid "default plan"
+msgstr "тариф по умолчанию"
+
+msgid "encryption"
+msgstr "шифрование"
+
+msgid "keys in the bots"
+msgstr "ключи в ботах"
+
+msgid "notifications to private networks"
+msgstr "уведомления в частные сети"
+
+msgid "panel name"
+msgstr "название панели"
+
+msgid "panel settings"
+msgstr "настройки панели"
+
+msgid "ran at"
+msgstr "время запуска"
+
+msgid "registration"
+msgstr "регистрация"
+
+msgid "rows removed"
+msgstr "удалено строк"
+
+msgid "sender"
+msgstr "отправитель"
+
+msgid "showing a key again"
+msgstr "повторный показ ключа"
+
+msgid "sign in with Discord"
+msgstr "вход через Discord"
+
+msgid "sign in with Telegram"
+msgstr "вход через Telegram"
+
+msgid "task"
+msgstr "задача"
+
+msgid "users suggest articles"
+msgstr "пользователи предлагают статьи"

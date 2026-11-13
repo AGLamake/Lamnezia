@@ -1,0 +1,61 @@
+{% extends "notifications/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Notifications" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Notifications" %}</h1>
+    <p class="page-lead">{% translate "Where the panel reports events: chats, mail and webhooks." %}</p>
+  </div>
+  <a href="{% url 'notifications:log' %}" class="btn btn-secondary">{% icon "history" %}{% translate "Delivery log" %}</a>
+</div>
+
+<section class="card space-y-3">
+  <h2 class="section-title">{% translate "Add a channel" %}</h2>
+  <div class="flex flex-wrap gap-2">
+    {% for kind, label in kinds %}<a href="{% url 'notifications:add' kind %}" class="btn btn-secondary btn-sm">{% icon "plus" "icon-sm" %}{{ label }}</a>{% endfor %}
+  </div>
+</section>
+
+{% if channels %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr><th>{% translate "Channel" %}</th><th>{% translate "Kind" %}</th><th>{% translate "Events" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr>
+      </thead>
+      <tbody>
+        {% for channel in channels %}
+          <tr>
+            <td class="cell-title">
+              <a href="{% url 'notifications:edit' channel.pk %}" class="font-medium hover:underline">{{ channel.name }}</a>
+              {% if not channel.enabled %}<span class="badge badge-muted">{% translate "off" %}</span>{% endif %}
+            </td>
+            <td data-label="{% translate 'Kind' %}">{{ channel.get_kind_display }}</td>
+            <td data-label="{% translate 'Events' %}" class="tabular-nums">{{ channel.routes.all|length }}</td>
+            <td class="sm:text-right">
+              <form method="post" action="{% url 'notifications:test' channel.pk %}">
+                {% csrf_token %}<button class="btn btn-ghost btn-sm">{% icon "bell" "icon-sm" %}{% translate "Send a test" %}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <section class="card space-y-3">
+    <h2 class="section-title">{% translate "Routing" %}</h2>
+    <dl class="facts">
+      {% for label, routed in routing %}
+        <div><dt>{{ label }}</dt><dd>{% for channel in routed %}{{ channel.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">{% translate "nowhere" %}</span>{% endfor %}</dd></div>
+      {% endfor %}
+    </dl>
+    <p class="help-text">{% translate "Users also get their own notifications by email: the limit is reached, the access ends soon." %}</p>
+  </section>
+{% else %}
+  {% translate "No channels yet." as empty_title %}
+  {% translate "Add one and choose the events it should get." as empty_text %}
+  {% include "components/empty_state.html" with icon="bell" title=empty_title text=empty_text %}
+{% endif %}
+{% endblock %}

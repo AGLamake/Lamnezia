@@ -1,0 +1,13 @@
+{% extends "layouts/auth.html" %}
+{% load i18n static %}
+{% block title %}{% translate "Sign in with Telegram" %} · Lamnezia{% endblock %}
+{% block head %}<script src="{% static 'js/telegram-login.js' %}" defer></script>{% endblock %}
+{% block heading %}{% translate "Sign in with Telegram" %}{% endblock %}
+
+{% block content %}
+<div id="telegram-return" data-login="{% url 'accounts:login' %}" class="space-y-4 text-sm">
+  <p role="status">{% translate "Checking the Telegram account…" %}</p>
+  <noscript><p>{% translate "Turn on JavaScript to sign in with Telegram." %}</p></noscript>
+  <a href="{% url 'accounts:login' %}" class="link">{% translate "Back to sign in" %}</a>
+</div>
+{% endblock %}

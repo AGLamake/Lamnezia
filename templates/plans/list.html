@@ -1,0 +1,55 @@
+{% extends "plans/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Plans" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Plans" %}</h1>
+    <p class="page-lead">{% translate "What users get: servers, protocols, traffic and how long the access lasts." %}</p>
+  </div>
+  <a href="{% url 'plans:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a plan" %}</a>
+</div>
+
+<form method="get" action="{% url 'plans:lookup' %}" class="bulk-bar">
+  <label for="{{ lookup_form.username.id_for_label }}" class="text-sm font-medium">{% translate "Plan of a user" %}</label>
+  <div class="flex min-w-0 flex-1 gap-2 sm:flex-none">
+    <div class="min-w-0 flex-1 sm:w-56">{{ lookup_form.username }}</div>
+    <button type="submit" class="btn btn-secondary">{% translate "Open" %}</button>
+  </div>
+</form>
+
+{% if plans %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>{% translate "Plan" %}</th><th>{% translate "Traffic" %}</th>
+          <th>{% translate "Keys" %}</th><th>{% translate "Access" %}</th><th>{% translate "Users" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for plan in plans %}
+          <tr>
+            <td class="cell-title">
+              <a href="{% url 'plans:edit' plan.pk %}" class="font-medium hover:underline">{{ plan.name }}</a>
+              {% if plan.is_trial %}<span class="badge badge-muted">{% translate "trial" %}</span>{% endif %}
+            </td>
+            <td data-label="{% translate 'Traffic' %}">
+              {% if plan.traffic_limit is None %}{% translate "no limit" %}{% else %}{% blocktranslate with size=plan.traffic_limit|filesizeformat days=plan.period_days %}{{ size }} per {{ days }} days{% endblocktranslate %}{% endif %}
+            </td>
+            <td data-label="{% translate 'Keys' %}">{{ plan.max_keys|default_if_none:"∞" }}</td>
+            <td data-label="{% translate 'Access' %}">{% if plan.access_days %}{% blocktranslate count days=plan.access_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}{% else %}{% translate "no end" %}{% endif %}</td>
+            <td data-label="{% translate 'Users' %}" class="tabular-nums">{{ plan.users }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% translate "No plans yet." as empty_title %}
+  {% translate "A plan sets the servers, protocols and limits of its users." as empty_text %}
+  {% url 'plans:add' as add_url %}{% translate "Add a plan" as add_text %}
+  {% include "components/empty_state.html" with icon="tag" title=empty_title text=empty_text action_url=add_url action_text=add_text %}
+{% endif %}
+{% endblock %}

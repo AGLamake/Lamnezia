@@ -1,0 +1,88 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Registration" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="registrations" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Registration" %}</h1>
+    <p class="page-lead">{% translate "New users waiting for approval and the invite links you gave out." %}</p>
+  </div>
+  <a href="{% url 'accounts:invite-add' %}" class="btn btn-primary">{% icon "user-plus" %}{% translate "Create an invite" %}</a>
+</div>
+
+{% if user.is_admin %}
+<section class="space-y-3">
+  <h2 class="section-title">{% translate "Waiting for approval" %}{% if waiting %} <span class="nav-count nav-count-danger">{{ waiting|length }}</span>{% endif %}</h2>
+  {% if waiting %}
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead><tr><th>{% translate "User" %}</th><th>{% translate "Email" %}</th><th>{% translate "Registered" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr></thead>
+        <tbody>
+          {% for applicant in waiting %}
+            <tr>
+              <td class="cell-title font-medium">{{ applicant.username }}</td>
+              <td data-label="{% translate 'Email' %}" class="cell-wrap">{{ applicant.email }}</td>
+              <td data-label="{% translate 'Registered' %}">{{ applicant.date_joined|date:"SHORT_DATETIME_FORMAT" }}</td>
+              <td>
+                <div class="grid gap-2 sm:flex sm:items-center sm:justify-end">
+                  <form method="post" action="{% url 'accounts:registration-approve' applicant.pk %}" class="flex items-center gap-2">
+                    {% csrf_token %}<div class="min-w-0 flex-1 sm:w-44 sm:flex-none">{{ approve_form.plan }}</div>
+                    <button type="submit" class="btn btn-primary">{% icon "check" %}{% translate "Approve" %}</button>
+                  </form>
+                  <form method="post" action="{% url 'accounts:registration-reject' applicant.pk %}" data-confirm="{% translate "Block this user?" %}">
+                    {% csrf_token %}<button type="submit" class="btn btn-ghost-danger w-full sm:w-auto">{% icon "close" "icon-sm" %}{% translate "Reject" %}</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {% translate "Nobody is waiting." as empty_title %}
+    {% translate "New users come here in the open registration with approval by an administrator." as empty_text %}
+    {% include "components/empty_state.html" with icon="user-plus" title=empty_title text=empty_text %}
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="space-y-3">
+  <h2 class="section-title">{% translate "Invites" %}</h2>
+  {% if not user.is_admin %}<p class="help-text">{% translate "Users who register by your invites are yours to serve, while your user quota allows." %}</p>{% endif %}
+  {% if invites %}
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead><tr><th>{% translate "Link" %}</th><th>{% translate "Plan" %}</th><th>{% translate "Registrations" %}</th><th>{% translate "Valid until" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr></thead>
+        <tbody>
+          {% for invite, link in invites %}
+            <tr>
+              <td class="cell-title">
+                {% if invite.note %}<p class="font-medium">{{ invite.note }}</p>{% endif %}
+                <div x-data="copy" class="flex min-w-0 items-center gap-2">
+                  <input type="text" readonly value="{{ link }}" x-ref="source" class="input min-w-0 flex-1 font-mono text-xs" aria-label="{% translate 'Link' %}">
+                  <button type="button" class="btn btn-ghost btn-sm" @click="copy">{% icon "copy" "icon-sm" %}<span class="sr-only">{% translate "Copy" %}</span></button>
+                </div>
+              </td>
+              <td data-label="{% translate 'Plan' %}">{{ invite.plan }}</td>
+              <td data-label="{% translate 'Registrations' %}" class="tabular-nums">{{ invite.uses }} / {{ invite.max_uses }}</td>
+              <td data-label="{% translate 'Valid until' %}">{% if invite.expires_at %}{{ invite.expires_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% translate "no end" %}{% endif %}</td>
+              <td>
+                <form method="post" action="{% url 'accounts:invite-delete' invite.pk %}" data-confirm="{% translate "Delete this invite?" %}" class="sm:text-right">
+                  {% csrf_token %}<button type="submit" class="btn btn-ghost-danger btn-sm">{% icon "trash" "icon-sm" %}{% translate "Delete" %}</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {% translate "No invites yet." as empty_title %}
+    {% translate "An invite gives its plan right away, in any registration mode." as empty_text %}
+    {% include "components/empty_state.html" with icon="tag" title=empty_title text=empty_text %}
+  {% endif %}
+</section>
+{% endblock %}

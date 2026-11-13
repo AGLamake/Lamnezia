@@ -1,0 +1,7 @@
+{% load ui %}{# Usage: {% include "components/empty_state.html" with icon="inbox" title=… text=… action_url=… action_text=… %} #}
+<div class="empty-state">
+  <span class="empty-state-icon">{% icon icon|default:"inbox" "icon size-6" %}</span>
+  <p class="font-semibold">{{ title }}</p>
+  {% if text %}<p class="help-text max-w-md">{{ text }}</p>{% endif %}
+  {% if action_url %}<a href="{{ action_url }}" class="btn btn-primary">{{ action_text }}</a>{% endif %}
+</div>

@@ -1,0 +1,15 @@
+.git
+.github
+.venv
+.env
+.env.*
+!.env.example
+**/__pycache__
+*.sqlite3
+*.mo
+staticfiles
+static/css/app.css
+.cache
+media
+docs
+backups

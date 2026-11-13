@@ -1,0 +1,43 @@
+{% extends "notifications/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Delivery log" %} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'notifications:channels' %}">{% translate "Notifications" %}</a></li><li aria-current="page">{% translate "Delivery log" %}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Delivery log" %}</h1>
+    <p class="page-lead">{% translate "Every notification the panel sent, where to and whether it arrived." %}</p>
+  </div>
+</div>
+
+{% include "components/filters.html" with form=filter_form %}
+
+{% if deliveries %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>{% translate "Event" %}</th><th>{% translate "Where" %}</th>
+          <th>{% translate "Status" %}</th><th>{% translate "Attempts" %}</th><th>{% translate "Error" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for delivery in deliveries %}
+          <tr>
+            <td class="cell-title"><span class="font-medium">{{ delivery.notification.event_label }}</span> <span class="help-text">· {{ delivery.created_at|date:"SHORT_DATETIME_FORMAT" }}</span></td>
+            <td data-label="{% translate 'Where' %}">{% if delivery.to_user %}{% blocktranslate with name=delivery.notification.user.username %}{{ name }} by email{% endblocktranslate %}{% else %}{{ delivery.channel_name }}{% endif %}</td>
+            <td data-label="{% translate 'Status' %}"><span class="badge {% if delivery.status == 'sent' %}badge-success{% elif delivery.status == 'failed' %}badge-danger{% else %}badge-muted{% endif %}">{{ delivery.get_status_display }}</span></td>
+            <td data-label="{% translate 'Attempts' %}">{{ delivery.attempts }}</td>
+            <td data-label="{% translate 'Error' %}" class="cell-wrap font-mono text-xs break-all">{{ delivery.error|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/pagination.html" %}
+{% else %}
+  <p class="help-text">{% translate "Nothing was sent yet." %}</p>
+{% endif %}
+{% endblock %}

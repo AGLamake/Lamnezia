@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{# Admin layout: sidebar on desktop, slide-in drawer on phones. Pages fill `content`, `nav` and, on inner pages, `breadcrumbs` (<li> items). #}
+{% block body %}
+<div x-data="drawer" @keydown.escape.window="close" class="min-h-full lg:flex">
+  <header class="sticky top-0 z-30 flex items-center gap-2 border-b border-border bg-surface/95 px-2 py-2 backdrop-blur lg:hidden">
+    <button type="button" class="btn btn-ghost btn-icon" x-ref="toggle" @click="toggle"
+            aria-controls="sidebar" :aria-expanded="expanded()" aria-label="{% translate 'Open menu' %}">{% icon "menu" %}</button>
+    <a href="{% url 'home' %}" class="flex min-w-0 items-center gap-2 font-semibold">{% include "components/logo_mark.html" with uid="logo-top" %}<span class="truncate">{{ site_name }}</span></a>
+    <button type="button" class="btn btn-ghost btn-icon ml-auto" data-dialog-open="palette" aria-label="{% translate 'Quick search' %}">{% icon "search" %}</button>
+  </header>
+
+  <div x-show="open" x-cloak x-transition.opacity class="overlay lg:hidden" @click="close"></div>
+  <aside id="sidebar" x-ref="panel" aria-label="{% translate 'Main menu' %}"
+         :class="open ? 'translate-x-0 visible' : '-translate-x-full invisible lg:visible'"
+         class="invisible fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-border bg-sidebar transition-[transform,visibility] duration-200 lg:visible lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:translate-x-0">
+    <div class="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
+      <a href="{% url 'home' %}" class="flex min-w-0 items-center gap-2 text-lg font-semibold">{% include "components/logo_mark.html" with uid="logo-side" size="h-8" %}<span class="truncate">{{ site_name }}</span></a>
+      <button type="button" class="btn btn-ghost btn-icon btn-sm lg:hidden" @click="close" aria-label="{% translate 'Close menu' %}">{% icon "close" %}</button>
+    </div>
+    <div class="px-3 pb-1">
+      <button type="button" class="palette-open" data-dialog-open="palette" aria-keyshortcuts="Control+K">
+        {% icon "search" %}<span class="flex-1 text-left">{% translate "Quick search" %}</span><kbd class="kbd">Ctrl K</kbd>
+      </button>
+    </div>
+    <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-2" aria-label="{% translate 'Sections' %}">{% block nav %}{% endblock %}</nav>
+    <div class="flex items-center justify-between gap-1 border-t border-border px-3 py-3">
+      {% include "components/account_menu.html" with up=True area="admin" %}
+      <div class="flex items-center">
+        {% include "components/language_switch.html" with up=True %}
+        {% include "components/theme_toggle.html" with up=True %}
+      </div>
+    </div>
+  </aside>
+
+  <main id="main" tabindex="-1" class="min-w-0 flex-1 px-4 py-6 focus:outline-none sm:px-6 lg:px-10 lg:py-8">
+    <div class="page-frame space-y-6">
+      <nav class="breadcrumbs-nav" aria-label="{% translate 'Breadcrumbs' %}"><ol class="breadcrumbs">{% block breadcrumbs %}{% endblock %}</ol></nav>
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+  {% include "components/command_palette.html" %}
+</div>
+{% endblock %}

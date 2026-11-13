@@ -1,0 +1,9 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+{% block heading %}{% translate "Confirm your email" %}{% endblock %}
+{% block content %}
+<p style="margin:0;">{% blocktranslate with username=user.get_username trimmed %}Account {{ username }} was registered with this email.{% endblocktranslate %}</p>
+{% translate "Confirm the email" as action %}{% include "email/_button.html" %}
+{% if messengers %}<p style="margin:16px 0 0;">{% blocktranslate trimmed %}In the <a href="{{ profile }}">profile</a> you can link {{ messengers }}: sign in with one tap and get keys and notifications there.{% endblocktranslate %}</p>{% endif %}
+{% endblock %}
+{% block note %}{% translate "If it was not you, ignore this letter: the account stays inactive." %}{% endblock %}

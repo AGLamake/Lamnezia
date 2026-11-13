@@ -1,0 +1,21 @@
+{% load i18n %}{# The staff's view of a thread; refetched from `messages_url` when it changes. #}
+<div id="messages" class="space-y-3" data-live-thread="{{ conversation.pk }}" hx-get="{{ messages_url }}" hx-trigger="support:thread from:body" hx-swap="outerHTML">
+  {% for message in thread %}
+    {% if message.event %}
+      {% url 'support:inbox-conversation' message.ticket_id as ticket_url %}{% include "support/_event.html" %}
+    {% else %}
+      <article class="card space-y-2{% if message.internal %} border-warning bg-warning-soft{% elif message.author_id == conversation.user_id %} sm:mr-12{% else %} sm:ml-12 border-accent{% endif %}">
+        <p class="help-text">
+          {% if message.author %}{{ message.author.username }}{% else %}{{ site_name }}{% endif %}
+          {% if message.internal %}· {% translate "internal note" %}{% endif %}
+          · {{ message.created_at|date:"SHORT_DATETIME_FORMAT" }}
+          {% if not message.internal and message.author_id != conversation.user_id and message.read_at %}· {% translate "seen" %}{% endif %}
+        </p>
+        {% if message.text %}<p class="whitespace-pre-line break-words">{{ message.text }}</p>{% endif %}
+        {% for attachment in message.attachments.all %}
+          <a href="{% url 'support:attachment' attachment.pk %}" target="_blank" rel="noopener"><img src="{% url 'support:attachment' attachment.pk %}" alt="{% translate 'Screenshot' %}" class="max-h-64 rounded-md" loading="lazy" decoding="async"></a>
+        {% endfor %}
+      </article>
+    {% endif %}
+  {% endfor %}
+</div>

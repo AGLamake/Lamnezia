@@ -1,0 +1,1 @@
+{% load i18n %}{% if instance.awg_version %}<span class="badge badge-muted" title="{% translate 'AmneziaWG version, as the Amnezia app determines it from the parameters' %}">{% blocktranslate with version=instance.awg_version %}version {{ version }}{% endblocktranslate %}</span>{% endif %}

@@ -1,0 +1,199 @@
+{% extends "servers/base.html" %}
+{% load backups i18n offload operations servers ui %}
+{% block title %}{{ server.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li aria-current="page">{{ server.name }}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="min-w-0">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <h1 class="page-title break-words">{{ server.name }}</h1>
+      {% if server.status == "ready" %}{% include "servers/_online.html" %}{% else %}<span class="badge {{ server.status|server_badge }}">{{ server.get_status_display }}</span>{% endif %}
+    </div>
+    <p class="page-lead">{% if server.location %}{{ server.location }} · {% endif %}{{ server.host }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'servers:edit' server.pk %}" class="btn btn-secondary">{% icon "pencil" %}{% translate "Edit" %}</a>
+    <form method="post" action="{% url 'servers:check' server.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary">{% icon "refresh" %}{% translate "Check again" %}</button>
+    </form>
+  </div>
+</div>
+
+{% for warning in warnings %}{% include "components/alert.html" with level="warning" text=warning %}{% endfor %}
+{% if ipsec.outdated %}
+  {% blocktranslate with ip=ipsec.issued_for host=server.host asvar ipsec_warning %}The IPsec server certificate is issued for {{ ip }}, but the server address is {{ host }}: IPsec clients are refused. Reissue the certificate below.{% endblocktranslate %}
+  {% include "components/alert.html" with level="warning" text=ipsec_warning %}
+{% endif %}
+
+{% if operation %}
+  <section class="card space-y-3" aria-labelledby="server-operation">
+    <h2 id="server-operation" class="card-title">{% icon "activity" "icon-sm" %}{% translate "Latest operation" %}: {{ operation.kind|operation_title }}</h2>
+    {% include "operations/_progress.html" %}
+  </section>
+{% endif %}
+
+<div class="grid items-start gap-6 lg:grid-cols-3">
+  <div class="space-y-4 lg:col-span-2">
+    <section class="card card-flush" aria-labelledby="server-load">
+      <div class="card-head">
+        <h2 id="server-load" class="card-title">{% icon "cpu" "icon-sm" %}{% translate "Load" %}</h2>
+        {% if server.latest_sample %}<span class="help-text">{{ server.latest_sample.at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}
+      </div>
+      <div class="card-body space-y-4">
+        {% include "servers/_meters.html" %}
+        {% with sample=server.latest_sample %}{% if sample.answered %}
+          <dl class="facts">
+            <div><dt>{% translate "Uptime" %}</dt><dd>{% if sample.booted_at %}{{ sample.booted_at|timesince:sample.at }}{% else %}—{% endif %}</dd></div>
+            <div><dt>{% translate "Memory" %}</dt><dd>{{ sample.memory_total|filesizeformat }}</dd></div>
+            <div><dt>{% translate "Disk" %}</dt><dd>{{ sample.disk_total|filesizeformat }}</dd></div>
+            <div><dt>{% translate "Amnezia containers" %}</dt><dd>{{ sample.containers|length }}</dd></div>
+          </dl>
+        {% endif %}{% endwith %}
+      </div>
+    </section>
+    {% if history %}{% health_trends history %}{% endif %}
+  </div>
+
+  <section class="card card-flush" aria-labelledby="server-access">
+    <div class="card-head"><h2 id="server-access" class="card-title">{% icon "server" "icon-sm" %}{% translate "Server" %}</h2></div>
+    <dl class="facts card-body">
+      <div><dt>{% translate "Address" %}</dt><dd class="font-mono text-xs break-all">{{ server.username }}@{{ server.host }}:{{ server.port }}</dd></div>
+      <div><dt>{% translate "Login with" %}</dt><dd>{{ server.get_auth_method_display }}</dd></div>
+      <div><dt>{% translate "Operating system" %}</dt><dd>{{ server.os_name|default:"—" }}</dd></div>
+      <div><dt>{% translate "Docker" %}</dt><dd>{{ server.docker_version|default:"—" }}</dd></div>
+      <div><dt>{% translate "Free disk space" %}</dt><dd>{% if server.disk_free_bytes is None %}—{% else %}{{ server.disk_free_bytes|filesizeformat }}{% endif %}</dd></div>
+      <div><dt>{% translate "Checked" %}</dt><dd>{{ server.checked_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }}</dd></div>
+      <div><dt>{% translate "VPS paid until" %}</dt><dd>{{ server.paid_until|date:"SHORT_DATE_FORMAT"|default:"—" }}{% include "servers/_paid_days.html" %}</dd></div>
+      <div><dt>{% translate "Added" %}</dt><dd>{{ server.created_at|date:"SHORT_DATE_FORMAT" }}</dd></div>
+      <div class="block! space-y-1"><dt>{% translate "SSH fingerprint" %}</dt>
+        <dd class="text-left!">{% if host_key %}<code class="block font-mono text-xs break-all">{{ host_key.key_type }} {{ host_key.fingerprint }}</code>
+          <form method="post" action="{% url 'servers:forget-host-key' server.pk %}" data-confirm="{% translate "Forget the SSH fingerprint? Do it only if the server was reinstalled: the next connection trusts whatever key the server shows." %}">
+            {% csrf_token %}<button type="submit" class="link-danger text-sm">{% translate "Forget" %}</button>
+          </form>{% else %}—{% endif %}</dd></div>
+      {% if ipsec %}
+      <div class="block! space-y-1"><dt>{% translate "IPsec server certificate" %}</dt>
+        <dd class="text-left!"><form method="post" action="{% url 'protocols:ipsec-reissue' ipsec.instance.pk %}" class="space-y-1" data-confirm="{% translate "Reissue the IPsec server certificate for the server IP? IPsec restarts, and the clients import their keys again." %}">
+          {% csrf_token %}
+          <p>{% blocktranslate with ip=ipsec.issued_for %}Issued for {{ ip }}{% endblocktranslate %}</p>
+          <label class="flex items-center gap-2 help-text"><input type="checkbox" name="reissue"> {% translate "Reissue the keys imported from the server" %}</label>
+          <button type="submit" class="text-sm text-link hover:underline">{% translate "Reissue" %}</button>
+        </form></dd></div>
+      {% endif %}
+    </dl>
+  </section>
+</div>
+
+<section class="card card-flush" aria-labelledby="server-protocols">
+  <div class="card-head flex-wrap">
+    <h2 id="server-protocols" class="card-title">{% icon "layers" "icon-sm" %}{% translate "Protocols and services" %}</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'protocols:speed-test' server.pk %}" class="btn btn-ghost btn-sm">{% icon "zap" "icon-sm" %}{% translate "Speed test by port" %}</a>
+      <form method="post" action="{% url 'protocols:import' server.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary btn-sm">{% icon "download" "icon-sm" %}{% translate "Import from the server" %}</button>
+      </form>
+      <a href="{% url 'protocols:install' server.pk %}" class="btn btn-primary btn-sm">{% icon "plus" "icon-sm" %}{% translate "Install" %}</a>
+    </div>
+  </div>
+  {% if containers %}
+    {% regroup containers by group as groups %}
+    {% for group in groups %}
+      <h3 class="rows-head{% if forloop.first %} border-t-0{% endif %}">{{ group.grouper }}</h3>
+      <ul class="rows">
+        {% for row in group.list %}
+          <li class="row items-start">
+            <span class="row-lead{% if row.stopped %} row-lead-danger{% elif row.instance or row.service %} row-lead-info{% endif %}">{% icon "layers" "icon-sm" %}</span>
+            <div class="row-main space-y-1.5 text-sm">
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span class="font-medium">{% if row.instance %}{{ row.instance.title }}{% elif row.service %}{{ row.service.title }}{% else %}{{ row.name }}{% endif %}</span>
+                {% if row.instance %}{% include "protocols/_awg_version.html" with instance=row.instance %}{% endif %}
+                {% if row.state %}<span class="badge {% if row.stopped %}badge-danger{% else %}badge-success{% endif %}">{{ row.state }}</span>{% endif %}
+              </div>
+              <p class="help-text">{% if row.instance or row.service %}<span class="font-mono">{{ row.name }}</span>{% endif %}{% if row.port %}{% if row.instance or row.service %} · {% endif %}{% blocktranslate with port=row.port %}port {{ port }}{% endblocktranslate %}{% endif %}</p>
+              {% if row.description %}<p class="help-text">{{ row.description }}</p>{% endif %}
+              {% if row.instance.removed %}
+                <p class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span class="badge badge-muted">{% translate "container removed" %}</span>
+                  <a href="{% url 'keys:list' %}?source={{ row.instance.source|urlencode }}" class="text-link hover:underline">{% blocktranslate count keys=row.keys %}{{ keys }} key{% plural %}{{ keys }} keys{% endblocktranslate %}</a>
+                </p>
+                <p class="help-text">{% translate "The keys and the backup are kept: restore the protocol in the Backup section." %}
+                  <a href="{% url 'protocols:remove' row.instance.pk %}" class="link-danger">{% translate "Delete all backups" %}</a></p>
+              {% elif row.instance %}
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <a href="{% url 'keys:list' %}?source={{ row.instance.source|urlencode }}" class="font-medium text-link hover:underline">{% blocktranslate count keys=row.keys %}{{ keys }} key{% plural %}{{ keys }} keys{% endblocktranslate %}</a>
+                  <a href="{% url 'protocols:settings' row.instance.pk %}" class="text-link hover:underline">{% translate "Settings" %}</a>
+                  <span class="flex flex-wrap gap-x-3 gap-y-1 help-text">
+                    {% include "protocols/_container_actions.html" with action_url="protocols:container" pk=row.instance.pk %}
+                    <a href="{% url 'protocols:remove' row.instance.pk %}" class="link-danger">{% translate "Remove" %}</a>
+                  </span>
+                </div>
+                {% if row.awg_upgrade %}
+                  <p class="help-text">{% translate "The Amnezia app calls AmneziaWG 2.0 outdated and offers to reinstall the container, which removes all its clients. Move it to 3.1 here instead: the keys stay." %}</p>
+                  <form method="post" action="{% url 'protocols:awg-upgrade' row.instance.pk %}" class="flex flex-wrap items-center gap-x-3 gap-y-1 help-text" data-confirm="{% translate "Move the server to AmneziaWG 3.1? The container is rebuilt, clients are cut off for a few minutes and then import their keys again. If something fails, the server stays on 2.0." %}">
+                    {% csrf_token %}
+                    <label class="flex items-center gap-2"><input type="checkbox" name="reissue"> {% translate "Reissue the keys imported from the server" %}</label>
+                    <button type="submit" class="text-link hover:underline">{% translate "Move to AmneziaWG 3.1" %}</button>
+                  </form>
+                {% endif %}
+                {% with migration=row.awg_migration %}{% if migration %}
+                  {% include "protocols/_awg_migration.html" with instance=row.instance %}
+                {% endif %}{% endwith %}
+              {% elif row.service %}
+                {% include "protocols/_service.html" with service=row.service row=row %}
+              {% elif row.supported %}
+                <span class="badge badge-muted">{% translate "not imported yet" %}</span>
+              {% else %}
+                <span class="badge badge-muted">{% translate "found, not supported" %}</span>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endfor %}
+  {% else %}
+    <p class="card-body help-text">{% translate "Import reads the Amnezia containers and clients of a server set up in the Amnezia app. Nothing is changed on the server." %}</p>
+  {% endif %}
+</section>
+
+<div class="space-y-3">
+  {% protocol_backups server %}
+
+  {% offload_card server %}
+
+  <details class="disclosure"{% if server.probe_down %} open{% endif %}>
+    <summary>{% icon "radar" "icon-sm text-muted" %}<span>{% translate "Reachability probe" %}</span>
+      <span class="disclosure-meta">{% if server.probe_down %}<span class="badge badge-danger">{% translate "not running" %}</span>{% elif server.probe_port %}<span class="badge badge-success">UDP {{ server.probe_port }}</span>{% else %}<span class="badge badge-muted">{% translate "not installed" %}</span>{% endif %}</span>
+    </summary>
+    <div class="disclosure-body">
+      <p class="help-text">{% translate "A small STUN responder on a UDP port. Users' browsers ask it and warn when the server cannot be reached from their network. It keeps no logs." %}</p>
+      {% if server.probe_port %}
+        <p>{% blocktranslate with port=server.probe_port %}Installed on UDP port {{ port }}.{% endblocktranslate %}</p>
+        {% if server.probe_down %}
+          {% translate "The monitor did not find the probe running. Users are not warned about this server until it runs again: reinstall it." as probe_down %}
+          {% include "components/alert.html" with level="warning" text=probe_down %}
+        {% endif %}
+      {% endif %}
+      <div class="flex flex-wrap items-end gap-2">
+        <form method="post" action="{% url 'servers:probe-install' server.pk %}" class="flex flex-wrap items-end gap-2">
+          {% csrf_token %}
+          <label class="space-y-1">
+            <span class="help-text">{{ probe_form.port.label }}</span>
+            <input type="number" name="{{ probe_form.port.html_name }}" value="{{ probe_form.port.value }}" min="1024" max="65535" required class="input w-32">
+          </label>
+          <button type="submit" class="btn btn-secondary">{% if server.probe_port %}{% translate "Reinstall" %}{% else %}{% translate "Install" %}{% endif %}</button>
+        </form>
+        {% if server.probe_port %}
+          <form method="post" action="{% url 'servers:probe-remove' server.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary">{% translate "Remove" %}</button>
+          </form>
+        {% endif %}
+      </div>
+      <p class="help-text">{{ probe_form.port.help_text }}</p>
+    </div>
+  </details>
+</div>
+{% endblock %}

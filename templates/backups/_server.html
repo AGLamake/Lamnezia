@@ -1,0 +1,54 @@
+{% load i18n backups ui %}
+{% if instances or services %}
+<details class="disclosure">
+  <summary>{% icon "database" "icon-sm text-muted" %}<span>{% translate "Backup" %}</span></summary>
+  <div class="disclosure-body">
+    <p class="help-text">{% translate "The panel keeps the server keys and a copy of the protocol files. If the VPS is lost, change the address and login of this server to a new VPS and restore: clients keep their keys and need nothing new while the server address stays the same." %}</p>
+    {% for instance in instances %}
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p>{{ instance.title }}</p>
+          <p class="help-text">
+            {% if instance.backup %}
+              {% blocktranslate with date=instance.backup.taken_at|date:"SHORT_DATETIME_FORMAT" %}Copy of the files from {{ date }}.{% endblocktranslate %}
+            {% elif instance|restorable %}
+              {% translate "No copy of the files yet: the restore uses the keys and settings in the panel." %}
+            {% else %}
+              {% translate "No copy of the files yet: the panel saves it every hour while the container runs." %}
+            {% endif %}
+          </p>
+          {% with identity=instance|ipsec_identity %}{% if identity %}
+            <p class="help-text">{% blocktranslate with ip=identity.issued_for %}The IPsec server certificate is issued for {{ ip }}. On a VPS with another IP, reissue it on this card after the restore, or IPsec clients are refused.{% endblocktranslate %}</p>
+          {% endif %}{% endwith %}
+        </div>
+        {% if instance|restorable %}
+        <form method="post" action="{% url 'backups:restore' instance.pk %}" data-confirm="{% translate "Install the protocol on this server with the saved keys?" %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary">{% translate "Restore on this server" %}</button>
+        </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+    {% for service in services %}
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p>{{ service.title }}</p>
+          <p class="help-text">
+            {% if service.backup %}
+              {% blocktranslate with date=service.backup.taken_at|date:"SHORT_DATETIME_FORMAT" %}Copy of the files from {{ date }}.{% endblocktranslate %}
+            {% else %}
+              {% translate "No copy of the files yet: the panel saves it every hour while the container runs." %}
+            {% endif %}
+          </p>
+        </div>
+        {% if service|service_restorable %}
+        <form method="post" action="{% url 'backups:restore-service' service.pk %}" data-confirm="{% translate "Install the service on this server from the saved copy?" %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary">{% translate "Restore on this server" %}</button>
+        </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</details>
+{% endif %}

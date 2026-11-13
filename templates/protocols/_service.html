@@ -1,0 +1,56 @@
+{% load i18n %}
+{% if service.is_sftp %}
+  <dl class="grid grid-cols-[auto_1fr] gap-x-3">
+    <dt class="help-text">{% translate "User name" %}</dt><dd><code>{{ service.login }}</code></dd>
+    <dt class="help-text">{% translate "Password" %}</dt>
+    <dd>{% include "protocols/_password_reveal.html" with service_pk=service.pk %}</dd>
+  </dl>
+{% elif service.is_socks5 %}
+  <dl class="grid grid-cols-[auto_1fr] gap-x-3">
+    <dt class="help-text">{% translate "Address" %}</dt><dd><code>{{ service.server.host }}:{{ service.port }}</code></dd>
+    {% if service.login %}
+      <dt class="help-text">{% translate "User name" %}</dt><dd><code>{{ service.login }}</code></dd>
+      <dt class="help-text">{% translate "Password" %}</dt>
+      <dd><details><summary class="cursor-pointer hover:underline">{% translate "Show" %}</summary><code>{{ service.secret }}</code></details></dd>
+    {% endif %}
+  </dl>
+  {% if service.app_log_size is not None %}
+    <form method="post" action="{% url 'protocols:service-app-log' service.pk %}" class="mt-1" data-confirm="{% translate "Delete 3proxy.log? The proxy restarts for a moment; its account stays." %}">
+      {% csrf_token %}
+      <span class="badge badge-danger">{% blocktranslate with size=service.app_log_size|filesizeformat %}3proxy.log of the app: {{ size }}{% endblocktranslate %}</span>
+      <span class="help-text">{% translate "The Amnezia app logs every host users visit through the proxy." %}</span>
+      <button type="submit" class="link-danger text-sm">{% translate "Delete the log" %}</button>
+    </form>
+  {% endif %}
+{% elif service.links %}
+  {% with links=service.links %}
+    <details>
+      <summary class="cursor-pointer hover:underline">{% translate "Show the links for Telegram" %}</summary>
+      <p><code class="break-all">{{ links.tg }}</code></p>
+      <p><a href="{{ links.tme }}" class="break-all hover:underline" rel="noreferrer" target="_blank">{{ links.tme }}</a></p>
+      <form method="post" action="{% url 'protocols:service-secret' service.pk %}" data-confirm="{% translate "Make a new secret? The links given out so far stop working." %}">
+        {% csrf_token %}<button type="submit" class="help-text hover:underline">{% translate "New secret" %}</button>
+      </form>
+    </details>
+  {% endwith %}
+{% elif service.is_tor_site %}
+  {% if service.secret %}
+    <p><span class="help-text">{% translate "Address in Tor" %}</span> <code class="break-all">{{ service.secret }}</code></p>
+  {% endif %}
+{% elif service.dns_logs_unset %}
+  <form method="post" action="{% url 'protocols:service-rebuild-dns' service.pk %}" data-confirm="{% translate "Rebuild AmneziaDNS? Clients lose DNS for a moment; if the new container does not start, the old one comes back." %}">
+    {% csrf_token %}
+    <span class="badge badge-danger">{% translate "built by the app" %}</span>
+    <span class="help-text">{% translate "Its config does not turn the query logs off: they stay as the image has them." %}</span>
+    <button type="submit" class="help-text hover:underline">{% translate "Rebuild" %}</button>
+  </form>
+{% else %}
+  <span class="badge badge-muted">{% translate "in the panel" %}</span>
+{% endif %}
+<div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 help-text">
+  {% include "protocols/_container_actions.html" with action_url="protocols:service-container" pk=service.pk %}
+  <a href="{% url 'protocols:service-settings' service.pk %}" class="hover:underline">{% translate "Settings" %}</a>
+  <form method="post" action="{% url 'protocols:service-remove' service.pk %}" data-confirm="{% translate "Remove the service? What it keeps on the server is deleted with the container." %}">
+    {% csrf_token %}<button type="submit" class="link-danger">{% translate "Remove" %}</button>
+  </form>
+</div>

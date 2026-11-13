@@ -1,0 +1,81 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Differences with servers" %} · Lamnezia{% endblock %}
+{% block nav %}{% include "keys/_nav.html" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'keys:list' %}">{% translate "Keys" %}</a></li><li aria-current="page">{% translate "Differences with servers" %}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Differences with servers" %}</h1>
+    <p class="page-lead">{% translate "The panel compares its keys with the server files regularly. A difference appears when clients are added or removed in the Amnezia app or by hand." %}</p>
+  </div>
+</div>
+
+{% if differing or matching %}
+{% for group in differing %}
+  <section class="card card-flush">
+    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5">
+      <h2 class="section-title flex items-center gap-2">{% icon "server" "icon-sm text-muted" %}{{ group.title }}{% if group.drifts %} <span class="nav-count nav-count-danger">{{ group.drifts|length }}</span>{% endif %}</h2>
+      <form method="post" action="{% url 'keys:drift-check' %}">
+        {% csrf_token %}
+        <input type="hidden" name="source" value="{{ group.source }}">
+        <button type="submit" class="btn btn-ghost btn-sm">{% icon "refresh" "icon-sm" %}{% translate "Check now" %}</button>
+      </form>
+    </div>
+      <div class="table-wrap rounded-none border-x-0 border-b-0 shadow-none">
+        <table class="table table-cards">
+          <thead>
+            <tr><th>{% translate "Client" %}</th><th>{% translate "IP address" %}</th><th>{% translate "Difference" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr>
+          </thead>
+          <tbody>
+            {% for item in group.drifts %}
+              <tr>
+                <td class="cell-title">
+                  {% if item.drift.key %}<a href="{% url 'keys:detail' item.drift.key.pk %}" class="font-medium hover:underline">{{ item.drift.name }}</a>
+                  {% else %}<span class="font-medium">{{ item.drift.name|default:"—" }}</span>{% endif %}
+                  <div class="help-text break-all font-mono">{{ item.drift.public_key }}</div>
+                </td>
+                <td data-label="{% translate 'IP address' %}" class="font-mono text-xs">{{ item.drift.client_ip|default:"—" }}</td>
+                <td data-label="{% translate 'Difference' %}"><span class="badge badge-warning">{{ item.drift.get_kind_display }}</span></td>
+                <td>
+                  <div class="flex flex-wrap gap-2 sm:justify-end">
+                    {% for action, label, style in item.buttons %}
+                      <form method="post" action="{% url 'keys:drift-resolve' item.drift.pk action %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn {{ style }} btn-sm">{{ label }}</button>
+                      </form>
+                    {% endfor %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+  </section>
+{% endfor %}
+
+{% if matching %}
+  <section class="card card-flush">
+    <h2 class="section-title flex items-center gap-2 px-4 py-3 sm:px-5">{% icon "check" "icon-sm text-success" %}{% if differing %}{% translate "No differences" %}{% else %}{% translate "Every server matches the panel" %}{% endif %}</h2>
+    <ul class="divide-y divide-border border-t border-border">
+      {% for group in matching %}
+        <li class="flex items-center justify-between gap-2 px-4 py-1.5 sm:px-5">
+          <span class="flex min-w-0 items-center gap-2 text-sm">{% icon "server" "icon-sm text-muted" %}<span class="truncate">{{ group.title }}</span></span>
+          <form method="post" action="{% url 'keys:drift-check' %}">
+            {% csrf_token %}
+            <input type="hidden" name="source" value="{{ group.source }}">
+            <button type="submit" class="btn btn-ghost btn-sm" aria-label="{% blocktranslate with title=group.title %}Check {{ title }} now{% endblocktranslate %}">{% icon "refresh" "icon-sm" %}<span class="max-sm:sr-only">{% translate "Check now" %}</span></button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+{% else %}
+  {% translate "No servers with protocols yet. Import a server first." as empty_title %}
+  {% include "components/empty_state.html" with icon="server" title=empty_title %}
+{% endif %}
+{% endblock %}

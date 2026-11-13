@@ -1,0 +1,6 @@
+{% extends "errors/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "The form is out of date" %}{% endblock %}
+{% block code %}403{% endblock %}
+{% block heading %}{% translate "The form is out of date" %}{% endblock %}
+{% block text %}{% translate "The page was open too long or cookies are blocked. Reload the page and send the form again." %}{% endblock %}

@@ -1,0 +1,16 @@
+{% load i18n servers %}{# CPU, memory and disk of `server` as meters; the reason when the server did not answer. #}
+{% with sample=server.latest_sample %}
+  {% if not sample %}
+    <p class="help-text">{% translate "No readings yet: the panel reads the server load in the background." %}</p>
+  {% elif not sample.answered %}
+    <p class="error-text">{{ sample.error|ssh_error }}</p>
+    <p class="help-text">{% if server.last_seen_at %}{% blocktranslate with ago=server.last_seen_at|timesince %}Last answered {{ ago }} ago.{% endblocktranslate %}{% else %}{% translate "The server has not answered yet." %}{% endif %}</p>
+  {% else %}
+    <div class="grid grid-cols-3 gap-x-5 gap-y-3">
+      {% translate "CPU" as cpu_label %}{% include "servers/_meter.html" with title=cpu_label percent=sample.cpu_percent %}
+      {% translate "Memory" as memory_label %}{% include "servers/_meter.html" with title=memory_label percent=sample.memory_percent %}
+      {% translate "Disk" as disk_label %}{% include "servers/_meter.html" with title=disk_label percent=sample.disk_percent %}
+    </div>
+    {% if sample.stopped_containers %}<p class="error-text">{% translate "not running:" %} {{ sample.stopped_containers|join:", " }}</p>{% endif %}
+  {% endif %}
+{% endwith %}

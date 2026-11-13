@@ -1,0 +1,506 @@
+[
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-self-hosted-ru",
+      "title": "Установка VPN на свой сервер",
+      "url": "https://docs.amnezia.org/ru/documentation/instructions/install-vpn-on-server/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "install",
+      "description_ru": "Официальная инструкция: какой сервер арендовать и как приложение Amnezia само ставит на него VPN по SSH. Полезно понять, что делает панель за вас.",
+      "description_en": "Official guide in Russian: what server to rent and how the Amnezia app installs a VPN on it over SSH. Helps to see what the panel does for you.",
+      "position": 10,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-self-hosted-en",
+      "title": "Set Up a Self-Hosted VPN",
+      "url": "https://docs.amnezia.org/documentation/instructions/install-vpn-on-server/",
+      "language": "en",
+      "source": "docs.amnezia.org",
+      "topic": "install",
+      "description_ru": "Та же официальная инструкция на английском: требования к серверу и установка протоколов через приложение.",
+      "description_en": "Official guide: server requirements and installing protocols from the Amnezia app.",
+      "position": 20,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-client-releases",
+      "title": "Amnezia VPN client releases",
+      "url": "https://github.com/amnezia-vpn/amnezia-client/releases",
+      "language": "en",
+      "source": "GitHub",
+      "topic": "install",
+      "description_ru": "Все выпуски приложения Amnezia VPN со списком изменений и файлами для всех систем. Наши инструкции берут ссылки отсюда.",
+      "description_en": "Every Amnezia VPN app release with release notes and downloads for all systems. Our guides take their download links from here.",
+      "position": 30,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amneziawg-kernel-module-ru",
+      "title": "Установка AmneziaWG kernel module",
+      "url": "https://docs.amnezia.org/ru/documentation/instructions/install-amneziawg-kernel-module-linux/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "speed",
+      "description_ru": "Как поставить AmneziaWG модулем ядра на Ubuntu и Debian. Модуль ядра работает быстрее и экономнее, чем userspace-версия в Docker.",
+      "description_en": "How to install AmneziaWG as a kernel module on Ubuntu and Debian (in Russian). The kernel module is faster and lighter than the userspace build in Docker.",
+      "position": 40,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-text-key-ru",
+      "title": "Подключение через ключ в виде текста",
+      "url": "https://docs.amnezia.org/ru/documentation/instructions/connect-via-text-key/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "devices",
+      "description_ru": "Как вставить ключ vpn:// из панели в приложение Amnezia на телефоне и компьютере.",
+      "description_en": "How to paste a vpn:// key from the panel into the Amnezia app on a phone or computer (in Russian).",
+      "position": 50,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-text-key-en",
+      "title": "Connecting via Text Key",
+      "url": "https://docs.amnezia.org/documentation/instructions/connect-via-text-key/",
+      "language": "en",
+      "source": "docs.amnezia.org",
+      "topic": "devices",
+      "description_ru": "Английская версия инструкции по добавлению ключа vpn:// в приложение.",
+      "description_en": "Adding a vpn:// key to the Amnezia app on any device.",
+      "position": 60,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-keenetic-ru",
+      "title": "Установка VPN на роутер Keenetic/Netcraze",
+      "url": "https://docs.amnezia.org/ru/documentation/instructions/keenetic-os-awg/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "devices",
+      "description_ru": "Настройка AmneziaWG на роутере Keenetic: подключение, DNS и маршрутизация, чтобы VPN работал для всей домашней сети.",
+      "description_en": "Setting up AmneziaWG on a Keenetic router: connection, DNS and routing so the whole home network uses the VPN (in Russian).",
+      "position": 70,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-android-tv-ru",
+      "title": "Подключение AmneziaVPN на Android TV",
+      "url": "https://docs.amnezia.org/ru/documentation/instructions/android_tv_connect/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "devices",
+      "description_ru": "Как перенести ключ на телевизор без набора текста с пульта — через LocalSend.",
+      "description_en": "Getting a key onto an Android TV without typing it on the remote, using LocalSend (in Russian).",
+      "position": 80,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-split-tunneling-ru",
+      "title": "Раздельное туннелирование",
+      "url": "https://docs.amnezia.org/ru/documentation/instructions/vpn-split-tunneling/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "devices",
+      "description_ru": "Как пустить через VPN только часть сайтов или приложений, а остальное — напрямую.",
+      "description_en": "How to send only some sites or apps through the VPN and the rest directly (in Russian).",
+      "position": 90,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-split-tunneling-en",
+      "title": "Split Tunneling",
+      "url": "https://docs.amnezia.org/documentation/instructions/vpn-split-tunneling/",
+      "language": "en",
+      "source": "docs.amnezia.org",
+      "topic": "devices",
+      "description_ru": "Английская версия: раздельное туннелирование по адресам и по приложениям.",
+      "description_en": "Split tunneling by addresses and by apps in the Amnezia app.",
+      "position": 100,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-error-codes-en",
+      "title": "Error Codes",
+      "url": "https://docs.amnezia.org/troubleshooting/error-codes/",
+      "language": "en",
+      "source": "docs.amnezia.org",
+      "topic": "devices",
+      "description_ru": "Расшифровка кодов ошибок приложения Amnezia — с чего начать, если приложение показывает номер ошибки.",
+      "description_en": "What the Amnezia app error codes mean: the place to start when the app shows an error number.",
+      "position": 110,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amneziawg-about-ru",
+      "title": "AmneziaWG",
+      "url": "https://docs.amnezia.org/ru/documentation/amnezia-wg/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "blocking",
+      "description_ru": "Что такое AmneziaWG и чем он отличается от WireGuard: какие параметры прячут трафик от DPI и почему стойкость шифрования не меняется.",
+      "description_en": "What AmneziaWG is and how it differs from WireGuard: which parameters hide the traffic from DPI and why the encryption stays the same (in Russian).",
+      "position": 120,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amneziawg-about-en",
+      "title": "AmneziaWG",
+      "url": "https://docs.amnezia.org/documentation/amnezia-wg/",
+      "language": "en",
+      "source": "docs.amnezia.org",
+      "topic": "blocking",
+      "description_ru": "Английская версия описания протокола AmneziaWG и его параметров.",
+      "description_en": "The AmneziaWG protocol and its obfuscation parameters explained.",
+      "position": 130,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amneziawg-not-working-ru",
+      "title": "Подключение к Self-hosted серверу не работает по протоколу AmneziaWG",
+      "url": "https://docs.amnezia.org/ru/troubleshooting/self-hosted-amneziawg-not-working/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "blocking",
+      "description_ru": "Пошаговая проверка, когда AmneziaWG не подключается: белые списки у мобильного оператора, блокировка IP сервера, блокировка параметров протокола.",
+      "description_en": "Step-by-step checks when AmneziaWG does not connect: mobile operator whitelists, a blocked server IP, blocked protocol parameters (in Russian).",
+      "position": 140,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amneziawg-not-working-en",
+      "title": "Self-Hosted Connection via the AmneziaWG Protocol Does Not Work",
+      "url": "https://docs.amnezia.org/troubleshooting/self-hosted-amneziawg-not-working/",
+      "language": "en",
+      "source": "docs.amnezia.org",
+      "topic": "blocking",
+      "description_ru": "Английская версия пошаговой проверки, когда AmneziaWG не подключается.",
+      "description_en": "Step-by-step checks when a self-hosted AmneziaWG server does not connect.",
+      "position": 150,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amneziawg-signature-ru",
+      "title": "Поиск сигнатуры для AmneziaWG",
+      "url": "https://docs.amnezia.org/ru/documentation/instructions/amneziawg-signature/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "blocking",
+      "description_ru": "Как подобрать параметр I1, чтобы начало соединения выглядело как обычный трафик другого сервиса, если провайдер распознаёт AmneziaWG.",
+      "description_en": "How to pick the I1 parameter so a connection starts like ordinary traffic of another service when the provider recognises AmneziaWG (in Russian).",
+      "position": 160,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amneziawg-signature-en",
+      "title": "Finding a Signature for AmneziaWG",
+      "url": "https://docs.amnezia.org/documentation/instructions/amneziawg-signature/",
+      "language": "en",
+      "source": "docs.amnezia.org",
+      "topic": "blocking",
+      "description_ru": "Английская версия инструкции по подбору параметра I1.",
+      "description_en": "Picking the I1 parameter that makes a connection look like another service.",
+      "position": 170,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "habr-amneziawg-intro",
+      "title": "Создаем свой VPN с защищенным от блокировок протоколом AmneziaWG, или WireGuard на максималках",
+      "url": "https://habr.com/ru/articles/769992/",
+      "language": "ru",
+      "source": "Хабр",
+      "topic": "blocking",
+      "description_ru": "Рассказ разработчиков о том, зачем появился AmneziaWG и как он маскирует WireGuard. Хорошее введение для тех, кто хочет понять устройство.",
+      "description_en": "The developers explain why AmneziaWG was made and how it disguises WireGuard. A good introduction to how it works (in Russian).",
+      "position": 180,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "habr-wiresock-review",
+      "title": "Поддержка AmneziaWG в Wiresock Secure Connect: маскировка WireGuard-трафика или избыточность?",
+      "url": "https://habr.com/en/articles/901282/",
+      "language": "ru",
+      "source": "Хабр",
+      "topic": "blocking",
+      "description_ru": "Критический разбор маскировки AmneziaWG и более простой подход с мусорными пакетами. Полезно для взгляда со стороны.",
+      "description_en": "A critical look at AmneziaWG obfuscation and a simpler junk-packet approach. Useful for an outside view (in Russian).",
+      "position": 190,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "contabo-wireguard-performance",
+      "title": "Maximizing WireGuard Performance: Advanced Tuning and Benchmarking",
+      "url": "https://contabo.com/blog/maximizing-wireguard-performance/",
+      "language": "en",
+      "source": "Contabo",
+      "topic": "speed",
+      "description_ru": "Как измерить скорость WireGuard до и после настройки: MTU и MSS, GRO и GSO, нагрузка на процессор. Подходит и для AmneziaWG.",
+      "description_en": "How to measure WireGuard speed before and after tuning: MTU and MSS, GRO and GSO, CPU load. Applies to AmneziaWG as well.",
+      "position": 200,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "iperf3-invoking",
+      "title": "Invoking iperf3",
+      "url": "https://software.es.net/iperf/invoking.html",
+      "language": "en",
+      "source": "ESnet",
+      "topic": "speed",
+      "description_ru": "Справка по iperf3 — инструменту для замера скорости. Ключ -R меряет скачивание, без него — выгрузку; -P запускает несколько потоков.",
+      "description_en": "The iperf3 manual. Use -R to measure download, run without it for upload, and -P for several parallel streams.",
+      "position": 210,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "habr-qna-wireguard-speed",
+      "title": "Wireguard режет скорость. Как исправить?",
+      "url": "https://qna.habr.com/q/1158822",
+      "language": "ru",
+      "source": "Хабр Q&A",
+      "topic": "speed",
+      "description_ru": "Обсуждение медленного WireGuard с типичными причинами и советами: MTU, провайдер, ресурсы сервера.",
+      "description_en": "A discussion of a slow WireGuard tunnel with the usual causes and fixes: MTU, the provider, server resources (in Russian).",
+      "position": 220,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "wireguard-protocol",
+      "title": "Protocol & Cryptography",
+      "url": "https://www.wireguard.com/protocol/",
+      "language": "en",
+      "source": "wireguard.com",
+      "topic": "security",
+      "description_ru": "Описание протокола WireGuard и его криптографии от автора. AmneziaWG использует ту же криптографию.",
+      "description_en": "The WireGuard protocol and its cryptography, by its author. AmneziaWG uses the same cryptography.",
+      "position": 230,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-vpn-protocols-ru",
+      "title": "VPN-протоколы: история, отличия и принципы работы",
+      "url": "https://amnezia.org/ru/blog/vpn-protocols-and-how-they-differ",
+      "language": "ru",
+      "source": "amnezia.org",
+      "topic": "security",
+      "description_ru": "Обзор VPN-протоколов от Amnezia: чем отличаются WireGuard, OpenVPN, XRay и другие, что из них лучше переносит блокировки.",
+      "description_en": "Amnezia's overview of VPN protocols: how WireGuard, OpenVPN, XRay and others differ and which cope with blocking better (in Russian).",
+      "position": 240,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-vpn-protocols-en",
+      "title": "VPN protocols: history, differences and how they work",
+      "url": "https://amnezia.org/blog/vpn-protocols-and-how-they-differ",
+      "language": "en",
+      "source": "amnezia.org",
+      "topic": "security",
+      "description_ru": "Английская версия обзора VPN-протоколов.",
+      "description_en": "Amnezia's overview of VPN protocols and how they differ.",
+      "position": 250,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "mozilla-openssh-guidelines",
+      "title": "OpenSSH",
+      "url": "https://infosec.mozilla.org/guidelines/openssh",
+      "language": "en",
+      "source": "Mozilla",
+      "topic": "security",
+      "description_ru": "Рекомендации Mozilla по настройке SSH-сервера: ключи вместо паролей, современные алгоритмы. Пригодится, чтобы защитить сервер, которым управляет панель.",
+      "description_en": "Mozilla's recommendations for an SSH server: keys instead of passwords, modern algorithms. Helps to protect the server the panel manages.",
+      "position": 260,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-killswitch-ru",
+      "title": "KillSwitch",
+      "url": "https://docs.amnezia.org/ru/documentation/instructions/killswitch/",
+      "language": "ru",
+      "source": "docs.amnezia.org",
+      "topic": "security",
+      "description_ru": "Как включить KillSwitch в приложении, чтобы при обрыве VPN трафик и DNS-запросы не уходили мимо туннеля.",
+      "description_en": "Turning on KillSwitch in the app so traffic and DNS queries do not leak past the tunnel when the VPN drops (in Russian).",
+      "position": 270,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  },
+  {
+    "model": "guides.usefulmaterial",
+    "fields": {
+      "slug": "amnezia-killswitch-en",
+      "title": "KillSwitch",
+      "url": "https://docs.amnezia.org/documentation/instructions/killswitch/",
+      "language": "en",
+      "source": "docs.amnezia.org",
+      "topic": "security",
+      "description_ru": "Английская версия инструкции по KillSwitch.",
+      "description_en": "Keeping traffic and DNS inside the tunnel when the VPN drops.",
+      "position": 280,
+      "is_published": true,
+      "checked_at": "2026-11-07",
+      "is_broken": false,
+      "check_error": ""
+    }
+  }
+]

@@ -1,0 +1,13 @@
+{% load i18n ui %}{# Modal fragment for HTMX: a template extends this one, fills title/body/footer and is loaded into #modal (ui.js opens it). #}
+<dialog class="dialog" aria-labelledby="modal-title">
+  <div class="dialog-header">
+    <h2 id="modal-title" class="dialog-title">{% block title %}{% endblock %}</h2>
+    <button type="button" class="btn btn-ghost btn-icon btn-sm -mr-2" data-dialog-close aria-label="{% translate 'Close' %}">{% icon "close" %}</button>
+  </div>
+  <div class="dialog-body">{% block body %}{% endblock %}</div>
+  <div class="dialog-footer">
+    {% block footer %}
+      <button type="button" class="btn btn-secondary" data-dialog-close>{% translate "Close" %}</button>
+    {% endblock %}
+  </div>
+</dialog>

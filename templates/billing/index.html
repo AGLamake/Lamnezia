@@ -1,0 +1,54 @@
+{% extends "layouts/portal.html" %}
+{% load i18n %}
+{% block title %}{% translate "Payment" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% translate "Payment" %}</h1>
+{% if not can_buy %}
+  {% translate "Payment opens once an administrator approves your account." as waiting %}
+  {% include "components/alert.html" with level="info" text=waiting %}
+{% elif plans %}
+  <p class="help-text">{% translate "Paying for your current plan moves the end of access later. Another plan replaces the current one and its term starts today." %}</p>
+  <ul class="space-y-2">
+    {% for plan in plans %}
+      <li class="card flex flex-wrap items-center justify-between gap-3">
+        <span class="min-w-0">
+          <span class="block truncate font-medium">{{ plan.name }}</span>
+          <span class="help-text block">
+            {{ plan.price }} {{ plan.currency }} ·
+            {% if plan.access_days %}{% blocktranslate count days=plan.access_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}{% else %}{% translate "no end date" %}{% endif %}
+          </span>
+        </span>
+        <form method="post" action="{% url 'billing:checkout' %}" class="flex flex-wrap gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="plan" value="{{ plan.pk }}">
+          {% for provider in providers %}
+            <button type="submit" name="provider" value="{{ provider.key }}" class="btn btn-primary">{{ provider.title }}</button>
+          {% endfor %}
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="help-text">{% translate "No plans are on sale yet." %}</p>
+{% endif %}
+
+{% if orders %}
+  <section class="space-y-3">
+    <h2 class="text-lg font-semibold">{% translate "My payments" %}</h2>
+    <ul class="space-y-2">
+      {% for order in orders %}
+        <li>
+          <a href="{% url 'billing:order' order.number %}" class="card card-link flex items-center justify-between gap-3">
+            <span class="min-w-0">
+              <span class="block truncate font-medium">{{ order.plan.name }}</span>
+              <span class="help-text block truncate">{{ order.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ order.amount }} {{ order.currency }}</span>
+            </span>
+            {% include "billing/_status.html" %}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load i18n %}
+{# Sign-in pages: one narrow card in the middle of the screen. Pages fill `heading` and `content`. #}
+{% block body %}
+<div class="flex min-h-full flex-col">
+  <div class="flex justify-end px-2 pt-2">
+    {% include "components/language_switch.html" %}
+    {% include "components/theme_toggle.html" %}
+  </div>
+  <main id="main" tabindex="-1" class="flex flex-1 flex-col items-center justify-center px-4 pt-4 pb-12 focus:outline-none">
+    <div class="w-full max-w-sm space-y-6">
+      <div class="flex flex-col items-center gap-3 text-lg font-semibold">
+        {% include "components/logo_mark.html" with uid="logo" size="h-14" %}
+        <p>{{ site_name }}</p>
+      </div>
+      <section class="card space-y-5 shadow-raised">
+        <h1 class="text-xl font-semibold tracking-tight">{% block heading %}{% endblock %}</h1>
+        {% block content %}{% endblock %}
+      </section>
+    </div>
+  </main>
+</div>
+{% endblock %}

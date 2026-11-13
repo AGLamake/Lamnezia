@@ -1,0 +1,73 @@
+{% extends "guides/base.html" %}
+{% load i18n ui %}
+{% block title %}Amnezia VPN · {{ guide.device.label }} · Lamnezia{% endblock %}
+
+{% block content %}
+<h1 class="page-title flex items-center gap-3">{% icon "os-"|add:guide.device.value "size-7 shrink-0" %}{% blocktranslate with device=guide.device.label %}Amnezia VPN for {{ device }}{% endblocktranslate %}</h1>
+
+<section class="card space-y-4">
+  <h2 class="text-lg font-semibold">{% translate "1. Install the app" %}</h2>
+
+  {% if guide.release %}
+    <p class="help-text">
+      {% blocktranslate with version=guide.release.version date=guide.release.published_at|date:"DATE_FORMAT" %}Version {{ version }} from {{ date }}.{% endblocktranslate %}
+      <a href="{{ guide.release.page_url }}" class="underline" rel="noopener">{% translate "Release notes" %}</a>
+    </p>
+  {% elif guide.device != "ios" %}
+    {% translate "GitHub cannot be reached right now. Download the app from the releases page." as offline_text %}
+    {% include "components/alert.html" with level="warning" text=offline_text %}
+  {% endif %}
+
+  {% if guide.apk %}
+    <form method="get" class="grid gap-4 sm:grid-cols-2" data-autosubmit>
+      <div class="field">
+        <label for="android" class="label">{% translate "Android version" %}</label>
+        <select id="android" name="android" class="input">
+          {% for version in guide.android_versions %}
+            <option value="{{ version }}" {% if version == guide.apk.android_version %}selected{% endif %}>Android {{ version }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="abi" class="label">{% translate "Processor" %}</label>
+        <select id="abi" name="abi" class="input">
+          {% for abi in guide.abis %}
+            <option value="{{ abi }}" {% if abi == guide.apk.abi %}selected{% endif %}>{{ abi }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <p class="help-text sm:col-span-2">{% translate "Most phones need arm64-v8a. Your Android version is in Settings → About phone." %}</p>
+      <noscript><button type="submit" class="btn btn-secondary btn-sm">{% translate "Show" %}</button></noscript>
+    </form>
+  {% endif %}
+
+  <div class="flex flex-wrap gap-2">
+    {% for asset in guide.downloads %}
+      <a href="{{ asset.url }}" class="btn btn-primary" rel="noopener">
+        {% translate "Download" %} {{ asset.arch }} · {{ asset.size|filesizeformat }}
+      </a>
+    {% endfor %}
+    {% if guide.store_url %}
+      <a href="{{ guide.store_url }}" class="btn btn-secondary" rel="noopener">
+        {% if guide.device == "ios" %}{% translate "Open in App Store" %}{% else %}{% translate "Open in Google Play" %}{% endif %}
+      </a>
+    {% endif %}
+    {% if guide.device != "ios" %}
+      <a href="{{ guide.releases_page_url }}" class="btn btn-ghost" rel="noopener">{% translate "All downloads" %}</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="card space-y-2">
+  <h2 class="text-lg font-semibold">{% translate "2. Get a key" %}</h2>
+  <p>{% translate "Open the panel, choose a server and your device. You get a vpn:// link and a QR code." %}</p>
+</section>
+
+<section class="card space-y-2">
+  <h2 class="text-lg font-semibold">{% translate "3. Add the key to Amnezia" %}</h2>
+  <p>{% translate "In the app press «Add» («Let's get started» on the first launch), paste the vpn:// link or scan the QR code, and connect." %}</p>
+</section>
+
+{% url 'guides:faq' as faq_url %}
+<p>{% blocktranslate %}Something does not work? See the <a href="{{ faq_url }}" class="underline">FAQ</a>.{% endblocktranslate %}</p>
+{% endblock %}

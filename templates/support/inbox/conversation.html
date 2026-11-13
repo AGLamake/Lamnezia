@@ -1,0 +1,49 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}#{{ conversation.pk }} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="inbox" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% if conversation.kind == 'chat' %}{% url 'support:inbox-chats' %}{% else %}{% url 'support:inbox' %}{% endif %}">{% translate "Inbox" %}</a></li><li aria-current="page">{% if conversation.kind == 'chat' %}{{ conversation.user.username }}{% else %}#{{ conversation.pk }}{% endif %}</li>{% endblock %}
+
+{% block content %}
+<div>
+  <h1 class="page-title break-words">{% if conversation.kind == "chat" %}{% blocktranslate with user=conversation.user.username %}Chat with {{ user }}{% endblocktranslate %}{% else %}#{{ conversation.pk }} {% include "support/_subject.html" %}{% endif %}</h1>
+  <p class="help-text">
+    {% if user.is_admin %}<a href="{% url 'dashboard:user' conversation.user_id %}" class="hover:underline">{{ conversation.user.username }}</a>{% else %}{{ conversation.user.username }}{% endif %}
+    {% if conversation.kind == "ticket" %}· {{ conversation.get_type_display }} · {{ conversation.created_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}
+    {% if conversation.incident_id and user.is_admin %}· <a href="{% url 'support:incidents' %}" class="hover:underline">{% translate "part of an incident" %}</a>{% endif %}
+  </p>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="min-w-0 lg:col-span-2">{% include "support/inbox/_thread.html" %}</div>
+  <aside class="space-y-4">
+    {% if conversation.kind == "ticket" %}
+      <form method="post" action="{% url 'support:inbox-manage' conversation.pk %}" class="card space-y-3">
+        {% csrf_token %}
+        {{ manage_form }}
+        <button type="submit" class="btn btn-secondary">{% translate "Save" %}</button>
+      </form>
+    {% endif %}
+    {% if client %}{% include "support/inbox/_client.html" %}{% endif %}
+    {% if conversation.context %}
+      <section class="card space-y-2">
+        <h2 class="font-semibold">{% translate "When opened" %}</h2>
+        <p>{% translate "Plan" %}: {{ conversation.context.plan|default:"—" }}</p>
+        {% for key in conversation.context.keys %}
+          <p class="help-text">{{ key.name }} · {{ key.server }} · {{ key.status }} · {% translate "last seen online" %}: {{ key.handshake|default:"—" }}</p>
+        {% endfor %}
+        {% if conversation.context.user_agent %}<p class="help-text break-words">{{ conversation.context.user_agent }}</p>{% endif %}
+      </section>
+    {% endif %}
+    {% if report %}
+      <section class="card space-y-1">
+        <h2 class="font-semibold">{% translate "Server check" %}</h2>
+        <p>{% if report.answered %}{% translate "The server answers." %}{% else %}{% translate "The server does not answer." %}{% endif %}</p>
+        {% if report.answered %}<p>{% if report.stopped %}{% translate "The VPN service is stopped." %}{% else %}{% translate "The VPN service runs." %}{% endif %}</p>{% endif %}
+        <p class="help-text">{% blocktranslate with at=report.checked|date:"SHORT_DATETIME_FORMAT" %}Checked at {{ at }}.{% endblocktranslate %}</p>
+      </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

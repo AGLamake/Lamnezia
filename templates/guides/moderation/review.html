@@ -1,0 +1,43 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{{ suggestion.title }} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="suggestions" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'guides:moderation' %}">{% translate "Article suggestions" %}</a></li><li aria-current="page">{{ suggestion.title }}</li>{% endblock %}
+
+{% block content %}
+<div>
+  <h1 class="page-title">{{ suggestion.title }}</h1>
+  <p class="help-text">{{ suggestion.get_kind_display }} · {{ suggestion.get_topic_display }} · {{ suggestion.get_language_display }} · {{ suggestion.author.username }} · {{ suggestion.created_at|date:"SHORT_DATETIME_FORMAT" }}</p>
+</div>
+
+<section class="card space-y-3">
+  <h2 class="text-lg font-semibold">{% translate "As the author sent it" %}</h2>
+  {% if suggestion.url %}<p><a href="{{ suggestion.url }}" class="break-all hover:underline" target="_blank" rel="noopener noreferrer nofollow">{{ suggestion.url }}</a></p>{% endif %}
+  {% if preview %}<div class="markdown">{{ preview }}</div>{% endif %}
+  {% if suggestion.comment %}<p><span class="help-text">{% translate "Comment:" %}</span> {{ suggestion.comment|linebreaksbr }}</p>{% endif %}
+  <p class="help-text">{% if suggestion.credit_author %}{% translate "The author asks to be named." %}{% else %}{% translate "The author asks not to be named." %}{% endif %}</p>
+</section>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  <input type="hidden" name="as" value="{{ target }}">
+  <h2 class="text-lg font-semibold">{% if target == targets.MATERIAL %}{% translate "Publish as a useful material" %}{% else %}{% translate "Publish as an FAQ article" %}{% endif %}</h2>
+  <nav class="flex flex-wrap items-center gap-2" aria-label="{% translate 'Publish as' %}">
+    <span class="help-text">{% translate "Publish as" %}</span>
+    {% for value, label in targets.choices %}
+      <a href="?as={{ value }}" class="btn btn-sm {% if value == target %}btn-secondary{% else %}btn-ghost{% endif %}"{% if value == target %} aria-current="true"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+  <p class="help-text">{% translate "Edit the text before publishing if needed." %}</p>
+  {{ publish_form }}
+  <button type="submit" class="btn btn-primary">{% translate "Publish" %}</button>
+</form>
+
+<form method="post" action="{% url 'guides:moderation-reject' suggestion.pk %}" class="card space-y-4">
+  {% csrf_token %}
+  <h2 class="text-lg font-semibold">{% translate "Decline" %}</h2>
+  {{ reject_form }}
+  <button type="submit" class="btn btn-danger">{% translate "Decline" %}</button>
+</form>
+{% endblock %}

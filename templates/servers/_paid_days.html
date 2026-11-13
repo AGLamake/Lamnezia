@@ -1,0 +1,5 @@
+{% load i18n %}{% with days=server.days_until_paid overdue=server.days_overdue %}{% if days is not None %}
+  <span class="{% if overdue %}text-danger-soft-fg{% elif days <= 7 %}text-warning-soft-fg{% else %}help-text{% endif %}">
+    ({% if overdue %}{% blocktranslate count days=overdue %}overdue by {{ days }} day{% plural %}overdue by {{ days }} days{% endblocktranslate %}{% elif days == 0 %}{% translate "due today" %}{% else %}{% blocktranslate count days=days %}in {{ days }} day{% plural %}in {{ days }} days{% endblocktranslate %}{% endif %})
+  </span>
+{% endif %}{% endwith %}

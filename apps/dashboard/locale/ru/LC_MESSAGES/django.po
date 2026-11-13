@@ -1,0 +1,292 @@
+# Russian translation of Lamnezia (apps.dashboard).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#, python-format
+msgid "%(count)d application waits for approval"
+msgid_plural "%(count)d applications wait for approval"
+msgstr[0] "%(count)d заявка ждёт подтверждения"
+msgstr[1] "%(count)d заявки ждут подтверждения"
+msgstr[2] "%(count)d заявок ждут подтверждения"
+
+#, python-format
+msgid "%(count)d article suggestion to review"
+msgid_plural "%(count)d article suggestions to review"
+msgstr[0] "%(count)d предложение статьи на проверку"
+msgstr[1] "%(count)d предложения статей на проверку"
+msgstr[2] "%(count)d предложений статей на проверку"
+
+#, python-format
+msgid "%(count)d operation failed in the last day"
+msgid_plural "%(count)d operations failed in the last day"
+msgstr[0] "%(count)d операция не удалась за сутки"
+msgstr[1] "%(count)d операции не удались за сутки"
+msgstr[2] "%(count)d операций не удались за сутки"
+
+#, python-format
+msgid "%(count)d unread message"
+msgid_plural "%(count)d unread messages"
+msgstr[0] "%(count)d непрочитанное сообщение"
+msgstr[1] "%(count)d непрочитанных сообщения"
+msgstr[2] "%(count)d непрочитанных сообщений"
+
+#, python-format
+msgid "%(count)d useful material is hidden: its link is broken"
+msgid_plural "%(count)d useful materials are hidden: their links are broken"
+msgstr[0] "%(count)d полезный материал скрыт: ссылка не работает"
+msgstr[1] "%(count)d полезных материала скрыты: ссылки не работают"
+msgstr[2] "%(count)d полезных материалов скрыты: ссылки не работают"
+
+#, python-format
+msgid "%(name)s does not answer"
+msgstr "%(name)s не отвечает"
+
+#, python-format
+msgid "%(name)s: VPS payment is due today"
+msgstr "%(name)s: оплата VPS сегодня"
+
+#, python-format
+msgid "%(name)s: VPS payment overdue by %(days)d day"
+msgid_plural "%(name)s: VPS payment overdue by %(days)d days"
+msgstr[0] "%(name)s: оплата VPS просрочена на %(days)d день"
+msgstr[1] "%(name)s: оплата VPS просрочена на %(days)d дня"
+msgstr[2] "%(name)s: оплата VPS просрочена на %(days)d дней"
+
+#, python-format
+msgid "%(name)s: pay for the VPS within %(days)d day"
+msgid_plural "%(name)s: pay for the VPS within %(days)d days"
+msgstr[0] "%(name)s: оплатите VPS в течение %(days)d дня"
+msgstr[1] "%(name)s: оплатите VPS в течение %(days)d дней"
+msgstr[2] "%(name)s: оплатите VPS в течение %(days)d дней"
+
+msgid "A new subscription link is ready."
+msgstr "Новая ссылка-подписка готова."
+
+msgid "Access has no end date."
+msgstr "Доступ без срока окончания."
+
+#, python-format
+msgid "Access until %(date)s."
+msgstr "Доступ до %(date)s."
+
+msgid "Account ID"
+msgstr "ID аккаунта"
+
+msgid "Action"
+msgstr "Действие"
+
+msgid "All servers"
+msgstr "Все серверы"
+
+msgid "Already on this plan."
+msgstr "Уже на этом тарифе."
+
+msgid "Any"
+msgstr "Любой"
+
+msgid "Change plan"
+msgstr "Сменить тариф"
+
+msgid "Choose a plan."
+msgstr "Выберите тариф."
+
+msgid "Day"
+msgstr "День"
+
+msgid "Days"
+msgstr "Дней"
+
+msgid "Device"
+msgstr "Устройство"
+
+msgid "Disable keys"
+msgstr "Отключить ключи"
+
+msgid "Download, bytes"
+msgstr "Скачано, байт"
+
+msgid "Downloaded"
+msgstr "Скачано"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Extend access"
+msgstr "Продлить доступ"
+
+msgid "Friends"
+msgstr "Друзья"
+
+msgid "Hourly traffic"
+msgstr "Почасовой трафик"
+
+msgid "How many days to add?"
+msgstr "На сколько дней продлить?"
+
+msgid "I agree"
+msgstr "Я согласен"
+
+msgid "Keys"
+msgstr "Ключи"
+
+#, python-format
+msgid "Keys to reissue: %(count)d."
+msgstr "Ключей к перевыпуску: %(count)d."
+
+#, python-format
+msgid "Keys to turn off: %(count)d."
+msgstr "Ключей к отключению: %(count)d."
+
+msgid "Linked."
+msgstr "Привязано."
+
+msgid "Messenger"
+msgstr "Мессенджер"
+
+msgid "Month"
+msgstr "Месяц"
+
+msgid "Name"
+msgstr "Имя"
+
+msgid "Name in the messenger"
+msgstr "Имя в мессенджере"
+
+msgid "Name, email or messenger account"
+msgstr "Имя, email или аккаунт в мессенджере"
+
+msgid "No active keys."
+msgstr "Нет активных ключей."
+
+msgid "No keys."
+msgstr "Ключей нет."
+
+msgid "No plan"
+msgstr "Без тарифа"
+
+msgid "No plan."
+msgstr "Нет тарифа."
+
+msgid "Not linked"
+msgstr "Не привязан"
+
+msgid "Note"
+msgstr "Заметка"
+
+msgid "Notification deliveries"
+msgstr "Доставки уведомлений"
+
+msgid "Operation log"
+msgstr "Журнал операций"
+
+msgid "Period"
+msgstr "Период"
+
+msgid "Plan"
+msgstr "Тариф"
+
+msgid "Reissue keys"
+msgstr "Перевыпустить ключи"
+
+msgid "Search"
+msgstr "Поиск"
+
+msgid "Server"
+msgstr "Сервер"
+
+msgid "Server monitoring history"
+msgstr "История мониторинга серверов"
+
+msgid "Servers"
+msgstr "Серверы"
+
+msgid "Shown to other users."
+msgstr "Видно другим пользователям."
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "The account ID is a number."
+msgstr "ID аккаунта — это число."
+
+msgid "The subscription link is deleted."
+msgstr "Ссылка-подписка удалена."
+
+msgid "The user may not have keys."
+msgstr "Пользователю нельзя иметь ключи."
+
+msgid "Tick at least one user."
+msgstr "Отметьте хотя бы одного пользователя."
+
+msgid "Trial"
+msgstr "Пробный"
+
+msgid "Unlinked."
+msgstr "Отвязано."
+
+msgid "Upload, bytes"
+msgstr "Отправлено, байт"
+
+msgid "Uploaded"
+msgstr "Отправлено"
+
+msgid "User"
+msgstr "Пользователь"
+
+msgid "Users"
+msgstr "Пользователи"
+
+msgid "Users with a key on the server."
+msgstr "Пользователи с ключом на этом сервере."
+
+msgid "Week"
+msgstr "Неделя"
+
+msgid "action"
+msgstr "действие"
+
+msgid "bulk action"
+msgstr "массовое действие"
+
+msgid "bulk action result"
+msgstr "результат массового действия"
+
+msgid "bulk action results"
+msgstr "результаты массового действия"
+
+msgid "bulk actions"
+msgstr "массовые действия"
+
+msgid "created at"
+msgstr "создано"
+
+msgid "days"
+msgstr "дней"
+
+msgid "done"
+msgstr "готово"
+
+msgid "note"
+msgstr "заметка"
+
+msgid "operations"
+msgstr "операции"
+
+msgid "outcome"
+msgstr "итог"
+
+msgid "plan"
+msgstr "тариф"
+
+msgid "skipped"
+msgstr "пропущен"
+
+msgid "started by"
+msgstr "запустил"
+
+msgid "user"
+msgstr "пользователь"

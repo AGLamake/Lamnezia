@@ -1,0 +1,6 @@
+{% extends "errors/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Bad request" %}{% endblock %}
+{% block code %}400{% endblock %}
+{% block heading %}{% translate "Bad request" %}{% endblock %}
+{% block text %}{% translate "The server could not understand the request. Go back and try again." %}{% endblock %}

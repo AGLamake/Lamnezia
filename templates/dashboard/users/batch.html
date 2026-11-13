@@ -1,0 +1,16 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{{ object.get_action_display }} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="users" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'dashboard:users' %}">{% translate "Users" %}</a></li><li aria-current="page">{{ object.get_action_display }}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">
+    {{ object.get_action_display }}{% if object.days %}: {% blocktranslate count days=object.days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}{% elif object.plan %}: {{ object.plan.name }}{% endif %}
+  </h1>
+  <p class="help-text">{{ object.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ object.created_by|default:"—" }}</p>
+</div>
+{% include "dashboard/users/_report.html" %}
+{% endblock %}

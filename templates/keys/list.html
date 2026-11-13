@@ -1,0 +1,60 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Keys" %} · Lamnezia{% endblock %}
+{% block nav %}{% include "keys/_nav.html" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Keys" %}</h1>
+    <p class="page-lead">{% translate "Devices of the users on the servers. Tick keys to change many at once." %}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'keys:drift' %}" class="btn btn-secondary">{% icon "switch" %}{% translate "Differences with servers" %}{% if drift_count %} <span class="nav-count nav-count-danger">{{ drift_count }}</span>{% endif %}</a>
+    <a href="{% url 'keys:issue' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Issue a key" %}</a>
+  </div>
+</div>
+
+{% include "components/filters.html" with form=filter_form %}
+
+{% if keys %}
+  <form method="post" action="{% url 'keys:bulk' %}" class="space-y-4" data-confirm="{% translate 'Apply the action to the ticked keys?' %}" data-confirm-button="{% translate 'Apply' %}">
+    {% csrf_token %}
+    <div class="bulk-bar">
+      <label for="{{ bulk_form.action.id_for_label }}" class="text-sm font-medium">{{ bulk_form.action.label }}</label>
+      <div class="flex min-w-0 flex-1 gap-2 sm:flex-none">
+        <div class="min-w-0 flex-1 sm:w-48">{{ bulk_form.action }}</div>
+        <button type="submit" class="btn btn-primary">{% translate "Apply" %}</button>
+      </div>
+      <p class="help-text w-full">{% translate "Each key changes on its server in a separate operation; the operations list shows their progress." %}</p>
+    </div>
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead>
+          <tr>
+            <th><input type="checkbox" class="checkbox" aria-label="{% translate 'Tick all' %}" data-check-all="keys"></th>
+            <th>{% translate "Device" %}</th><th>{% translate "Owner" %}</th><th>{% translate "Server" %}</th>
+            <th>{% translate "IP address" %}</th><th>{% translate "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for key, title in rows %}
+            <tr>
+              <td class="cell-check"><input type="checkbox" class="checkbox" name="keys" value="{{ key.pk }}" aria-label="{{ key.name }}"></td>
+              <td class="cell-title"><a href="{% url 'keys:detail' key.pk %}" class="font-medium hover:underline">{{ key.name }}</a></td>
+              <td data-label="{% translate 'Owner' %}">{{ key.user|default:"—" }}</td>
+              <td data-label="{% translate 'Server' %}">{{ title }}</td>
+              <td data-label="{% translate 'IP address' %}" class="font-mono text-xs">{{ key.client_ip|default:"—" }}</td>
+              <td data-label="{% translate 'Status' %}"><span class="badge {% if key.status == 'active' %}badge-success{% elif key.status == 'revoked' %}badge-danger{% else %}badge-muted{% endif %}">{{ key.get_status_display }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+  {% include "components/pagination.html" %}
+{% else %}
+  {% translate "No keys found." as empty_title %}
+  {% include "components/empty_state.html" with icon="key" title=empty_title %}
+{% endif %}
+{% endblock %}

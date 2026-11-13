@@ -1,0 +1,159 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, releases]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy .
+
+  i18n:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+      - run: uv sync --locked
+      # Every wrapped string must have a Russian translation, and the catalogs must compile.
+      - run: make messages-check compilemessages
+      # The catalogs are sorted, so a fresh run over unchanged strings must not touch them.
+      - run: git diff --exit-code -- '*.po'
+
+  ui:
+    runs-on: ubuntu-latest
+    env:
+      AXE_VERSION: 4.10.2
+      AXE_SHA256: b511cd9dec01c76f4b2ad1723b66b6db37d4c2eb4ed199076e1829d9ee7b75e3
+      LAMNEZIA_DEBUG: "1"
+      LAMNEZIA_SECRET_KEY: ui-check-only
+      LAMNEZIA_ENCRYPTION_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      LAMNEZIA_DATABASE_URL: sqlite:////tmp/ui-check.sqlite3
+      LAMNEZIA_ALLOWED_HOSTS: 127.0.0.1
+      LAMNEZIA_REQUIRE_ADMIN_2FA: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run playwright install --with-deps chromium
+      - run: make css
+      - name: Download axe-core
+        run: |
+          curl -sSfL -o /tmp/axe.min.js "https://cdn.jsdelivr.net/npm/axe-core@$AXE_VERSION/axe.min.js"
+          echo "$AXE_SHA256  /tmp/axe.min.js" | sha256sum -c -
+      - name: Start the panel with demo data
+        run: |
+          uv run python manage.py collectstatic --noinput
+          uv run python manage.py migrate --noinput
+          uv run python manage.py shell < scripts/ui_seed.py
+          uv run uvicorn config.asgi:application --port 8000 > /tmp/panel.log 2>&1 &
+          for _ in $(seq 30); do curl -sf -o /dev/null http://127.0.0.1:8000/accounts/login/ && break; sleep 1; done
+      # axe serious/critical, horizontal scroll and console errors under the real CSP.
+      - run: uv run python scripts/ui_check.py --axe /tmp/axe.min.js
+      - name: Panel log
+        if: failure()
+        run: cat /tmp/panel.log
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: lamnezia
+          POSTGRES_PASSWORD: lamnezia
+          POSTGRES_DB: lamnezia
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lamnezia"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      LAMNEZIA_DATABASE_URL: postgres://lamnezia:lamnezia@localhost:5432/lamnezia
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      # The Node.js receiver from the webhook docs is run by a test.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+      - run: uv sync --locked
+      - run: uv run python manage.py makemigrations --check --dry-run --settings=config.settings_test
+      # Tests of the Russian interface need the compiled catalogs (*.mo are not in git).
+      - run: uv run python manage.py compilemessages --ignore=.venv --settings=config.settings_test
+      # --cov measures amnezia_core and enforces its coverage gate (pyproject.toml).
+      - run: uv run pytest --cov
+
+  ssh-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Start test sshd and target container
+        run: |
+          ssh-keygen -q -t ed25519 -N "" -f "$RUNNER_TEMP/id_test"
+          docker build -t lamnezia-test-sshd apps/ssh/tests/integration/sshd
+          docker run -d --name lamnezia-test-target alpine:3.20 sleep infinity
+          docker run -d --name lamnezia-test-sshd -p 2222:22 \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -e AUTHORIZED_KEY="$(cat "$RUNNER_TEMP/id_test.pub")" \
+            lamnezia-test-sshd
+          for _ in $(seq 30); do
+            ssh-keyscan -p 2222 127.0.0.1 > /dev/null 2>&1 && break
+            sleep 1
+          done
+      - run: uv sync --locked
+      - run: uv run pytest -m integration apps/ssh -v
+        env:
+          LAMNEZIA_TEST_SSH_HOST: 127.0.0.1
+          LAMNEZIA_TEST_SSH_PORT: "2222"
+          LAMNEZIA_TEST_SSH_KEY_FILE: ${{ runner.temp }}/id_test
+          LAMNEZIA_TEST_SSH_CONTAINER: lamnezia-test-target
+      - name: sshd log
+        if: failure()
+        run: docker logs lamnezia-test-sshd
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+        if: hashFiles('Dockerfile') != ''
+      - name: Build image
+        if: hashFiles('Dockerfile') != ''
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

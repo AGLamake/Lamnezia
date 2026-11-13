@@ -1,0 +1,133 @@
+# Russian translation of Lamnezia (apps.plans).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "A new plan starts the access term again."
+msgstr "С новым тарифом срок доступа начинается заново."
+
+msgid "AmneziaWG (legacy)"
+msgstr "AmneziaWG (старый)"
+
+msgid "Counted from the day the plan is assigned. Empty: no end date."
+msgstr "Отсчитывается со дня назначения тарифа. Пусто — без срока."
+
+msgid "Empty: as in the plan."
+msgstr "Пусто — как в тарифе."
+
+msgid "Empty: no limit."
+msgstr "Пусто — без ограничения."
+
+msgid "Empty: the term of the plan."
+msgstr "Пусто — срок по тарифу."
+
+msgid "In GB. Empty: as in the plan."
+msgstr "В ГБ. Пусто — как в тарифе."
+
+msgid "In GB. Empty: no limit."
+msgstr "В ГБ. Пусто — без ограничения."
+
+msgid "No user with this name."
+msgstr "Пользователя с таким именем нет."
+
+msgid "None selected: all protocols."
+msgstr "Ничего не выбрано — все протоколы."
+
+msgid "None selected: all servers."
+msgstr "Ничего не выбрано — все серверы."
+
+msgid "Per key, each way. Empty: as in the plan."
+msgstr "На ключ, в каждую сторону. Пусто — как в тарифе."
+
+msgid "Per key, each way. Empty: no limit."
+msgstr "На ключ, в каждую сторону. Пусто — без ограничения."
+
+msgid "Protocols"
+msgstr "Протоколы"
+
+msgid "The limits are saved."
+msgstr "Лимиты сохранены."
+
+msgid "The plan is deleted."
+msgstr "Тариф удалён."
+
+msgid "The plan was paid for and stays for the record. Clear its price to stop selling it."
+msgstr "За тариф платили, поэтому он остаётся в истории. Чтобы снять его с продажи, очистите цену."
+
+msgid "Traffic in total"
+msgstr "Трафик всего"
+
+msgid "Traffic per period"
+msgstr "Трафик за период"
+
+msgid "Use a three-letter code, e.g. EUR or RUB."
+msgstr "Укажите трёхбуквенный код, например EUR или RUB."
+
+msgid "User name"
+msgstr "Имя пользователя"
+
+msgid "Users still have this plan. Give them another one first."
+msgstr "У пользователей ещё есть этот тариф. Сначала назначьте им другой."
+
+msgid "With a payment plugin, users can buy the plan at this price."
+msgstr "С плагином оплаты пользователи смогут купить тариф по этой цене."
+
+msgid "access until"
+msgstr "доступ до"
+
+msgid "access, days"
+msgstr "доступ, дней"
+
+msgid "created at"
+msgstr "создан"
+
+msgid "currency"
+msgstr "валюта"
+
+msgid "keys at most"
+msgstr "ключей не больше"
+
+msgid "name"
+msgstr "название"
+
+msgid "period, days"
+msgstr "период, дней"
+
+msgid "plan"
+msgstr "тариф"
+
+msgid "plan assigned at"
+msgstr "тариф назначен"
+
+msgid "plans"
+msgstr "тарифы"
+
+msgid "price"
+msgstr "цена"
+
+msgid "protocols"
+msgstr "протоколы"
+
+msgid "servers"
+msgstr "серверы"
+
+msgid "speed, Mbit/s"
+msgstr "скорость, Мбит/с"
+
+msgid "traffic in total"
+msgstr "трафик всего"
+
+msgid "traffic per period"
+msgstr "трафик за период"
+
+msgid "trial"
+msgstr "пробный"
+
+msgid "user"
+msgstr "пользователь"
+
+msgid "user limits"
+msgstr "лимиты пользователя"

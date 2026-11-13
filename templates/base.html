@@ -1,0 +1,37 @@
+{% load i18n static %}<!doctype html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Lamnezia{% endblock %}</title>
+  <link rel="icon" href="{% static 'brand/favicon.ico' %}" sizes="48x48">
+  <link rel="icon" href="{% static 'brand/favicon.svg' %}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{% static 'brand/apple-touch-icon.png' %}">
+  {# Install as an app (apps/core/views_pwa.py); the bar colours follow the page in each theme. #}
+  <link rel="manifest" href="{% url 'pwa-manifest' %}">
+  <meta name="theme-color" content="#eef1f6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161a22" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="{{ site_name }}">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  {# Not deferred: sets the theme before the page renders. A file, not inline, for the CSP. #}
+  <script src="{% static 'js/theme.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'vendor/htmx-2.0.11.min.js' %}" defer></script>
+  {# ui.js registers the Alpine components, so it loads before the CSP build of Alpine (no eval). #}
+  <script src="{% static 'js/ui.js' %}" defer></script>
+  <script src="{% static 'vendor/alpinejs-csp-3.17.5.min.js' %}" defer></script>
+  <script src="{% static 'js/support-live.js' %}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="h-full" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <a href="#main" class="skip-link sr-only-focusable">{% translate "Skip to content" %}</a>
+  {% block body %}{% endblock %}
+  {% include "components/messages.html" %}
+  {% include "components/confirm_dialog.html" %}
+  {# HTMX loads modal fragments here (templates extending components/modal.html). #}
+  <div id="modal"></div>
+</body>
+</html>

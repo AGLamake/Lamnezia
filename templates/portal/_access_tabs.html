@@ -1,0 +1,7 @@
+{% load i18n %}{# Second-level tabs of "My access": the keys and their usage. #}
+{% with page=request.resolver_match.url_name %}
+<nav class="tabs" aria-label="{% translate 'My access' %}">
+  <a href="{% url 'portal:index' %}" class="tab"{% if page == 'index' %} aria-current="page"{% endif %}>{% translate "Keys" %}</a>
+  <a href="{% url 'portal:usage' %}" class="tab"{% if page == 'usage' %} aria-current="page"{% endif %}>{% translate "Usage" %}</a>
+</nav>
+{% endwith %}

@@ -1,0 +1,24 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{% translate "Create an invite" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="registrations" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'accounts:registrations' %}">{% translate "Registration" %}</a></li><li aria-current="page">{% translate "Create an invite" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Create an invite" %}</h1>
+</div>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {{ form.plan.as_field_group }}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {{ form.max_uses.as_field_group }}
+    {{ form.expires_at.as_field_group }}
+  </div>
+  {{ form.note.as_field_group }}
+  <button type="submit" class="btn btn-primary">{% translate "Create" %}</button>
+</form>
+{% endblock %}

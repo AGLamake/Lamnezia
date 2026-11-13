@@ -1,0 +1,213 @@
+{% extends layout %}
+{% load i18n ui %}
+{# Showcase of the design system (DEBUG only). Every component class of assets/css/app.css is here; add new ones too. #}
+{% block title %}UI · Lamnezia{% endblock %}
+
+{% block nav %}
+  <a href="?layout=admin" class="nav-link"{% if 'admin' in layout %} aria-current="page"{% endif %}>{% icon "home" %}<span class="truncate">{% translate "Admin layout" %}</span></a>
+  <a href="?layout=portal" class="nav-link"{% if 'portal' in layout %} aria-current="page"{% endif %}>{% icon "key" %}<span class="truncate">{% translate "Portal layout" %}</span></a>
+{% endblock %}
+
+{% block breadcrumbs %}<li><a href="?layout=admin">{% translate "Development" %}</a></li><li aria-current="page">{% translate "UI components" %}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "UI components" %}</h1>
+    <p class="help-text">{% translate "Switch the theme and narrow the window: every block must stay readable from 360 px." %}</p>
+  </div>
+</div>
+
+<section class="card space-y-4" aria-labelledby="ui-colours">
+  <h2 id="ui-colours" class="text-lg font-semibold">{% translate "Colours and type" %}</h2>
+  <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+    <div class="rounded-control border border-border bg-canvas p-3">canvas</div>
+    <div class="rounded-control border border-border bg-surface p-3">surface</div>
+    <div class="rounded-control border border-border bg-surface-2 p-3">surface-2</div>
+    <div class="rounded-control border border-border bg-surface-3 p-3">surface-3</div>
+    <div class="rounded-control bg-accent p-3 text-accent-fg">accent</div>
+    <div class="rounded-control bg-success-soft p-3 text-success-soft-fg">success</div>
+    <div class="rounded-control bg-warning-soft p-3 text-warning-soft-fg">warning</div>
+    <div class="rounded-control bg-danger-soft p-3 text-danger-soft-fg">danger</div>
+  </div>
+  <div class="space-y-1">
+    <p class="text-2xl font-semibold tracking-tight">{% translate "Page title" %}</p>
+    <p class="text-lg font-semibold">{% translate "Section title" %}</p>
+    <p>{% translate "Body text for descriptions and table cells." %} <a href="#ui-colours" class="link">{% translate "A link" %}</a></p>
+    <p class="help-text">{% translate "Help text under fields." %} <span class="kbd">Ctrl</span> + <span class="kbd">K</span></p>
+  </div>
+</section>
+
+<section class="card space-y-4" aria-labelledby="ui-buttons">
+  <h2 id="ui-buttons" class="text-lg font-semibold">{% translate "Buttons" %}</h2>
+  <div class="flex flex-wrap gap-2">
+    <button type="button" class="btn btn-primary">{% translate "Primary" %}</button>
+    <button type="button" class="btn btn-secondary">{% translate "Secondary" %}</button>
+    <button type="button" class="btn btn-danger">{% translate "Danger" %}</button>
+    <button type="button" class="btn btn-ghost">{% translate "Ghost" %}</button>
+    <button type="button" class="btn btn-link">{% translate "Link" %}</button>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <button type="button" class="btn btn-primary btn-sm">{% translate "Small" %}</button>
+    <button type="button" class="btn btn-primary">{% translate "Normal" %}</button>
+    <button type="button" class="btn btn-primary btn-lg">{% translate "Large" %}</button>
+    <button type="button" class="btn btn-secondary">{% icon "plus" %}{% translate "With an icon" %}</button>
+    <button type="button" class="btn btn-ghost btn-icon" aria-label="{% translate 'Copy' %}">{% icon "copy" %}</button>
+    <button type="button" class="btn btn-primary" aria-busy="true" disabled>{% translate "Saving…" %}</button>
+    <button type="button" class="btn btn-primary" disabled>{% translate "Disabled" %}</button>
+  </div>
+</section>
+
+<section class="card space-y-4" aria-labelledby="ui-badges">
+  <h2 id="ui-badges" class="text-lg font-semibold">{% translate "Status badges" %}</h2>
+  <div class="flex flex-wrap gap-2">
+    <span class="badge badge-success">{% translate "active" %}</span>
+    <span class="badge badge-warning">{% translate "expires soon" %}</span>
+    <span class="badge badge-danger">{% translate "revoked" %}</span>
+    <span class="badge badge-info">{% translate "in progress" %}</span>
+    <span class="badge badge-accent">{% translate "new" %}</span>
+    <span class="badge badge-muted">{% translate "disabled" %}</span>
+    <span class="badge">{% translate "plain" %}</span>
+  </div>
+</section>
+
+<section class="card space-y-3" aria-labelledby="ui-alerts">
+  <h2 id="ui-alerts" class="text-lg font-semibold">{% translate "Alerts and toasts" %}</h2>
+  {% translate "Server added." as success_text %}
+  {% translate "Traffic limit is close." as warning_text %}
+  {% translate "SSH connection failed." as error_text %}
+  {% translate "Changes apply within five minutes." as info_text %}
+  {% include "components/alert.html" with level="info" text=info_text %}
+  {% include "components/alert.html" with level="success" text=success_text %}
+  {% include "components/alert.html" with level="warning" text=warning_text %}
+  {% include "components/alert.html" with level="error" text=error_text %}
+  <div class="flex flex-wrap gap-2 pt-2">
+    <button type="button" class="btn btn-secondary btn-sm" data-toast="success" data-toast-text="{{ success_text }}">{% translate "Success toast" %}</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-toast="info" data-toast-text="{{ info_text }}">{% translate "Info toast" %}</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-toast="error" data-toast-text="{{ error_text }}">{% translate "Error toast" %}</button>
+  </div>
+</section>
+
+<section class="card space-y-4" aria-labelledby="ui-form">
+  <h2 id="ui-form" class="text-lg font-semibold">{% translate "Form" %}</h2>
+  <p class="help-text">{% translate "Submit empty to see validation errors." %}</p>
+  <form method="get" class="grid gap-4 sm:max-w-md" novalidate>
+    <input type="hidden" name="layout" value="{% if 'portal' in layout %}portal{% else %}admin{% endif %}">
+    {{ form }}
+    <div><button type="submit" class="btn btn-primary">{% translate "Check" %}</button></div>
+  </form>
+</section>
+
+<section class="space-y-3" aria-labelledby="ui-table">
+  <h2 id="ui-table" class="text-lg font-semibold">{% translate "Table" %}</h2>
+  <p class="help-text">{% translate "With table-cards, rows turn into cards on phones." %}</p>
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>{% translate "Device" %}</th><th>{% translate "Server" %}</th><th>{% translate "Traffic" %}</th>
+          <th>{% translate "Status" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="{% translate 'Device' %}">iPhone</td><td data-label="{% translate 'Server' %}">Amsterdam</td>
+          <td data-label="{% translate 'Traffic' %}">12.4 GB</td>
+          <td data-label="{% translate 'Status' %}"><span class="badge badge-success">{% translate "active" %}</span></td>
+          <td class="text-right"><button type="button" class="btn btn-secondary btn-sm">{% translate "Show key" %}</button></td>
+        </tr>
+        <tr>
+          <td data-label="{% translate 'Device' %}">Laptop</td><td data-label="{% translate 'Server' %}">Frankfurt</td>
+          <td data-label="{% translate 'Traffic' %}">3.1 GB</td>
+          <td data-label="{% translate 'Status' %}"><span class="badge badge-muted">{% translate "disabled" %}</span></td>
+          <td class="text-right"><button type="button" class="btn btn-secondary btn-sm">{% translate "Show key" %}</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card space-y-4" aria-labelledby="ui-dialogs">
+  <h2 id="ui-dialogs" class="text-lg font-semibold">{% translate "Dialogs" %}</h2>
+  <div class="flex flex-wrap gap-2">
+    <button type="button" class="btn btn-secondary"
+            hx-get="{% url 'dashboard:dev-ui-modal' %}" hx-target="#modal">{% translate "Open modal" %}</button>
+    <button type="button" class="btn btn-secondary" data-dialog-open="ui-drawer">{% translate "Open side panel" %}</button>
+    <form method="get" action="" data-confirm="{% translate 'Revoke this key? It stops working at once.' %}" data-confirm-button="{% translate 'Revoke' %}">
+      <input type="hidden" name="layout" value="{% if 'portal' in layout %}portal{% else %}admin{% endif %}">
+      <button type="submit" class="btn btn-danger">{% translate "Dangerous action" %}</button>
+    </form>
+  </div>
+  <dialog id="ui-drawer" class="dialog dialog-drawer" aria-labelledby="ui-drawer-title">
+    <div class="dialog-header">
+      <h2 id="ui-drawer-title" class="dialog-title">{% translate "Side panel" %}</h2>
+      <button type="button" class="btn btn-ghost btn-icon btn-sm -mr-2" data-dialog-close aria-label="{% translate 'Close' %}">{% icon "close" %}</button>
+    </div>
+    <div class="dialog-body">{% translate "Filters and details that do not need a page of their own." %}</div>
+    <div class="dialog-footer"><button type="button" class="btn btn-primary" data-dialog-close>{% translate "Done" %}</button></div>
+  </dialog>
+</section>
+
+<section class="grid gap-4 md:grid-cols-2" aria-label="{% translate 'Empty state and loading' %}">
+  <div class="card">
+    {% translate "No keys yet" as empty_title %}{% translate "Issue the first key: it appears here with its traffic." as empty_text %}{% translate "Issue a key" as empty_action %}
+    {% include "components/empty_state.html" with icon="key" title=empty_title text=empty_text action_url="#ui-buttons" action_text=empty_action %}
+  </div>
+  <div class="card">{% include "components/skeleton.html" %}</div>
+</section>
+
+<section class="space-y-3" aria-labelledby="ui-stats">
+  <h2 id="ui-stats" class="text-lg font-semibold">{% translate "Numbers and trends" %}</h2>
+  <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div class="stat">
+      <span class="stat-label">{% translate "Availability" %}</span><span class="stat-value">99.6%</span>
+      {% translate "Availability by day" as label %}{% sparkline demo_availability label floor=0 ceiling=100 %}
+    </div>
+    <div class="stat">
+      <span class="stat-label">{% translate "Average CPU" %}</span><span class="stat-value">23%</span>
+      {% translate "Average CPU by day" as label %}{% sparkline demo_cpu label floor=0 ceiling=100 %}
+    </div>
+    <div class="stat">
+      <span class="stat-label">{% translate "Traffic" %}</span><span class="stat-value">48 GB</span>
+      {% translate "Traffic by day" as label %}{% sparkline demo_traffic label floor=0 %}
+    </div>
+    <div class="stat">
+      <span class="stat-label">{% translate "Disk" %}</span><span class="stat-value">62%</span>
+      <div class="progress" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100" aria-label="{% translate 'Disk' %}"><div class="progress-bar w-[62%]"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="space-y-3" aria-labelledby="ui-blocks">
+  <h2 id="ui-blocks" class="text-lg font-semibold">{% translate "Page blocks" %}</h2>
+  <p class="help-text">kpis · stat-note · segmented · bulk-bar · rows · facts · meter · disclosure</p>
+  <div class="kpis">
+    <div class="stat"><span class="stat-label">{% icon "server" "icon-sm" %}{% translate "Servers online" %}</span><span class="stat-value">3</span><span class="stat-note">{% blocktranslate with limit=4 %}of {{ limit }}{% endblocktranslate %}</span></div>
+    <div class="stat"><span class="stat-label">{% icon "key" "icon-sm" %}{% translate "Keys" %}</span><span class="stat-value">128</span></div>
+    <div class="stat"><span class="stat-label">{% icon "users" "icon-sm" %}{% translate "Clients" %}</span><span class="stat-value">57</span></div>
+    <div class="stat"><span class="stat-label">{% icon "chart" "icon-sm" %}{% translate "Today" %}</span><span class="stat-value">4.2 GB</span></div>
+  </div>
+  <nav class="segmented" aria-label="{% translate 'Period' %}"><a href="#ui-blocks" aria-current="page">{% translate "Today" %}</a><a href="#ui-blocks">{% translate "In 7 days" %}</a></nav>
+  <div class="bulk-bar"><span class="text-sm text-muted">{% translate "Filters" %}</span><button type="button" class="btn btn-secondary btn-sm">{% translate "Apply" %}</button></div>
+  <div class="grid gap-4 lg:grid-cols-2">
+    <section class="card card-flush" aria-label="{% translate 'Needs attention' %}">
+      <ul class="rows">
+        <li class="row"><span class="row-lead row-lead-danger">{% icon "server" "icon-sm" %}</span><div class="row-main"><p class="row-title">nl-1</p><p class="row-sub">{% translate "Not answering" %}</p></div></li>
+        <li class="row"><span class="row-lead row-lead-warning">{% icon "wallet" "icon-sm" %}</span><div class="row-main"><p class="row-title">de-2</p><p class="row-sub">{% translate "Careful" %}</p></div></li>
+        <li class="row"><span class="row-lead row-lead-success">{% icon "check" "icon-sm" %}</span><div class="row-main"><p class="row-title">fi-3</p></div></li>
+      </ul>
+    </section>
+    <div class="card space-y-4">
+      <dl class="facts">
+        <div><dt>{% translate "Owner" %}</dt><dd>{% translate "No owner" %}</dd></div>
+        <div><dt>{% translate "Created" %}</dt><dd>12.11.2026</dd></div>
+      </dl>
+      {% translate "Disk" as disk %}{% include "servers/_meter.html" with title=disk percent=62 %}
+    </div>
+  </div>
+  <details class="disclosure">
+    <summary><span>{% translate "Careful" %}</span><span class="disclosure-meta">2</span></summary>
+    <div class="disclosure-body"><p class="text-sm text-muted">{% translate "A revoked key stops working at once and cannot be turned back on." %}</p></div>
+  </details>
+</section>
+{% endblock %}

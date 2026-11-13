@@ -1,0 +1,16 @@
+{% load i18n support ui %}{% comment %} The chat with support on every portal page (layouts/portal.html): a round button with the unread count and a dialog over the page.
+   The first click opens the dialog (ui.js) and loads the chat into it with HTMX; the chat stays after closing, so it opens again at once and
+   only refetches its messages. While the dialog is closed nothing in it is fetched, so its answers are not marked seen.
+   A link to #support-chat opens it (the old chat address leads there). {% endcomment %}
+{% support_chat_unread as unread %}{% url 'support:chat-unread' as unread_url %}
+<button type="button" class="chat-launcher" data-dialog-open="support-chat" aria-haspopup="dialog"
+        hx-get="{% url 'support:chat' %}" hx-target="#support-chat-body" hx-swap="innerHTML">
+  {% icon "message" %}<span class="sr-only">{% translate "Chat with support" %}</span>{% include "support/_badge.html" %}
+</button>
+<dialog id="support-chat" class="dialog chat-panel" aria-labelledby="support-chat-title" data-dialog-lazy>
+  <div class="dialog-header">
+    <h2 id="support-chat-title" class="dialog-title">{% translate "Chat with support" %}</h2>
+    <button type="button" class="btn btn-ghost btn-sm -mr-2" data-dialog-close>{% icon "close" %}{% translate "Close" %}</button>
+  </div>
+  <div id="support-chat-body" class="chat-panel-body" data-dialog-content data-loading="{% translate 'Loading…' %}"></div>
+</dialog>

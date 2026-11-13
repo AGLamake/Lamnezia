@@ -1,0 +1,5 @@
+{# A tiny line chart (templatetag `sparkline` in apps/core/templatetags/ui.py); the label is read aloud. The end dot is a zero-length round stroke, so stretching the chart keeps it round. #}
+<svg class="sparkline" viewBox="0 0 {{ chart.width }} {{ chart.height }}" preserveAspectRatio="none" role="img" aria-label="{{ label }}" focusable="false">
+  {% for points in segments %}<polyline points="{{ points }}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>{% endfor %}
+  {% if dot %}{% with x=dot.0|stringformat:".1f" y=dot.1|stringformat:".1f" %}<polyline points="{{ x }},{{ y }} {{ x }},{{ y }}" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>{% endwith %}{% endif %}
+</svg>

@@ -1,0 +1,29 @@
+{% extends "servers/base.html" %}
+{% load i18n backups %}
+{% block title %}{% translate "Remove the container" %} · {{ instance.server.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li><a href="{% url 'servers:detail' instance.server.pk %}">{{ instance.server.name }}</a></li><li aria-current="page">{% translate "Remove the container" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Remove the container" %} · {{ instance.title }}</h1>
+</div>
+
+{% blocktranslate asvar warning count keys=keys with container=instance.container %}The container {{ container }} is removed from the server with its configuration and clients, as the Amnezia app does it. {{ keys }} key stops working until the protocol is restored from the backup. If you tick Delete all backups, the key is revoked and the panel forgets the protocol and its backup; this cannot be undone.{% plural %}The container {{ container }} is removed from the server with its configuration and clients, as the Amnezia app does it. {{ keys }} keys stop working until the protocol is restored from the backup. If you tick Delete all backups, the keys are revoked and the panel forgets the protocol and its backup; this cannot be undone.{% endblocktranslate %}
+{% include "components/alert.html" with level="error" text=warning %}
+{% if not instance|restorable %}
+{% translate "The panel has no backup of this protocol yet. It copies the container files before removing it; if the copy fails, the keys cannot work again, even if the protocol is installed anew." as no_backup %}
+{% include "components/alert.html" with level="error" text=no_backup %}
+{% endif %}
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  <p>{% blocktranslate with name=instance.server.name %}To confirm, type the server name: <strong>{{ name }}</strong>{% endblocktranslate %}</p>
+  {{ form.server_name.as_field_group }}
+  {{ form.delete_backups.as_field_group }}
+  <div class="flex gap-2">
+    <button type="submit" class="btn btn-danger">{% translate "Remove" %}</button>
+    <a href="{% url 'servers:detail' instance.server.pk %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

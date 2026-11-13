@@ -1,0 +1,8 @@
+{% load i18n ui %}{# Quick actions of a server in a list or on a card: the same two buttons as on its page. #}
+<div class="flex items-center gap-1">
+  <form method="post" action="{% url 'servers:check' server.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-ghost btn-icon btn-sm" aria-label="{% blocktranslate with name=server.name %}Check {{ name }} again{% endblocktranslate %}" title="{% translate 'Check again' %}">{% icon "refresh" %}</button>
+  </form>
+  <a href="{% url 'servers:edit' server.pk %}" class="btn btn-ghost btn-icon btn-sm" aria-label="{% blocktranslate with name=server.name %}Edit {{ name }}{% endblocktranslate %}" title="{% translate 'Edit' %}">{% icon "pencil" %}</a>
+</div>

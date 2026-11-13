@@ -1,0 +1,43 @@
+{% load i18n ui %}{# The usage card: traffic against the plan, reset date, access term and warnings. #}
+<section class="card space-y-4" aria-labelledby="usage-title">
+  <h2 id="usage-title" class="sr-only">{% translate "Usage" %}</h2>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div class="space-y-2">
+      <p class="stat-label">{% translate "Traffic this period" %}</p>
+      {% if usage.period_limit is not None %}
+        <p class="text-lg font-semibold tabular-nums">{% blocktranslate with used=usage.period_used|filesizeformat limit=usage.period_limit|filesizeformat %}{{ used }} of {{ limit }}{% endblocktranslate %}</p>
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ usage.period_percent }}" aria-labelledby="usage-title">
+          <div class="progress-bar {% if usage.period_percent >= 95 %}progress-bar-danger{% elif usage.period_percent >= 80 %}progress-bar-warning{% endif %}" style="width: {{ usage.period_percent }}%"></div>
+        </div>
+        {% if usage.resets_at %}<p class="help-text">{% blocktranslate with date=usage.resets_at|date:"DATE_FORMAT" %}resets on {{ date }}{% endblocktranslate %}</p>{% endif %}
+      {% else %}
+        <p class="text-lg font-semibold tabular-nums">{{ usage.period_used|filesizeformat }}</p>
+        <p class="help-text">{% translate "No traffic limit" %}</p>
+      {% endif %}
+      {% if usage.total_limit is not None %}
+        <p class="help-text">{% blocktranslate with used=usage.total_used|filesizeformat limit=usage.total_limit|filesizeformat %}In total: {{ used }} of {{ limit }}{% endblocktranslate %}</p>
+      {% endif %}
+    </div>
+    <div class="space-y-2">
+      <p class="stat-label">{% translate "Access" %}</p>
+      {% if usage.access_until %}
+        <p class="text-lg font-semibold">{% blocktranslate with date=usage.access_until|date:"DATE_FORMAT" %}until {{ date }}{% endblocktranslate %}</p>
+        <p class="help-text">{% blocktranslate count days=usage.days_left %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktranslate %}</p>
+      {% else %}
+        <p class="text-lg font-semibold">{% translate "Without an end date" %}</p>
+      {% endif %}
+    </div>
+  </div>
+  {% if usage.expired %}
+    {% translate "Your access has ended, the keys are off. Ask the administrator to extend it." as text %}
+    {% include "components/alert.html" with level="error" text=text %}
+  {% elif usage.expires_soon %}
+    {% translate "Your access ends soon. Ask the administrator to extend it." as text %}
+    {% include "components/alert.html" with level="warning" text=text %}
+  {% endif %}
+  {% if usage.traffic_low %}
+    {% translate "Traffic is running out. When it ends, the keys go off until the next period." as text %}
+    {% include "components/alert.html" with level="warning" text=text %}
+  {% endif %}
+  <a href="{% url 'portal:usage' %}" class="link inline-flex items-center gap-1.5 text-sm">{% icon "chart" "icon-sm" %}{% translate "Usage by key and forecast" %}</a>
+</section>

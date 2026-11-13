@@ -1,0 +1,9 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+{% block heading %}{% translate "Confirm the new email" %}{% endblock %}
+{% block content %}
+<p style="margin:0;">{% blocktranslate with username=user.get_username trimmed %}Account {{ username }} asked to use this email from now on.{% endblocktranslate %}</p>
+<p style="margin:12px 0 0;">{% translate "Open the link while signed in to the account. Until then the old email stays." %}</p>
+{% translate "Confirm the email" as action %}{% include "email/_button.html" %}
+{% endblock %}
+{% block note %}{% translate "If it was not you, ignore this letter: nothing changes." %}{% endblock %}

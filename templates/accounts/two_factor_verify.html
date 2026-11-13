@@ -1,0 +1,15 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Two-factor authentication" %} · Lamnezia{% endblock %}
+{% block heading %}{% translate "Two-factor authentication" %}{% endblock %}
+
+{% block content %}
+<p class="help-text">{% translate "Open the authenticator app on your phone and enter the code for Lamnezia." %}</p>
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  {{ form }}
+  <input type="hidden" name="next" value="{{ next }}">
+  <button type="submit" class="btn btn-primary w-full">{% translate "Continue" %}</button>
+</form>
+{% include "accounts/_logout.html" %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Sign in by email" %} · {{ site_name }}{% endblock %}
+{% block heading %}{% translate "Sign in by email" %}{% endblock %}
+
+{% block content %}
+<p class="help-text">{% translate "Enter the email of your account and we will send a link that signs you in without a password." %}</p>
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  {{ form }}
+  <button type="submit" class="btn btn-primary w-full">{% translate "Send the link" %}</button>
+</form>
+<p class="help-text"><a href="{% url 'accounts:login' %}" class="link">{% translate "Back to sign in" %}</a></p>
+{% endblock %}

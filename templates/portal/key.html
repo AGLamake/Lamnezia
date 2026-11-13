@@ -1,0 +1,49 @@
+{% extends "layouts/portal.html" %}
+{% load i18n ui %}
+{% block title %}{{ key.name }} · Lamnezia{% endblock %}
+{% block breadcrumbs %}
+  <li><a href="{% url 'portal:index' %}">{% translate "My access" %}</a></li>
+  <li><span aria-current="page">{{ key.name }}</span></li>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <div class="flex flex-wrap items-center gap-2">
+    <h1 class="page-title break-words">{{ key.name }}</h1>
+    <span class="badge {% if key.status == 'active' %}badge-success{% elif key.is_disabled %}badge-danger{% else %}badge-muted{% endif %}">{{ key.get_status_display }}</span>
+  </div>
+  <p class="help-text">{{ title }} · {% blocktranslate with date=key.created_at|date:"DATE_FORMAT" %}since {{ date }}{% endblocktranslate %}</p>
+</div>
+
+{% include "portal/_reachability.html" %}
+{% include "portal/_key_state.html" %}
+
+<section class="card space-y-3" aria-labelledby="rename-title">
+  <h2 id="rename-title" class="text-lg font-semibold">{% translate "Key name" %}</h2>
+  <form method="post" action="{% url 'portal:rename' key.pk %}" class="flex flex-col gap-2 sm:flex-row">
+    {% csrf_token %}
+    <input type="text" name="name" value="{{ rename_form.name.value }}" maxlength="100" required autocomplete="off" class="input sm:flex-1" aria-labelledby="rename-title">
+    <button type="submit" class="btn btn-secondary">{% icon "pencil" %}{% translate "Rename" %}</button>
+  </form>
+</section>
+
+{% if server_id %}
+<section class="card flex flex-wrap items-center justify-between gap-3">
+  <p>{% translate "The key does not connect?" %}</p>
+  {% include "support/_server_down.html" %}
+</section>
+{% endif %}
+
+<section class="card space-y-3 border-danger/40" aria-labelledby="danger-title">
+  <h2 id="danger-title" class="text-lg font-semibold">{% translate "Lost the key or think someone else has it?" %}</h2>
+  <p class="help-text">{% translate "Re-issuing gives you a new key; the old one stops working at once." %}</p>
+  <div class="flex flex-col gap-2 sm:flex-row">
+    <form method="post" action="{% url 'portal:reissue' key.pk %}" data-confirm="{% translate "Re-issue the key? The old one stops working at once." %}" data-confirm-button="{% translate 'Re-issue' %}">
+      {% csrf_token %}<button type="submit" class="btn btn-secondary w-full">{% icon "refresh" %}{% translate "Re-issue" %}</button>
+    </form>
+    <form method="post" action="{% url 'portal:delete' key.pk %}" data-confirm="{% translate "Delete the key? It stops working at once." %}" data-confirm-button="{% translate 'Delete' %}">
+      {% csrf_token %}<button type="submit" class="btn btn-danger w-full">{% icon "trash" %}{% translate "Delete" %}</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

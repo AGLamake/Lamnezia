@@ -1,0 +1,27 @@
+{% extends "layouts/portal.html" %}
+{% load i18n %}
+{% block title %}{% translate "Support" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{% translate "Support" %}</h1>
+  <a href="{% url 'support:new' %}" class="btn btn-primary">{% translate "Report a problem" %}</a>
+</div>
+{% if conversations %}
+  <ul class="space-y-2">
+    {% for conversation in conversations %}
+      <li>
+        <a href="{% url 'support:conversation' conversation.pk %}" class="card card-link flex items-center justify-between gap-3">
+          <span class="min-w-0">
+            <span class="block truncate font-medium">{% include "support/_subject.html" %}</span>
+            <span class="help-text block">{{ conversation.updated_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+          </span>
+          <span class="badge {% if conversation.is_open %}badge-success{% else %}badge-muted{% endif %}">{{ conversation.get_status_display }}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="help-text">{% translate "You have no requests yet. If something does not work, tell us." %}</p>
+{% endif %}
+{% endblock %}

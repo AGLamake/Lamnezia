@@ -1,0 +1,1 @@
+{% load i18n %}{# One limit value: `value` in bytes if `bytes`, `empty` shown for None. #}{% if value is None %}<span class="help-text">{{ empty }}</span>{% elif bytes %}{{ value|filesizeformat }}{% else %}{{ value }}{% endif %}

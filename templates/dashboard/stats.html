@@ -1,0 +1,184 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Statistics" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="stats" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Statistics" %}</h1>
+    <p class="page-lead">{% translate "Traffic of the keys, who uses the most and whose limit runs out." %}</p>
+  </div>
+  <a href="{% url 'dashboard:stats-export' %}{% if query %}?{{ query }}{% endif %}" class="btn btn-secondary">{% icon "download" %}{% translate "Export CSV" %}</a>
+</div>
+
+<div class="flex flex-wrap items-center gap-3">
+  <nav class="segmented" aria-label="{% translate 'Period' %}">
+    {% for link in periods %}<a href="?{{ link.query }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title }}</a>{% endfor %}
+  </nav>
+  <form method="get" class="flex w-full items-center gap-2 sm:w-auto">
+    <input type="hidden" name="period" value="{{ form.selected_period }}">
+    {{ form.user }}{{ form.key }}
+    <label for="{{ form.server.id_for_label }}" class="sr-only">{{ form.server.label }}</label>
+    <div class="min-w-0 flex-1 sm:w-56 sm:flex-none">{{ form.server }}</div>
+    <button type="submit" class="btn btn-secondary">{% translate "Show" %}</button>
+  </form>
+</div>
+{% if scope.user or scope.key %}
+  <p class="alert alert-info">
+    {% icon "filter" "icon-sm" %}
+    <span class="flex-1">{% if scope.key %}{% blocktranslate with name=scope.key.name %}Key: {{ name }}{% endblocktranslate %}{% else %}{% blocktranslate with name=scope.user.username %}User: {{ name }}{% endblocktranslate %}{% endif %}
+    · <a href="{% url 'dashboard:stats' %}">{% translate "Show everyone" %}</a></span>
+  </p>
+{% endif %}
+
+{% if unavailable %}
+  <section class="alert alert-warning" role="status" aria-labelledby="uncounted-title">
+    {% icon "warning" %}
+    <div class="min-w-0 flex-1 space-y-2">
+      <h2 id="uncounted-title" class="font-semibold">{% translate "Traffic is not counted on some servers" %}</h2>
+      <p>{% translate "The panel could not read the traffic counters there, so the traffic of their keys is unknown (not zero) and the limits do not grow. Counting resumes by itself after the cause is fixed." %}</p>
+      <ul class="space-y-1.5">
+        {% for row in unavailable %}
+          <li>
+            <span class="font-medium">{{ row.instance.server.name }} · {{ row.instance.title }}</span>
+            <span class="text-sm">({% blocktranslate with when=row.checked_at|timesince %}checked {{ when }} ago{% endblocktranslate %})</span><br>
+            <span class="text-sm">{% if row.needs_stats_blocks %}{% translate "XRay gives no counters: its configuration lacks the statistics blocks. Open the protocol settings and save them: the panel adds the blocks, the container restarts and the clients reconnect." %}{% else %}{% translate "The container did not answer. Check on the server page that it is running and start it if it is not." %}{% endif %}</span>
+            {% if user.is_admin %}
+              <a class="text-sm font-medium underline" href="{% if row.needs_stats_blocks %}{% url 'protocols:settings' row.instance.pk %}{% else %}{% url 'servers:detail' row.instance.server.pk %}{% endif %}">{% if row.needs_stats_blocks %}{% translate "Protocol settings" %}{% else %}{% translate "Open the server" %}{% endif %}</a>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+{% endif %}
+
+<div class="kpis">
+  <div class="stat">
+    <span class="stat-label">{% icon "arrow-down" "icon-sm" %}{% translate "Downloaded" %}</span>
+    <span class="stat-value">{{ sent|filesizeformat }}</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% icon "arrow-up" "icon-sm" %}{% translate "Uploaded" %}</span>
+    <span class="stat-value">{{ received|filesizeformat }}</span>
+  </div>
+  <a href="#stats-online" class="stat">
+    <span class="stat-label">{% icon "signal" "icon-sm" %}{% translate "Online now" %}</span>
+    <span class="stat-value">{{ online|length }}</span>
+  </a>
+  <a href="#stats-inactive" class="stat">
+    <span class="stat-label">{% icon "clock" "icon-sm" %}{% translate "Without traffic" %}</span>
+    <span class="stat-value">{{ inactive|length }}</span>
+  </a>
+</div>
+
+<section class="card space-y-3" aria-labelledby="stats-chart">
+  <h2 id="stats-chart" class="card-title">{% icon "chart" "icon-sm" %}{% translate "Traffic" %}</h2>
+  {% translate "Traffic" as traffic_label %}
+  {% bar_chart chart.labels chart.series chart.names traffic_label %}
+</section>
+
+<div class="grid items-start gap-6 lg:grid-cols-2">
+  <section class="card card-flush" aria-labelledby="stats-top">
+    <div class="card-head"><h2 id="stats-top" class="card-title">{% icon "zap" "icon-sm" %}{% translate "Top consumers" %}</h2></div>
+    {% if top %}
+      <ol class="rows">
+        {% for row in top %}
+          <li><a href="{% url 'dashboard:user' row.user.pk %}" class="row">
+            <span class="row-lead text-xs font-semibold tabular-nums">{{ forloop.counter }}</span>
+            <span class="row-main space-y-1.5">
+              <span class="flex items-baseline justify-between gap-3"><span class="row-title">{{ row.user.username }}</span><span class="row-value">{{ row.total|filesizeformat }}</span></span>
+              <span class="progress block" aria-hidden="true"><span class="progress-bar block" style="width: {% widthratio row.total top.0.total 100 %}%"></span></span>
+            </span>
+          </a></li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="card-body help-text">{% translate "No traffic in this period." %}</p>
+    {% endif %}
+  </section>
+
+  <section class="card card-flush" aria-labelledby="stats-forecast">
+    <div class="card-head"><h2 id="stats-forecast" class="card-title">{% icon "warning" "icon-sm" %}{% translate "Limit runs out" %}</h2></div>
+    {% if forecast %}
+      <ul class="rows">
+        {% for row in forecast %}
+          <li><a href="{% url 'dashboard:user' row.user.pk %}" class="row">
+            <span class="row-main">
+              <span class="row-title">{{ row.user.username }}</span>
+              <span class="row-sub">{{ row.used|filesizeformat }} / {{ row.limit|filesizeformat }}</span>
+            </span>
+            {% if row.reached %}<span class="badge badge-danger">{% translate "reached" %}</span>{% else %}<span class="row-value">{{ row.at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}
+          </a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="card-body help-text">{% translate "At the current pace nobody reaches the limit before the period ends." %}</p>
+    {% endif %}
+  </section>
+
+  <section id="stats-online" class="card card-flush" aria-labelledby="stats-online-title">
+    <div class="card-head">
+      <h2 id="stats-online-title" class="card-title">{% icon "signal" "icon-sm" %}{% translate "Online now" %}</h2>
+      {% if online %}<span class="nav-count">{{ online|length }}</span>{% endif %}
+    </div>
+    {% if online %}
+      <ul class="rows max-h-96 overflow-y-auto">
+        {% for key in online|slice:":50" %}
+          <li><a href="{% url 'keys:detail' key.pk %}" class="row">
+            <span class="row-lead row-lead-success">{% icon "key" "icon-sm" %}</span>
+            <span class="row-main"><span class="row-title">{{ key.name }}</span><span class="row-sub">{{ key.user|default:"—" }}</span></span>
+          </a></li>
+        {% endfor %}
+      </ul>
+      {% if online|length > 50 %}<p class="card-body help-text">{% blocktranslate count counter=online|length %}{{ counter }} key in total.{% plural %}{{ counter }} keys in total.{% endblocktranslate %}</p>{% endif %}
+    {% else %}
+      <p class="card-body help-text">{% translate "Nobody is online." %}</p>
+    {% endif %}
+  </section>
+
+  <section id="stats-inactive" class="card card-flush" aria-labelledby="stats-inactive-title">
+    <div class="card-head">
+      <h2 id="stats-inactive-title" class="card-title">{% icon "clock" "icon-sm" %}{% translate "Inactive keys" %}</h2>
+      {% if inactive %}<span class="nav-count">{{ inactive|length }}</span>{% endif %}
+    </div>
+    {% if inactive %}
+      <ul class="rows max-h-96 overflow-y-auto">
+        {% for key in inactive %}
+          <li><a href="{% url 'keys:detail' key.pk %}" class="row">
+            <span class="row-main"><span class="row-title">{{ key.name }}</span><span class="row-sub">{{ key.user|default:"—" }}</span></span>
+            <span class="row-value font-normal text-muted">{{ key.created_at|date:"SHORT_DATE_FORMAT" }}</span>
+          </a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="card-body help-text">{% translate "Every active key had traffic." %}</p>
+    {% endif %}
+  </section>
+</div>
+
+{% if storage %}
+<details class="disclosure">
+  <summary>{% icon "database" "icon-sm text-muted" %}{% translate "Storage" %}</summary>
+  <div class="disclosure-body">
+    <p class="help-text">{% translate "Background tasks delete old records and fold old traffic by day; the terms are set in the LAMNEZIA_*_DAYS settings." %}</p>
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead><tr><th>{% translate "Data" %}</th><th>{% translate "Rows" %}</th><th>{% translate "Size" %}</th><th>{% translate "Last cleanup" %}</th></tr></thead>
+        <tbody>
+          {% for row in storage %}
+            <tr>
+              <td class="font-medium">{{ row.title }}</td>
+              <td data-label="{% translate 'Rows' %}">{{ row.rows }}</td>
+              <td data-label="{% translate 'Size' %}">{% if row.size is None %}—{% else %}{{ row.size|filesizeformat }}{% endif %}</td>
+              <td data-label="{% translate 'Last cleanup' %}">{% if row.cleaned_at %}{{ row.cleaned_at|date:"SHORT_DATETIME_FORMAT" }} <span class="help-text">{% blocktranslate count removed=row.removed %}{{ removed }} row removed{% plural %}{{ removed }} rows removed{% endblocktranslate %}</span>{% else %}<span class="help-text">{% translate "not yet" %}</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</details>
+{% endif %}
+{% endblock %}

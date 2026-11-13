@@ -1,0 +1,44 @@
+{% extends "servers/base.html" %}
+{% load i18n ports %}
+{% block title %}{% translate "Speed test by port" %} · {{ server.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li><a href="{% url 'servers:detail' server.pk %}">{{ server.name }}</a></li><li aria-current="page">{% translate "Speed test by port" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Speed test by port" %}</h1>
+  <p class="help-text">
+    {% translate "Some providers block or throttle UDP on ports above 9999. The panel starts a temporary iperf3 server on several ports; run the iperf3 client on a device in the network of that provider, without the VPN, and compare the ports." %}
+    <a href="{% ports_wiki_url %}" target="_blank" rel="noopener" class="underline">{% translate "How to test and read the results" %}</a>
+  </p>
+</div>
+
+{% if running %}
+  <section class="card space-y-3">
+    <p>
+      <span class="badge badge-success">{% translate "running" %}</span>
+      <span class="help-text">{% blocktranslate with date=running.until|date:"SHORT_DATETIME_FORMAT" %}The container removes itself at {{ date }}.{% endblocktranslate %}</span>
+    </p>
+    <p class="help-text">{% translate "On the client, for every port: download over UDP, upload over UDP, then download over TCP." %}</p>
+    {% for port in running.plan.ports %}
+      <pre class="overflow-x-auto rounded bg-black/5 p-3 text-sm dark:bg-white/5">iperf3 -c {{ server.host }} -p {{ port }} -u -b 200M -t 10 -R
+iperf3 -c {{ server.host }} -p {{ port }} -u -b 200M -t 10
+iperf3 -c {{ server.host }} -p {{ port }} -t 10 -R</pre>
+    {% endfor %}
+    <form method="post" action="{% url 'protocols:speed-test-stop' server.pk %}">
+      {% csrf_token %}<button type="submit" class="btn btn-secondary">{% translate "Stop now" %}</button>
+    </form>
+  </section>
+{% endif %}
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {{ form.ports.as_field_group }}
+  {{ form.minutes.as_field_group }}
+  <p class="help-text">{% translate "The ports are opened for TCP and UDP. Open them in the firewall of the hosting provider if it has one." %}</p>
+  <div class="flex gap-2">
+    <button type="submit" class="btn btn-primary">{% if running %}{% translate "Start again" %}{% else %}{% translate "Start" %}{% endif %}</button>
+    <a href="{% url 'servers:detail' server.pk %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

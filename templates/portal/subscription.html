@@ -1,0 +1,29 @@
+{% extends "layouts/portal.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Subscription link" %} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}
+  <li><a href="{% url 'portal:index' %}">{% translate "My access" %}</a></li>
+  <li><span aria-current="page">{% translate "Subscription link" %}</span></li>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% translate "Subscription link" %}</h1>
+
+<section class="card space-y-3" x-data="copy">
+  <p class="help-text">{% translate "Add the link to v2rayN, v2RayTun, Hiddify, Streisand or another XRay client as a subscription. The client fetches your active XRay keys by it and updates them itself: a re-issued key or a changed server reaches it without a new link. The Amnezia app does not read subscription links: add keys to it one by one." %}</p>
+  {% if url %}
+    <textarea x-ref="source" readonly rows="2" class="input font-mono text-xs" aria-label="{% translate 'Subscription link' %}">{{ url }}</textarea>
+    <p class="help-text">{% translate "Anyone with the link gets your keys. If it leaked, make a new one: the old link stops working." %}</p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn btn-primary" @click="copy">
+        {% icon "copy" %}<span x-show="!copied">{% translate "Copy" %}</span><span x-show="copied" x-cloak>{% translate "Copied" %}</span>
+      </button>
+      <form method="post" data-confirm="{% translate 'Make a new link? The old one stops working, and the clients need the new one.' %}" data-confirm-button="{% translate 'New link' %}">{% csrf_token %}<button name="action" value="renew" class="btn btn-secondary">{% icon "refresh" %}{% translate "New link" %}</button></form>
+      <form method="post" class="sm:ml-auto" data-confirm="{% translate 'Delete the link? The clients stop getting your keys by it.' %}" data-confirm-button="{% translate 'Delete link' %}">{% csrf_token %}<button name="action" value="delete" class="btn btn-danger">{% icon "trash" %}{% translate "Delete link" %}</button></form>
+    </div>
+  {% else %}
+    <form method="post">{% csrf_token %}<button name="action" value="renew" class="btn btn-primary">{% translate "Create link" %}</button></form>
+  {% endif %}
+</section>
+{% endblock %}

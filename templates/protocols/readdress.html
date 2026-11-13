@@ -1,0 +1,31 @@
+{% extends "servers/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Keys after the address change" %} · {{ server.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li><a href="{% url 'servers:detail' server.pk %}">{{ server.name }}</a></li><li aria-current="page">{% translate "Keys after the address change" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Keys after the address change" %}</h1>
+</div>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  <p>{% blocktranslate with host=server.host %}The server address is now <strong>{{ host }}</strong>. The vpn:// link of every key carries the address, so the clients must import their keys again.{% endblocktranslate %}</p>
+  <ul class="list-disc pl-5">
+    <li>{% blocktranslate count count=outdated %}{{ count }} key issued by the panel is moved to the new address.{% plural %}{{ count }} keys issued by the panel are moved to the new address.{% endblocktranslate %}</li>
+    <li>{% blocktranslate count count=imported %}{{ count }} key imported from the server can only be reissued.{% plural %}{{ count }} keys imported from the server can only be reissued.{% endblocktranslate %}</li>
+  </ul>
+  <p class="help-text">{% translate "The owners are notified that their keys must be imported again." %}</p>
+  {% if imported %}{{ form.reissue.as_field_group }}{% endif %}
+  {% if ipsec %}
+    {% blocktranslate with ip=ipsec.issued_for asvar ipsec_warning %}The IPsec server certificate is issued for {{ ip }}. If the server IP changed, IPsec clients are refused until the certificate is reissued for the new IP; the clients then import their keys again.{% endblocktranslate %}
+    {% include "components/alert.html" with level="warning" text=ipsec_warning %}
+    {{ form.ipsec.as_field_group }}
+  {% endif %}
+  <div class="flex gap-2">
+    <button type="submit" class="btn btn-primary">{% translate "Update the keys" %}</button>
+    <a href="{% url 'servers:detail' server.pk %}" class="btn btn-secondary">{% translate "Later" %}</a>
+  </div>
+</form>
+{% endblock %}

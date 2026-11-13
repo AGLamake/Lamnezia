@@ -1,0 +1,33 @@
+{% extends "notifications/base.html" %}
+{% load i18n %}
+{% block title %}{% if channel %}{{ channel.name }}{% else %}{% translate "Add a channel" %}{% endif %} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'notifications:channels' %}">{% translate "Notifications" %}</a></li><li aria-current="page">{% if channel %}{{ channel.name }}{% else %}{% translate "Add a channel" %}{% endif %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% if channel %}{% translate "Edit the channel" %}{% else %}{% translate "Add a channel" %}{% endif %}</h1>
+</div>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {{ form.name.as_field_group }}
+  {% if form.target %}{{ form.target.as_field_group }}{% endif %}
+  {% if form.secret %}{{ form.secret.as_field_group }}{% endif %}
+  {{ form.enabled.as_field_group }}
+  {{ form.events.as_field_group }}
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+</form>
+
+{% if channel %}
+  <div class="flex flex-wrap gap-2">
+    <form method="post" action="{% url 'notifications:test' channel.pk %}">
+      {% csrf_token %}<button class="btn btn-secondary">{% translate "Send a test" %}</button>
+    </form>
+    <form method="post" action="{% url 'notifications:delete' channel.pk %}" data-confirm="{% translate "Delete this channel?" %}">
+      {% csrf_token %}<button class="btn btn-danger">{% translate "Delete the channel" %}</button>
+    </form>
+  </div>
+{% endif %}
+{% endblock %}

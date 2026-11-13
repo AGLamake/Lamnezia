@@ -1,0 +1,23 @@
+{% extends "servers/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Settings" %} · {{ subject.server.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li><a href="{% url 'servers:detail' subject.server.pk %}">{{ subject.server.name }}</a></li><li aria-current="page">{% translate "Settings" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Settings" %} · {{ subject.title }}</h1>
+</div>
+
+<div class="card space-y-3">
+  <p>{{ info.note }}</p>
+  {% if info.rows %}
+    <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+      {% for row in info.rows %}
+        <dt class="help-text">{{ row.label }}</dt>
+        <dd>{% if row.secret %}{% include "protocols/_password_reveal.html" with service_pk=subject.pk %}{% else %}<code class="break-all">{{ row.value }}</code>{% endif %}</dd>
+      {% endfor %}
+    </dl>
+  {% endif %}
+</div>
+{% endblock %}

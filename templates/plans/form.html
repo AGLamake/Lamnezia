@@ -1,0 +1,39 @@
+{% extends "plans/base.html" %}
+{% load i18n %}
+{% block title %}{% if plan %}{{ plan.name }}{% else %}{% translate "Add a plan" %}{% endif %} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'plans:list' %}">{% translate "Plans" %}</a></li><li aria-current="page">{% if plan %}{{ plan.name }}{% else %}{% translate "Add a plan" %}{% endif %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% if plan %}{% translate "Edit the plan" %}{% else %}{% translate "Add a plan" %}{% endif %}</h1>
+</div>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {{ form.name.as_field_group }}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {{ form.traffic_limit.as_field_group }}
+    {{ form.period_days.as_field_group }}
+    {{ form.total_traffic_limit.as_field_group }}
+    {{ form.max_keys.as_field_group }}
+    {{ form.speed_limit.as_field_group }}
+    {{ form.access_days.as_field_group }}
+  </div>
+  {{ form.servers.as_field_group }}
+  {{ form.protocols.as_field_group }}
+  {{ form.is_trial.as_field_group }}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {{ form.price.as_field_group }}
+    {{ form.currency.as_field_group }}
+  </div>
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+</form>
+
+{% if plan %}
+  <form method="post" action="{% url 'plans:delete' plan.pk %}" data-confirm="{% translate "Delete this plan?" %}">
+    {% csrf_token %}<button class="btn btn-danger">{% translate "Delete the plan" %}</button>
+  </form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% load i18n %}{# Start or restart, stop and log of a container. `action_url` is protocols:container or protocols:service-container, `pk` its object, `row` its row on the server card. #}
+{% if row.stopped %}
+  <form method="post" action="{% url action_url pk 'restart' %}">
+    {% csrf_token %}<button type="submit" class="hover:underline">{% translate "Start" %}</button>
+  </form>
+{% else %}
+  <form method="post" action="{% url action_url pk 'restart' %}" data-confirm="{% translate "Restart the container? Clients reconnect in a few seconds." %}">
+    {% csrf_token %}<button type="submit" class="hover:underline">{% translate "Restart" %}</button>
+  </form>
+  <form method="post" action="{% url action_url pk 'stop' %}" data-confirm="{% translate "Stop the container? Clients cannot connect until it is restarted." %}">
+    {% csrf_token %}<button type="submit" class="hover:underline">{% translate "Stop" %}</button>
+  </form>
+{% endif %}
+<form method="post" action="{% url action_url pk 'logs' %}">
+  {% csrf_token %}<button type="submit" class="hover:underline">{% translate "Log" %}</button>
+</form>

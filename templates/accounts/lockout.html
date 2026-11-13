@@ -1,0 +1,18 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Too many attempts" %} · Lamnezia{% endblock %}
+{% block heading %}{% translate "Too many attempts" %}{% endblock %}
+
+{% block content %}
+<p>{% blocktranslate count limit=failure_limit trimmed %}
+  The password was wrong {{ limit }} time in a row, so signing in to this account from your address is paused.
+{% plural %}
+  The password was wrong {{ limit }} times in a row, so signing in to this account from your address is paused.
+{% endblocktranslate %}</p>
+<p class="help-text">{% blocktranslate count minutes=minutes trimmed %}
+  Try again in {{ minutes }} minute.
+{% plural %}
+  Try again in {{ minutes }} minutes.
+{% endblocktranslate %}</p>
+<p class="help-text"><a href="{% url 'accounts:password-reset' %}" class="link">{% translate "Forgot your password?" %}</a></p>
+{% endblock %}

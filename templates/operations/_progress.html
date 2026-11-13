@@ -1,0 +1,44 @@
+{% load i18n operations %}{# Polls itself until the operation ends: the finished block has no hx-trigger. #}
+<section id="operation-progress" class="space-y-4" aria-live="polite"
+         {% if not operation.is_finished %}hx-get="{% url 'operations:progress' operation.pk %}" hx-trigger="every {{ poll_seconds }}s" hx-swap="outerHTML"{% endif %}>
+  <p>
+    <span class="badge {{ operation.status|status_badge }}">{{ operation.get_status_display }}</span>
+    {% if operation.retry_of_id %}
+      <a href="{% url 'operations:detail' operation.retry_of_id %}" class="help-text hover:underline">{% translate "retry of an earlier attempt" %}</a>
+    {% endif %}
+  </p>
+
+  {% if operation.error_message %}
+    <div class="alert alert-error" role="alert">
+      <div class="flex-1 space-y-1">
+        {% if failed_step %}<p class="font-medium">{% blocktranslate with step=failed_step.title %}Step «{{ step }}» failed.{% endblocktranslate %}</p>{% endif %}
+        <p>{{ operation.error_message }}</p>
+        {% if operation.error_hint %}<p class="text-sm">{{ operation.error_hint }}</p>{% endif %}
+      </div>
+    </div>
+    {% if retry %}
+      <a href="{% url 'operations:detail' retry.pk %}" class="btn btn-secondary">{% translate "Open the retry" %}</a>
+    {% elif operation.can_retry %}
+      <form method="post" action="{% url 'operations:retry' operation.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">{% translate "Retry" %}</button>
+      </form>
+    {% endif %}
+  {% endif %}
+
+  {% if steps %}
+    <ol class="card space-y-3">
+      {% for step in steps %}
+        <li class="space-y-1">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-medium">{{ step.position }}. {{ step.title }}</span>
+            <span class="badge {{ step.status|status_badge }}">{{ step.get_status_display }}</span>
+          </div>
+          {% if step.log %}<pre class="overflow-x-auto whitespace-pre-wrap text-xs text-muted">{{ step.log }}</pre>{% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  {% elif not operation.is_finished %}
+    <p class="help-text">{% translate "Waiting for a background worker…" %}</p>
+  {% endif %}
+</section>

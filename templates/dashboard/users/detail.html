@@ -1,0 +1,216 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{{ card.user.username }} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="users" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'dashboard:users' %}">{% translate "Users" %}</a></li><li aria-current="page">{{ card.user.username }}</li>{% endblock %}
+
+{% block content %}
+{% translate "no limit" as no_limit %}{% translate "as in the plan" as as_planned %}
+<div class="page-header">
+  <div class="min-w-0">
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="page-title break-words">{{ card.user.username }}</h1>
+      {% include "dashboard/users/_status.html" with user=card.user %}
+      {% if card.user.is_staff_member %}<span class="badge badge-muted">{{ card.user.get_role_display }}</span>{% endif %}
+    </div>
+    <p class="page-lead">
+      {{ card.user.email|default:_("no email") }} ·
+      {% blocktranslate with date=card.user.date_joined|date:"SHORT_DATE_FORMAT" %}registered {{ date }}{% endblocktranslate %}
+      {% if card.user.last_login %} · {% blocktranslate with date=card.user.last_login|date:"SHORT_DATETIME_FORMAT" %}last sign-in {{ date }}{% endblocktranslate %}{% endif %}
+    </p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'dashboard:stats' %}?user={{ card.user.pk }}" class="btn btn-ghost">{% icon "chart" %}{% translate "Statistics" %}</a>
+    <a href="{% url 'plans:user' card.user.pk %}" class="btn btn-secondary">{% icon "pencil" %}{% translate "Change" %}</a>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="stat">
+    <span class="stat-label">{% icon "tag" "icon-sm" %}{% translate "Plan" %}</span>
+    <span class="stat-value truncate text-xl">{{ card.plan.name|default:"—" }}</span>
+    {% if card.plan.is_trial %}<span class="stat-note">{% translate "trial" %}</span>{% elif card.limits.plan_assigned_at %}<span class="stat-note">{% blocktranslate with date=card.limits.plan_assigned_at|date:"SHORT_DATE_FORMAT" %}since {{ date }}{% endblocktranslate %}</span>{% endif %}
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% icon "calendar" "icon-sm" %}{% translate "Access until" %}</span>
+    <span class="stat-value text-xl">{% if card.plan %}{{ card.effective.access_until|date:"SHORT_DATE_FORMAT"|default:_("no end") }}{% else %}—{% endif %}</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% icon "activity" "icon-sm" %}{% if card.usage.period_start %}{% translate "This period" %}{% elif card.plan %}{% translate "Since the plan was assigned" %}{% else %}{% translate "In total" %}{% endif %}</span>
+    {% if card.usage.period_start %}
+      <span class="stat-value text-xl">{{ card.usage.period|filesizeformat }}</span>
+      <span class="stat-note">{% if card.effective.traffic_limit is not None %}{% blocktranslate with limit=card.effective.traffic_limit|filesizeformat %}of {{ limit }}{% endblocktranslate %} · {% endif %}{% blocktranslate with date=card.usage.period_start|date:"SHORT_DATE_FORMAT" %}since {{ date }}{% endblocktranslate %}</span>
+    {% else %}
+      <span class="stat-value text-xl">{{ card.usage.total|filesizeformat }}</span>
+    {% endif %}
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% icon "key" "icon-sm" %}{% translate "Keys" %}</span>
+    <span class="stat-value text-xl">{{ card.keys|length }}</span>
+    {% if card.effective.max_keys is not None and card.plan %}<span class="stat-note">{% blocktranslate with limit=card.effective.max_keys %}of {{ limit }}{% endblocktranslate %}</span>{% endif %}
+  </div>
+</div>
+
+<div class="grid items-start gap-6 lg:grid-cols-3">
+  <div class="min-w-0 space-y-6 lg:col-span-2">
+    <section class="card card-flush">
+      <h2 class="section-title flex items-center gap-2 px-4 py-3 sm:px-5">{% icon "key" "icon-sm text-muted" %}{% translate "Keys" %}</h2>
+      {% if card.keys %}
+        <ul class="rows border-t border-border">
+          {% for key, instance in card.keys %}
+            <li>
+              <a href="{% url 'keys:detail' key.pk %}" class="row">
+                <span class="row-lead{% if key.status == 'active' %} row-lead-success{% endif %}">{% icon "key" "icon-sm" %}</span>
+                <span class="row-main">
+                  <span class="row-title">{{ key.name }}</span>
+                  <span class="row-sub">{{ instance }}{% if key.client_ip %} · <span class="font-mono">{{ key.client_ip }}</span>{% endif %}</span>
+                </span>
+                <span class="badge {% if key.status == 'active' %}badge-success{% elif key.status == 'revoked' %}badge-danger{% else %}badge-muted{% endif %}">{{ key.get_status_display }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="border-t border-border px-4 py-3 text-sm text-muted sm:px-5">{% translate "No keys yet." %}</p>
+      {% endif %}
+    </section>
+
+    <section class="card space-y-3">
+      <h2 class="section-title flex items-center gap-2">{% icon "tag" "icon-sm text-muted" %}{% translate "Plan and limits" %}</h2>
+      {% if card.plan %}
+        <p class="text-sm">{% translate "Plan" %}: <span class="font-medium">{{ card.plan.name }}</span>{% if card.plan.is_trial %} <span class="badge badge-muted">{% translate "trial" %}</span>{% endif %}
+          {% if card.limits.plan_assigned_at %}<span class="help-text">· {% blocktranslate with date=card.limits.plan_assigned_at|date:"SHORT_DATE_FORMAT" %}since {{ date }}{% endblocktranslate %}</span>{% endif %}</p>
+        <div class="table-wrap">
+          <table class="table table-cards">
+            <thead><tr><th>{% translate "Limit" %}</th><th>{% translate "In the plan" %}</th><th>{% translate "Personal" %}</th><th>{% translate "In effect" %}</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="cell-title">{% translate "Traffic per period" %}</td>
+                <td data-label="{% translate 'In the plan' %}">{% include "dashboard/users/_limit.html" with value=card.plan.traffic_limit bytes=True empty=no_limit %}</td>
+                <td data-label="{% translate 'Personal' %}">{% include "dashboard/users/_limit.html" with value=card.limits.traffic_limit bytes=True empty=as_planned %}</td>
+                <td data-label="{% translate 'In effect' %}" class="font-medium">{% include "dashboard/users/_limit.html" with value=card.effective.traffic_limit bytes=True empty=no_limit %}</td>
+              </tr>
+              <tr>
+                <td class="cell-title">{% translate "Period, days" %}</td>
+                <td data-label="{% translate 'In the plan' %}">{{ card.plan.period_days }}</td>
+                <td data-label="{% translate 'Personal' %}">{% include "dashboard/users/_limit.html" with value=card.limits.period_days empty=as_planned %}</td>
+                <td data-label="{% translate 'In effect' %}" class="font-medium">{{ card.effective.period_days }}</td>
+              </tr>
+              <tr>
+                <td class="cell-title">{% translate "Traffic in total" %}</td>
+                <td data-label="{% translate 'In the plan' %}">{% include "dashboard/users/_limit.html" with value=card.plan.total_traffic_limit bytes=True empty=no_limit %}</td>
+                <td data-label="{% translate 'Personal' %}">{% include "dashboard/users/_limit.html" with value=card.limits.total_traffic_limit bytes=True empty=as_planned %}</td>
+                <td data-label="{% translate 'In effect' %}" class="font-medium">{% include "dashboard/users/_limit.html" with value=card.effective.total_traffic_limit bytes=True empty=no_limit %}</td>
+              </tr>
+              <tr>
+                <td class="cell-title">{% translate "Keys at most" %}</td>
+                <td data-label="{% translate 'In the plan' %}">{% include "dashboard/users/_limit.html" with value=card.plan.max_keys empty=no_limit %}</td>
+                <td data-label="{% translate 'Personal' %}">{% include "dashboard/users/_limit.html" with value=card.limits.max_keys empty=as_planned %}</td>
+                <td data-label="{% translate 'In effect' %}" class="font-medium">{% include "dashboard/users/_limit.html" with value=card.effective.max_keys empty=no_limit %}</td>
+              </tr>
+              <tr>
+                <td class="cell-title">{% translate "Access until" %}</td>
+                <td data-label="{% translate 'In the plan' %}">{% if card.plan.access_days %}{% blocktranslate count days=card.plan.access_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}{% else %}<span class="help-text">{% translate "no end" %}</span>{% endif %}</td>
+                <td data-label="{% translate 'Personal' %}">{{ card.limits.access_until|date:"SHORT_DATETIME_FORMAT"|default:as_planned }}</td>
+                <td data-label="{% translate 'In effect' %}" class="font-medium">{{ card.effective.access_until|date:"SHORT_DATETIME_FORMAT"|default:_("no end") }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="help-text">{% translate "No plan: the user cannot get keys." %}</p>
+        <a href="{% url 'plans:user' card.user.pk %}" class="btn btn-primary">{% icon "tag" %}{% translate "Change" %}</a>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="min-w-0 space-y-6">
+    {% if offers_subscription %}
+    <section class="card space-y-3">
+      <h2 class="section-title flex items-center gap-2">{% icon "share" "icon-sm text-muted" %}{% translate "Subscription link" %}</h2>
+      <p class="help-text">{% translate "XRay clients fetch the user's XRay keys by this link and keep them up to date. Anyone with the link gets the keys." %}</p>
+      {% if subscription_url %}
+        <div x-data="copy" class="flex min-w-0 items-center gap-2">
+          <input type="text" readonly value="{{ subscription_url }}" x-ref="source" class="input min-w-0 flex-1 font-mono text-xs" aria-label="{% translate 'Subscription link' %}">
+          <button type="button" class="btn btn-ghost btn-sm" @click="copy">{% icon "copy" "icon-sm" %}<span class="sr-only">{% translate "Copy" %}</span></button>
+        </div>
+      {% else %}
+        <p class="help-text">{% translate "The user has no subscription link yet." %}</p>
+      {% endif %}
+      <div class="flex flex-wrap gap-2">
+        <form method="post" action="{% url 'dashboard:user-subscription' card.user.pk %}"
+              {% if subscription_url %}data-confirm="{% translate "The current link will stop working. Continue?" %}"{% endif %}>
+          {% csrf_token %}<button type="submit" class="btn btn-secondary btn-sm">{% if subscription_url %}{% translate "New link" %}{% else %}{% translate "Create link" %}{% endif %}</button>
+        </form>
+        {% if subscription_url %}
+          <form method="post" action="{% url 'dashboard:user-subscription' card.user.pk %}"
+                data-confirm="{% translate "Delete the subscription link?" %}">
+            {% csrf_token %}<input type="hidden" name="action" value="delete">
+            <button type="submit" class="btn btn-ghost-danger btn-sm">{% translate "Delete link" %}</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="card card-flush">
+      <h2 class="section-title flex items-center gap-2 px-4 py-3 sm:px-5">{% icon "message" "icon-sm text-muted" %}{% translate "Linked accounts" %}</h2>
+      <ul class="rows border-t border-border">
+        {% for slot in card.messengers %}
+          <li class="space-y-3 px-4 py-3 sm:px-5">
+            <div class="flex items-center gap-3">
+              <span class="row-main">
+                <span class="row-title">{{ slot.messenger.label }}</span>
+                {% if slot.account %}
+                  <span class="row-sub">{{ slot.account.username|default:"—" }} · ID <span class="font-mono">{{ slot.account.external_id }}</span> · {% blocktranslate with date=slot.account.linked_at|date:"SHORT_DATETIME_FORMAT" %}linked {{ date }}{% endblocktranslate %}</span>
+                {% endif %}
+              </span>
+              {% if slot.account %}
+                <form method="post" action="{% url 'dashboard:user-unlink' card.user.pk slot.messenger %}"
+                      data-confirm="{% translate "Unlink this account?" %}">
+                  {% csrf_token %}<button type="submit" class="btn btn-ghost-danger btn-sm">{% translate "Unlink" %}</button>
+                </form>
+              {% elif slot.invitable %}
+                <form method="post" action="{% url 'dashboard:user-link-code' card.user.pk slot.messenger %}">
+                  {% csrf_token %}<button type="submit" class="btn btn-secondary btn-sm">{% translate "Link for the user" %}</button>
+                </form>
+              {% else %}
+                <span class="badge badge-muted">{% translate "not linked" %}</span>
+              {% endif %}
+            </div>
+            {% if not slot.account %}
+              {% if invited == slot.messenger %}
+                <div class="space-y-1 rounded-control bg-surface-2 p-3 text-sm">
+                  {% if slot.messenger == "telegram" %}
+                    <p>{% translate "Send this link to the user: they open it and press Start in the bot. It works once." %}</p>
+                  {% else %}
+                    <p>{% translate "Send this command to the user: they send it to the panel bot in Discord. It works once." %}</p>
+                  {% endif %}
+                  <p><code class="select-all break-all">{{ invitation }}</code></p>
+                  <p class="help-text">{% blocktranslate count minutes=code_minutes %}Valid for {{ minutes }} minute.{% plural %}Valid for {{ minutes }} minutes.{% endblocktranslate %}</p>
+                </div>
+              {% endif %}
+              <details class="text-sm">
+                <summary class="cursor-pointer text-link">{% translate "Link by account ID" %}</summary>
+                <form method="post" action="{% url 'dashboard:user-link' card.user.pk slot.messenger %}" class="mt-3 grid gap-3">
+                  {% csrf_token %}
+                  <div>
+                    <label for="link-id-{{ slot.messenger }}" class="label">{% translate "Account ID" %}</label>
+                    <input id="link-id-{{ slot.messenger }}" name="external_id" class="input" inputmode="numeric" pattern="[0-9]+" required>
+                  </div>
+                  <div>
+                    <label for="link-name-{{ slot.messenger }}" class="label">{% translate "Name in the messenger" %}</label>
+                    <input id="link-name-{{ slot.messenger }}" name="username" class="input" maxlength="100">
+                  </div>
+                  <div><button type="submit" class="btn btn-secondary btn-sm">{% translate "Link account" %}</button></div>
+                </form>
+              </details>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

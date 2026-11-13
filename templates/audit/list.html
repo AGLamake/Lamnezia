@@ -1,0 +1,42 @@
+{% extends "layouts/admin.html" %}
+{% load i18n audit %}
+{% block title %}{% translate "Audit log" %} · Lamnezia{% endblock %}
+
+{% block nav %}{% include "components/admin_nav.html" with active="audit" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Audit log" %}</h1>
+    <p class="page-lead">{% translate "Who changed what in the panel and when." %}</p>
+  </div>
+</div>
+
+{% include "components/filters.html" with form=filter_form %}
+
+{% if events %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>{% translate "Action" %}</th><th>{% translate "Who" %}</th>
+          <th>{% translate "Object" %}</th><th>{% translate "IP address" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+          <tr>
+            <td class="cell-title" title="{{ event.action }}"><span class="font-medium">{{ event.action|action_label }}</span> <span class="help-text">· {{ event.created_at|date:"SHORT_DATETIME_FORMAT" }}</span></td>
+            <td data-label="{% translate 'Who' %}">{{ event.actor_name|default:"—" }}</td>
+            <td data-label="{% translate 'Object' %}" class="cell-wrap">{{ event.target_repr|default:"—" }}</td>
+            <td data-label="{% translate 'IP address' %}" class="font-mono text-xs">{{ event.ip|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/pagination.html" %}
+{% else %}
+  <p class="help-text">{% translate "No events found." %}</p>
+{% endif %}
+{% endblock %}

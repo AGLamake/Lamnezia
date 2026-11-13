@@ -1,0 +1,81 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Users" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="users" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Users" %}</h1>
+    <p class="page-lead">{% translate "Clients and staff: access, plan and keys. Tick users to extend or change many at once." %}</p>
+  </div>
+  <a href="{% url 'accounts:invite-add' %}" class="btn btn-primary">{% icon "user-plus" %}{% translate "Create an invite" %}</a>
+</div>
+
+{% include "components/filters.html" with form=filter_form %}
+
+{% if rows %}
+  <form method="post" action="{% url 'dashboard:users-batch' %}" class="space-y-4" x-data="{ action: 'extend' }">
+    {% csrf_token %}
+    <input type="hidden" name="filters" value="{{ filters }}">
+    <div class="bulk-bar items-end">
+      <div class="min-w-0 flex-1 sm:flex-none">
+        <label for="batch-action" class="label">{% translate "With the ticked users" %}</label>
+        <select id="batch-action" name="action" class="input" x-model="action">
+          {% for value, title in actions %}<option value="{{ value }}">{{ title }}</option>{% endfor %}
+        </select>
+      </div>
+      <div x-show="action === 'extend'">
+        <label for="batch-days" class="label">{% translate "Days" %}</label>
+        <input id="batch-days" name="days" type="number" min="1" value="30" class="input w-28">
+      </div>
+      <div x-show="action === 'change_plan'" x-cloak>
+        <label for="batch-plan" class="label">{% translate "Plan" %}</label>
+        <select id="batch-plan" name="plan" class="input">
+          {% for plan in plans %}<option value="{{ plan.pk }}">{{ plan.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">{% translate "Apply" %}</button>
+      <p class="help-text w-full">{% translate "Keys change on the servers in the background; the report shows every operation." %}</p>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead>
+          <tr>
+            <th><input type="checkbox" class="checkbox" aria-label="{% translate 'Tick all' %}"
+                       data-check-all="users"></th>
+            <th>{% translate "User" %}</th><th>{% translate "Status" %}</th><th>{% translate "Plan" %}</th>
+            <th>{% translate "Access until" %}</th><th>{% translate "Active keys" %}</th><th>{% translate "Messengers" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              <td class="cell-check"><input type="checkbox" name="users" value="{{ row.user.pk }}" class="checkbox" aria-label="{{ row.user.username }}"></td>
+              <td class="cell-title">
+                <a href="{% url 'dashboard:user' row.user.pk %}" class="font-medium hover:underline">{{ row.user.username }}</a>
+                {% if row.user.is_staff_member %}<span class="badge badge-muted">{{ row.user.get_role_display }}</span>{% endif %}
+                {% if row.user.email %}<div class="help-text">{{ row.user.email }}</div>{% endif %}
+              </td>
+              <td data-label="{% translate 'Status' %}">{% include "dashboard/users/_status.html" with user=row.user %}</td>
+              <td data-label="{% translate 'Plan' %}">{{ row.plan|default:"—" }}</td>
+              <td data-label="{% translate 'Access until' %}">{% if row.plan %}{{ row.access_until|date:"SHORT_DATE_FORMAT"|default:_("no end") }}{% else %}—{% endif %}</td>
+              <td data-label="{% translate 'Active keys' %}">{{ row.user.active_keys }}</td>
+              <td data-label="{% translate 'Messengers' %}">
+                {% for account in row.user.linked_accounts.all %}
+                  <div title="{{ account.external_id }}"><span class="badge badge-muted">{{ account.get_messenger_display }}</span> {{ account.username|default:account.external_id }}</div>
+                {% empty %}—{% endfor %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+  {% include "components/pagination.html" %}
+{% else %}
+  {% translate "No users found." as empty_title %}
+  {% include "components/empty_state.html" with icon="users" title=empty_title %}
+{% endif %}
+{% endblock %}

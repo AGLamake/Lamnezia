@@ -1,0 +1,23 @@
+{% load i18n %}
+  <div class="space-y-2">
+    <div class="grid gap-4 sm:grid-cols-3">
+      {{ form.port.as_field_group }}
+      {{ form.primary_dns.as_field_group }}
+      {{ form.secondary_dns.as_field_group }}
+    </div>
+    {% include "protocols/_port_hint.html" with server=instance.server %}
+    {{ form.subnet.as_field_group }}
+  </div>
+  <p class="help-text">{% translate "DNS goes only into client profiles: changing it alone does not touch the server, but clients get it after importing the key again." %}</p>
+
+  {% for group in form.groups %}
+    <fieldset class="space-y-3">
+      <legend class="font-semibold">{{ group.title }}</legend>
+      {% if group.note %}<p class="error-text">{{ group.note }}</p>{% endif %}
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% for field in group.fields %}{{ field.as_field_group }}{% endfor %}
+      </div>
+    </fieldset>
+  {% endfor %}
+  <p class="help-text">{% translate "An empty parameter is left out of awg0.conf, as the Amnezia app does it." %}</p>
+

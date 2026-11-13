@@ -1,0 +1,6 @@
+{% extends "errors/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Server error" %}{% endblock %}
+{% block code %}500{% endblock %}
+{% block heading %}{% translate "Something went wrong" %}{% endblock %}
+{% block text %}{% translate "The panel could not finish the request. Try again in a minute; if it repeats, tell the administrator." %}{% endblock %}

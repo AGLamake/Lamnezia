@@ -1,0 +1,22 @@
+{% load i18n ui %}
+{% comment %} Appearance menu: theme (light, dark or as on the device) and, on wide screens, the page width.
+   static/js/theme.js keeps both choices in localStorage. {% endcomment %}
+<div class="relative" x-data="themeMenu" @keydown.escape="close" @click.outside="closeOutside">
+  <button type="button" class="btn btn-ghost btn-icon btn-sm" x-ref="button" @click="toggle"
+          aria-haspopup="menu" :aria-expanded="expanded()" aria-label="{% translate 'Appearance' %}">
+    <span class="hidden dark:inline">{% icon "moon" "icon-sm" %}</span><span class="dark:hidden">{% icon "sun" "icon-sm" %}</span>
+  </button>
+  <div class="menu {% if up %}bottom-full mb-2{% else %}right-0{% endif %} min-w-44" role="menu" x-ref="items" x-show="open" x-cloak
+       x-transition.opacity @keydown="move($event)" aria-label="{% translate 'Appearance' %}">
+    <p class="menu-label" aria-hidden="true">{% translate "Theme" %}</p>
+    <button type="button" class="menu-item" role="menuitemradio" :aria-checked="checked('light')" @click="choose('light')">{% icon "sun" %}{% translate "Light" %}</button>
+    <button type="button" class="menu-item" role="menuitemradio" :aria-checked="checked('dark')" @click="choose('dark')">{% icon "moon" %}{% translate "Dark" %}</button>
+    <button type="button" class="menu-item" role="menuitemradio" :aria-checked="checked('system')" @click="choose('system')">{% icon "monitor" %}{% translate "As on the device" %}</button>
+    <div class="max-lg:hidden">
+      <div class="divider my-1" role="separator"></div>
+      <p class="menu-label" aria-hidden="true">{% translate "Page width" %}</p>
+      <button type="button" class="menu-item" role="menuitemradio" :aria-checked="widthChecked('normal')" @click="chooseWidth('normal')">{% icon "width-normal" %}{% translate "Normal" %}</button>
+      <button type="button" class="menu-item" role="menuitemradio" :aria-checked="widthChecked('wide')" @click="chooseWidth('wide')">{% icon "width-wide" %}{% translate "Wide" %}</button>
+    </div>
+  </div>
+</div>

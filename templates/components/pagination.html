@@ -1,0 +1,25 @@
+{% load i18n ui %}
+{% comment %} Previous and next page of a paginated list; the filters of the URL are kept. A list with
+   `PageSizeMixin` (apps/core/paging.py) also gets the rows-per-page choice once it has more rows than the smallest size.
+{% endcomment %}
+{% with count=page_obj.paginator.count size=page_obj.paginator.per_page %}
+{% if is_paginated or page_sizes and count > page_sizes.0 %}
+  <div class="pagination">
+    {% if is_paginated %}
+      <nav class="flex items-center gap-2" aria-label="{% translate 'Pages' %}">
+        {% if page_obj.has_previous %}<a class="btn btn-secondary btn-icon btn-sm" href="{% querystring page=page_obj.previous_page_number %}" rel="prev" aria-label="{% translate 'Previous page' %}">{% icon "chevron-left" %}</a>{% endif %}
+        <span class="help-text">{% blocktranslate with number=page_obj.number total=page_obj.paginator.num_pages %}Page {{ number }} of {{ total }}{% endblocktranslate %}</span>
+        {% if page_obj.has_next %}<a class="btn btn-secondary btn-icon btn-sm" href="{% querystring page=page_obj.next_page_number %}" rel="next" aria-label="{% translate 'Next page' %}">{% icon "chevron-right" %}</a>{% endif %}
+      </nav>
+    {% endif %}
+    {% if page_sizes and count > page_sizes.0 %}
+      <nav class="flex items-center gap-2" aria-label="{% translate 'Rows per page' %}">
+        <span class="help-text" aria-hidden="true">{% translate "Rows per page" %}</span>
+        <div class="segmented">
+          {% for option in page_sizes %}<a href="{% querystring per_page=option page=None %}"{% if option == size %} aria-current="page"{% endif %}>{{ option }}</a>{% endfor %}
+        </div>
+      </nav>
+    {% endif %}
+  </div>
+{% endif %}
+{% endwith %}

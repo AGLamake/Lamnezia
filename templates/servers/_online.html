@@ -1,0 +1,6 @@
+{% load i18n %}{# Monitor status of `server`: online, offline or no readings yet. #}
+{% with online=server.online %}
+  {% if online %}<span class="badge badge-success">{% translate "online" %}</span>
+  {% elif online is False %}<span class="badge badge-danger">{% translate "offline" %}</span>
+  {% else %}<span class="badge badge-muted">{% translate "no data yet" %}</span>{% endif %}
+{% endwith %}

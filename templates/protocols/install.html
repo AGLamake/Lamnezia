@@ -1,0 +1,66 @@
+{% extends "servers/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Install" %} · {{ server.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li><a href="{% url 'servers:detail' server.pk %}">{{ server.name }}</a></li><li aria-current="page">{% translate "Install" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Install" %}</h1>
+  <p class="help-text">{% translate "The panel prepares the server and installs the container the same way the Amnezia app does, so the app keeps working with it." %}</p>
+</div>
+
+{% if form.fields.container.choices %}
+  <form method="post" class="card space-y-4" x-data="{ container: '{{ form.container.value|default_if_none:''|escapejs }}' }">
+    {% csrf_token %}
+    {{ form.container.as_field_group }}
+    {% for container, description in form.descriptions %}
+      <p class="help-text" x-show="container === '{{ container }}'" x-cloak>{{ description }}</p>
+    {% endfor %}
+    <div class="space-y-2" x-data="{ port: '{{ form.port.value|default_if_none:''|escapejs }}' }">
+      {{ form.port.as_field_group }}
+      {% include "protocols/_port_hint.html" %}
+      {% for container, default_port, low_port in form.low_port_advice %}
+        <p class="help-text" x-show="container === '{{ container }}' && !port" x-cloak>
+          {% blocktranslate %}An empty field keeps port {{ default_port }} of the Amnezia app, which is above 9999. Where UDP on high ports is throttled, enter a port up to 9999, for example {{ low_port }}.{% endblocktranslate %}
+        </p>
+      {% endfor %}
+    </div>
+    {{ form.logs.as_field_group }}
+    {% for field, condition in form.installer_fields %}
+      <div x-show="{{ condition }}" x-cloak>{{ field.as_field_group }}</div>
+    {% endfor %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "Install" %}</button>
+      <a href="{% url 'servers:detail' server.pk %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+{% else %}
+  {% translate "Everything the panel can install is already on this server." as nothing %}
+  {% include "components/alert.html" with level="info" text=nothing %}
+{% endif %}
+
+{% if choices %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% translate "Protocol or service" %}</th><th>{% translate "Port" %}</th><th></th></tr></thead>
+      <tbody>
+        {% regroup choices by group as groups %}
+        {% for group in groups %}
+          <tr><th colspan="3">{{ group.grouper.label }}</th></tr>
+          {% for choice in group.list %}
+          <tr>
+            <td>
+              {{ choice.title }} <span class="help-text">{{ choice.container }}</span>
+              <p class="help-text">{{ choice.description }}</p>
+            </td>
+            <td>{{ choice.ports }}</td>
+            <td>{% if choice.reason %}<span class="help-text">{{ choice.reason }}</span>{% else %}<span class="badge badge-muted">{% translate "can be installed" %}</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+{% endblock %}

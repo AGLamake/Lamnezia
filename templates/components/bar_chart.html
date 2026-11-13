@@ -1,0 +1,59 @@
+{% load i18n %}
+{% comment %} Stacked bar chart (templatetag `bar_chart` in apps/core/templatetags/ui.py). The bars are an SVG
+   stretched to the width; the axis text and the tooltips are HTML, so they keep their size. A tooltip opens
+   on hover or tap (the `barChart` Alpine component); a hidden table reads the numbers aloud.
+{% endcomment %}
+{% if empty %}
+<p class="help-text py-6 text-center">{% translate "No traffic in this period." %}</p>
+{% else %}
+<figure class="bar-chart">
+  <figcaption class="flex flex-wrap gap-4 text-sm text-muted">
+    {% for number, title in legend %}
+      <span class="inline-flex items-center gap-2"><span class="bar-chart-swatch bar-chart-{{ number }}" aria-hidden="true"></span>{{ title }}</span>
+    {% endfor %}
+  </figcaption>
+  <div class="bar-chart-body" aria-hidden="true">
+    <div class="bar-chart-ticks">
+      {% for tick in ticks %}<span style="bottom: {{ tick.bottom|stringformat:'.2f' }}%">{{ tick.value|filesizeformat }}</span>{% endfor %}
+    </div>
+    <div class="bar-chart-plot" x-data="barChart" @click.outside="clear">
+      {% for tick in ticks %}<span class="bar-chart-grid" style="bottom: {{ tick.bottom|stringformat:'.2f' }}%"></span>{% endfor %}
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
+        {% for column, values in columns %}
+          {% for segment in column.segments %}
+            <rect class="bar-chart-{{ segment.series|add:1 }}" x="{{ column.left|stringformat:'.3f' }}" y="{{ segment.top|stringformat:'.3f' }}" width="{{ column.width|stringformat:'.3f' }}" height="{{ segment.height|stringformat:'.3f' }}"/>
+          {% endfor %}
+        {% endfor %}
+      </svg>
+      {% for column, values in columns %}
+        <div class="bar-chart-col" style="left: {{ column.slot_left|stringformat:'.3f' }}%; width: {{ column.slot_width|stringformat:'.3f' }}%"
+             @click="pick({{ forloop.counter0 }})" :data-active="state({{ forloop.counter0 }})">
+          <div class="bar-chart-tip bar-chart-tip-{{ column.tip_side }}">
+            <p class="font-semibold">{{ column.label }}</p>
+            {% for title, value in values %}
+              <p class="flex items-center gap-2"><span class="bar-chart-swatch bar-chart-{{ forloop.counter }}"></span><span class="flex-1">{{ title }}</span><span class="tabular-nums">{{ value|filesizeformat }}</span></p>
+            {% endfor %}
+            {% if several %}<p class="flex gap-2 border-t border-border pt-1 text-muted"><span class="flex-1">{% translate "Total" %}</span><span class="tabular-nums">{{ column.total|filesizeformat }}</span></p>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+      <div class="bar-chart-axis bar-chart-axis-wide">
+        {% for text, centre in axis %}<span style="left: {{ centre|stringformat:'.2f' }}%">{{ text }}</span>{% endfor %}
+      </div>
+      <div class="bar-chart-axis bar-chart-axis-narrow">
+        {% for text, centre in axis_narrow %}<span style="left: {{ centre|stringformat:'.2f' }}%">{{ text }}</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+  {# Hidden by a wrapper: a table ignores the 1px width of sr-only and Firefox draws its caption. #}
+  <div class="sr-only"><table>
+    <caption>{{ label }}</caption>
+    <thead><tr><th scope="col">{% translate "Period" %}</th>{% for title in titles %}<th scope="col">{{ title }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for column, values in columns %}
+        <tr><th scope="row">{{ column.label }}</th>{% for title, value in values %}<td>{{ value|filesizeformat }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</figure>
+{% endif %}

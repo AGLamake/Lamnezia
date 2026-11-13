@@ -1,0 +1,142 @@
+# Russian translation of Lamnezia (apps.ssh).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "A command on the server failed."
+msgstr "Команда на сервере завершилась с ошибкой."
+
+msgid "A required file is missing on the server."
+msgstr "На сервере нет нужного файла."
+
+msgid "Add the user to the sudo (or wheel) group, or connect as root."
+msgstr "Добавьте пользователя в группу sudo (или wheel) либо подключайтесь под root."
+
+msgid "Allow sudo without a password for this user (NOPASSWD in sudoers), or connect as root."
+msgstr "Разрешите этому пользователю sudo без пароля (NOPASSWD в sudoers) или подключайтесь под root."
+
+msgid "Another operation is changing this server right now."
+msgstr "Сервер сейчас изменяет другая операция."
+
+msgid "Check that the port belongs to SSH and not to another service."
+msgstr "Проверьте, что указан порт SSH, а не другого сервиса."
+
+msgid "Check that the server is online and the SSH port is open, then try again."
+msgstr "Проверьте, что сервер в сети и порт SSH открыт, и повторите попытку."
+
+msgid "Check the address and port, that the server is up and the firewall allows SSH."
+msgstr "Проверьте адрес и порт, что сервер включён и файрвол пропускает SSH."
+
+msgid "Check the network and try again."
+msgstr "Проверьте сеть и повторите попытку."
+
+msgid "Check the user name and the password or key. Make sure the key is in authorized_keys."
+msgstr "Проверьте имя пользователя и пароль или ключ. Убедитесь, что ключ добавлен в authorized_keys."
+
+msgid "Docker is not installed on the server."
+msgstr "На сервере не установлен Docker."
+
+msgid "Enter the key passphrase."
+msgstr "Укажите пароль от ключа."
+
+msgid "If the server was reinstalled, press Forget next to the SSH fingerprint on the server card. Otherwise the connection may be intercepted: do not continue."
+msgstr "Если сервер переустанавливали, нажмите «Забыть» рядом с отпечатком SSH на карточке сервера. Иначе подключение может быть перехвачено: не продолжайте."
+
+msgid "Install sudo or connect as root."
+msgstr "Установите sudo или подключайтесь под root."
+
+msgid "Install the server with the Amnezia app or the panel first."
+msgstr "Сначала установите сервер через приложение Amnezia или панель."
+
+msgid "Install the util-linux package."
+msgstr "Установите пакет util-linux."
+
+msgid "Paste the whole key in OpenSSH or PEM format (Ed25519, ECDSA or RSA)."
+msgstr "Вставьте ключ целиком в формате OpenSSH или PEM (Ed25519, ECDSA или RSA)."
+
+msgid "See the operation log for details."
+msgstr "Подробности — в журнале операции."
+
+msgid "Start the container on the server or in the Amnezia app."
+msgstr "Запустите контейнер на сервере или в приложении Amnezia."
+
+msgid "The command on the server took too long."
+msgstr "Команда на сервере выполнялась слишком долго."
+
+msgid "The connection to the server was lost."
+msgstr "Соединение с сервером потеряно."
+
+msgid "The flock utility is missing on the server."
+msgstr "На сервере нет утилиты flock."
+
+msgid "The private key cannot be read."
+msgstr "Не удаётся прочитать приватный ключ."
+
+msgid "The private key is protected by a passphrase that is missing or wrong."
+msgstr "Приватный ключ защищён паролем, а пароль не указан или неверен."
+
+msgid "The protocol container is stopped."
+msgstr "Контейнер протокола остановлен."
+
+msgid "The protocol container was not found on the server."
+msgstr "Контейнер протокола не найден на сервере."
+
+msgid "The protocol may be installed incompletely. Reinstall it or refresh the server data."
+msgstr "Возможно, протокол установлен не полностью. Переустановите его или обновите данные сервера."
+
+msgid "The protocol may have been removed in the Amnezia app. Refresh the server data."
+msgstr "Возможно, протокол удалили в приложении Amnezia. Обновите данные сервера."
+
+msgid "The server cannot be reached."
+msgstr "Сервер недоступен."
+
+msgid "The server did not answer in time."
+msgstr "Сервер не ответил вовремя."
+
+msgid "The server does not respond like an SSH server."
+msgstr "На этом порту отвечает не SSH-сервер."
+
+msgid "The server identity has changed since the first connection."
+msgstr "Ключ сервера изменился с момента первого подключения."
+
+msgid "The server may be overloaded. Try again later."
+msgstr "Возможно, сервер перегружен. Повторите позже."
+
+msgid "The server rejected the login."
+msgstr "Сервер отклонил вход."
+
+msgid "The user is not allowed to use sudo."
+msgstr "Пользователю не разрешён sudo."
+
+msgid "Wait for it to finish and try again."
+msgstr "Дождитесь её завершения и повторите попытку."
+
+msgid "fingerprint"
+msgstr "отпечаток"
+
+msgid "first seen"
+msgstr "впервые замечен"
+
+msgid "host"
+msgstr "хост"
+
+msgid "key type"
+msgstr "тип ключа"
+
+msgid "known host"
+msgstr "известный хост"
+
+msgid "known hosts"
+msgstr "известные хосты"
+
+msgid "port"
+msgstr "порт"
+
+msgid "sudo asks for a password."
+msgstr "sudo запрашивает пароль."
+
+msgid "sudo is not installed on the server."
+msgstr "На сервере не установлен sudo."

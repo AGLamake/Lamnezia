@@ -1,0 +1,19 @@
+{% extends "guides/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Guides" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% translate "Install Amnezia VPN" %}</h1>
+<p class="help-text">{% translate "Choose your device. Download links always point to the latest Amnezia release." %}</p>
+
+<div class="grid gap-3 sm:grid-cols-2">
+  {% for device in devices %}
+    <a href="{% url 'guides:platform' device.value %}" class="card card-link flex items-center justify-between gap-3">
+      <span class="flex items-center gap-3 text-lg font-medium"><span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted">{% icon "os-"|add:device.value %}</span>{{ device.label }}</span>
+      {% if device == detected %}<span class="badge badge-success">{% translate "your device" %}</span>{% endif %}
+    </a>
+  {% endfor %}
+</div>
+
+<p><a href="{% url 'guides:faq' %}" class="btn btn-secondary">{% translate "Frequently asked questions" %}</a></p>
+{% endblock %}

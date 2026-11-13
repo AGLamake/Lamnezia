@@ -1,0 +1,47 @@
+name: Deploy
+
+# After a green CI on dev, updates the panel on the server over SSH. The key may run only
+# deploy/update/lamnezia-deploy.sh there (see docs/wiki/en/Upgrade.md). Without the DEPLOY_HOST
+# secret the job does nothing, so forks are not affected.
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [dev]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update the server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "DEPLOY_HOST is not set, nothing to deploy."
+            exit 0
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy ~/.ssh/known_hosts
+          printf '%s\n' "$GH_TOKEN" | ssh -i ~/.ssh/deploy -p "${DEPLOY_PORT:-22}" \
+            -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "${DEPLOY_USER:-root}@$DEPLOY_HOST" deploy "$COMMIT"

@@ -1,0 +1,13 @@
+# Used with `docker compose --profile caddy` on servers without their own nginx.
+# Caddy obtains and renews the TLS certificate for LAMNEZIA_DOMAIN automatically.
+# reverse_proxy passes WebSocket upgrades through as is.
+{$LAMNEZIA_DOMAIN} {
+	encode zstd gzip
+	# The Telegram webhook (LAMNEZIA_TELEGRAM_WEBHOOK) goes to the bots service.
+	handle /bots/telegram/* {
+		reverse_proxy bots:8081
+	}
+	handle {
+		reverse_proxy web:8000
+	}
+}

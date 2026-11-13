@@ -1,0 +1,132 @@
+# Russian translation of Lamnezia (apps.backups).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "A copy of the container files is saved in the panel."
+msgstr "Копия файлов контейнера сохранена в панели."
+
+msgid "A new copy could not be saved: the last saved copy is kept for a restore."
+msgstr "Новую копию сохранить не удалось: для восстановления остаётся последняя сохранённая."
+
+msgid "Another AmneziaWG 2.0 server with other keys already runs on this server."
+msgstr "На этом сервере уже работает другой AmneziaWG 2.0 с другими ключами."
+
+#, python-format
+msgid "Clients to restore: %(count)d."
+msgstr "Клиентов к восстановлению: %(count)d."
+
+msgid "Connect to the server"
+msgstr "Подключиться к серверу"
+
+#, python-format
+msgid "Copy of the server files from %(date)s."
+msgstr "Копия файлов сервера от %(date)s."
+
+#, python-format
+msgid "Files put back: %(count)d."
+msgstr "Возвращено файлов: %(count)d."
+
+msgid "Import the protocol from the server again, or install it anew and issue new keys."
+msgstr "Импортируйте протокол с сервера ещё раз или установите его заново и выдайте новые ключи."
+
+msgid "Install the protocol anew and issue new keys."
+msgstr "Установите протокол заново и выдайте новые ключи."
+
+#, python-format
+msgid "Keys issued after the copy: %(count)d. They may not connect; reissue them."
+msgstr "Ключей, выданных после копии: %(count)d. Они могут не подключаться — перевыпустите их."
+
+msgid "Load the saved database"
+msgstr "Загрузить сохранённую базу данных"
+
+msgid "No copy could be saved: the keys of this protocol will not work again."
+msgstr "Копию сохранить не удалось: ключи этого протокола больше не заработают."
+
+msgid "Prepare the files from the panel"
+msgstr "Подготовить файлы из панели"
+
+msgid "Put the saved files into the container"
+msgstr "Положить сохранённые файлы в контейнер"
+
+msgid "Restore the protocol"
+msgstr "Восстановление протокола"
+
+msgid "Restore the service"
+msgstr "Восстановление сервиса"
+
+msgid "Save a copy of the server files"
+msgstr "Сохранить копию файлов сервера"
+
+msgid "The container already has its files, they are kept."
+msgstr "В контейнере уже есть свои файлы, они сохранены."
+
+msgid "The container has no files of its own yet."
+msgstr "В контейнере ещё нет своих файлов."
+
+msgid "The container has the account the panel keeps."
+msgstr "В контейнере та же учётная запись, что хранит панель."
+
+msgid "The container has the keys the panel keeps."
+msgstr "В контейнере те же ключи, что хранит панель."
+
+msgid "The container of this protocol on the server has other keys."
+msgstr "Контейнер этого протокола на сервере работает с другими ключами."
+
+#, python-format
+msgid "The key %(name)s has no address and is skipped."
+msgstr "У ключа %(name)s нет адреса, он пропущен."
+
+msgid "The panel does not overwrite it. Remove the amnezia-awg2 container on the server or restore to another server."
+msgstr "Панель его не перезаписывает. Удалите контейнер amnezia-awg2 на сервере или восстановите на другой сервер."
+
+msgid "The panel does not overwrite it. Remove the container on the server or restore to another server."
+msgstr "Панель его не перезаписывает. Удалите контейнер на сервере или восстановите на другой сервер."
+
+msgid "The panel has no copy of the files of this protocol."
+msgstr "В панели нет копии файлов этого протокола."
+
+msgid "The saved copy belongs to other server keys than the panel has for the protocol."
+msgstr "Сохранённая копия относится к другим ключам сервера, чем те, что есть в панели для этого протокола."
+
+msgid "The saved copy of the protocol files cannot be read."
+msgstr "Сохранённую копию файлов протокола не удаётся прочитать."
+
+msgid "There is no copy of the server files: the panel settings are used."
+msgstr "Копии файлов сервера нет: используются настройки из панели."
+
+msgid "Without the copy the old keys cannot work again. Install the protocol anew and issue new keys."
+msgstr "Без копии старые ключи заново не заработают. Установите протокол заново и выдайте новые ключи."
+
+msgid "client list"
+msgstr "список клиентов"
+
+msgid "container files"
+msgstr "файлы контейнера"
+
+msgid "protocol"
+msgstr "протокол"
+
+msgid "protocol backup"
+msgstr "копия протокола"
+
+msgid "protocol backups"
+msgstr "копии протоколов"
+
+msgid "saved at"
+msgstr "сохранено"
+
+msgid "server configuration"
+msgstr "конфигурация сервера"
+
+msgid "service"
+msgstr "сервис"
+
+msgid "service backup"
+msgstr "копия сервиса"
+
+msgid "service backups"
+msgstr "копии сервисов"

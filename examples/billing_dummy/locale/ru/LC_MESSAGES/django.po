@@ -1,0 +1,19 @@
+# Russian translation of Lamnezia (examples.billing_dummy).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "Pay"
+msgstr "Оплатить"
+
+msgid "Refuse"
+msgstr "Отказаться"
+
+msgid "Test payment"
+msgstr "Тестовая оплата"
+
+msgid "This is the example payment plugin: no money is charged. Never enable it on a public panel."
+msgstr "Это пример платёжного плагина: деньги не списываются. Никогда не включайте его на публичной панели."

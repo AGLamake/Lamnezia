@@ -1,0 +1,1307 @@
+# Russian translation of Lamnezia (apps.protocols).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#, python-format
+msgid "%(file)s already exists and is kept."
+msgstr "%(file)s уже есть и сохранён без изменений."
+
+#, python-format
+msgid "%(file)s is created with new server keys."
+msgstr "%(file)s создан с новыми ключами сервера."
+
+#, python-format
+msgid "%(file)s is restored with the saved server keys."
+msgstr "%(file)s восстановлен с сохранёнными ключами сервера."
+
+#, python-format
+msgid "%(host)s is %(ip)s."
+msgstr "%(host)s — это %(ip)s."
+
+#, python-format
+msgid "%(title)s listens on UDP %(port)s, clients get addresses from %(subnet)s."
+msgstr "%(title)s слушает UDP %(port)s, клиенты получают адреса из %(subnet)s."
+
+#, python-format
+msgid "%(transport)s port %(port)d is free."
+msgstr "%(transport)s-порт %(port)d свободен."
+
+msgid "32 hex digits from @MTProxybot: Telegram shows your channel to the users."
+msgstr "32 шестнадцатеричные цифры от @MTProxybot: Telegram покажет пользователям ваш канал."
+
+msgid "3proxy.cfg of the SOCKS5 proxy has no account, so the log is left as it is."
+msgstr "В 3proxy.cfg прокси SOCKS5 нет учётной записи, поэтому журнал оставлен как есть."
+
+msgid "A domain that points at this server."
+msgstr "Домен, который указывает на этот сервер."
+
+msgid "A large site that works over HTTPS; it goes into the secret of the links."
+msgstr "Крупный сайт, работающий по HTTPS; он входит в секрет ссылок."
+
+msgid "A proxy for apps and browsers that support SOCKS5."
+msgstr "Прокси для приложений и браузеров с поддержкой SOCKS5."
+
+msgid "Add an A record of the domain with the IP address of the server and try again."
+msgstr "Добавьте домену A-запись с IP-адресом сервера и попробуйте снова."
+
+msgid "Additional client configuration commands"
+msgstr "Дополнительные команды конфигурации клиента"
+
+msgid "Additional secrets"
+msgstr "Дополнительные секреты"
+
+msgid "Additional server configuration commands"
+msgstr "Дополнительные команды конфигурации сервера"
+
+msgid "Address in Tor"
+msgstr "Адрес в Tor"
+
+msgid "Address in amnezia-dns-net"
+msgstr "Адрес в amnezia-dns-net"
+
+msgid "Already on the server."
+msgstr "Уже есть на сервере."
+
+#, python-format
+msgid "Already used on the server: %(ports)s."
+msgstr "Уже заняты на сервере: %(ports)s."
+
+msgid "Amnezia runs the container without a log. With the log on, docker keeps up to 30 MB of it. Changing this recreates the container; keys and clients stay."
+msgstr "Amnezia запускает контейнер без лога. С включённым логом docker хранит до 30 МБ. Изменение пересоздаёт контейнер; ключи и клиенты сохраняются."
+
+msgid "Amnezia runs the container without a log; docker keeps up to 30 MB of it."
+msgstr "Amnezia запускает контейнер без лога; docker хранит до 30 МБ лога."
+
+msgid "AmneziaDNS has no settings: the VPN containers send it the DNS requests."
+msgstr "У AmneziaDNS нет параметров: DNS-запросы ему отправляют VPN-контейнеры."
+
+msgid "AmneziaWG (legacy)"
+msgstr "AmneziaWG (legacy)"
+
+msgid "AmneziaWG 2.0 is installed, but the import did not find it."
+msgstr "AmneziaWG 2.0 установлен, но импорт его не нашёл."
+
+msgid "AmneziaWG 2.0 is removed from the server, its backup is kept."
+msgstr "AmneziaWG 2.0 удалён с сервера, его резервная копия сохранена."
+
+msgid "AmneziaWG 2.0 on the server is not on version 3.1 yet."
+msgstr "AmneziaWG 2.0 на сервере ещё не переведён на версию 3.1."
+
+msgid "AmneziaWG 3.1"
+msgstr "AmneziaWG 3.1"
+
+msgid "AmneziaWG and WireGuard only. On some VPS upload through the VPN drops several times because the container network glues TCP packets together and the glued packets are lost. A systemd timer on the server keeps TSO/GSO off on the container interface. Configs and keys do not change; it is turned off on the server card."
+msgstr "Только для AmneziaWG и WireGuard. На некоторых VPS отдача через VPN падает в разы: сеть контейнера склеивает TCP-пакеты, и склеенные пакеты теряются. Таймер systemd на сервере держит TSO/GSO выключенными на интерфейсе контейнера. Конфиги и ключи не меняются; выключается на карточке сервера."
+
+msgid "AmneziaWG did not start in the container."
+msgstr "AmneziaWG не запустился в контейнере."
+
+msgid "AmneziaWG is a special protocol from Amnezia based on WireGuard. It provides high connection speed and ensures stable operation even in the most challenging network conditions."
+msgstr "AmneziaWG — специальный протокол от Amnezia, основанный на WireGuard. Он обеспечивает высокую скорость соединения и гарантирует стабильную работу даже в самых сложных условиях."
+
+msgid "AmneziaWG needs Linux 4.14 or newer. Upgrade the system or use another server."
+msgstr "AmneziaWG нужен Linux 4.14 или новее. Обновите систему или используйте другой сервер."
+
+msgid "AmneziaWG started without the settings of version 3.1."
+msgstr "AmneziaWG запустился без настроек версии 3.1."
+
+#, python-format
+msgid "Applied: %(count)d of %(total)d."
+msgstr "Применено: %(count)d из %(total)d."
+
+msgid "As in the Amnezia app, the SFTP account is shown, not changed."
+msgstr "Как и в приложении Amnezia, учётная запись SFTP показывается, но не меняется."
+
+msgid "As in the Amnezia app, the site in Tor has no settings."
+msgstr "Как и в приложении Amnezia, у сайта в Tor нет параметров."
+
+msgid "Auto-negotiate encryption"
+msgstr "Согласовывать шифрование автоматически"
+
+msgid "Automatic updates are probably running. Wait a few minutes and try again."
+msgstr "Вероятно, идут автоматические обновления. Подождите несколько минут и повторите."
+
+msgid "Block DNS requests outside of VPN"
+msgstr "Блокировать DNS-запросы в обход VPN"
+
+msgid "Bring back the old container"
+msgstr "Возврат старого контейнера"
+
+msgid "Bring back the settings files"
+msgstr "Возврат файлов настроек"
+
+msgid "Build the container image"
+msgstr "Сборка образа контейнера"
+
+msgid "Build the image"
+msgstr "Сборка образа"
+
+msgid "Build the image with AmneziaWG 3.1"
+msgstr "Сборка образа с AmneziaWG 3.1"
+
+msgid "Build the iperf3 image"
+msgstr "Сборка образа iperf3"
+
+#, python-format
+msgid "Certificates with names the panel cannot manage are skipped: %(count)d."
+msgstr "Пропущено сертификатов с именами, которыми панель не может управлять: %(count)d."
+
+msgid "Change the OpenVPN settings"
+msgstr "Смена параметров OpenVPN"
+
+msgid "Change the XRay settings"
+msgstr "Смена параметров XRay"
+
+msgid "Change the protocol settings"
+msgstr "Изменение параметров протокола"
+
+msgid "Change the service settings"
+msgstr "Смена параметров сервиса"
+
+msgid "Check TSO/GSO"
+msgstr "Проверка TSO/GSO"
+
+msgid "Check server.conf and the container log: docker logs amnezia-openvpn."
+msgstr "Проверьте server.conf и журнал контейнера: docker logs amnezia-openvpn."
+
+msgid "Check server.json and the container log: docker logs amnezia-xray."
+msgstr "Проверьте server.json и лог контейнера: docker logs amnezia-xray."
+
+msgid "Check systemd"
+msgstr "Проверка systemd"
+
+msgid "Check the DNS record of the server, or give the server by its IP address."
+msgstr "Проверьте DNS-запись сервера или укажите сервер по IP-адресу."
+
+msgid "Check the container log: docker logs amnezia-awg2."
+msgstr "Посмотрите лог контейнера: docker logs amnezia-awg2."
+
+msgid "Check the container log: docker logs amnezia-ipsec."
+msgstr "Проверьте журнал контейнера: docker logs amnezia-ipsec."
+
+msgid "Check the container on the server"
+msgstr "Проверить контейнер на сервере"
+
+msgid "Check the domain of the proxy"
+msgstr "Проверка домена прокси"
+
+msgid "Check the kernel version"
+msgstr "Проверка версии ядра"
+
+msgid "Check the operating system"
+msgstr "Проверка операционной системы"
+
+msgid "Check the output of `systemctl status docker` on the server."
+msgstr "Посмотрите вывод `systemctl status docker` на сервере."
+
+msgid "Check the port"
+msgstr "Проверка порта"
+
+msgid "Choose another port or stop the program that uses it."
+msgstr "Выберите другой порт или остановите программу, которая его занимает."
+
+msgid "Choose on or off."
+msgstr "Выберите «вкл» или «выкл»."
+
+msgid "Choose other ports for the speed test."
+msgstr "Выберите для замера другие порты."
+
+msgid "Cipher"
+msgstr "Шифр"
+
+msgid "Client and server agree on the cipher; the one below is the fallback."
+msgstr "Клиент и сервер договариваются о шифре; указанный ниже — запасной."
+
+#, python-format
+msgid "Client certificates in force: %(peers)d, named in clientsTable: %(named)d."
+msgstr "Действующих сертификатов клиентов: %(peers)d, с именем в clientsTable: %(named)d."
+
+msgid "Client subnet"
+msgstr "Подсеть клиентов"
+
+#, python-format
+msgid "Client subnet: %(old)s → %(new)s."
+msgstr "Подсеть клиентов: %(old)s → %(new)s."
+
+#, python-format
+msgid "Clients in the configuration: %(peers)d, named in clientsTable: %(named)d."
+msgstr "Клиентов в конфигурации: %(peers)d, с именем в clientsTable: %(named)d."
+
+msgid "Compare the container and the same name with -previous in `docker ps -a`, remove the one that is not needed and try again."
+msgstr "Сравните в `docker ps -a` контейнер и одноимённый с суффиксом -previous, удалите ненужный и повторите."
+
+#, python-format
+msgid "Configure %(title)s"
+msgstr "Настройка %(title)s"
+
+msgid "Configure the firewall and network settings"
+msgstr "Настройка файрвола и сетевых параметров"
+
+msgid "Confirm that the keys must be imported again."
+msgstr "Подтвердите, что ключи придётся импортировать заново."
+
+msgid "Connect to the server"
+msgstr "Подключиться к серверу"
+
+msgid "Container log"
+msgstr "Лог контейнера"
+
+msgid "Create a file vault on your server to securely store and transfer files."
+msgstr "Создайте на сервере файловое хранилище для безопасного хранения и передачи файлов."
+
+msgid "Create the Amnezia network"
+msgstr "Создание сети Amnezia"
+
+msgid "DNS"
+msgstr "DNS"
+
+msgid "Delete 3proxy.log"
+msgstr "Удаление 3proxy.log"
+
+msgid "Delete all backups?"
+msgstr "Удалить все бэкапы?"
+
+msgid "Delete the SOCKS5 log"
+msgstr "Удаление журнала SOCKS5"
+
+msgid "Delete the old server certificate"
+msgstr "Удалить старый сертификат сервера"
+
+msgid "Deploy a WordPress site on the Tor network in two clicks."
+msgstr "Разверните сайт на WordPress в сети Tor в два клика."
+
+msgid "Docker Hub refused to download the image: the download limit is reached."
+msgstr "Docker Hub отказал в загрузке образа: достигнут лимит загрузок."
+
+msgid "Docker could not be installed."
+msgstr "Не удалось установить Docker."
+
+msgid "Docker is installed but does not run."
+msgstr "Docker установлен, но не запускается."
+
+msgid "E-mail for the certificate"
+msgstr "E-mail для сертификата"
+
+msgid "Each secret must be 32 hex digits."
+msgstr "Каждый секрет — 32 шестнадцатеричные цифры."
+
+msgid "Empty: the e-mail given at the install."
+msgstr "Пусто — e-mail, указанный при установке."
+
+msgid "Empty: the masking site."
+msgstr "Пусто — сайт маскировки."
+
+msgid "Enter a 32-byte key in base64."
+msgstr "Введите 32-байтовый ключ в base64."
+
+msgid "Enter a domain name like proxy.example.com or an IPv4 address."
+msgstr "Введите доменное имя вида proxy.example.com или IPv4-адрес."
+
+msgid "Enter a domain name like proxy.example.com."
+msgstr "Введите доменное имя, например proxy.example.com."
+
+msgid "Enter a domain name like www.example.com or an IPv4 address."
+msgstr "Введите доменное имя вроде www.example.com или IPv4-адрес."
+
+msgid "Enter a domain name like www.example.com."
+msgstr "Введите доменное имя вида www.example.com."
+
+msgid "Enter a network like 10.8.1.0/24."
+msgstr "Введите сеть вида 10.8.1.0/24."
+
+msgid "Enter a number or a range like 100-200."
+msgstr "Введите число или диапазон вида 100-200."
+
+msgid "Enter a whole number."
+msgstr "Введите целое число."
+
+msgid "Enter from one to four ports."
+msgstr "Введите от одного до четырёх портов."
+
+msgid "Enter port numbers from 1 to 65535."
+msgstr "Введите номера портов от 1 до 65535."
+
+msgid "Enter the 32 hex digits of the tag."
+msgstr "Введите 32 шестнадцатеричные цифры тега."
+
+msgid "Enter the e-mail for the certificate."
+msgstr "Введите e-mail для сертификата."
+
+msgid "Every client has a key on AmneziaWG 3.1."
+msgstr "У каждого клиента есть ключ на AmneziaWG 3.1."
+
+msgid "Every client keeps its place in the new subnet: 10.8.1.5 of 10.8.1.0/24 becomes 10.9.0.5 of 10.9.0.0/24. Changing it recreates the container."
+msgstr "Каждый клиент сохраняет своё место в новой подсети: 10.8.1.5 из 10.8.1.0/24 становится 10.9.0.5 из 10.9.0.0/24. При смене контейнер пересоздаётся."
+
+msgid "Everything is already installed."
+msgstr "Всё уже установлено."
+
+msgid "FakeTLS (ee secret)"
+msgstr "FakeTLS (секрет ee)"
+
+msgid "FakeTLS domain"
+msgstr "Домен FakeTLS"
+
+msgid "FakeTLS makes the traffic look like HTTPS to the domain below."
+msgstr "FakeTLS маскирует трафик под HTTPS к домену ниже."
+
+msgid "Find Amnezia containers"
+msgstr "Найти контейнеры Amnezia"
+
+msgid "Find the server address"
+msgstr "Определить адрес сервера"
+
+msgid "Fingerprint"
+msgstr "Отпечаток (fingerprint)"
+
+msgid "Finish the move to AmneziaWG 3.1"
+msgstr "Завершить перевод на AmneziaWG 3.1"
+
+msgid "Fix /etc/ipsec.d/ikev2.conf in amnezia-ipsec, or remove the protocol and install it again."
+msgstr "Исправьте /etc/ipsec.d/ikev2.conf в amnezia-ipsec или удалите протокол и установите его заново."
+
+msgid "Fix /opt/amnezia/openvpn/server.conf in amnezia-openvpn, or remove the protocol and install it again."
+msgstr "Исправьте /opt/amnezia/openvpn/server.conf в amnezia-openvpn или удалите протокол и установите его заново."
+
+msgid "Fix /opt/amnezia/xray/server.json in amnezia-xray, or remove the protocol and install it again."
+msgstr "Исправьте /opt/amnezia/xray/server.json в amnezia-xray или удалите протокол и установите его заново."
+
+msgid "Flow"
+msgstr "Flow"
+
+msgid "For a server behind NAT: its address in the local network."
+msgstr "Для сервера за NAT: его адрес в локальной сети."
+
+msgid "For a server behind NAT: the public address Telegram sees."
+msgstr "Для сервера за NAT: публичный адрес, который видит Telegram."
+
+msgid "H1-H4 must be different and their ranges must not overlap."
+msgstr "H1-H4 должны различаться, а их диапазоны — не пересекаться."
+
+msgid "Hash"
+msgstr "Хеш"
+
+msgid "I understand that every client must import the key again"
+msgstr "Я понимаю, что каждому клиенту нужно заново импортировать ключ"
+
+msgid "IKEv2/IPsec - modern stable protocol, a bit faster than others, restores connection after signal loss. It has native support on the latest versions of Android and iOS."
+msgstr "IKEv2/IPsec — современный стабильный протокол, немного быстрее других, восстанавливает соединение после потери сигнала. Он имеет встроенную поддержку в последних версиях Android и iOS."
+
+msgid "IPsec (libreswan) did not start in the container."
+msgstr "IPsec (libreswan) не запустился в контейнере."
+
+#, python-format
+msgid "IPsec listens on UDP %(ports)s."
+msgstr "IPsec слушает UDP %(ports)s."
+
+msgid "Import from the server"
+msgstr "Импорт с сервера"
+
+msgid "Import from the server, then run the move again."
+msgstr "Выполните импорт с сервера и запустите перевод ещё раз."
+
+#, python-format
+msgid "Imported client %(number)d"
+msgstr "Импортированный клиент %(number)d"
+
+msgid "Install Docker"
+msgstr "Установка Docker"
+
+msgid "Install conntrack"
+msgstr "Установка conntrack"
+
+msgid "Install ethtool"
+msgstr "Установка ethtool"
+
+msgid "Install on the server"
+msgstr "Установка на сервер"
+
+msgid "Installer's client"
+msgstr "Клиент установщика"
+
+#, python-format
+msgid "Installing: %(packages)s"
+msgstr "Установка: %(packages)s"
+
+msgid "Issue the server certificate"
+msgstr "Выпустить сертификат сервера"
+
+#, python-format
+msgid "Issued for %(ip)s."
+msgstr "Выпущен для %(ip)s."
+
+msgid "Jmin must not be larger than Jmax."
+msgstr "Jmin не может быть больше Jmax."
+
+msgid "Junk packets"
+msgstr "Мусорные пакеты"
+
+msgid "Keep the container log"
+msgstr "Вести лог контейнера"
+
+msgid "Keep the keys and the backup"
+msgstr "Сохранить ключи и бэкап"
+
+#, python-format
+msgid "Key %(key)s is kept: its owner may not have keys."
+msgstr "Ключ %(key)s оставлен: его владельцу нельзя иметь ключи."
+
+#, python-format
+msgid "Key %(key)s is not moved: %(reason)s"
+msgstr "Ключ %(key)s не переведён: %(reason)s"
+
+#, python-format
+msgid "Key addresses moved: %(count)d."
+msgstr "Перенесено адресов ключей: %(count)d."
+
+#, python-format
+msgid "Key profiles updated: %(count)d."
+msgstr "Обновлено профилей ключей: %(count)d."
+
+#, python-format
+msgid "Keys moved to the new address: %(moved)d, reissued: %(reissued)d. Owners notified: %(owners)d."
+msgstr "Ключей перенесено на новый адрес: %(moved)d, перевыдано: %(reissued)d. Уведомлено владельцев: %(owners)d."
+
+#, python-format
+msgid "Keys moved: %(count)d."
+msgstr "Переведено ключей: %(count)d."
+
+#, python-format
+msgid "Keys revoked: %(count)d."
+msgstr "Отозвано ключей: %(count)d."
+
+#, python-format
+msgid "Keys to reissue: %(count)d."
+msgstr "Ключей к перевыпуску: %(count)d."
+
+msgid "Leave empty for the port in the table below: a free port up to 9999 for AmneziaWG, the port of the Amnezia app for the others."
+msgstr "Оставьте пустым — возьмётся порт из таблицы ниже: для AmneziaWG свободный порт до 9999, для остальных — порт приложения Amnezia."
+
+msgid "Let's Encrypt gives the certificate only to the server the domain points at. Set the A record of the domain to the IP address of the server; behind the proxy of Cloudflare, turn the proxy off for this record."
+msgstr "Let's Encrypt выдаёт сертификат только серверу, на который указывает домен. Укажите в A-записи домена IP-адрес сервера; если домен за прокси Cloudflare, отключите прокси для этой записи."
+
+msgid "Lines of server.conf, without the characters $ ` and \\."
+msgstr "Строки server.conf, без символов $ ` и \\."
+
+msgid "Making the certificate authority."
+msgstr "Создаётся центр сертификации."
+
+msgid "Making the certificate authority: this can take a few minutes."
+msgstr "Создаётся центр сертификации: это может занять несколько минут."
+
+msgid "Masking site"
+msgstr "Сайт маскировки"
+
+msgid "Message headers"
+msgstr "Заголовки сообщений"
+
+msgid "Message padding"
+msgstr "Дополнение сообщений"
+
+msgid "Minutes"
+msgstr "Минуты"
+
+msgid "Move AmneziaWG 2.0 to version 3.1 on the server card, then move the clients."
+msgstr "Переведите AmneziaWG 2.0 на версию 3.1 на странице сервера, затем переведите клиентов."
+
+msgid "Move AmneziaWG to version 3.1"
+msgstr "Перевод AmneziaWG на версию 3.1"
+
+msgid "Move the clients first: the old container is removed only after that."
+msgstr "Сначала переведите клиентов: старый контейнер удаляется только после этого."
+
+msgid "Move the clients to AmneziaWG 3.1"
+msgstr "Перевести клиентов на AmneziaWG 3.1"
+
+msgid "NAT needs both the internal and the external address."
+msgstr "Для NAT нужны и внутренний, и внешний адрес."
+
+msgid "NAT: external address"
+msgstr "NAT: внешний адрес"
+
+msgid "NAT: internal address"
+msgstr "NAT: внутренний адрес"
+
+msgid "Needed if the server IP changed; IPsec clients are refused until then."
+msgstr "Нужно, если сменился IP сервера; до этого клиенты IPsec не подключатся."
+
+#, python-format
+msgid "New clients: %(new)d, already in the panel: %(known)d."
+msgstr "Новых клиентов: %(new)d, уже в панели: %(known)d."
+
+msgid "New secret of the proxy"
+msgstr "Новый секрет прокси"
+
+msgid "No Amnezia containers are running on the server."
+msgstr "На сервере не запущено ни одного контейнера Amnezia."
+
+msgid "No running AmneziaWG or WireGuard container."
+msgstr "Нет запущенных контейнеров AmneziaWG или WireGuard."
+
+msgid "Nobody to reissue the keys on behalf of."
+msgstr "Некому перевыпустить ключи: пользователь не найден."
+
+msgid "Not every client of the old AmneziaWG has a new key."
+msgstr "Не у всех клиентов старого AmneziaWG есть новый ключ."
+
+#, python-format
+msgid "Not supported by the server, skipped: %(command)s"
+msgstr "Сервер не поддерживает, пропущено: %(command)s"
+
+msgid "One of the speed test ports is already used by another program on the server."
+msgstr "Один из портов замера уже занят другой программой на сервере."
+
+msgid "Only Latin letters, digits and underscores."
+msgstr "Только латинские буквы, цифры и подчёркивание."
+
+msgid "Only the client profiles get it: the server is not restarted for it."
+msgstr "Попадает только в профили клиентов: сервер ради этого не перезапускается."
+
+msgid "OpenVPN did not start in the container."
+msgstr "OpenVPN не запустился в контейнере."
+
+msgid "OpenVPN is the most popular VPN protocol, with flexible configuration options. It uses its own security protocol with SSL/TLS for key exchange."
+msgstr "OpenVPN — самый популярный VPN-протокол с гибкой настройкой. Имеет собственный протокол безопасности с SSL/TLS для обмена ключами."
+
+#, python-format
+msgid "OpenVPN listens on %(transport)s %(port)s."
+msgstr "OpenVPN слушает %(transport)s %(port)s."
+
+msgid "Other containers"
+msgstr "Другие контейнеры"
+
+msgid "Other parameters"
+msgstr "Прочие параметры"
+
+#, python-format
+msgid "Owners notified: %(count)d."
+msgstr "Уведомлено владельцев: %(count)d."
+
+msgid "Password"
+msgstr "Пароль"
+
+msgid "Plan the new keys"
+msgstr "Подготовить новые ключи"
+
+msgid "Port"
+msgstr "Порт"
+
+msgid "Port 80 of the server is already used by another program."
+msgstr "Порт 80 на сервере уже занят другой программой."
+
+msgid "Port must be in the range of 1 to 65535"
+msgstr "Порт должен быть в диапазоне от 1 до 65535"
+
+msgid "Ports"
+msgstr "Порты"
+
+msgid "Promotion tag"
+msgstr "Тег рекламы"
+
+msgid "Protocol or service"
+msgstr "Протокол или сервис"
+
+msgid "Proxy domain"
+msgstr "Домен прокси"
+
+msgid "Public host"
+msgstr "Публичный хост"
+
+#, python-format
+msgid "Read %(title)s"
+msgstr "Прочитать %(title)s"
+
+msgid "Read TSO/GSO of the containers"
+msgstr "Чтение TSO/GSO контейнеров"
+
+#, python-format
+msgid "Read the %(title)s configuration"
+msgstr "Прочитать конфигурацию %(title)s"
+
+msgid "Read the container log"
+msgstr "Прочитать лог контейнера"
+
+msgid "Read the container state"
+msgstr "Прочитать состояние контейнера"
+
+msgid "Read the new links"
+msgstr "Чтение новых ссылок"
+
+msgid "Read the server certificate"
+msgstr "Прочитать сертификат сервера"
+
+msgid "Read the server config"
+msgstr "Чтение конфигурации сервера"
+
+msgid "Read the service"
+msgstr "Чтение сервиса"
+
+msgid "Read the settings back"
+msgstr "Чтение параметров с сервера"
+
+#, python-format
+msgid "Reality public key: %(key)s"
+msgstr "Публичный ключ Reality: %(key)s"
+
+msgid "Rebuild AmneziaDNS"
+msgstr "Пересборка AmneziaDNS"
+
+msgid "Reissue the IPsec server certificate"
+msgstr "Перевыпуск сертификата сервера IPsec"
+
+msgid "Reissue the IPsec server certificate for the new address"
+msgstr "Перевыпустить сертификат сервера IPsec для нового адреса"
+
+msgid "Reissue the keys imported from the server"
+msgstr "Перевыпустить ключи, импортированные с сервера"
+
+msgid "Remove it with `docker volume rm` on the server, or try again."
+msgstr "Удалите его командой `docker volume rm` на сервере или повторите."
+
+msgid "Remove the container"
+msgstr "Удалить контейнер"
+
+msgid "Remove the container of the unfinished restore"
+msgstr "Удалить контейнер незавершённого восстановления"
+
+msgid "Remove the iperf3 container"
+msgstr "Удаление контейнера iperf3"
+
+msgid "Remove the old container"
+msgstr "Удаление старого контейнера"
+
+msgid "Remove the service"
+msgstr "Удаление сервиса"
+
+msgid "Remove the workaround and turn TSO/GSO back on"
+msgstr "Удаление обхода и включение TSO/GSO"
+
+msgid "Removed with its backup kept: restore it from the backup instead."
+msgstr "Удалён, бэкап сохранён: восстановите его из бэкапа."
+
+msgid "Replace the current DNS server with your own. This will increase your privacy level."
+msgstr "Замените текущий DNS-сервер на свой собственный. Это повысит уровень вашей конфиденциальности."
+
+#, python-format
+msgid "Restart %(title)s"
+msgstr "Перезапуск %(title)s"
+
+msgid "Restart IPsec"
+msgstr "Перезапустить IPsec"
+
+msgid "Restart the VPN interface"
+msgstr "Перезапуск VPN-интерфейса"
+
+msgid "Restart the container"
+msgstr "Перезапустить контейнер"
+
+msgid "Restart the proxy"
+msgstr "Перезапуск прокси"
+
+msgid "Restart the service"
+msgstr "Перезапуск сервиса"
+
+msgid "Restore it in the Backup section or delete the backup, then move the clients."
+msgstr "Восстановите его в разделе «Резервные копии» или удалите копию, затем переведите клиентов."
+
+msgid "Revoke the keys and delete the backup"
+msgstr "Отозвать ключи и удалить бэкап"
+
+msgid "Revoke the old keys"
+msgstr "Отозвать старые ключи"
+
+msgid "SFTP file sharing"
+msgstr "Файловое хранилище SFTP"
+
+msgid "SNI"
+msgstr "SNI"
+
+msgid "SNI must be a valid domain or an IP address."
+msgstr "SNI должен быть доменом или IP-адресом."
+
+msgid "SNI must not contain *."
+msgstr "SNI не может содержать *."
+
+msgid "SOCKS5 proxy server"
+msgstr "Прокси-сервер SOCKS5"
+
+#, python-format
+msgid "Save %(title)s and its clients"
+msgstr "Сохранить %(title)s и клиентов"
+
+msgid "Save the keys"
+msgstr "Сохранить ключи"
+
+msgid "Save the server files"
+msgstr "Сохранение файлов сервера"
+
+msgid "Save the settings files"
+msgstr "Сохранение файлов настроек"
+
+msgid "Secondary DNS"
+msgstr "Запасной DNS"
+
+msgid "Secrets of 32 hex digits separated by commas; the links use the main one."
+msgstr "Секреты из 32 шестнадцатеричных цифр через запятую; в ссылках — основной."
+
+msgid "See the step log and `docker ps -a` on the server, then try again."
+msgstr "Посмотрите журнал шага и `docker ps -a` на сервере, затем повторите."
+
+msgid "See the step log and run the reissue again: finished steps are not repeated."
+msgstr "Посмотрите журнал шага и запустите перевыпуск снова: выполненные шаги не повторяются."
+
+msgid "See the step log and try again: an unfinished authority is made anew."
+msgstr "Посмотрите журнал шага и повторите: недоделанный центр создаётся заново."
+
+msgid "See the step log for the Docker error."
+msgstr "Ошибка Docker — в логе шага."
+
+msgid "See the step log. Check that Docker works and the server can reach Docker Hub."
+msgstr "Смотрите журнал шага. Проверьте, что Docker работает и сервер видит Docker Hub."
+
+msgid "See the step log. Check that the server can reach Docker Hub and has free disk space."
+msgstr "Посмотрите лог шага. Проверьте, что сервер видит Docker Hub и на диске есть место."
+
+msgid "See the step log. Check that the server has internet access and free disk space."
+msgstr "Посмотрите лог шага. Проверьте, что у сервера есть доступ в интернет и свободное место на диске."
+
+msgid "See the step log. Check that the server has internet access, then try again."
+msgstr "Посмотрите лог шага. Проверьте, что у сервера есть доступ в интернет, и повторите."
+
+msgid "See the step log. Try again: keys that were created are kept."
+msgstr "Смотрите журнал шага. Повторите: уже созданные ключи сохраняются."
+
+msgid "Server name"
+msgstr "Имя сервера"
+
+#, python-format
+msgid "Server public key: %(key)s"
+msgstr "Публичный ключ сервера: %(key)s"
+
+msgid "Service log"
+msgstr "Лог сервиса"
+
+msgid "Services"
+msgstr "Сервисы"
+
+msgid "Set the old container aside"
+msgstr "Старый контейнер откладывается"
+
+msgid "Special junk packets"
+msgstr "Специальные мусорные пакеты"
+
+msgid "Standard (dd secret)"
+msgstr "Обычный (секрет dd)"
+
+#, python-format
+msgid "Start %(title)s"
+msgstr "Запуск %(title)s"
+
+msgid "Start Docker"
+msgstr "Запуск Docker"
+
+msgid "Start iperf3"
+msgstr "Запуск iperf3"
+
+msgid "Start the container"
+msgstr "Запуск контейнера"
+
+msgid "Start the container from its card or read the server again, then try once more."
+msgstr "Запустите контейнер из его карточки или перечитайте сервер и попробуйте ещё раз."
+
+msgid "Start the container on the new port"
+msgstr "Запуск контейнера на новом порту"
+
+msgid "Start the port speed test"
+msgstr "Запуск замера скорости по портам"
+
+msgid "Stop the container"
+msgstr "Остановить контейнер"
+
+msgid "Stop the port speed test"
+msgstr "Остановка замера скорости по портам"
+
+msgid "Stop the service"
+msgstr "Остановка сервиса"
+
+msgid "TLS auth"
+msgstr "TLS auth"
+
+msgid "TProxy needs port 80 for its Let's Encrypt certificate. Stop the web server that uses it, then try again."
+msgstr "TProxy нужен порт 80 для сертификата Let's Encrypt. Остановите веб-сервер, который его занимает, и попробуйте снова."
+
+msgid "TProxy only: Let's Encrypt writes here about the certificate."
+msgstr "Только для TProxy: сюда Let's Encrypt пишет о сертификате."
+
+msgid "TProxy only: a domain that points at this server. Port 80 must be free for its Let's Encrypt certificate."
+msgstr "Только для TProxy: домен, указывающий на этот сервер. Для сертификата Let's Encrypt порт 80 должен быть свободен."
+
+msgid "TSO/GSO workaround"
+msgstr "обход TSO/GSO"
+
+msgid "TSO/GSO workaround on"
+msgstr "обход TSO/GSO включён"
+
+msgid "TSO/GSO workarounds"
+msgstr "обходы TSO/GSO"
+
+msgid "Telegram MTProto proxy (Telemt, Rust)"
+msgstr "Прокси Telegram MTProto (Telemt, Rust)"
+
+msgid "Telegram MTProto proxy server"
+msgstr "Прокси-сервер Telegram MTProto"
+
+msgid "Telegram WEB proxy (tproxy-server)"
+msgstr "Прокси Telegram WEB (tproxy-server)"
+
+#, python-format
+msgid "The %(unit)s timer turns them off again after a container restart."
+msgstr "Таймер %(unit)s снова выключает их после перезапуска контейнера."
+
+msgid "The Amnezia app has no settings for IPsec: its ports are fixed."
+msgstr "В приложении Amnezia у IPsec нет параметров: его порты фиксированы."
+
+msgid "The AmneziaDNS container does not run, so it is not rebuilt."
+msgstr "Контейнер AmneziaDNS не запущен, поэтому он не пересобран."
+
+msgid "The IP address of the server cannot be found from its name."
+msgstr "Не удалось определить IP-адрес сервера по его имени."
+
+msgid "The Linux kernel of the server is too old for AmneziaWG."
+msgstr "Ядро Linux на сервере слишком старое для AmneziaWG."
+
+msgid "The SOCKS5 container does not run, so its log cannot be deleted."
+msgstr "Контейнер SOCKS5 не запущен, поэтому журнал не удалить."
+
+msgid "The Telegram proxies download files from core.telegram.org: check the network of the server and try again, the container is kept."
+msgstr "Прокси для Telegram скачивают файлы с core.telegram.org: проверьте сеть сервера и попробуйте ещё раз, контейнер сохранён."
+
+msgid "The VPN interface is already up."
+msgstr "VPN-интерфейс уже поднят."
+
+msgid "The VPN interface runs with the old settings again."
+msgstr "VPN-интерфейс снова работает со старыми параметрами."
+
+msgid "The VPN port is already used by another program on the server."
+msgstr "Порт VPN на сервере уже занят другой программой."
+
+msgid "The account of the proxy is kept."
+msgstr "Учётная запись прокси сохранена."
+
+msgid "The certificate authority and the clients passed to the new container."
+msgstr "Центр сертификации и клиенты перенесены в новый контейнер."
+
+msgid "The certificate authority did not reach the new OpenVPN container."
+msgstr "Центр сертификации не перенёсся в новый контейнер OpenVPN."
+
+msgid "The certificate authority of the container is kept."
+msgstr "Центр сертификации контейнера сохранён."
+
+msgid "The commands cannot contain $, ` or \\ or a line EOF."
+msgstr "Команды не могут содержать $, ` или \\ и строку EOF."
+
+#, python-format
+msgid "The container %(name)s already exists and is kept."
+msgstr "Контейнер %(name)s уже есть и сохранён."
+
+msgid "The container already has a server.conf the panel cannot read."
+msgstr "В контейнере уже есть server.conf, который панель не может прочитать."
+
+msgid "The container already has a server.json the panel cannot read."
+msgstr "В контейнере уже есть server.json, который панель не может прочитать."
+
+msgid "The container already has an ikev2.conf the panel cannot read."
+msgstr "В контейнере уже есть ikev2.conf, который панель не может прочитать."
+
+msgid "The container is removed, but its data volume is still on the server."
+msgstr "Контейнер удалён, но его том с данными остался на сервере."
+
+msgid "The container is still on the server after the removal."
+msgstr "Контейнер остался на сервере после удаления."
+
+msgid "The container keeps no log: it runs with logging turned off, as Amnezia starts it. Turn on the container log in the protocol settings."
+msgstr "Контейнер не ведёт лог: он запущен с выключенным логированием, как это делает Amnezia. Включите лог контейнера в настройках протокола."
+
+msgid "The container keeps no log: it runs with logging turned off. Install it again with the container log on."
+msgstr "Контейнер не ведёт лог: он запущен с выключенным логированием. Установите его заново с включённым логом контейнера."
+
+msgid "The domain of the proxy does not point at this server."
+msgstr "Домен прокси указывает не на этот сервер."
+
+msgid "The domain of the proxy has no IPv4 address in DNS."
+msgstr "У домена прокси нет IPv4-адреса в DNS."
+
+msgid "The domain or IP address in the links; empty for the address of the server."
+msgstr "Домен или IP-адрес в ссылках; пусто — адрес сервера."
+
+msgid "The keys and the backup are kept: the protocol can be restored."
+msgstr "Ключи и бэкап сохранены: протокол можно восстановить."
+
+msgid "The keys are revoked and the panel forgets the protocol. Unchecked, the keys and the backup stay, and the protocol can be restored on this server."
+msgstr "Ключи будут отозваны, панель забудет протокол. Без отметки ключи и бэкап сохранятся, и протокол можно будет восстановить на этом сервере."
+
+msgid "The log is empty."
+msgstr "Лог пуст."
+
+msgid "The mask is /24, as in the app."
+msgstr "Маска /24, как в приложении."
+
+#, python-format
+msgid "The network %(name)s already exists."
+msgstr "Сеть %(name)s уже есть."
+
+#, python-format
+msgid "The network %(name)s is created."
+msgstr "Сеть %(name)s создана."
+
+msgid "The old container is back with all its clients. See the step log and try again."
+msgstr "Старый контейнер возвращён со всеми клиентами. Посмотрите журнал шагов и повторите."
+
+msgid "The onion address of the site is ready."
+msgstr "Onion-адрес сайта готов."
+
+msgid "The operating system of the server is not supported."
+msgstr "Операционная система сервера не поддерживается."
+
+msgid "The package manager on the server is busy."
+msgstr "Менеджер пакетов на сервере занят."
+
+msgid "The panel has no settings for this container."
+msgstr "У панели нет параметров для этого контейнера."
+
+msgid "The panel prepares Debian and Ubuntu servers. Use one of them or the Amnezia app."
+msgstr "Панель подготавливает серверы на Debian и Ubuntu. Используйте одну из них или приложение Amnezia."
+
+msgid "The port is already used on the server."
+msgstr "Порт уже занят на сервере."
+
+msgid "The protocol container could not be built."
+msgstr "Не удалось собрать контейнер протокола."
+
+msgid "The protocol container could not be started."
+msgstr "Не удалось запустить контейнер протокола."
+
+msgid "The proxy container does not run, so its secret cannot be renewed."
+msgstr "Контейнер прокси не запущен, поэтому секрет не перевыпустить."
+
+msgid "The proxy keeps 3proxy.log, the hosts users visited, left by the Amnezia app. Delete it on the server card."
+msgstr "В прокси остался 3proxy.log от приложения Amnezia — адреса, которые посещали пользователи. Удалите его на карточке сервера."
+
+msgid "The reachability probe of the server uses this port."
+msgstr "Этот порт занят проверкой доступности сервера."
+
+msgid "The secret of the proxy is ready."
+msgstr "Секрет прокси готов."
+
+msgid "The server already runs AmneziaWG 3.1."
+msgstr "Сервер уже работает на AmneziaWG 3.1."
+
+msgid "The server has no such container any more."
+msgstr "Этого контейнера на сервере уже нет."
+
+msgid "The server has no systemd: the TSO/GSO workaround cannot be kept on."
+msgstr "На сервере нет systemd: обход TSO/GSO не удержится после перезапуска."
+
+msgid "The server probably has an old amneziawg kernel module: it drops the new settings without an error. Update or unload the module and try again. The server stays on AmneziaWG 2.0."
+msgstr "Вероятно, на сервере старый модуль ядра amneziawg: он молча отбрасывает новые настройки. Обновите или выгрузите модуль и повторите. Сервер остаётся на AmneziaWG 2.0."
+
+msgid "The server runs AmneziaWG 2.0: move it to 3.1 with the button on the server page first. Its image may not know these parameters, and AmneziaWG then does not start."
+msgstr "Сервер работает на AmneziaWG 2.0: сначала переведите его на 3.1 кнопкой на странице сервера. Его образ может не знать этих параметров, и тогда AmneziaWG не запустится."
+
+msgid "The server still has the container left by an interrupted change of the settings."
+msgstr "На сервере остался контейнер от прерванной смены параметров."
+
+msgid "The service runs with the old settings again."
+msgstr "Сервис снова работает со старыми настройками."
+
+msgid "The speed test container could not be built or started."
+msgstr "Не удалось собрать или запустить контейнер замера скорости."
+
+#, python-format
+msgid "The subnet must be at least /%(prefix)d: the clients must fit into it."
+msgstr "Подсеть должна быть не меньше /%(prefix)d: в неё должны поместиться клиенты."
+
+msgid "The subnet overlaps another network of the server."
+msgstr "Подсеть пересекается с другой сетью сервера."
+
+msgid "The value is too large: the packet must fit into 1280 bytes."
+msgstr "Слишком большое значение: пакет должен помещаться в 1280 байт."
+
+msgid "Then the container removes itself."
+msgstr "Потом контейнер удалится сам."
+
+msgid "They have no private key in the panel, so their profile cannot be updated."
+msgstr "У панели нет их приватного ключа, поэтому их профиль нельзя обновить."
+
+msgid "This port is already used on the server."
+msgstr "Этот порт на сервере уже занят."
+
+msgid "Tor did not create the onion address of the site."
+msgstr "Tor не создал onion-адрес сайта."
+
+msgid "Tor may need more time to start: try again, the container is kept."
+msgstr "Tor может запускаться дольше: повторите, контейнер сохранён."
+
+msgid "Transport"
+msgstr "Транспорт"
+
+msgid "Transport mode"
+msgstr "Режим транспорта"
+
+msgid "Turn TSO/GSO off and keep it off"
+msgstr "Выключение TSO/GSO и таймер"
+
+msgid "Turn TSO/GSO off by hand after every container restart: nsenter -t <pid> -n ethtool -K eth1 tso off gso off."
+msgstr "Выключайте TSO/GSO вручную после каждого перезапуска контейнера: nsenter -t <pid> -n ethtool -K eth1 tso off gso off."
+
+msgid "Turn TSO/GSO off in the container (recommended)"
+msgstr "Выключить TSO/GSO в контейнере (рекомендуется)"
+
+msgid "Turn the TSO/GSO workaround off"
+msgstr "Выключение обхода TSO/GSO"
+
+msgid "Turn the TSO/GSO workaround on"
+msgstr "Включение обхода TSO/GSO"
+
+msgid "Turn the proxy log off"
+msgstr "Отключение журнала прокси"
+
+msgid "Type the name of the server exactly as it is shown."
+msgstr "Введите имя сервера точно так, как оно показано."
+
+msgid "UDP port"
+msgstr "UDP-порт"
+
+msgid "Up to four ports separated by commas: one up to 9999 and one above it."
+msgstr "До четырёх портов через запятую: один до 9999 и один выше."
+
+msgid "Update the keys"
+msgstr "Обновление ключей"
+
+#, python-format
+msgid "Use a private network from /%(largest)d to /%(smallest)d."
+msgstr "Укажите частную сеть от /%(largest)d до /%(smallest)d."
+
+msgid "Use only the tags <b 0x..>, <r N>, <rc N>, <rd N>, <c> and <t>."
+msgstr "Используйте только теги <b 0x..>, <r N>, <rc N>, <rd N>, <c> и <t>."
+
+msgid "User name"
+msgstr "Имя пользователя"
+
+msgid "VPN address subnet"
+msgstr "Подсеть VPN-адресов"
+
+msgid "VPN protocols"
+msgstr "Протоколы VPN"
+
+msgid "Wait an hour and try again."
+msgstr "Подождите час и повторите."
+
+msgid "Wait for IPsec to start"
+msgstr "Дождаться запуска IPsec"
+
+msgid "Wait for OpenVPN to start"
+msgstr "Дождаться запуска OpenVPN"
+
+msgid "Wait for XRay to start"
+msgstr "Дождаться запуска XRay"
+
+msgid "Wait for other operations on the server"
+msgstr "Ожидание других операций на сервере"
+
+msgid "Wait for the VPN interface"
+msgstr "Дождаться запуска VPN-интерфейса"
+
+msgid "Website in Tor network"
+msgstr "Сайт в сети Tor"
+
+msgid "Windows clients of the Amnezia app only."
+msgstr "Только для клиентов приложения Amnezia на Windows."
+
+msgid "WireGuard - popular VPN protocol with high performance, high speed and low power consumption."
+msgstr "WireGuard — популярный VPN-протокол с высокой производительностью, высокой скоростью и низким энергопотреблением."
+
+msgid "With HeaderProtectionKey each of S1-S4 must be at least 12, or AmneziaWG does not start."
+msgstr "С HeaderProtectionKey каждый из S1-S4 должен быть не меньше 12, иначе AmneziaWG не запустится."
+
+msgid "With these S1-S4 two kinds of packets get the same size: change one of them."
+msgstr "С такими S1-S4 два вида пакетов получают одинаковый размер: измените один из них."
+
+msgid "Without the account the panel would give the proxy a new password and the app would lose it. Read the server again, or install SOCKS5 again from the panel."
+msgstr "Без учётной записи панель выдала бы прокси новый пароль, и приложение потеряло бы доступ. Перечитайте сервер или переустановите SOCKS5 из панели."
+
+msgid "Workaround: off."
+msgstr "Обход: выключен."
+
+msgid "Workaround: on."
+msgstr "Обход: включён."
+
+msgid "Write the protocol configuration"
+msgstr "Записать конфигурацию протокола"
+
+msgid "XRay could not generate the Reality keys in the container."
+msgstr "XRay не смог сгенерировать ключи Reality в контейнере."
+
+msgid "XRay did not start in the container."
+msgstr "XRay не запустился в контейнере."
+
+msgid "XRay is already running."
+msgstr "XRay уже запущен."
+
+#, python-format
+msgid "XRay listens on TCP %(port)s and is masked as %(site)s."
+msgstr "XRay слушает TCP %(port)s и маскируется под %(site)s."
+
+msgid "XRay only: the site the server pretends to be for an observer. Choose a large site that works over HTTPS; leave empty for the one the Amnezia app uses."
+msgstr "Только для XRay: сайт, которым сервер притворяется для наблюдателя. Выберите крупный сайт, работающий по HTTPS; оставьте пустым для сайта приложения Amnezia."
+
+msgid "XRay with REALITY masks VPN traffic as web traffic and protects against active probing. It is highly resistant to detection and offers high speed."
+msgstr "XRay с REALITY маскирует VPN-трафик под веб-трафик и защищает от активного зондирования. Обладает высокой устойчивостью к обнаружению и обеспечивает высокую скорость соединения."
+
+msgid "added at"
+msgstr "добавлен"
+
+msgid "certutil could not issue or delete the IPsec server certificate."
+msgstr "certutil не смог выпустить или удалить сертификат сервера IPsec."
+
+msgid "checked at"
+msgstr "проверено"
+
+msgid "configure_container.sh could not configure the proxy."
+msgstr "configure_container.sh не смог настроить прокси."
+
+msgid "configure_container.sh could not make the IPsec certificate authority."
+msgstr "configure_container.sh не смог создать центр сертификации IPsec."
+
+msgid "conntrack could not be installed; the installation goes on."
+msgstr "conntrack установить не удалось; установка продолжается."
+
+msgid "conntrack is already installed."
+msgstr "conntrack уже установлен."
+
+msgid "container"
+msgstr "контейнер"
+
+msgid "container interfaces"
+msgstr "интерфейсы контейнеров"
+
+msgid "container removed at"
+msgstr "контейнер удалён"
+
+msgid "easy-rsa could not make the OpenVPN certificate authority."
+msgstr "easy-rsa не смог создать центр сертификации OpenVPN."
+
+msgid "ethtool could not be installed for the TSO/GSO workaround."
+msgstr "Не удалось установить ethtool для обхода TSO/GSO."
+
+msgid "ethtool is not installed: turning the workaround on installs it."
+msgstr "ethtool не установлен: включение обхода установит его."
+
+msgid "imported"
+msgstr "импортирован"
+
+msgid "installed by the panel"
+msgstr "установлен панелью"
+
+#, python-format
+msgid "iperf3 listens on ports %(ports)s (TCP and UDP) for %(minutes)d minutes."
+msgstr "iperf3 слушает порты %(ports)s (TCP и UDP) %(minutes)d мин."
+
+msgid "keep the container log"
+msgstr "вести лог контейнера"
+
+msgid "keys moved at"
+msgstr "ключи переведены"
+
+msgid "legacy AmneziaWG"
+msgstr "старый AmneziaWG"
+
+msgid "login"
+msgstr "логин"
+
+msgid "move to AmneziaWG 3.1"
+msgstr "перевод на AmneziaWG 3.1"
+
+msgid "moved keys"
+msgstr "переведённые ключи"
+
+msgid "moves to AmneziaWG 3.1"
+msgstr "переводы на AmneziaWG 3.1"
+
+msgid "none"
+msgstr "нет"
+
+msgid "not set"
+msgstr "не задано"
+
+msgid "not supported"
+msgstr "не поддерживается"
+
+msgctxt "toggle"
+msgid "off"
+msgstr "выкл"
+
+msgctxt "toggle"
+msgid "on"
+msgstr "вкл"
+
+msgid "origin"
+msgstr "происхождение"
+
+msgid "password or address"
+msgstr "пароль или адрес"
+
+msgid "port"
+msgstr "порт"
+
+msgid "preshared key"
+msgstr "общий ключ (PSK)"
+
+msgid "protocol instance"
+msgstr "протокол на сервере"
+
+msgid "protocol instances"
+msgstr "протоколы на серверах"
+
+msgid "protocol parameters"
+msgstr "параметры протокола"
+
+msgid "read at"
+msgstr "прочитан"
+
+msgid "secondary DNS"
+msgstr "запасной DNS"
+
+msgid "server"
+msgstr "сервер"
+
+msgid "server private key"
+msgstr "приватный ключ сервера"
+
+msgid "server public key"
+msgstr "публичный ключ сервера"
+
+msgid "server.json is created with new Reality keys."
+msgstr "server.json создан с новыми ключами Reality."
+
+msgid "service"
+msgstr "сервис"
+
+msgid "services"
+msgstr "сервисы"
+
+msgid "settings"
+msgstr "настройки"
+
+msgid "started at"
+msgstr "начат"
+
+msgid "subnet"
+msgstr "подсеть"
+
+msgid "supported"
+msgstr "поддерживается"

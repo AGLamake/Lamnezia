@@ -1,0 +1,9 @@
+{% load i18n %}{% autoescape off %}{% blocktranslate with username=user.get_username trimmed %}
+Someone asked to sign in to account {{ username }} without a password.
+{% endblocktranslate %}
+
+{% translate "To sign in, open this link. It works once and not for long:" %}
+{{ link }}
+
+{% translate "If it was not you, ignore this letter." %}
+{% endautoescape %}

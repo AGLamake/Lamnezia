@@ -1,0 +1,458 @@
+# Russian translation of Lamnezia (apps.bots).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#, python-format
+msgid "%(server)s since %(time)s, reports: %(reports)s"
+msgstr "%(server)s с %(time)s, жалоб: %(reports)s"
+
+msgid ""
+"/status: traffic and access term\n"
+"/keys: your keys\n"
+"/newkey: get a key\n"
+"/sub: subscription link for XRay clients\n"
+"/servers: server status\n"
+"/down: report a server that does not work\n"
+"/support: write to the administrators\n"
+"/ticket: open a request\n"
+"/requests: your requests and the answers\n"
+"/guides: how to set up the app\n"
+"/unlink: unlink this account from the panel"
+msgstr ""
+"/status: трафик и срок доступа\n"
+"/keys: ваши ключи\n"
+"/newkey: получить ключ\n"
+"/sub: ссылка-подписка для клиентов XRay\n"
+"/servers: состояние серверов\n"
+"/down: сообщить, что сервер не работает\n"
+"/support: написать администраторам\n"
+"/ticket: открыть обращение\n"
+"/requests: ваши обращения и ответы\n"
+"/guides: как настроить приложение\n"
+"/unlink: отвязать этот аккаунт от панели"
+
+msgid "A server does not work"
+msgstr "Не работает сервер"
+
+#, python-format
+msgid "Access ended on %(date)s."
+msgstr "Доступ закончился %(date)s."
+
+msgid "Access has no end date."
+msgstr "Доступ бессрочный."
+
+#, python-format
+msgid "Access until %(date)s."
+msgstr "Доступ до %(date)s."
+
+#, python-format
+msgid ""
+"Add the link to v2rayN, v2RayTun, Hiddify, Streisand or another XRay client as a subscription: it keeps your XRay keys up to date. Anyone with the link gets your keys.\n"
+"\n"
+"%(url)s"
+msgstr ""
+"Добавьте ссылку в v2rayN, v2RayTun, Hiddify, Streisand или другой клиент XRay как подписку: он сам будет обновлять ваши ключи XRay. Любой, у кого есть ссылка, получит ваши ключи.\n"
+"\n"
+"%(url)s"
+
+msgid "Administration"
+msgstr "Администрирование"
+
+#, python-format
+msgid "All servers: %(total)s"
+msgstr "Все серверы: %(total)s"
+
+#, python-format
+msgid "Amnezia app for %(device)s"
+msgstr "Приложение Amnezia для %(device)s"
+
+msgid "Answer"
+msgstr "Ответить"
+
+msgid "Back"
+msgstr "Назад"
+
+msgid "CPU"
+msgstr "ЦП"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Choose a server."
+msgstr "Выберите сервер."
+
+msgid "Choose the device for the key."
+msgstr "Выберите устройство для ключа."
+
+msgid "Choose your device to download the Amnezia app and set it up."
+msgstr "Выберите устройство, чтобы скачать приложение Amnezia и настроить его."
+
+msgid "Close"
+msgstr "Закрыть"
+
+#, python-format
+msgid "Close the incident on %(server)s? Its requests close and the users are told."
+msgstr "Закрыть инцидент на %(server)s? Его обращения закроются, пользователи получат уведомление."
+
+msgid "Closed."
+msgstr "Закрыт."
+
+msgid "Commands"
+msgstr "Команды"
+
+msgid "Create link"
+msgstr "Создать ссылку"
+
+msgid "Delete"
+msgstr "Удалить"
+
+#, python-format
+msgid "Delete «%(name)s»? It stops working and cannot be restored."
+msgstr "Удалить «%(name)s»? Ключ перестанет работать, восстановить его нельзя."
+
+msgid "Describe it in one message; its first line becomes the topic."
+msgstr "Опишите его одним сообщением; первая строка станет темой."
+
+msgid "Get the Amnezia app"
+msgstr "Скачать приложение Amnezia"
+
+msgid "Guides"
+msgstr "Инструкции"
+
+msgid "I can't write to you: your direct messages are closed. Open the server menu, go to Privacy Settings, allow direct messages from server members and repeat the command."
+msgstr "Не могу написать вам: личные сообщения закрыты. Откройте меню сервера, зайдите в «Настройки конфиденциальности», разрешите личные сообщения от участников сервера и повторите команду."
+
+msgid "I do not know this command."
+msgstr "Такой команды я не знаю."
+
+msgid "I wrote to you in direct messages."
+msgstr "Написал вам в личные сообщения."
+
+#, python-format
+msgid "Incident on %(server)s"
+msgstr "Инцидент на %(server)s"
+
+msgid "Incidents"
+msgstr "Инциденты"
+
+#, python-format
+msgid "Key «%(name)s». Add it in the Amnezia app: paste the vpn:// link or scan the QR codes in order."
+msgstr "Ключ «%(name)s». Добавьте его в приложение Amnezia: вставьте ссылку vpn:// или отсканируйте QR-коды по порядку."
+
+#, python-format
+msgid "Key «%(name)s». Add it in the Amnezia app: paste the vpn:// link, scan the QR codes in order or open the %(files)s file."
+msgstr "Ключ «%(name)s». Добавьте его в приложение Amnezia: вставьте ссылку vpn://, отсканируйте QR-коды по порядку или откройте файл %(files)s."
+
+msgid "Link this account with a code from your profile"
+msgstr "Привязать этот аккаунт кодом из профиля"
+
+#, python-format
+msgid "Linked to %(user)s on the panel."
+msgstr "Привязано к пользователю %(user)s на панели."
+
+msgid "Make a new link? The current one stops working at once."
+msgstr "Сделать новую ссылку? Текущая сразу перестанет работать."
+
+msgid "Menu"
+msgstr "Меню"
+
+msgid "My keys"
+msgstr "Мои ключи"
+
+msgid "My requests"
+msgstr "Мои обращения"
+
+msgid "New key"
+msgstr "Новый ключ"
+
+msgid "New link"
+msgstr "Новая ссылка"
+
+msgid "New request"
+msgstr "Новое обращение"
+
+msgid "No open incidents."
+msgstr "Открытых инцидентов нет."
+
+msgid "No servers yet."
+msgstr "Серверов пока нет."
+
+msgid "Nobody has taken it."
+msgstr "Никто ещё не взял."
+
+msgid "None of its requests are from your users."
+msgstr "В нём нет обращений ваших пользователей."
+
+msgid "Open the key"
+msgstr "Открыть ключ"
+
+msgid "Open the key on the panel: the bot does not send keys to chats."
+msgstr "Откройте ключ на панели: бот не отправляет ключи в чаты."
+
+msgid "Open the profile"
+msgstr "Открыть профиль"
+
+#, python-format
+msgid "Opened: %(time)s"
+msgstr "Открыт: %(time)s"
+
+msgid "Questions and answers"
+msgstr "Вопросы и ответы"
+
+msgid "Re-issue"
+msgstr "Перевыпустить"
+
+#, python-format
+msgid "Re-issue «%(name)s»? The old key stops working at once."
+msgstr "Перевыпустить «%(name)s»? Старый ключ сразу перестанет работать."
+
+#, python-format
+msgid "Reports: %(reports)s"
+msgstr "Жалоб: %(reports)s"
+
+#, python-format
+msgid "Request #%(number)s"
+msgstr "Обращение №%(number)s"
+
+#, python-format
+msgid "Request #%(number)s is open. The administrators answer you here."
+msgstr "Обращение №%(number)s открыто. Администраторы ответят вам здесь."
+
+#, python-format
+msgid "Resets on %(date)s."
+msgstr "Обнулится %(date)s."
+
+msgid "Send without a comment"
+msgstr "Отправить без комментария"
+
+#, python-format
+msgid "Sent to %(user)s."
+msgstr "Отправлено пользователю %(user)s."
+
+msgid "Sent to the administrators."
+msgstr "Отправлено администраторам."
+
+msgid "Server summary"
+msgstr "Сводка по серверам"
+
+msgid "Servers"
+msgstr "Серверы"
+
+msgid "Show the key"
+msgstr "Показать ключ"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Subscription link"
+msgstr "Ссылка-подписка"
+
+msgid "Subscription links are turned off."
+msgstr "Ссылки-подписки выключены."
+
+msgid "Support"
+msgstr "Поддержка"
+
+msgid "Take"
+msgstr "Взять"
+
+#, python-format
+msgid "Taken by: %(staff)s"
+msgstr "Взяли: %(staff)s"
+
+msgid "Thank you. The panel is checking the server, and the administrators know of it."
+msgstr "Спасибо. Панель проверяет сервер, администраторы уже знают."
+
+msgid "The bot is turning off."
+msgstr "Бот выключается."
+
+msgid "The bot is turning on."
+msgstr "Бот включается."
+
+msgid "The bot leaves the server in a few seconds."
+msgstr "Бот покинет сервер через несколько секунд."
+
+msgid "The bot restarts in a few seconds."
+msgstr "Бот перезапустится через несколько секунд."
+
+msgid "The incident is closed; the users are told."
+msgstr "Инцидент закрыт, пользователи получили уведомление."
+
+msgid "The key could not be issued. Delete it and get a new one."
+msgstr "Ключ не удалось выпустить. Удалите его и получите новый."
+
+msgid "The key is being issued. Press the button in a minute."
+msgstr "Ключ выпускается. Нажмите кнопку через минуту."
+
+msgid "The key is deleted and stops working in a moment."
+msgstr "Ключ удалён и сейчас перестанет работать."
+
+msgid "The old key is revoked. The new one will be ready in a moment."
+msgstr "Старый ключ отозван. Новый будет готов через минуту."
+
+msgid "There is no such key."
+msgstr "Такого ключа нет."
+
+msgid "This account is not linked to the panel. Open Messengers in your profile on the panel and press Link account."
+msgstr "Этот аккаунт не привязан к панели. Откройте «Мессенджеры» в профиле на панели и нажмите «Привязать»."
+
+msgid "This is not available to you."
+msgstr "Это вам недоступно."
+
+msgid "This is not available until your account is approved."
+msgstr "Это станет доступно, когда ваш аккаунт одобрят."
+
+msgid "This key cannot be re-issued. Delete it and get a new one."
+msgstr "Этот ключ нельзя перевыпустить. Удалите его и получите новый."
+
+msgid "This key cannot be shown again. Re-issue it to get a new one."
+msgstr "Этот ключ больше нельзя показать. Перевыпустите его, чтобы получить новый."
+
+msgid "This request is closed."
+msgstr "Это обращение закрыто."
+
+msgid "This request is closed. Open a new one if you need to."
+msgstr "Это обращение закрыто. При необходимости откройте новое."
+
+msgid "This server is not available to you."
+msgstr "Этот сервер вам недоступен."
+
+msgid "Too many commands. Please wait a minute."
+msgstr "Слишком много команд. Подождите минуту."
+
+msgid "Too many messages in a minute. Please wait a little."
+msgstr "Слишком много сообщений за минуту. Подождите немного."
+
+msgid "Too many requests in an hour. Please try again later."
+msgstr "Слишком много обращений за час. Попробуйте позже."
+
+#, python-format
+msgid "Total traffic: %(used)s of %(limit)s."
+msgstr "Трафик всего: %(used)s из %(limit)s."
+
+msgid "Traffic today"
+msgstr "Трафик за сегодня"
+
+#, python-format
+msgid "Traffic: %(used)s of %(limit)s."
+msgstr "Трафик: %(used)s из %(limit)s."
+
+#, python-format
+msgid "Traffic: %(used)s, no limit."
+msgstr "Трафик: %(used)s, без ограничения."
+
+msgid "Unlink"
+msgstr "Отвязать"
+
+msgid "Unlink this account from the panel? The bot will stop answering you here."
+msgstr "Отвязать этот аккаунт от панели? Бот перестанет вам здесь отвечать."
+
+msgid "Unlinked. You can link the account again in your profile."
+msgstr "Аккаунт отвязан. Привязать его снова можно в профиле."
+
+#, python-format
+msgid "What does not work on %(server)s? Write it in one message, or send the report as is."
+msgstr "Что не работает на %(server)s? Опишите одним сообщением или отправьте сообщение как есть."
+
+msgid "What is the request about?"
+msgstr "О чём обращение?"
+
+msgid "What would you like to check?"
+msgstr "Что посмотреть?"
+
+msgid "What would you like to do?"
+msgstr "Что вы хотите сделать?"
+
+msgid "Which server does not work?"
+msgstr "Какой сервер не работает?"
+
+msgid "Write your answer in one message."
+msgstr "Напишите ответ одним сообщением."
+
+msgid "Write your question in a message here: it goes to the administrators. Or open a request: it has a topic and a status."
+msgstr "Напишите вопрос сообщением сюда: он придёт администраторам. Или откройте обращение: у него есть тема и статус."
+
+msgid "You"
+msgstr "Вы"
+
+msgid "You cannot get another key now."
+msgstr "Сейчас нельзя получить ещё один ключ."
+
+msgid "You have no keys yet."
+msgstr "У вас пока нет ключей."
+
+msgid "You have no plan yet. Ask the administrator for one."
+msgstr "У вас пока нет тарифа. Попросите его у администратора."
+
+msgid "You have no requests yet."
+msgstr "У вас пока нет обращений."
+
+msgid "You have no subscription link yet."
+msgstr "У вас пока нет ссылки-подписки."
+
+msgid "You took the incident: its requests are yours now."
+msgstr "Вы взяли инцидент: его обращения теперь ваши."
+
+msgid "Your account is blocked. Write to the administrator."
+msgstr "Ваш аккаунт заблокирован. Напишите администратору."
+
+msgid "Your plan has no servers yet."
+msgstr "В вашем тарифе пока нет серверов."
+
+msgid "Your registration waits for approval. Meanwhile you can read the guides."
+msgstr "Ваша регистрация ждёт одобрения. Пока можно почитать инструкции."
+
+msgid "bot"
+msgstr "бот"
+
+msgid "bots"
+msgstr "боты"
+
+msgid "disk"
+msgstr "диск"
+
+msgid "does not answer"
+msgstr "не отвечает"
+
+msgid "enabled"
+msgstr "включён"
+
+msgid "error"
+msgstr "ошибка"
+
+msgid "memory"
+msgstr "память"
+
+msgid "messenger"
+msgstr "мессенджер"
+
+msgid "no readings yet"
+msgstr "показаний пока нет"
+
+msgid "no token"
+msgstr "нет токена"
+
+msgid "online"
+msgstr "в сети"
+
+msgid "open incident"
+msgstr "открытый инцидент"
+
+msgid "running"
+msgstr "работает"
+
+msgid "starting"
+msgstr "запускается"
+
+msgid "status"
+msgstr "состояние"
+
+msgid "turned off"
+msgstr "выключен"
+
+msgid "under maintenance"
+msgstr "на обслуживании"

@@ -1,0 +1,22 @@
+{% load i18n ui %}
+{# Compact language menu. Posts to set_language: the choice goes to a cookie and the user's notification language, then back to this page. #}
+{% get_current_language as current_language %}
+{% get_available_languages as languages %}
+<div class="relative" x-data="menu" @keydown.escape="close" @click.outside="closeOutside">
+  <button type="button" class="btn btn-ghost btn-sm" x-ref="button" @click="toggle"
+          aria-haspopup="menu" :aria-expanded="expanded()" aria-label="{% translate 'Language' %}: {{ current_language|upper }}">
+    {% icon "globe" "icon-sm" %}<span aria-hidden="true">{{ current_language|upper }}</span>
+  </button>
+  <form action="{% url 'set_language' %}" method="post" class="menu {% if up %}bottom-full mb-2{% else %}right-0{% endif %} min-w-36" role="menu" x-ref="items" x-show="open" x-cloak
+        x-transition.opacity @keydown="move($event)" aria-label="{% translate 'Language' %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    {% for code, name in languages %}
+      {% get_language_info for code as info %}
+      <button type="submit" name="language" value="{{ code }}" lang="{{ code }}" class="menu-item" role="menuitemradio"
+              aria-checked="{% if code == current_language %}true{% else %}false{% endif %}">
+        <span class="w-4">{% if code == current_language %}{% icon "check" "icon-sm" %}{% endif %}</span>{{ info.name_local|capfirst }}
+      </button>
+    {% endfor %}
+  </form>
+</div>

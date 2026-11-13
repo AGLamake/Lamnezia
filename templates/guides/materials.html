@@ -1,0 +1,25 @@
+{% extends "guides/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Useful materials" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% translate "Useful materials" %}</h1>
+<p class="help-text">{% translate "Articles on other sites that we picked and checked. Each one opens on its own site." %}</p>
+{% for section in sections %}
+  <section class="space-y-2">
+    <h2 class="text-lg font-semibold">{{ section.label }}</h2>
+    <ul class="card divide-y divide-border">
+      {% for material in section.materials %}
+        <li class="space-y-1 py-3">
+          <a href="{{ material.url }}" class="link font-medium" target="_blank" rel="noopener noreferrer">{{ material.title }}</a>
+          <p class="help-text">{{ material.source }} · {{ material.material_language }}</p>
+          <p>{{ material.description }}</p>
+          {% if material.credit %}<p class="help-text">{% blocktranslate with name=material.credit %}Suggested by {{ name }}{% endblocktranslate %}</p>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% empty %}
+  <p class="help-text">{% translate "No materials yet." %}</p>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,5 @@
+{% load servers %}{# One load meter: `title` and `percent` (None shows a dash). #}
+<div class="meter">
+  <div class="meter-head"><span>{{ title }}</span><span class="meter-value">{% if percent is None %}—{% else %}{{ percent|floatformat:0 }}%{% endif %}</span></div>
+  <div class="progress" aria-hidden="true">{% if percent is not None %}<div class="progress-bar {{ percent|load_tone }}" style="width: {{ percent|floatformat:0 }}%"></div>{% endif %}</div>
+</div>

@@ -1,0 +1,2 @@
+{# The unread counter of a menu or of the chat button; refetched from `unread_url` when it changes (js/support-live.js). Its own target: the chat button around it loads the chat elsewhere. #}
+<span data-support-live hx-get="{{ unread_url }}" hx-target="this" hx-trigger="support:unread from:body" hx-swap="outerHTML">{% if unread %}<span class="nav-count nav-count-danger">{{ unread }}</span>{% endif %}</span>

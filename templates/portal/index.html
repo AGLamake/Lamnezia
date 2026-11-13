@@ -1,0 +1,78 @@
+{% extends "layouts/portal.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "My access" %} · Lamnezia{% endblock %}
+{% block subnav %}{% if limits %}{% include "portal/_access_tabs.html" %}{% endif %}{% endblock %}
+
+{% block content %}
+{% include "accounts/_link_offer.html" %}
+<div class="page-header">
+  <h1 class="page-title">{% translate "My access" %}</h1>
+  {% if can_get_key and keys %}<a href="{% url 'portal:get-key' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Get a key" %}</a>{% endif %}
+</div>
+
+{% if not user.can_have_keys %}
+  <section class="empty-state">
+    <span class="empty-state-icon">{% icon "info" %}</span>
+    <h2 class="text-lg font-semibold">{% translate "Your account waits for approval" %}</h2>
+    <p class="help-text max-w-md">{% translate "An administrator will open access soon. Meanwhile, install the app: keys appear here once access opens." %}</p>
+    <a href="{% url 'guides:index' %}" class="btn btn-primary">{% icon "phone" %}{% translate "Install Amnezia VPN" %}</a>
+  </section>
+{% elif not limits %}
+  <section class="empty-state">
+    <span class="empty-state-icon">{% icon "info" %}</span>
+    <h2 class="text-lg font-semibold">{% translate "You have no plan yet" %}</h2>
+    <p class="help-text max-w-md">{% translate "Ask the administrator to give you one." %}</p>
+    <a href="{% url 'support:index' %}" class="btn btn-secondary">{% icon "inbox" %}{% translate "Write to support" %}</a>
+  </section>
+{% else %}
+  {% include "portal/_reachability.html" %}
+  {% include "portal/_usage.html" %}
+
+  <section class="space-y-3" aria-labelledby="keys-title">
+    <h2 id="keys-title" class="text-lg font-semibold">
+      {% translate "My keys" %}
+      {% if limits.max_keys is not None %}<span class="help-text font-normal">{% blocktranslate with used=keys|length limit=limits.max_keys %}{{ used }} of {{ limit }}{% endblocktranslate %}</span>{% endif %}
+    </h2>
+    {% if keys %}
+      <ul class="space-y-2">
+        {% for key, title in keys %}
+          <li>
+            <a href="{% url 'portal:key' key.pk %}" class="card card-link flex items-center gap-3">
+              <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-soft-fg">{% icon "key" %}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-medium">{{ key.name }}</span>
+                <span class="help-text block truncate">{{ title }}</span>
+              </span>
+              <span class="badge {% if key.status == 'active' %}badge-success{% elif key.is_disabled %}badge-danger{% else %}badge-muted{% endif %}">{{ key.get_status_display }}</span>
+              {% icon "chevron-right" "icon text-muted" %}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if not can_get_key and limits.max_keys is not None and keys|length >= limits.max_keys %}
+        <p class="help-text">{% translate "You have as many keys as your plan allows. Delete one to get another." %}</p>
+      {% endif %}
+    {% else %}
+      <div class="empty-state">
+        <span class="empty-state-icon">{% icon "key" %}</span>
+        <p class="font-medium">{% translate "You have no keys yet." %}</p>
+        {% if can_get_key %}
+          <p class="help-text max-w-md">{% translate "Choose your device: the key and the guide take a minute." %}</p>
+          <a href="{% url 'portal:get-key' %}" class="btn btn-primary btn-lg">{% icon "plus" %}{% translate "Get a key" %}</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+
+  {% if offers_subscription %}
+    <a href="{% url 'portal:subscription' %}" class="card card-link flex items-center gap-3">
+      <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted">{% icon "refresh" %}</span>
+      <span class="min-w-0 flex-1">
+        <span class="block font-medium">{% translate "Subscription link" %}</span>
+        <span class="help-text block">{% translate "One link for v2rayN, v2RayTun, Hiddify and other XRay clients: they update your XRay keys themselves." %}</span>
+      </span>
+      {% icon "chevron-right" "icon text-muted" %}
+    </a>
+  {% endif %}
+{% endif %}
+{% endblock %}

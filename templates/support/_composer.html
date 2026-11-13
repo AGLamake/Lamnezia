@@ -1,0 +1,31 @@
+{% load i18n ui %}{% comment %} The reply box under a chat, as in a messenger: one line that grows while typing, Enter sends and Shift+Enter
+   starts a new line (ui.js), a clip for a screenshot and a send button. `staff` adds reply templates and the internal note.
+   `prefix` sets the ids apart in the chat widget. {% endcomment %}
+<form id="{{ prefix }}reply" method="post" action="{{ send_url }}" enctype="multipart/form-data"
+      hx-post="{{ send_url }}" hx-encoding="multipart/form-data" hx-target="#{{ prefix }}thread" hx-swap="outerHTML"
+      class="composer">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}<p class="error-text">{{ error }}</p>{% endfor %}
+  {% for field in form %}{% if field.errors %}<div id="{{ field.auto_id }}_error">{% for error in field.errors %}<p class="error-text">{{ error }}</p>{% endfor %}</div>{% endif %}{% endfor %}
+  <div class="composer-box">
+    <label class="composer-tool" title="{% translate 'Attach a screenshot' %}">{% icon "paperclip" %}<span class="sr-only">{% translate "Attach a screenshot" %}</span>{{ form.image }}</label>
+    <label for="{{ form.text.id_for_label }}" class="sr-only">{{ form.text.label }}</label>
+    {{ form.text }}
+    <button type="submit" class="composer-send" title="{% translate 'Send' %}">{% icon "send" %}<span class="sr-only">{% translate "Send" %}</span></button>
+  </div>
+  <p class="composer-file" data-file-name hidden></p>
+  {% if staff %}
+    <div class="composer-extras">
+      {% if templates %}
+        <label class="flex items-center gap-2"><span class="text-muted">{% translate "Template" %}</span>
+          <select class="input composer-select" data-fill="text">
+            <option value="">—</option>
+            {% for template in templates %}<option value="{{ template.text }}">{{ template.title }}</option>{% endfor %}
+          </select>
+        </label>
+      {% endif %}
+      <label class="flex items-center gap-2">{{ form.internal }} {{ form.internal.label }}<span id="{{ form.internal.auto_id }}_helptext" class="sr-only">{{ form.internal.help_text }}</span></label>
+    </div>
+    {% if not conversation.is_open %}<p class="help-text">{% translate "The request is closed: only internal notes can be added." %}</p>{% endif %}
+  {% endif %}
+</form>

@@ -1,0 +1,21 @@
+{% extends "layouts/portal.html" %}
+{% load i18n %}
+{% block title %}{% translate "Test payment" %} · Lamnezia{% endblock %}
+{% block nav %}{% include "portal/_nav.html" %}{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold">{% translate "Test payment" %}</h1>
+{% translate "This is the example payment plugin: no money is charged. Never enable it on a public panel." as warning %}
+{% include "components/alert.html" with level="warning" text=warning %}
+<p>{{ order.plan.name }} · {{ order.amount }} {{ order.currency }}</p>
+<div class="flex flex-wrap gap-2">
+  <form method="post" action="{% url 'billing:notify' 'dummy' %}">
+    <input type="hidden" name="notice" value="{{ paid_notice }}">
+    <button type="submit" class="btn btn-primary">{% translate "Pay" %}</button>
+  </form>
+  <form method="post" action="{% url 'billing:notify' 'dummy' %}">
+    <input type="hidden" name="notice" value="{{ failed_notice }}">
+    <button type="submit" class="btn btn-secondary">{% translate "Refuse" %}</button>
+  </form>
+</div>
+{% endblock %}

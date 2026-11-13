@@ -1,0 +1,9 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Check your email" %} · {{ site_name }}{% endblock %}
+{% block heading %}{% translate "Check your email" %}{% endblock %}
+
+{% block content %}
+<p>{% blocktranslate %}We sent a confirmation link to {{ email }}. Open it to finish the registration. Check the spam folder too.{% endblocktranslate %}</p>
+<p class="help-text"><a href="{% url 'accounts:login' %}" class="link">{% translate "Back to sign in" %}</a></p>
+{% endblock %}

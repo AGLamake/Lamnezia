@@ -1,0 +1,52 @@
+{% extends "servers/base.html" %}
+{% load i18n servers ui %}
+{% block title %}{% translate "Servers" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Servers" %}</h1>
+    <p class="page-lead">{% translate "The VPS the panel manages: their state, payment and quick actions." %}</p>
+  </div>
+  <a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>
+</div>
+
+{% if has_servers %}{% include "components/filters.html" with form=filter_form %}{% endif %}
+
+{% if servers %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>{% translate "Server" %}</th><th>{% translate "Address" %}</th>
+          <th>{% translate "VPS paid until" %}</th><th>{% translate "Status" %}</th>
+          <th><span class="sr-only">{% translate "Actions" %}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for server in servers %}
+          <tr>
+            <td>
+              <a href="{% url 'servers:detail' server.pk %}" class="font-medium hover:underline">{{ server.name }}</a>
+              {% if server.location %}<span class="help-text">· {{ server.location }}</span>{% endif %}
+            </td>
+            <td data-label="{% translate 'Address' %}" class="font-mono text-xs">{{ server.host }}:{{ server.port }}</td>
+            <td data-label="{% translate 'VPS paid until' %}">{{ server.paid_until|date:"SHORT_DATE_FORMAT"|default:"—" }}{% if server.paid_until %} {% include "servers/_paid_days.html" %}{% endif %}</td>
+            <td data-label="{% translate 'Status' %}"><span class="inline-flex flex-wrap justify-end gap-1">{% if server.status == "ready" %}{% include "servers/_online.html" %}{% else %}<span class="badge {{ server.status|server_badge }}">{{ server.get_status_display }}</span>{% endif %}{% if server.maintenance %}<span class="badge badge-muted">{% translate "maintenance" %}</span>{% endif %}</span></td>
+            <td>{% include "servers/_quick_actions.html" %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% elif has_servers %}
+  {% translate "No servers found." as empty_title %}
+  {% include "components/empty_state.html" with icon="search" title=empty_title %}
+{% else %}
+  <div class="empty-state">
+    <span class="empty-state-icon">{% icon "server" %}</span>
+    <p>{% translate "No servers yet. Add a VPS you can log in to over SSH as root or a user with sudo." %}</p>
+    <a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>
+  </div>
+{% endif %}
+{% endblock %}

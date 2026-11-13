@@ -1,0 +1,2 @@
+{% load i18n %}{# A line of the chat about a request: an answer or a new status, a link to it and never the answer itself. #}
+<p class="chat-event"><a href="{{ ticket_url }}" class="link">{% blocktranslate with number=message.ticket_id event=message.get_event_display %}Request #{{ number }}: {{ event }}{% endblocktranslate %}</a> · {{ message.created_at|date:"SHORT_DATETIME_FORMAT" }}</p>

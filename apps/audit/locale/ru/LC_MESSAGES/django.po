@@ -1,0 +1,187 @@
+# Russian translation of Lamnezia (apps.audit).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "Action"
+msgstr "Действие"
+
+msgid "Allow showing key again"
+msgstr "Разрешение повторного показа ключа"
+
+msgid "Any"
+msgstr "Любое"
+
+msgid "Approve registration"
+msgstr "Одобрение регистрации"
+
+msgid "Bot command"
+msgstr "Команда бота"
+
+msgid "Bot leaves server"
+msgstr "Выход бота с сервера"
+
+msgid "Change email"
+msgstr "Смена почты"
+
+msgid "Change notification channel"
+msgstr "Изменение канала уведомлений"
+
+msgid "Change plan of users"
+msgstr "Смена тарифа пользователям"
+
+msgid "Change site settings"
+msgstr "Изменение настроек сайта"
+
+msgid "Change user limits"
+msgstr "Изменение лимитов пользователя"
+
+msgid "Create invitation"
+msgstr "Создание приглашения"
+
+msgid "Create notification channel"
+msgstr "Создание канала уведомлений"
+
+msgid "Create plan"
+msgstr "Создание тарифа"
+
+msgid "Create reply template"
+msgstr "Создание шаблона ответа"
+
+msgid "Decline article suggestion"
+msgstr "Отказ в предложенной статье"
+
+msgid "Delete invitation"
+msgstr "Удаление приглашения"
+
+msgid "Delete notification channel"
+msgstr "Удаление канала уведомлений"
+
+msgid "Delete plan"
+msgstr "Удаление тарифа"
+
+msgid "Delete reply template"
+msgstr "Удаление шаблона ответа"
+
+msgid "Delete subscription link"
+msgstr "Удалить ссылку-подписку"
+
+msgid "Disable keys of users"
+msgstr "Отключение ключей пользователей"
+
+msgid "Edit plan"
+msgstr "Изменение тарифа"
+
+msgid "Edit reply template"
+msgstr "Изменение шаблона ответа"
+
+msgid "End sessions"
+msgstr "Завершение сеансов"
+
+msgid "Extend access of users"
+msgstr "Продление доступа пользователям"
+
+msgid "Forget server host key"
+msgstr "Сброс ключа хоста сервера"
+
+msgid "From"
+msgstr "С"
+
+msgid "IP address"
+msgstr "IP-адрес"
+
+msgid "Issue backup codes"
+msgstr "Выпуск резервных кодов"
+
+msgid "Issue messenger link code"
+msgstr "Код привязки мессенджера"
+
+msgid "Issue subscription link"
+msgstr "Выдать ссылку-подписку"
+
+msgid "Link messenger"
+msgstr "Привязка мессенджера"
+
+msgid "Move keys to the new server address"
+msgstr "Перенос ключей на новый адрес сервера"
+
+msgid "Object"
+msgstr "Объект"
+
+msgid "Publish article suggestion"
+msgstr "Публикация предложенной статьи"
+
+msgid "Receive payment"
+msgstr "Получение оплаты"
+
+msgid "Refund payment"
+msgstr "Вернуть оплату"
+
+msgid "Reject registration"
+msgstr "Отклонение регистрации"
+
+msgid "Restart bot"
+msgstr "Перезапуск бота"
+
+msgid "Show SFTP password"
+msgstr "Показ пароля SFTP"
+
+msgid "Show key"
+msgstr "Показ ключа"
+
+msgid "Sign in from a messenger"
+msgstr "Вход из мессенджера"
+
+msgid "Sign in with a backup code"
+msgstr "Вход по резервному коду"
+
+msgid "Start payment of plan"
+msgstr "Начало оплаты тарифа"
+
+msgid "To"
+msgstr "По"
+
+msgid "Turn bot off"
+msgstr "Выключение бота"
+
+msgid "Turn bot on"
+msgstr "Включение бота"
+
+msgid "Unlink messenger"
+msgstr "Отвязка мессенджера"
+
+msgid "Who"
+msgstr "Кто"
+
+msgid "action"
+msgstr "действие"
+
+msgid "actor"
+msgstr "кто"
+
+msgid "actor name"
+msgstr "имя пользователя"
+
+msgid "audit event"
+msgstr "событие журнала"
+
+msgid "audit events"
+msgstr "журнал действий"
+
+msgid "details"
+msgstr "подробности"
+
+msgid "target"
+msgstr "объект"
+
+msgid "target id"
+msgstr "id объекта"
+
+msgid "target type"
+msgstr "тип объекта"
+
+msgid "time"
+msgstr "время"

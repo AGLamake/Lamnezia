@@ -1,0 +1,77 @@
+{
+  "tag_name": "5.0.3.0",
+  "name": "5.0.3.0",
+  "html_url": "https://github.com/amnezia-vpn/amnezia-client/releases/tag/5.0.3.0",
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2026-09-18T05:59:39Z",
+  "body": "## Version differences\r\n\r\n### Android\r\n* For Android version 11 and higher, you need to use .apk that start with - AmneziaVPN_5.0.3.0_android11+\r\n* For Android version 9-10, you need to use .apk that start with - AmneziaVPN_5.0.3.0_android9-10\r\n* ***The app version for Android 7 and 8 is temporarily unavailable***\r\n\r\n### macOS\r\n!!! The previous version (4.8.8.2 and lower) of the application (installed via the .dmg installer) must be uninstalled via “move to bin” in the applications folder\r\n\r\n* For macOS version 13 and higher, you need to use .pkg - AmneziaVPN_5.0.3.0_macos.pkg\r\n* ***The app version for macOS 10.15 - 12, is temporarily unavailable***\r\n\r\n### Linux\r\nFor Ubuntu you need to install xcb plugin:\r\napt install libxcb-cursor0 libxcb-xinerama0 libxcb-icccm4 libxcb-keysyms1 libopengl0 libxkbcommon-x11-0\r\n\r\n## Changelog\r\n\r\n### General\r\n* Added TProxy support\r\n* Improve stability\r\n\r\n**Full Changelog**: https://github.com/amnezia-vpn/amnezia-client/compare/5.0.1.5...5.0.3.0",
+  "assets": [
+    {
+      "name": "AmneziaVPN_5.0.3.0_android11+_arm64-v8a.apk",
+      "size": 75946851,
+      "content_type": "application/vnd.android.package-archive",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_android11%2B_arm64-v8a.apk"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_android11+_armeabi-v7a.apk",
+      "size": 71355657,
+      "content_type": "application/vnd.android.package-archive",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_android11%2B_armeabi-v7a.apk"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_android11+_x86.apk",
+      "size": 81987185,
+      "content_type": "application/vnd.android.package-archive",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_android11%2B_x86.apk"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_android11+_x86_64.apk",
+      "size": 78842090,
+      "content_type": "application/vnd.android.package-archive",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_android11%2B_x86_64.apk"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_android9-10_arm64-v8a.apk",
+      "size": 75836465,
+      "content_type": "application/vnd.android.package-archive",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_android9-10_arm64-v8a.apk"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_android9-10_armeabi-v7a.apk",
+      "size": 71257567,
+      "content_type": "application/vnd.android.package-archive",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_android9-10_armeabi-v7a.apk"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_android9-10_x86.apk",
+      "size": 81889063,
+      "content_type": "application/vnd.android.package-archive",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_android9-10_x86.apk"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_android9-10_x86_64.apk",
+      "size": 78739884,
+      "content_type": "application/vnd.android.package-archive",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_android9-10_x86_64.apk"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_linux_x64.run",
+      "size": 96657023,
+      "content_type": "application/octet-stream",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_linux_x64.run"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_macos_x64.pkg",
+      "size": 111838127,
+      "content_type": "application/octet-stream",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_macos_x64.pkg"
+    },
+    {
+      "name": "AmneziaVPN_5.0.3.0_windows_x64.exe",
+      "size": 115035296,
+      "content_type": "application/x-msdownload",
+      "browser_download_url": "https://github.com/amnezia-vpn/amnezia-client/releases/download/5.0.3.0/AmneziaVPN_5.0.3.0_windows_x64.exe"
+    }
+  ]
+}

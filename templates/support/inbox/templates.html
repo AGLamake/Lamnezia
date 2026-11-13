@@ -1,0 +1,25 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Reply templates" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="inbox" %}{% endblock %}
+
+{% block content %}
+{% include "support/inbox/_tabs.html" with tab="templates" %}
+<div class="flex flex-wrap items-center justify-between gap-2">
+  <p class="help-text">{% translate "Ready answers the staff put into a reply with one click." %}</p>
+  <a href="{% url 'support:template-add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a template" %}</a>
+</div>
+{% if templates %}
+  <ul class="space-y-3">
+    {% for template in templates %}
+      <li class="card space-y-1">
+        <a href="{% url 'support:template-edit' template.pk %}" class="font-medium hover:underline">{{ template.title }}</a>
+        <p class="help-text whitespace-pre-line break-words">{{ template.text|truncatechars:200 }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {% translate "No templates yet." as empty_title %}
+  {% include "components/empty_state.html" with icon="template" title=empty_title %}
+{% endif %}
+{% endblock %}

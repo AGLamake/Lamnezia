@@ -1,0 +1,38 @@
+{% load i18n operations %}{# Polls itself until every key operation ends: the finished block has no hx-trigger. #}
+<section id="batch-report" class="space-y-4" aria-live="polite"
+         {% if not report.is_finished %}hx-get="{% url 'dashboard:batch-progress' object.pk %}" hx-trigger="every {{ poll_seconds }}s" hx-swap="outerHTML"{% endif %}>
+  <div class="card flex flex-wrap gap-x-6 gap-y-2">
+    <p>{% translate "Users done" %}: <span class="font-medium">{{ report.done }}</span></p>
+    <p>{% translate "Skipped" %}: <span class="font-medium">{{ report.skipped }}</span></p>
+    {% if report.operations %}
+      <p>{% translate "Key operations done" %}: <span class="font-medium">{{ report.succeeded }}</span></p>
+      <p>{% translate "Failed" %}: <span class="font-medium{% if report.failed %} error-text{% endif %}">{{ report.failed }}</span></p>
+      {% if report.unfinished %}<p>{% translate "Running" %}: <span class="font-medium">{{ report.unfinished }}</span></p>{% endif %}
+    {% endif %}
+  </div>
+  {% if report.failed %}<p class="help-text">{% translate "Open a failed operation to see what went wrong and run it again." %}</p>{% endif %}
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>{% translate "User" %}</th><th>{% translate "Outcome" %}</th><th>{% translate "Key operations" %}</th></tr></thead>
+      <tbody>
+        {% for item in report.items %}
+          <tr>
+            <td><a href="{% url 'dashboard:user' item.user_id %}" class="font-medium hover:underline">{{ item.user.username }}</a></td>
+            <td>
+              <span class="badge {% if item.outcome == 'done' %}badge-success{% else %}badge-muted{% endif %}">{{ item.get_outcome_display }}</span>
+              {% if item.note %}<span class="help-text">{{ item.note }}</span>{% endif %}
+            </td>
+            <td>
+              <div class="flex flex-wrap gap-1">
+                {% for operation in item.operations.all %}
+                  <a href="{% url 'operations:detail' operation.pk %}" class="badge {{ operation.status|status_badge }}" title="{{ operation.subject }}">{{ operation.kind|operation_title }} · {{ operation.get_status_display }}</a>
+                {% empty %}<span class="help-text">—</span>{% endfor %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,249 @@
+# Russian translation of Lamnezia (apps.servers).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#, python-format
+msgid "%(gb).1f GB free"
+msgstr "свободно %(gb).1f ГБ"
+
+msgid "A server with this host and port is already added."
+msgstr "Сервер с таким хостом и портом уже добавлен."
+
+msgid "Amnezia containers"
+msgstr "контейнеры Amnezia"
+
+msgid "Any"
+msgstr "Любой"
+
+msgid "CPU, %"
+msgstr "процессор, %"
+
+msgid "Check Docker"
+msgstr "Проверить Docker"
+
+msgid "Check free disk space"
+msgstr "Проверить свободное место"
+
+msgid "Check root access"
+msgstr "Проверить права root"
+
+msgid "Check server"
+msgstr "Проверка сервера"
+
+msgid "Check the operating system"
+msgstr "Проверить операционную систему"
+
+msgid "Check the probe from the internet"
+msgstr "Проверить ответчик из интернета"
+
+msgid "Choose another port for the probe."
+msgstr "Выберите для проверки другой порт."
+
+msgid "Connect to the server"
+msgstr "Подключиться к серверу"
+
+msgid "Country or any label that tells servers apart, e.g. «Germany, Hetzner»."
+msgstr "Страна или любая метка, по которой серверы различать, например «Германия, Hetzner»."
+
+msgid "Docker"
+msgstr "Docker"
+
+msgid "Docker is not installed: the panel installs it with a protocol."
+msgstr "Docker не установлен: панель установит его вместе с протоколом."
+
+msgid "Enter a host name or an IP address, without a user name, port or protocol."
+msgstr "Введите имя хоста или IP-адрес без имени пользователя, порта и протокола."
+
+msgid "Enter the password."
+msgstr "Введите пароль."
+
+msgid "Free disk space is unknown."
+msgstr "Свободное место узнать не удалось."
+
+msgid "Install the reachability probe"
+msgstr "Установка проверки доступности"
+
+msgid "Key passphrase"
+msgstr "Пароль ключа"
+
+msgid "Leave empty to keep the saved one."
+msgstr "Оставьте пустым, чтобы сохранить прежний."
+
+msgid "Little free disk space: a protocol may fail to install."
+msgstr "Мало свободного места на диске: протокол может не установиться."
+
+msgid "Only if the key is protected by one."
+msgstr "Только если ключ им защищён."
+
+msgid "Open it in the firewall of the server and of the hosting provider."
+msgstr "Откройте его в брандмауэре сервера и хостинга."
+
+msgid "Open the UDP port in the firewall of the server and of the hosting provider, then install the probe again."
+msgstr "Откройте UDP-порт в брандмауэре сервера и хостинга и установите проверку снова."
+
+msgid "OpenSSH or PEM, Ed25519, ECDSA or RSA."
+msgstr "OpenSSH или PEM, Ed25519, ECDSA или RSA."
+
+msgid "Password"
+msgstr "Пароль"
+
+msgid "Paste the private key."
+msgstr "Вставьте приватный ключ."
+
+msgid "Private key"
+msgstr "Приватный ключ"
+
+msgid "Remove the probe container"
+msgstr "Удалить контейнер проверки"
+
+msgid "Remove the reachability probe"
+msgstr "Удаление проверки доступности"
+
+msgid "SSH key"
+msgstr "SSH-ключ"
+
+msgid "SSH port"
+msgstr "порт SSH"
+
+msgid "SSH user"
+msgstr "пользователь SSH"
+
+msgid "Search"
+msgstr "Поиск"
+
+msgid "See the step log. Check that Docker works and the server has internet."
+msgstr "Смотрите журнал шага. Проверьте, что Docker работает и у сервера есть интернет."
+
+msgid "Start the probe container"
+msgstr "Запустить контейнер проверки"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "The SSH fingerprint is forgotten: the check saves the new one."
+msgstr "Отпечаток SSH забыт: проверка сохранит новый."
+
+msgid "The UDP port is already used on the server."
+msgstr "UDP-порт на сервере уже занят."
+
+msgid "The panel can install protocols only on Debian and Ubuntu."
+msgstr "Панель умеет устанавливать протоколы только на Debian и Ubuntu."
+
+#, python-format
+msgid "The probe answers on UDP port %(port)d."
+msgstr "Ответчик отвечает на UDP-порту %(port)d."
+
+msgid "The probe container did not start."
+msgstr "Контейнер проверки не запустился."
+
+msgid "The probe does not answer from the internet."
+msgstr "Ответчик не отвечает из интернета."
+
+msgid "This port is used by SSH or a protocol on the server."
+msgstr "Этот порт занят SSH или протоколом на сервере."
+
+msgid "UDP port"
+msgstr "UDP-порт"
+
+msgid "Users see the server as under maintenance on their status page."
+msgstr "Пользователи увидят на странице статуса, что сервер на обслуживании."
+
+msgid "VPS paid until"
+msgstr "VPS оплачен до"
+
+msgid "Wait for other operations on the server"
+msgstr "Дождаться других операций на сервере"
+
+msgid "added at"
+msgstr "добавлен"
+
+msgid "check failed"
+msgstr "проверка не прошла"
+
+msgid "checked at"
+msgstr "проверен"
+
+msgid "containers"
+msgstr "контейнеры"
+
+msgid "disk"
+msgstr "диск"
+
+msgid "error"
+msgstr "ошибка"
+
+msgid "free disk space"
+msgstr "свободно на диске"
+
+msgid "free memory"
+msgstr "свободная память"
+
+msgid "host"
+msgstr "хост"
+
+msgid "key passphrase"
+msgstr "пароль ключа"
+
+msgid "last answered at"
+msgstr "последний ответ"
+
+msgid "location"
+msgstr "расположение"
+
+msgid "login with"
+msgstr "вход"
+
+msgid "memory"
+msgstr "память"
+
+msgid "name"
+msgstr "название"
+
+msgid "not checked"
+msgstr "не проверен"
+
+msgid "operating system"
+msgstr "операционная система"
+
+msgid "password"
+msgstr "пароль"
+
+msgid "private key"
+msgstr "приватный ключ"
+
+msgid "reachability probe port"
+msgstr "порт проверки доступности"
+
+msgid "read at"
+msgstr "время замера"
+
+msgid "ready"
+msgstr "готов"
+
+msgid "server"
+msgstr "сервер"
+
+msgid "server reading"
+msgstr "замер сервера"
+
+msgid "server readings"
+msgstr "замеры серверов"
+
+msgid "servers"
+msgstr "серверы"
+
+msgid "status"
+msgstr "статус"
+
+msgid "under maintenance"
+msgstr "на обслуживании"
+
+msgid "uptime, s"
+msgstr "время работы, с"
+
+msgid "warnings"
+msgstr "предупреждения"

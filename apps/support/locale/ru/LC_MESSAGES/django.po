@@ -1,0 +1,295 @@
+# Russian translation of Lamnezia (apps.support).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "A picture is attached: open Support in your personal account to see it."
+msgstr "Приложена картинка: откройте раздел «Поддержка» в личном кабинете, чтобы её увидеть."
+
+msgid "An internal note takes no screenshot."
+msgstr "К внутренней заметке нельзя приложить скриншот."
+
+msgid "Answer to everyone who reported"
+msgstr "Ответ всем, кто сообщил"
+
+msgid "Any"
+msgstr "Любой"
+
+msgid "Assignee"
+msgstr "Исполнитель"
+
+msgid "Attach a PNG, JPEG, GIF or WebP image."
+msgstr "Приложите изображение PNG, JPEG, GIF или WebP."
+
+msgid "Chat"
+msgstr "Чат"
+
+msgid "Check a server for a request"
+msgstr "Проверка сервера по обращению"
+
+msgid "Check the server"
+msgstr "Проверить сервер"
+
+msgid "Comment"
+msgstr "Комментарий"
+
+msgid "Description"
+msgstr "Описание"
+
+msgid "Internal note"
+msgstr "Внутренняя заметка"
+
+msgid "Last message"
+msgstr "Последнее сообщение"
+
+msgid "Message"
+msgstr "Сообщение"
+
+msgid "Newest"
+msgstr "Сначала новые"
+
+msgid "Nobody"
+msgstr "Никто"
+
+msgid "Oldest"
+msgstr "Сначала старые"
+
+msgid "Only the staff see it, never the user."
+msgstr "Видят только администраторы и модераторы, пользователь — никогда."
+
+msgid "Opened from"
+msgstr "Открыто с"
+
+msgid "Opened till"
+msgstr "Открыто по"
+
+msgid "Other"
+msgstr "Другое"
+
+msgid "Plan"
+msgstr "Тариф"
+
+msgid "Question"
+msgstr "Вопрос"
+
+msgid "Request"
+msgstr "Обращение"
+
+msgid "SSH answers."
+msgstr "SSH отвечает."
+
+msgid "SSH does not answer."
+msgstr "SSH не отвечает."
+
+msgid "Saved."
+msgstr "Сохранено."
+
+msgid "Screenshot"
+msgstr "Скриншот"
+
+msgid "Server"
+msgstr "Сервер"
+
+msgid "Server does not work"
+msgstr "Не работает сервер"
+
+msgid "Something is broken"
+msgstr "Что-то сломалось"
+
+msgid "Sort"
+msgstr "Сортировка"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Thanks! We are checking the server now."
+msgstr "Спасибо! Уже проверяем сервер."
+
+msgid "The image must be at most 5 MB."
+msgstr "Изображение должно быть не больше 5 МБ."
+
+msgid "The incident is closed; the users are told."
+msgstr "Инцидент закрыт, пользователи уведомлены."
+
+msgid "The request is closed. Open a new one."
+msgstr "Обращение закрыто. Откройте новое."
+
+msgid "The request is closed. Open it again to answer."
+msgstr "Обращение закрыто. Чтобы ответить, откройте его снова."
+
+msgid "The request is sent. We will answer here."
+msgstr "Обращение отправлено. Ответим здесь."
+
+msgid "The server is deleted."
+msgstr "Сервер удалён."
+
+msgid "The template is deleted."
+msgstr "Шаблон удалён."
+
+msgid "Too many requests. Try again in an hour."
+msgstr "Слишком много обращений. Попробуйте через час."
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "Unread first"
+msgstr "Сначала непрочитанные"
+
+msgid "User or text"
+msgstr "Пользователь или текст"
+
+msgid "User status"
+msgstr "Статус пользователя"
+
+msgid "Users with a key on the server."
+msgstr "Пользователи с ключом на сервере."
+
+msgid "Waiting for an answer first"
+msgstr "Сначала ждущие ответа"
+
+msgid "What happened"
+msgstr "Что случилось"
+
+msgid "Write a message or attach a screenshot."
+msgstr "Напишите сообщение или приложите скриншот."
+
+msgid "You send messages too often. Wait a minute."
+msgstr "Вы отправляете сообщения слишком часто. Подождите минуту."
+
+msgid "assignee"
+msgstr "исполнитель"
+
+msgid "attachment"
+msgstr "вложение"
+
+msgid "attachments"
+msgstr "вложения"
+
+msgid "author"
+msgstr "автор"
+
+msgid "closed"
+msgstr "закрыто"
+
+msgid "closed at"
+msgstr "закрыт"
+
+msgid "closed by"
+msgstr "закрыл"
+
+msgid "context"
+msgstr "контекст"
+
+msgid "conversation"
+msgstr "переписка"
+
+msgid "conversations"
+msgstr "переписки"
+
+msgid "file"
+msgstr "файл"
+
+msgid "high"
+msgstr "высокий"
+
+msgid "in progress"
+msgstr "в работе"
+
+msgid "incident"
+msgstr "инцидент"
+
+msgid "incidents"
+msgstr "инциденты"
+
+msgid "internal note"
+msgstr "внутренняя заметка"
+
+msgid "kind"
+msgstr "вид"
+
+msgid "last message"
+msgstr "последнее сообщение"
+
+msgid "last report"
+msgstr "последнее сообщение о сбое"
+
+msgid "low"
+msgstr "низкий"
+
+msgid "message"
+msgstr "сообщение"
+
+msgid "messages"
+msgstr "сообщения"
+
+msgid "new"
+msgstr "новое"
+
+msgid "normal"
+msgstr "обычный"
+
+msgid "opened at"
+msgstr "открыто"
+
+msgid "priority"
+msgstr "приоритет"
+
+msgid "reply template"
+msgstr "шаблон ответа"
+
+msgid "reply templates"
+msgstr "шаблоны ответов"
+
+msgid "request"
+msgstr "обращение"
+
+msgid "request event"
+msgstr "событие обращения"
+
+msgid "resolved"
+msgstr "решено"
+
+msgid "seen at"
+msgstr "прочитано"
+
+msgid "sent at"
+msgstr "отправлено"
+
+msgid "sent from"
+msgstr "отправлено из"
+
+msgid "server"
+msgstr "сервер"
+
+msgid "server check"
+msgstr "проверка сервера"
+
+msgid "size"
+msgstr "размер"
+
+msgid "status"
+msgstr "статус"
+
+msgid "support answered"
+msgstr "ответ поддержки"
+
+msgid "text"
+msgstr "текст"
+
+msgid "title"
+msgstr "название"
+
+msgid "topic"
+msgstr "тема"
+
+msgid "type"
+msgstr "тип"
+
+msgid "user"
+msgstr "пользователь"
+
+msgid "waiting for you"
+msgstr "ждёт вашего ответа"

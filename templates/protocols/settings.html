@@ -1,0 +1,37 @@
+{% extends "servers/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Protocol settings" %} · {{ instance.server.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li><a href="{% url 'servers:detail' instance.server.pk %}">{{ instance.server.name }}</a></li><li aria-current="page">{% translate "Protocol settings" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Protocol settings" %} · {{ instance.title }} {% include "protocols/_awg_version.html" %}</h1>
+</div>
+{% if instance.awg_outdated %}
+  <div class="alert alert-info" role="status">
+    <p class="flex-1">{% translate "The Amnezia app calls AmneziaWG 2.0 outdated and offers to reinstall the container, which removes all its clients. Move it to 3.1 here instead: the keys stay." %}
+      <a href="{% url 'servers:detail' instance.server.pk %}" class="underline">{% translate "Move to AmneziaWG 3.1" %}</a></p>
+  </div>
+{% endif %}
+
+{% blocktranslate asvar warning count keys=keys %}Changing the port or the protocol parameters restarts the protocol on the server and breaks the connection of {{ keys }} key until its owner imports it into the Amnezia app again.{% plural %}Changing the port or the protocol parameters restarts the protocol on the server and breaks the connection of {{ keys }} keys until their owners import them into the Amnezia app again.{% endblocktranslate %}
+{% include "components/alert.html" with level="warning" text=warning %}
+
+<form method="post" class="card space-y-6" x-data="{ port: '{{ form.port.value|default_if_none:''|escapejs }}' }">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {% include form.fields_template %}
+
+  {{ form.container_logs.as_field_group }}
+
+  <div class="space-y-3">
+    {% if imported %}
+      {{ form.reissue.as_field_group }}
+      <p class="help-text">{% blocktranslate count keys=imported %}{{ keys }} key was imported from the server.{% plural %}{{ keys }} keys were imported from the server.{% endblocktranslate %}</p>
+    {% endif %}
+    {{ form.confirm.as_field_group }}
+  </div>
+  <div><button type="submit" class="btn btn-primary">{% translate "Apply" %}</button></div>
+</form>
+{% endblock %}

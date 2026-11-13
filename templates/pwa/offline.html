@@ -1,0 +1,8 @@
+{% extends "errors/base.html" %}
+{% load i18n %}
+{% comment %} Shown by the service worker (templates/pwa/sw.js) instead of a page that could not be loaded. The link
+   points at the address being viewed, so it tries that page again. {% endcomment %}
+{% block title %}{% translate "No connection" %}{% endblock %}
+{% block heading %}{% translate "No connection" %}{% endblock %}
+{% block text %}{% translate "The panel cannot be reached. Check the internet connection and try again." %}{% endblock %}
+{% block primary %}<a href="" class="btn btn-primary">{% translate "Try again" %}</a>{% endblock %}

@@ -1,0 +1,15 @@
+{# One form field: label, widget, help text, errors. Checkboxes put the label on the right. Django points the widget's aria-describedby at the _helptext and _error ids. #}
+{% if field.widget_type == "checkbox" %}
+  <div class="field">
+    <label class="flex items-center gap-2 text-sm">{{ field }} {{ field.label }}</label>
+    {% if field.help_text %}<p class="help-text" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+    {% if field.errors %}<div id="{{ field.auto_id }}_error">{% for error in field.errors %}<p class="error-text">{{ error }}</p>{% endfor %}</div>{% endif %}
+  </div>
+{% else %}
+  <div class="field">
+    {% if field.label %}<label class="label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-mark" aria-hidden="true">*</span>{% endif %}</label>{% endif %}
+    {{ field }}
+    {% if field.help_text %}<p class="help-text" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+    {% if field.errors %}<div id="{{ field.auto_id }}_error">{% for error in field.errors %}<p class="error-text">{{ error }}</p>{% endfor %}</div>{% endif %}
+  </div>
+{% endif %}

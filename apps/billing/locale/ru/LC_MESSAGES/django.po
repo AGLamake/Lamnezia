@@ -1,0 +1,97 @@
+# Russian translation of Lamnezia (apps.billing).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "Any"
+msgstr "Любой"
+
+msgid "Choose a plan and a way to pay."
+msgstr "Выберите тариф и способ оплаты."
+
+msgid "From"
+msgstr "С"
+
+msgid "Payment method"
+msgstr "Способ оплаты"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "The money is returned. Change the plan of the user if needed."
+msgstr "Деньги возвращены. При необходимости поменяйте тариф пользователя."
+
+msgid "The payment service is not answering. Try again later."
+msgstr "Платёжный сервис не отвечает. Попробуйте позже."
+
+msgid "This order cannot be refunded."
+msgstr "За этот заказ нельзя вернуть деньги."
+
+msgid "This plan cannot be bought now."
+msgstr "Этот тариф сейчас нельзя купить."
+
+msgid "To"
+msgstr "По"
+
+msgid "User"
+msgstr "Пользователь"
+
+msgid "access, days"
+msgstr "доступ, дней"
+
+msgid "amount"
+msgstr "сумма"
+
+msgid "created at"
+msgstr "создан"
+
+msgid "currency"
+msgstr "валюта"
+
+msgid "expired"
+msgstr "просрочен"
+
+msgid "not paid"
+msgstr "не оплачен"
+
+msgid "number"
+msgstr "номер"
+
+msgid "order"
+msgstr "заказ"
+
+msgid "orders"
+msgstr "заказы"
+
+msgid "paid"
+msgstr "оплачен"
+
+msgid "paid at"
+msgstr "время оплаты"
+
+msgid "payment id"
+msgstr "номер платежа"
+
+msgid "payment method"
+msgstr "способ оплаты"
+
+msgid "plan"
+msgstr "тариф"
+
+msgid "refunded"
+msgstr "возвращён"
+
+msgid "status"
+msgstr "статус"
+
+msgid "user"
+msgstr "пользователь"
+
+msgid "username"
+msgstr "имя пользователя"
+
+msgid "waiting for payment"
+msgstr "ждёт оплаты"

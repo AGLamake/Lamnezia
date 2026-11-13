@@ -1,0 +1,53 @@
+{% extends "layouts/portal.html" %}
+{% load i18n ui %}
+{% block title %}{{ key.name }} · Lamnezia{% endblock %}
+{% block breadcrumbs %}
+  <li><a href="{% url 'portal:index' %}">{% translate "My access" %}</a></li>
+  <li><a href="{% url 'portal:key' key.pk %}">{{ key.name }}</a></li>
+  <li><span aria-current="page">{% translate "Your key" %}</span></li>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% translate "Your key" %}</h1>
+
+{# The QR first on a computer (scanned with the phone); on the phone itself the link is what works. #}
+<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start">
+  <div class="space-y-6">
+    <section class="card space-y-3">
+      <h2 class="text-lg font-semibold">1. {% translate "Install the app" %}</h2>
+      {% if device %}
+        <a href="{% url 'guides:platform' device.value %}" class="btn btn-secondary">{% icon "os-"|add:device.value %}{% blocktranslate with device=device.label %}Amnezia VPN for {{ device }}{% endblocktranslate %}</a>
+      {% else %}
+        <a href="{% url 'guides:index' %}" class="btn btn-secondary">{% icon "phone" %}{% translate "Install Amnezia VPN" %}</a>
+      {% endif %}
+    </section>
+
+    <section class="card space-y-3" x-data="copy">
+      <h2 class="text-lg font-semibold">2. {% translate "Add the key to the app" %}</h2>
+      <p class="help-text">{% translate "Copy the link and paste it in Amnezia VPN: «+» → «Insert key»." %}</p>
+      <textarea x-ref="source" readonly rows="4" class="input font-mono text-xs" aria-label="{% translate 'The vpn:// link' %}">{{ vpn_link }}</textarea>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="btn btn-primary" @click="copy">
+          {% icon "copy" %}<span x-show="!copied">{% translate "Copy" %}</span><span x-show="copied" x-cloak>{% translate "Copied" %}</span>
+        </button>
+        <button type="button" class="btn btn-secondary" x-show="canShare" x-cloak @click="share">{% icon "share" %}{% translate "Share" %}</button>
+        {% for file in files %}<a href="{{ file.data }}" download="{{ key.name|slugify|default:'lamnezia' }}.{{ file.extension }}" class="btn btn-secondary">{% icon "download" %}{{ file.label }}</a>{% endfor %}
+      </div>
+    </section>
+    {% if vless_link %}{% include "keys/_vless.html" %}{% endif %}
+  </div>
+
+  <section class="card space-y-3">
+    <h2 class="text-lg font-semibold">{% translate "Or scan the QR code" %}</h2>
+    {% if qr_codes|length > 1 %}<p class="help-text">{% translate "Scan all codes one after another in the Amnezia app." %}</p>{% endif %}
+    <div class="space-y-4">
+      {% for svg in qr_codes %}<div class="qr [&>svg]:h-auto [&>svg]:w-full">{{ svg|safe }}</div>{% endfor %}
+    </div>
+  </section>
+</div>
+
+<div class="flex flex-col gap-2 sm:flex-row">
+  <a href="{% url 'portal:index' %}" class="btn btn-primary">{% icon "check" %}{% translate "Done" %}</a>
+  <a href="{% url 'support:index' %}" class="btn btn-ghost">{% translate "The key does not connect?" %}</a>
+</div>
+{% endblock %}

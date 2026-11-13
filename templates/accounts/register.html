@@ -1,0 +1,18 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Registration" %} · {{ site_name }}{% endblock %}
+{% block heading %}{% translate "Registration" %}{% endblock %}
+
+{% block content %}
+{% if invited %}<p class="help-text">{% translate "You have an invite: its plan comes without waiting for approval." %}</p>{% endif %}
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {{ form.username.as_field_group }}
+  {{ form.email.as_field_group }}
+  {{ form.password1.as_field_group }}
+  {{ form.password2.as_field_group }}
+  <button type="submit" class="btn btn-primary w-full">{% translate "Create an account" %}</button>
+</form>
+<p class="border-t border-border pt-4 text-center text-sm text-muted">{% translate "Already have an account?" %} <a href="{% url 'accounts:login' %}" class="link">{% translate "Sign in" %}</a></p>
+{% endblock %}

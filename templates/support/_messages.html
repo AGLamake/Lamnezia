@@ -1,0 +1,22 @@
+{% load i18n %}{# The user's view of a thread; refetched from `messages_url` when it changes. A page follows its own thread live (data-live-thread); the chat in the widget (`prefix`) comes over the user's socket and is refetched when the widget opens again (data-dialog-refresh). #}
+<div id="{{ prefix }}messages" class="space-y-3"{% if conversation %}{% if prefix %} data-dialog-refresh{% else %} data-live-thread="{{ conversation.pk }}"{% endif %} hx-get="{{ messages_url }}" hx-trigger="support:thread from:body{% if prefix %}, dialog:refresh{% endif %}" hx-swap="outerHTML"{% endif %}>
+  {% for message in thread %}
+    {% if message.event %}
+      {% url 'support:conversation' message.ticket_id as ticket_url %}{% include "support/_event.html" %}
+    {% else %}
+      <article class="card space-y-2{% if message.author_id == conversation.user_id %}{% if prefix %} ml-8{% else %} sm:ml-12{% endif %}{% else %}{% if prefix %} mr-8{% else %} sm:mr-12{% endif %} border-accent/40{% endif %}">
+        <p class="help-text">
+          {% if message.author_id == conversation.user_id %}{% translate "You" %}{% elif message.author %}{% translate "Support" %}{% else %}{{ site_name }}{% endif %}
+          · {{ message.created_at|date:"SHORT_DATETIME_FORMAT" }}
+          {% if message.author_id == conversation.user_id and message.read_at %}· {% translate "seen" %}{% endif %}
+        </p>
+        {% if message.text %}<p class="whitespace-pre-line break-words">{{ message.text }}</p>{% endif %}
+        {% for attachment in message.attachments.all %}
+          <a href="{% url 'support:attachment' attachment.pk %}" target="_blank" rel="noopener"><img src="{% url 'support:attachment' attachment.pk %}" alt="{% translate 'Screenshot' %}" class="max-h-64 rounded-md" loading="lazy" decoding="async"></a>
+        {% endfor %}
+      </article>
+    {% endif %}
+  {% empty %}
+    {% if prefix %}<p class="help-text">{% translate "Ask anything: the answer appears here. If you are not on the site, we let you know by mail." %}</p>{% endif %}
+  {% endfor %}
+</div>

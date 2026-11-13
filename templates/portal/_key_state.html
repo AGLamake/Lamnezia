@@ -1,0 +1,40 @@
+{% load i18n ui %}{# Polls itself while the key is being issued or prepared; then offers to show it. #}
+<section id="key-state" class="card space-y-3" aria-live="polite"
+         {% if key.status == "issuing" and not issue_failed or profile_pending %}hx-get="{% url 'portal:key-state' key.pk %}{% if device %}?device={{ device.value }}{% endif %}" hx-trigger="every {{ poll_seconds }}s" hx-swap="outerHTML"{% endif %}>
+  {% if issue_failed %}
+    {% translate "The key could not be created. Try re-issuing it or ask the administrator." as text %}
+    {% include "components/alert.html" with level="error" text=text %}
+  {% elif key.status == "issuing" %}
+    <p class="flex items-center gap-2">{% icon "refresh" "icon animate-spin text-muted" %}{% translate "The key is being created on the server, this takes a few seconds…" %}</p>
+  {% else %}
+    {% if key.is_disabled %}
+      {% translate "The key is off. It comes back on when your access or traffic is renewed." as text %}
+      {% include "components/alert.html" with level="warning" text=text %}
+    {% endif %}
+    <h2 class="text-lg font-semibold">{% translate "Connect" %}</h2>
+    <ol class="list-decimal space-y-2 pl-5">
+      <li>
+        {% if device %}
+          <a href="{% url 'guides:platform' device.value %}" class="link inline-flex items-center gap-1.5">{% icon "os-"|add:device.value "icon-sm" %}{% blocktranslate with device=device.label %}Install Amnezia VPN for {{ device }}{% endblocktranslate %}</a>
+        {% else %}
+          <a href="{% url 'guides:index' %}" class="link">{% translate "Install Amnezia VPN" %}</a>
+        {% endif %}
+      </li>
+      <li>{% translate "Show the key and add it to the app: copy the vpn:// link or scan the QR code." %}</li>
+    </ol>
+    {% if can_reveal %}
+      <form method="post" action="{% url 'portal:reveal' key.pk %}{% if device %}?device={{ device.value }}{% endif %}">
+        {% csrf_token %}<button type="submit" class="btn btn-primary btn-lg w-full sm:w-auto">{% icon "key" %}{% translate "Show the key" %}</button>
+      </form>
+      {% if reveal_once %}<p class="help-text">{% translate "The key is shown only once: add it to the app right away." %}</p>{% endif %}
+    {% elif key.can_export %}
+      <p class="help-text">{% translate "The key has already been shown. If you lost it, re-issue it." %}</p>
+    {% elif profile_pending %}
+      <p class="flex items-center gap-2">{% icon "refresh" "icon animate-spin text-muted" %}{% translate "The key is being prepared on the server, this takes a few seconds…" %}</p>
+    {% elif key.awaits_profile %}
+      <p class="help-text">{% translate "The key cannot be prepared right now. Open this page again later or ask the administrator." %}</p>
+    {% else %}
+      <p class="help-text">{% translate "This key was added without its private part and cannot be shown. Re-issue it to get one you can add to the app." %}</p>
+    {% endif %}
+  {% endif %}
+</section>

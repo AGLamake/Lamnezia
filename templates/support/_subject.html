@@ -1,0 +1,1 @@
+{% load i18n %}{% if conversation.type == "server_down" %}{% blocktranslate with server=conversation.subject %}Server {{ server }} does not work{% endblocktranslate %}{% else %}{{ conversation.subject|default:conversation.get_type_display }}{% endif %}

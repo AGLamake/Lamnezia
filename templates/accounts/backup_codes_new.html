@@ -1,0 +1,16 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Backup codes" %} · Lamnezia{% endblock %}
+{% block heading %}{% translate "Backup codes" %}{% endblock %}
+
+{% block content %}
+<p>{% translate "If the phone is lost, sign in with one of these codes instead of the code from the app. Each code works once." %}</p>
+{% translate "The codes are shown only now. Save them in a password manager or print them; the previous codes no longer work." as save_them %}
+{% include "components/alert.html" with level="warning" text=save_them %}
+<ul class="grid grid-cols-2 gap-2 font-mono text-center">
+  {% for code in codes %}
+    <li class="rounded border px-2 py-1">{{ code }}</li>
+  {% endfor %}
+</ul>
+<a href="{{ next }}" class="btn btn-primary w-full">{% translate "I saved the codes" %}</a>
+{% endblock %}

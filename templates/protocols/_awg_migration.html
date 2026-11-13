@@ -1,0 +1,24 @@
+{% load i18n %}
+<div class="mt-1 space-y-1 help-text">
+  <p>{% translate "The Amnezia app no longer develops legacy AmneziaWG. Move its clients to AmneziaWG 3.1: every client gets a new key on AmneziaWG 2.0 and is told to import it, while this container keeps working." %}</p>
+  {% if migration.migration %}
+    <p>{% blocktranslate count moved=migration.moved %}{{ moved }} key moved{% plural %}{{ moved }} keys moved{% endblocktranslate %}{% if migration.unmoved %} · {% blocktranslate count left=migration.unmoved %}{{ left }} key left{% plural %}{{ left }} keys left{% endblocktranslate %}{% endif %}</p>
+  {% endif %}
+  {% if migration.blocked %}
+    <p class="text-warning-soft-fg">{{ migration.blocked }}</p>
+  {% elif not migration.migration or migration.unmoved %}
+    <form method="post" action="{% url 'protocols:awg-migration' instance.pk %}" class="flex flex-wrap items-center gap-x-3" data-confirm="{% translate "Give the clients new keys on AmneziaWG 3.1? The owners are told to import them; the old keys keep working until you finish the move." %}">
+      {% csrf_token %}
+      {% if migration.port %}
+        <label>{% translate "UDP port of AmneziaWG 2.0" %} <input type="number" name="port" value="{{ migration.port }}" min="1" max="65535" required class="input w-28"></label>
+      {% endif %}
+      <button type="submit" class="hover:underline">{% translate "Move the clients to AmneziaWG 3.1" %}</button>
+    </form>
+  {% endif %}
+  {% if migration.can_finish %}
+    <form method="post" action="{% url 'protocols:awg-migration-finish' instance.pk %}" data-confirm="{% translate "Finish the move? The old container is removed and its keys stop working. Do it once the clients have imported their new keys." %}">
+      {% csrf_token %}
+      <button type="submit" class="link-danger">{% translate "Finish the move and remove the old container" %}</button>
+    </form>
+  {% endif %}
+</div>

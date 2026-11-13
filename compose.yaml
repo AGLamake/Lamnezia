@@ -1,0 +1,151 @@
+# Production stack. Configure .env (see .env.example), then: docker compose up -d --build
+# The web port is published on localhost for the host's nginx (deploy/nginx/lamnezia.conf).
+# On a server without nginx add the bundled Caddy: docker compose --profile caddy up -d --build
+# Ready image instead of a local build: LAMNEZIA_IMAGE=ghcr.io/aglamake/lamnezia:<version> in .env,
+# then docker compose pull && docker compose up -d --no-build
+
+x-app: &app
+  build: .
+  image: ${LAMNEZIA_IMAGE:-lamnezia:latest}
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    LAMNEZIA_ALLOWED_HOSTS: ${LAMNEZIA_DOMAIN:?set LAMNEZIA_DOMAIN in .env},localhost
+    LAMNEZIA_DATABASE_URL: postgres://lamnezia:${LAMNEZIA_DB_PASSWORD:?set LAMNEZIA_DB_PASSWORD in .env}@postgres:5432/lamnezia
+    LAMNEZIA_REDIS_URL: redis://redis:6379/0
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  caddy:
+    image: caddy:2.10
+    profiles: [caddy]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      LAMNEZIA_DOMAIN: ${LAMNEZIA_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+
+  web:
+    <<: *app
+    # Migrations and built-in guides run on every start; both are idempotent.
+    command: >-
+      sh -c "python manage.py migrate --noinput &&
+      python manage.py load_guides &&
+      exec gunicorn config.asgi:application
+      --worker-class uvicorn_worker.UvicornWorker
+      --bind 0.0.0.0:8000
+      --workers $${LAMNEZIA_WEB_WORKERS:-2}"
+    ports:
+      - "${LAMNEZIA_HTTP_BIND:-127.0.0.1:8000}:8000"
+    volumes:
+      - media:/app/media
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    <<: *app
+    # Reads the poll queue too, so monitoring and traffic go on if the poller is down.
+    command: celery -A config worker -Q celery,poll --loglevel=info
+    volumes:
+      - media:/app/media
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Monitoring and traffic readings, apart from long operations such as installs.
+  poller:
+    <<: *app
+    command: >-
+      sh -c "exec celery -A config worker -Q poll -n poll@%h --loglevel=info
+      --concurrency $${LAMNEZIA_POLL_WORKERS:-2}"
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping -d poll@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  beat:
+    <<: *app
+    # The schedule state file is disposable; /tmp keeps /app read-only for the app user.
+    command: celery -A config beat --loglevel=info --schedule /tmp/celerybeat-schedule
+
+  # Telegram and Discord bots. Always running: Settings → Bots in the panel turns each bot on and
+  # off and shows its state; the service follows the database, the panel never touches Docker.
+  # The Telegram webhook (LAMNEZIA_TELEGRAM_WEBHOOK) listens on 8081 inside compose: Caddy reaches
+  # it there, nginx on the host needs it published by compose.override.yaml (docs/wiki Messengers).
+  bots:
+    <<: *app
+    restart: unless-stopped
+    command: python manage.py runbots
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lamnezia
+      POSTGRES_USER: lamnezia
+      POSTGRES_PASSWORD: ${LAMNEZIA_DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lamnezia -d lamnezia"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Database dump and uploaded files every LAMNEZIA_BACKUP_INTERVAL seconds into ./backups
+  # (deploy/backup/backup.sh). The image matches the database: pg_dump must not be older.
+  backup:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    command: ["sh", "/usr/local/bin/backup.sh"]
+    environment:
+      PGHOST: postgres
+      PGUSER: lamnezia
+      PGPASSWORD: ${LAMNEZIA_DB_PASSWORD}
+      PGDATABASE: lamnezia
+      LAMNEZIA_BACKUP_INTERVAL: ${LAMNEZIA_BACKUP_INTERVAL:-86400}
+      LAMNEZIA_BACKUP_KEEP: ${LAMNEZIA_BACKUP_KEEP:-14}
+    volumes:
+      - ./deploy/backup/backup.sh:/usr/local/bin/backup.sh:ro
+      - ${LAMNEZIA_BACKUP_DIR:-./backups}:/backups
+      - media:/data/media:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+  media:

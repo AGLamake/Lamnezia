@@ -1,0 +1,153 @@
+{% extends layout %}
+{% load i18n ui %}
+{% comment %} The profile of the signed-in user: every personal setting on one page, a section each.
+   Each form posts to its own view and comes back here, to its section, by the anchor.
+   The team sees it in the admin layout, clients in the portal.
+{% endcomment %}
+{% block title %}{% translate "Profile" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Profile" %}</h1>
+    <p class="page-lead">{% translate "Your account, how you sign in and where the notifications go." %}</p>
+  </div>
+</div>
+
+<nav class="tabs" aria-label="{% translate 'Profile sections' %}">
+  <a class="tab" href="#account">{% translate "Account" %}</a>
+  <a class="tab" href="#password">{% translate "Password" %}</a>
+  <a class="tab" href="#two-factor">{% translate "Two-factor" %}</a>
+  <a class="tab" href="#messengers">{% translate "Messengers" %}</a>
+  <a class="tab" href="#notifications">{% translate "Notifications" %}</a>
+  <a class="tab" href="#sessions">{% translate "Sessions" %}</a>
+</nav>
+
+<div class="space-y-6">
+<section id="account" class="form-section scroll-mt-24" aria-labelledby="account-title">
+  <h2 id="account-title" class="section-title flex items-center gap-2">{% icon "user" "icon-sm text-muted" %}{% translate "Account" %}</h2>
+  <div class="form-section-body">
+    <dl class="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+      <div><dt class="help-text">{% translate "Username" %}</dt><dd class="font-medium break-all">{{ user.get_username }}</dd></div>
+      <div><dt class="help-text">{% translate "Email" %}</dt><dd class="font-medium break-all">{{ user.email|default:"—" }}</dd></div>
+    </dl>
+    <form method="post" action="{% url 'accounts:email-change' %}" class="space-y-4">
+      {% csrf_token %}
+      <h3 class="label">{% translate "Change email" %}</h3>
+      {{ email_form.email.as_field_group }}
+      {{ email_form.password.as_field_group }}
+      {% if mail %}<p class="help-text">{% translate "The new email gets a link; the email changes when you open it." %}</p>{% endif %}
+      <button type="submit" class="btn btn-secondary btn-sm">{% translate "Change email" %}</button>
+    </form>
+  </div>
+</section>
+
+<section id="password" class="form-section scroll-mt-24" aria-labelledby="password-title">
+  <h2 id="password-title" class="section-title flex items-center gap-2">{% icon "key" "icon-sm text-muted" %}{% translate "Password" %}</h2>
+  <form method="post" action="{% url 'accounts:password-change' %}" class="form-section-body">
+    {% csrf_token %}
+    {{ password_form }}
+    <p class="help-text">{% translate "Other sessions are signed out when the password changes." %}</p>
+    <button type="submit" class="btn btn-primary btn-sm">{% translate "Save the password" %}</button>
+  </form>
+</section>
+
+<section id="two-factor" class="form-section scroll-mt-24" aria-labelledby="two-factor-title">
+  <h2 id="two-factor-title" class="section-title flex items-center gap-2">{% icon "shield" "icon-sm text-muted" %}{% translate "Two-factor authentication" %}</h2>
+  <div class="form-section-body">
+    {% url 'accounts:profile' as profile_url %}
+    {% if two_factor.enabled %}
+      <p><span class="badge badge-success">{% translate "on" %}</span></p>
+      <p class="help-text">{% blocktranslate count left=backup_codes.left %}{{ left }} backup code is left for signing in without the phone.{% plural %}{{ left }} backup codes are left for signing in without the phone.{% endblocktranslate %}</p>
+      <div class="flex flex-wrap gap-2">
+        <a href="{% url 'accounts:two-factor-setup' %}?next={{ profile_url|urlencode }}" class="btn btn-secondary btn-sm">{% translate "Use another phone" %}</a>
+        <a href="{% url 'accounts:backup-codes' %}?next={{ profile_url|urlencode }}" class="btn btn-secondary btn-sm">{% translate "Backup codes" %}</a>
+        {% if not two_factor.required %}
+          <a href="{% url 'accounts:two-factor-disable' %}" class="btn btn-ghost btn-sm">{% translate "Turn off" %}</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="help-text">{% translate "After the password, signing in will also ask for a code from an app on your phone." %}</p>
+      <div><a href="{% url 'accounts:two-factor-setup' %}?next={{ profile_url|urlencode }}" class="btn btn-primary btn-sm">{% translate "Turn on" %}</a></div>
+    {% endif %}
+  </div>
+</section>
+
+<section id="messengers" class="form-section scroll-mt-24" aria-labelledby="messengers-title">
+  <h2 id="messengers-title" class="section-title flex items-center gap-2">{% icon "message" "icon-sm text-muted" %}{% translate "Messengers" %}</h2>
+  <div class="form-section-body">
+    <p class="help-text">{% translate "Telegram and Discord: the bots and your notifications." %}</p>
+    {% if code %}
+      <div class="alert alert-info flex-col items-start">
+        {% if deep_link %}
+          <p>{% translate "Open the bot and press Start. The link works once." %}</p>
+          <a href="{{ deep_link }}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">{% translate "Open Telegram" %}</a>
+        {% else %}
+          <p>{% translate "Send this command to the panel bot in Discord. The code works once." %}</p>
+          <p><code class="select-all">{{ discord_command }}</code></p>
+        {% endif %}
+        <p class="help-text">{% blocktranslate count minutes=code_minutes %}Valid for {{ minutes }} minute.{% plural %}Valid for {{ minutes }} minutes.{% endblocktranslate %}</p>
+      </div>
+    {% endif %}
+    <ul class="divide-y divide-border">
+      <li class="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0">
+        <span class="min-w-0"><span class="font-medium">Telegram</span>
+          <span class="help-text block break-all">{% if telegram %}{{ telegram.username|default:telegram.external_id }}{% elif site.telegram_linking %}{% translate "Not linked" %}{% else %}{% translate "The administrator has not set up the Telegram bot." %}{% endif %}</span></span>
+        {% if telegram %}
+          <form method="post" action="{% url 'accounts:telegram-unlink' %}">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm">{% translate "Unlink" %}</button></form>
+        {% elif site.telegram_linking %}
+          <form method="post" action="{% url 'accounts:telegram-code' %}">{% csrf_token %}<button type="submit" class="btn btn-secondary btn-sm">{% translate "Link account" %}</button></form>
+        {% endif %}
+      </li>
+      <li class="flex flex-wrap items-center justify-between gap-3 py-3 last:pb-0">
+        <span class="min-w-0"><span class="font-medium">Discord</span>
+          <span class="help-text block break-all">{% if discord %}{{ discord.username|default:discord.external_id }}{% elif site.discord_oauth %}{% translate "Not linked" %}{% else %}{% translate "The administrator has not set up the Discord application." %}{% endif %}</span></span>
+        {% if discord %}
+          <form method="post" action="{% url 'accounts:discord-unlink' %}">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm">{% translate "Unlink" %}</button></form>
+        {% elif site.discord_oauth %}
+          <div class="flex flex-wrap gap-2">
+            <a href="{% url 'accounts:discord-connect' %}" class="btn btn-secondary btn-sm">{% translate "Link account" %}</a>
+            <form method="post" action="{% url 'accounts:discord-code' %}">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm">{% translate "Code for the bot" %}</button></form>
+          </div>
+        {% endif %}
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section id="notifications" class="form-section scroll-mt-24" aria-labelledby="notifications-title">
+  <h2 id="notifications-title" class="section-title flex items-center gap-2">{% icon "bell" "icon-sm text-muted" %}{% translate "Notifications" %}</h2>
+  <form method="post" action="{% url 'accounts:notifications' %}" class="form-section-body">
+    {% csrf_token %}
+    {{ notify_form.notify_via.as_field_group }}
+    {{ notify_form.language.as_field_group }}
+    <button type="submit" class="btn btn-primary btn-sm">{% translate "Save" %}</button>
+  </form>
+</section>
+
+<section id="sessions" class="form-section scroll-mt-24" aria-labelledby="sessions-title">
+  <h2 id="sessions-title" class="section-title flex items-center gap-2">{% icon "monitor" "icon-sm text-muted" %}{% translate "Sessions" %}</h2>
+  <div class="form-section-body">
+    <p class="help-text">{% translate "Browsers signed in to your account. Only the browser, the system and the sign-in time are kept." %}</p>
+    <ul class="divide-y divide-border">
+      {% for session in sessions %}
+        <li class="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+          <span class="min-w-0">
+            <span class="font-medium">{{ session.device|default:_("Unknown browser") }}</span>
+            {% if session.current %}<span class="badge badge-success">{% translate "this one" %}</span>{% endif %}
+            <span class="help-text block">{% blocktranslate with when=session.signed_in_at|date:"SHORT_DATETIME_FORMAT" %}signed in {{ when }}{% endblocktranslate %}</span>
+          </span>
+          {% if not session.current %}
+            <form method="post" action="{% url 'accounts:session-end' %}">{% csrf_token %}<input type="hidden" name="session" value="{{ session.id }}"><button type="submit" class="btn btn-ghost btn-sm">{% translate "Sign out" %}</button></form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    {% if sessions|length > 1 %}
+      <form method="post" action="{% url 'accounts:session-end' %}">{% csrf_token %}<input type="hidden" name="session" value="others"><button type="submit" class="btn btn-secondary btn-sm">{% translate "Sign out everywhere else" %}</button></form>
+    {% endif %}
+  </div>
+</section>
+</div>
+{% endblock %}

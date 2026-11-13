@@ -1,0 +1,2 @@
+{% load i18n %}{# Stands for the reply form of a closed request; `oob` replaces the open form in place. #}
+<p id="{{ prefix }}reply" class="help-text"{% if oob %} hx-swap-oob="true"{% endif %}>{% translate "The request is closed. If the problem comes back, open a new one." %}</p>

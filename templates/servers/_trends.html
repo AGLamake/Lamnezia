@@ -1,0 +1,49 @@
+{% load i18n ui %}{# Load by day (templatetag health_trends): four tiles with the latest day and a sparkline since `since`; the numbers stay in a table under "By day". #}
+{% with since=since|date:"SHORT_DATE_FORMAT" %}
+<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="stat">
+    <span class="stat-label">{% translate "Availability" %}</span>
+    <span class="stat-value">{{ latest.availability|floatformat:"-1" }}%</span>
+    {% blocktranslate asvar label %}Availability by day since {{ since }}{% endblocktranslate %}{% sparkline availability label floor=0 ceiling=100 %}
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% translate "Average CPU" %}</span>
+    <span class="stat-value">{% if latest.cpu is None %}—{% else %}{{ latest.cpu|floatformat:0 }}%{% endif %}</span>
+    {% blocktranslate asvar label %}Average CPU by day since {{ since }}{% endblocktranslate %}{% sparkline cpu label floor=0 ceiling=100 %}
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% translate "Peak memory" %}</span>
+    <span class="stat-value">{% if latest.memory is None %}—{% else %}{{ latest.memory|floatformat:0 }}%{% endif %}</span>
+    {% blocktranslate asvar label %}Peak memory by day since {{ since }}{% endblocktranslate %}{% sparkline memory label floor=0 ceiling=100 %}
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% translate "Least free disk" %}</span>
+    <span class="stat-value">{% if latest.disk_free is None %}—{% else %}{{ latest.disk_free|filesizeformat }}{% endif %}</span>
+    {% blocktranslate asvar label %}Least free disk by day since {{ since }}{% endblocktranslate %}{% sparkline disk_free label floor=0 %}
+  </div>
+</div>
+{% endwith %}
+<details class="disclosure">
+  <summary class="text-sm">{% translate "By day" %}</summary>
+  <div class="disclosure-body table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>{% translate "Day" %}</th><th>{% translate "Availability" %}</th><th>{% translate "Average CPU" %}</th>
+          <th>{% translate "Peak memory" %}</th><th>{% translate "Least free disk" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for day in days %}
+          <tr>
+            <td data-label="{% translate 'Day' %}">{{ day.day|date:"SHORT_DATE_FORMAT" }}</td>
+            <td data-label="{% translate 'Availability' %}">{{ day.availability|floatformat:"-1" }}%</td>
+            <td data-label="{% translate 'Average CPU' %}">{% if day.cpu is None %}—{% else %}{{ day.cpu|floatformat:0 }}%{% endif %}</td>
+            <td data-label="{% translate 'Peak memory' %}">{% if day.memory is None %}—{% else %}{{ day.memory|floatformat:0 }}%{% endif %}</td>
+            <td data-label="{% translate 'Least free disk' %}">{% if day.disk_free is None %}—{% else %}{{ day.disk_free|filesizeformat }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>

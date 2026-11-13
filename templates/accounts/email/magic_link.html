@@ -1,0 +1,9 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+{% block heading %}{% translate "Sign in without a password" %}{% endblock %}
+{% block content %}
+<p style="margin:0;">{% blocktranslate with username=user.get_username trimmed %}Someone asked to sign in to account {{ username }} without a password.{% endblocktranslate %}</p>
+<p style="margin:12px 0 0;">{% translate "The link works once and not for long." %}</p>
+{% translate "Sign in" as action %}{% include "email/_button.html" %}
+{% endblock %}
+{% block note %}{% translate "If it was not you, ignore this letter." %}{% endblock %}

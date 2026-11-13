@@ -1,0 +1,55 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{% translate "Orders" %} · Lamnezia{% endblock %}
+
+{% block nav %}{% include "components/admin_nav.html" with active="orders" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Orders" %}</h1>
+    <p class="page-lead">{% translate "Payments of the plans: who paid, how much and how." %}</p>
+  </div>
+</div>
+
+{% include "components/filters.html" with form=filter_form %}
+
+{% if orders %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>{% translate "Created" %}</th><th>{% translate "User" %}</th><th>{% translate "Plan" %}</th>
+          <th>{% translate "Amount" %}</th><th>{% translate "Payment method" %}</th><th>{% translate "Status" %}</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+          <tr>
+            <td data-label="{% translate 'Created' %}">{{ order.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+            <td data-label="{% translate 'User' %}">
+              {% if order.user %}<a href="{% url 'dashboard:user' order.user.pk %}" class="font-medium hover:underline">{{ order.user.username }}</a>
+              {% else %}{{ order.username|default:"—" }} <span class="help-text">{% translate "deleted" %}</span>{% endif %}
+            </td>
+            <td data-label="{% translate 'Plan' %}">{{ order.plan.name }}</td>
+            <td data-label="{% translate 'Amount' %}" class="font-medium tabular-nums">{{ order.amount }} {{ order.currency }}</td>
+            <td data-label="{% translate 'Payment method' %}">{{ order.provider }}</td>
+            <td data-label="{% translate 'Status' %}">{% include "billing/_status.html" %}{% if order.paid_at %} <span class="help-text">{{ order.paid_at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}</td>
+            <td>
+              {% if order.status == "paid" and order.provider in refundable %}
+                <form method="post" action="{% url 'billing:refund' order.number %}" data-confirm="{% translate "Return the money of this order? The plan of the user stays as it is." %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-ghost btn-sm">{% translate "Refund" %}</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/pagination.html" %}
+{% else %}
+  <p class="help-text">{% translate "No orders found." %}</p>
+{% endif %}
+{% endblock %}

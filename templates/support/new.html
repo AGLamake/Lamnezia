@@ -1,0 +1,20 @@
+{% extends "layouts/portal.html" %}
+{% load i18n %}
+{% block title %}{% translate "Report a problem" %} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}
+  <li><a href="{% url 'support:index' %}">{% translate "Support" %}</a></li>
+  <li><span aria-current="page">{% translate "Report a problem" %}</span></li>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Report a problem" %}</h1>
+  <p class="help-text">{% translate "Your plan, keys and browser are attached to the request, so you need not describe them." %}</p>
+</div>
+<form method="post" enctype="multipart/form-data" class="card space-y-4">
+  {% csrf_token %}
+  {{ form }}
+  <button type="submit" class="btn btn-primary w-full sm:w-auto">{% translate "Send" %}</button>
+</form>
+{% endblock %}

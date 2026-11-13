@@ -1,0 +1,7 @@
+{% load i18n %}{% autoescape off %}{% blocktranslate with username=user.get_username email=user.email trimmed %}
+{{ username }} ({{ email }}) registered and waits for a plan.
+{% endblocktranslate %}
+
+{% translate "Approve or reject:" %}
+{{ link }}
+{% endautoescape %}

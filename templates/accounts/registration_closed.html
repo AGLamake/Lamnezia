@@ -1,0 +1,9 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Registration" %} · {{ site_name }}{% endblock %}
+{% block heading %}{% translate "Registration" %}{% endblock %}
+
+{% block content %}
+<p>{{ message }}</p>
+<p class="help-text"><a href="{% url 'accounts:login' %}" class="link">{% translate "Back to sign in" %}</a></p>
+{% endblock %}

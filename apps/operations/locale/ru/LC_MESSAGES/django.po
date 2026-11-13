@@ -1,0 +1,103 @@
+# Russian translation of Lamnezia (apps.operations).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "Any"
+msgstr "Любой"
+
+msgid "Only a failed operation can be retried."
+msgstr "Повторить можно только операцию с ошибкой."
+
+msgid "Search"
+msgstr "Поиск"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "The background worker stopped or is overloaded. Check it and try again."
+msgstr "Фоновый обработчик остановился или перегружен. Проверьте его и повторите попытку."
+
+msgid "The operation was interrupted."
+msgstr "Операция прервана."
+
+msgid "Try again. If the error repeats, check the worker log and report a bug."
+msgstr "Повторите попытку. Если ошибка повторяется, посмотрите лог worker и сообщите об ошибке."
+
+msgid "Unexpected error."
+msgstr "Непредвиденная ошибка."
+
+msgid "created at"
+msgstr "создана"
+
+msgid "done"
+msgstr "готово"
+
+msgid "error"
+msgstr "ошибка"
+
+msgid "error code"
+msgstr "код ошибки"
+
+msgid "failed"
+msgstr "ошибка"
+
+msgid "finished at"
+msgstr "завершена"
+
+msgid "kind"
+msgstr "вид"
+
+msgid "language"
+msgstr "язык"
+
+msgid "log"
+msgstr "лог"
+
+msgid "operation"
+msgstr "операция"
+
+msgid "operation step"
+msgstr "шаг операции"
+
+msgid "operation steps"
+msgstr "шаги операции"
+
+msgid "operations"
+msgstr "операции"
+
+msgid "parameters"
+msgstr "параметры"
+
+msgid "position"
+msgstr "номер"
+
+msgid "retry of"
+msgstr "повтор операции"
+
+msgid "running"
+msgstr "выполняется"
+
+msgid "started at"
+msgstr "начата"
+
+msgid "started by"
+msgstr "запустил"
+
+msgid "status"
+msgstr "статус"
+
+msgid "subject"
+msgstr "объект"
+
+msgid "title"
+msgstr "название"
+
+msgid "waiting"
+msgstr "в очереди"
+
+msgid "what to do"
+msgstr "что сделать"

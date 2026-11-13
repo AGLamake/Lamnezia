@@ -1,0 +1,1143 @@
+/* Tailwind source. Build with `make css` (scripts/tailwind.py); output: static/css/app.css.
+   Design tokens first, then the component classes the templates use. All components are on
+   /dev/ui/ (DEBUG only); the Development wiki page describes how to add one. */
+@import "tailwindcss" source(none);
+
+@source "../../templates";
+@source "../../apps";
+@source "../../static/js";
+
+/* Dark theme follows <html data-theme="dark">; static/js/theme.js sets it from the saved choice
+   (light, dark or system). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---- Design tokens -------------------------------------------------------------------------
+   Every colour pair below keeps WCAG 2.2 AA contrast (4.5:1 for text, 3:1 for borders of
+   controls and focus rings) in both themes. Change colours here, not in templates.
+   Four steps of depth keep the pages from looking flat: the canvas, the tinted menu, the cards
+   and the raised parts inside them; neither theme goes to pure white text or near-black. */
+:root {
+  color-scheme: light;
+  --ln-canvas: #eef1f6;
+  --ln-sidebar: #e6ebf3;
+  --ln-surface: #ffffff;
+  --ln-surface-2: #f3f5f9;
+  --ln-surface-3: #e3e8f0;
+  --ln-border: #dbe0e9;
+  --ln-border-strong: #747e92;
+  --ln-fg: #172033;
+  --ln-muted: #4f5a6d;
+  --ln-accent: #2a5fd6;
+  --ln-accent-hover: #2150bb;
+  --ln-accent-fg: #ffffff;
+  --ln-accent-soft: #dfe8fb;
+  --ln-accent-soft-fg: #1b479f;
+  --ln-link: #1f56c8;
+  --ln-focus: #2a5fd6;
+  --ln-success: #0f7a4a;
+  --ln-success-soft: #def3e8;
+  --ln-success-soft-fg: #0b5c38;
+  --ln-warning: #8a5300;
+  --ln-warning-soft: #faefd7;
+  --ln-warning-soft-fg: #6b4100;
+  --ln-danger: #c42a2a;
+  --ln-danger-hover: #a82020;
+  --ln-danger-soft: #fbe6e6;
+  --ln-danger-soft-fg: #951b1b;
+  --ln-info-soft: #dff0f8;
+  --ln-info-soft-fg: #0b5370;
+  --ln-chart-1: #1f5fe0;
+  --ln-chart-2: #b0469c;
+  --ln-overlay: rgb(15 23 42 / 0.55);
+  --ln-shadow-sm: 0 1px 2px rgb(17 24 39 / 0.04);
+  --ln-shadow-md: 0 4px 12px -2px rgb(17 24 39 / 0.08), 0 2px 4px -2px rgb(17 24 39 / 0.05);
+  --ln-shadow-lg: 0 20px 40px -12px rgb(15 23 42 / 0.25);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ln-canvas: #161a22;
+  --ln-sidebar: #1b2029;
+  --ln-surface: #1f242e;
+  --ln-surface-2: #262c37;
+  --ln-surface-3: #303744;
+  --ln-border: #333a47;
+  --ln-border-strong: #788193;
+  --ln-fg: #e1e5ec;
+  --ln-muted: #a7afbc;
+  --ln-accent: #2f66e0;
+  --ln-accent-hover: #4277ea;
+  --ln-accent-fg: #ffffff;
+  --ln-accent-soft: #21345c;
+  --ln-accent-soft-fg: #bcd0ff;
+  --ln-link: #8fb3ff;
+  --ln-focus: #7aa3ff;
+  --ln-success: #57d197;
+  --ln-success-soft: #17352b;
+  --ln-success-soft-fg: #94e3bb;
+  --ln-warning: #f0bd57;
+  --ln-warning-soft: #3a2d14;
+  --ln-warning-soft-fg: #f5d38f;
+  --ln-danger: #dc2c2c;
+  --ln-danger-hover: #c72323;
+  --ln-danger-soft: #421c1f;
+  --ln-danger-soft-fg: #fcb2b2;
+  --ln-info-soft: #15303d;
+  --ln-info-soft-fg: #9dd5ef;
+  --ln-chart-1: #5b8dff;
+  --ln-chart-2: #cf7abf;
+  --ln-overlay: rgb(2 6 16 / 0.7);
+  --ln-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --ln-shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5);
+  --ln-shadow-lg: 0 20px 40px -12px rgb(0 0 0 / 0.7);
+}
+
+/* Tokens as Tailwind utilities: bg-surface, text-muted, border-border, ring-focus, ... */
+@theme inline {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --color-canvas: var(--ln-canvas);
+  --color-sidebar: var(--ln-sidebar);
+  --color-surface: var(--ln-surface);
+  --color-surface-2: var(--ln-surface-2);
+  --color-surface-3: var(--ln-surface-3);
+  --color-border: var(--ln-border);
+  --color-border-strong: var(--ln-border-strong);
+  --color-fg: var(--ln-fg);
+  --color-muted: var(--ln-muted);
+  --color-accent: var(--ln-accent);
+  --color-accent-hover: var(--ln-accent-hover);
+  --color-accent-fg: var(--ln-accent-fg);
+  --color-accent-soft: var(--ln-accent-soft);
+  --color-accent-soft-fg: var(--ln-accent-soft-fg);
+  --color-link: var(--ln-link);
+  --color-focus: var(--ln-focus);
+  --color-success: var(--ln-success);
+  --color-success-soft: var(--ln-success-soft);
+  --color-success-soft-fg: var(--ln-success-soft-fg);
+  --color-warning: var(--ln-warning);
+  --color-warning-soft: var(--ln-warning-soft);
+  --color-warning-soft-fg: var(--ln-warning-soft-fg);
+  --color-danger: var(--ln-danger);
+  --color-danger-hover: var(--ln-danger-hover);
+  --color-danger-soft: var(--ln-danger-soft);
+  --color-danger-soft-fg: var(--ln-danger-soft-fg);
+  --color-info-soft: var(--ln-info-soft);
+  --color-info-soft-fg: var(--ln-info-soft-fg);
+  --color-overlay: var(--ln-overlay);
+  --color-chart-1: var(--ln-chart-1);
+  --color-chart-2: var(--ln-chart-2);
+
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-sheet: 1.25rem;
+
+  --shadow-card: var(--ln-shadow-sm);
+  --shadow-raised: var(--ln-shadow-md);
+  --shadow-overlay: var(--ln-shadow-lg);
+}
+
+/* ---- Base ---------------------------------------------------------------------------------- */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-canvas font-sans text-fg antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ln-focus);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--ln-accent-soft);
+    color: var(--ln-accent-soft-fg);
+  }
+  /* WCAG 2.3.3: no movement for people who asked for less of it. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+[x-cloak] {
+  display: none !important;
+}
+
+/* Moving between pages of the panel cross-fades instead of flashing white (browsers without
+   view transitions just load the page). */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 160ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
+/* Loading bar at the top while a request is on its way (<html data-loading>, static/js/ui.js).
+   It appears after a moment, so quick answers do not blink. */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 200;
+  height: 3px;
+  background: var(--ln-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0;
+  pointer-events: none;
+}
+html[data-loading]::before {
+  opacity: 1;
+  animation: loading-bar 8s cubic-bezier(0.1, 0.7, 0.2, 1) 150ms forwards;
+}
+@keyframes loading-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(0.92);
+  }
+}
+
+/* ---- Components ---------------------------------------------------------------------------- */
+@layer components {
+  /* Visually hidden, still read by screen readers; becomes visible on focus (skip link). */
+  .sr-only-focusable:not(:focus) {
+    @apply sr-only;
+  }
+  .skip-link {
+    @apply fixed top-2 left-2 z-[100] rounded-control bg-accent px-4 py-2 text-sm font-medium
+      text-accent-fg shadow-raised;
+  }
+
+  /* Buttons. aria-busy="true" shows a spinner and blocks a second click. */
+  .btn {
+    @apply relative inline-flex min-h-10 items-center justify-center gap-2 rounded-control px-4
+      py-2 text-sm font-medium whitespace-nowrap transition-colors select-none
+      disabled:cursor-not-allowed disabled:opacity-55 aria-disabled:pointer-events-none
+      aria-disabled:opacity-55;
+  }
+  .btn[aria-busy="true"] {
+    @apply pointer-events-none text-transparent;
+  }
+  .btn[aria-busy="true"]::after {
+    content: "";
+    @apply absolute size-4 animate-spin rounded-full border-2 border-current border-r-transparent;
+    color: var(--btn-spinner, currentColor);
+  }
+  .btn-primary {
+    @apply bg-accent text-accent-fg shadow-card hover:bg-accent-hover;
+    --btn-spinner: var(--ln-accent-fg);
+  }
+  .btn-secondary {
+    @apply border border-border-strong/60 bg-surface text-fg shadow-card hover:bg-surface-2;
+    --btn-spinner: var(--ln-fg);
+  }
+  /* Messenger colours, darkened where needed so white text keeps 4.5:1 in both themes. */
+  .btn-telegram {
+    @apply bg-[#1b79b2] text-white shadow-card hover:bg-[#176a9b];
+    --btn-spinner: #fff;
+  }
+  .btn-discord {
+    @apply bg-[#5865f2] text-white shadow-card hover:bg-[#4752c4];
+    --btn-spinner: #fff;
+  }
+  .btn-danger {
+    @apply bg-danger text-white shadow-card hover:bg-danger-hover;
+    --btn-spinner: #fff;
+  }
+  .btn-ghost {
+    @apply text-fg hover:bg-surface-2;
+    --btn-spinner: var(--ln-fg);
+  }
+  .btn-ghost-danger {
+    /* A quiet dangerous action next to others (Reject, Unlink): red text, readable in both themes. */
+    @apply text-danger hover:bg-danger-soft dark:text-danger-soft-fg;
+    --btn-spinner: var(--ln-danger);
+  }
+  .btn-link {
+    @apply min-h-0 p-0 text-link underline-offset-4 hover:underline;
+  }
+  .btn-sm {
+    @apply min-h-8 rounded-lg px-2.5 py-1 text-xs;
+  }
+  .btn-lg {
+    @apply min-h-12 px-5 text-base;
+  }
+  /* Square button with an icon only; give it an aria-label. */
+  .btn-icon {
+    @apply size-10 min-h-0 p-0;
+  }
+  .btn-icon.btn-sm {
+    @apply size-8;
+  }
+
+  .icon {
+    @apply size-5 shrink-0;
+  }
+  .icon-sm {
+    @apply size-4 shrink-0;
+  }
+
+  /* Surfaces. */
+  /* Page width: every page of a layout uses the same frame; the appearance menu widens it
+     (<html data-width="wide">, static/js/theme.js). */
+  .page-frame {
+    @apply mx-auto w-full max-w-6xl;
+  }
+  .portal-frame {
+    @apply mx-auto w-full max-w-5xl;
+  }
+  [data-width="wide"] .page-frame {
+    @apply max-w-[100rem];
+  }
+  [data-width="wide"] .portal-frame {
+    @apply max-w-7xl;
+  }
+
+  .card {
+    @apply rounded-card border border-border bg-surface p-4 shadow-card sm:p-5;
+  }
+  /* A section of a long settings form: the title on the left, the fields on the right
+     (stacked on narrow screens). */
+  .form-section {
+    @apply grid gap-4 rounded-card border border-border bg-surface p-4 shadow-card sm:p-5
+      lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8;
+  }
+  .form-section > .section-title {
+    @apply self-start;
+  }
+  .form-section-body {
+    @apply min-w-0 space-y-4;
+  }
+  /* A card with a header row (title and a link or action) and a body without padding. */
+  .card-head {
+    @apply flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5;
+  }
+  .card-title {
+    @apply flex items-center gap-2 text-sm font-semibold;
+  }
+  .card-flush {
+    @apply overflow-hidden p-0 sm:p-0;
+  }
+  .card-body {
+    @apply p-4 sm:p-5;
+  }
+  /* Section heading on a page: a title with an optional link on the right. */
+  .section-head {
+    @apply flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1;
+  }
+  .section-title {
+    @apply text-base font-semibold;
+  }
+  .card-muted {
+    @apply bg-surface-2 shadow-none;
+  }
+  .divider {
+    @apply border-t border-border;
+  }
+
+  /* Page heading: title, optional description and actions that wrap under it on phones. */
+  .page-header {
+    @apply flex flex-wrap items-end justify-between gap-x-4 gap-y-3;
+  }
+  .page-title {
+    @apply text-xl font-semibold tracking-tight sm:text-2xl;
+  }
+  .page-lead {
+    @apply mt-1 text-sm text-muted;
+  }
+  .page-actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  /* Breadcrumbs: layouts wrap the page's `breadcrumbs` block (<li> items, the last one with
+     aria-current="page"); without items the bar is hidden. */
+  .breadcrumbs-nav:not(:has(li)) {
+    @apply hidden;
+  }
+  .breadcrumbs {
+    @apply flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted;
+  }
+  .breadcrumbs li {
+    @apply inline-flex items-center gap-1.5;
+  }
+  .breadcrumbs li + li::before {
+    content: "/";
+    @apply text-border-strong;
+  }
+  .breadcrumbs a {
+    @apply rounded hover:text-fg hover:underline;
+  }
+  .breadcrumbs [aria-current="page"] {
+    @apply font-medium text-fg;
+  }
+
+  /* Second-level tabs inside a section (guides): a row of pills that scrolls sideways on phones.
+     Mark the current one with aria-current="page". */
+  .tabs {
+    @apply -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0;
+  }
+  .tab {
+    @apply inline-flex min-h-9 shrink-0 items-center rounded-full border border-border px-3.5 text-sm
+      font-medium text-muted transition-colors hover:bg-surface-2 hover:text-fg;
+  }
+  .tab[aria-current="page"] {
+    @apply border-transparent bg-accent-soft text-accent-soft-fg;
+  }
+
+  /* Forms. Django's renderer adds `input`/`checkbox`, `input-invalid` and aria-invalid. */
+  .field {
+    @apply flex flex-col gap-1.5;
+  }
+  .label {
+    @apply text-sm font-medium text-fg;
+  }
+  .required-mark {
+    @apply text-danger;
+  }
+  .input {
+    @apply block min-h-10 w-full rounded-control border border-border-strong/70 bg-surface px-3
+      py-2 text-base text-fg shadow-card transition-colors placeholder:text-muted/80
+      hover:border-border-strong focus:border-focus focus:ring-2 focus:ring-focus/30
+      focus:outline-none disabled:cursor-not-allowed disabled:bg-surface-2 disabled:opacity-70
+      sm:text-sm;
+  }
+  select.input {
+    @apply pr-8;
+  }
+  textarea.input {
+    @apply min-h-20;
+  }
+  .input-invalid,
+  .input[aria-invalid="true"] {
+    @apply border-danger focus:border-danger focus:ring-danger/30;
+  }
+  .checkbox {
+    @apply size-4 shrink-0 accent-accent;
+  }
+  .help-text {
+    @apply text-sm text-muted;
+  }
+  .error-text {
+    @apply flex items-start gap-1 text-sm font-medium text-danger dark:text-danger-soft-fg;
+  }
+
+  /* Tables. `.table-cards` turns rows into cards below 640 px: every <td data-label="…"> shows
+     its column name. Without it the table scrolls sideways inside .table-wrap. */
+  .table-wrap {
+    @apply relative overflow-x-auto rounded-card border border-border bg-surface shadow-card;
+  }
+  .table {
+    @apply min-w-full text-left text-sm;
+  }
+  .table th {
+    @apply border-b border-border bg-surface-2/70 px-4 py-2.5 text-xs font-medium whitespace-nowrap
+      text-muted;
+  }
+  .table td {
+    @apply border-b border-border px-4 py-3 whitespace-nowrap text-fg;
+  }
+  /* A cell that may hold long text (a description): it wraps instead of widening the table. */
+  .table td.cell-wrap {
+    @apply min-w-48 whitespace-normal;
+  }
+  .table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .table tbody tr {
+    @apply transition-colors hover:bg-surface-2/60;
+  }
+  @media (width < 40rem) {
+    .table-wrap:has(.table-cards) {
+      @apply overflow-visible border-0 bg-transparent shadow-none;
+    }
+    .table-cards thead {
+      @apply sr-only;
+    }
+    .table-cards,
+    .table-cards tbody {
+      @apply block;
+    }
+    .table-cards tbody {
+      @apply space-y-3;
+    }
+    .table-cards tr {
+      @apply block rounded-card border border-border bg-surface p-3 shadow-card;
+    }
+    .table-cards tbody tr:hover {
+      @apply bg-surface;
+    }
+    .table-cards td {
+      /* Long values without spaces (an email, a key) break instead of widening the card. */
+      @apply flex items-baseline justify-between gap-4 border-0 px-1 py-1.5 text-right
+        whitespace-normal wrap-anywhere;
+    }
+    .table-cards td[data-label]::before {
+      content: attr(data-label);
+      @apply shrink-0 text-left text-xs font-medium text-muted;
+    }
+    .table-cards td:empty {
+      @apply hidden;
+    }
+    /* The row's checkbox sits in the card corner, its name is the card title. */
+    .table-cards tr:has(> .cell-check) {
+      @apply relative pl-11;
+    }
+    .table-cards td.cell-check {
+      @apply absolute top-4 left-4 p-0;
+    }
+    .table-cards td.cell-title {
+      @apply block text-left;
+    }
+  }
+
+  /* An action for the ticked rows of a list, above its table. */
+  .bulk-bar {
+    @apply flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border border-border bg-surface
+      px-4 py-3 shadow-card sm:px-5;
+  }
+  .bulk-bar > label {
+    /* On a phone the label takes its own line, so the field next to it keeps its width. */
+    @apply w-full sm:w-auto;
+  }
+
+  /* Alerts (inline messages) and toasts (pop-up messages, components/toasts.html). */
+  .alert {
+    @apply flex items-start gap-3 rounded-card border px-4 py-3 text-sm;
+  }
+  .alert-info {
+    @apply border-info-soft-fg/25 bg-info-soft text-info-soft-fg;
+  }
+  .alert-success {
+    @apply border-success-soft-fg/25 bg-success-soft text-success-soft-fg;
+  }
+  .alert-warning {
+    @apply border-warning-soft-fg/25 bg-warning-soft text-warning-soft-fg;
+  }
+  .alert-error {
+    @apply border-danger-soft-fg/25 bg-danger-soft text-danger-soft-fg;
+  }
+  .alert a {
+    @apply font-medium underline;
+  }
+
+  .toast-region {
+    @apply pointer-events-none fixed inset-x-0 bottom-20 z-[60] flex flex-col items-center gap-2
+      px-4 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:items-end;
+  }
+  .toast {
+    @apply pointer-events-auto w-full max-w-sm shadow-overlay;
+  }
+
+  /* Status badges: a dot plus a word, so the state never depends on colour alone. */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium
+      whitespace-nowrap;
+  }
+  .badge::before {
+    content: "";
+    @apply size-1.5 rounded-full bg-current;
+  }
+  .badge-plain::before {
+    @apply hidden;
+  }
+  .badge-success {
+    @apply bg-success-soft text-success-soft-fg;
+  }
+  .badge-warning {
+    @apply bg-warning-soft text-warning-soft-fg;
+  }
+  .badge-danger {
+    @apply bg-danger-soft text-danger-soft-fg;
+  }
+  .badge-info {
+    @apply bg-info-soft text-info-soft-fg;
+  }
+  .badge-accent {
+    @apply bg-accent-soft text-accent-soft-fg;
+  }
+  .badge-muted {
+    @apply bg-surface-3 text-muted;
+  }
+
+  /* Navigation. Mark the current link with nav-link-active and aria-current="page". */
+  .nav-link {
+    @apply flex min-h-9 items-center gap-3 rounded-control px-2.5 py-1.5 text-sm font-medium
+      text-muted transition-colors hover:bg-surface-2 hover:text-fg;
+  }
+  .nav-link-active,
+  .nav-link[aria-current="page"] {
+    @apply bg-accent-soft text-accent-soft-fg hover:bg-accent-soft hover:text-accent-soft-fg;
+  }
+  .nav-text {
+    @apply min-w-0 flex-1 truncate;
+  }
+  /* Heading of a group of links in the admin sidebar. */
+  .nav-group {
+    @apply px-2.5 pt-4 pb-1 text-xs font-medium text-muted;
+  }
+  /* A number next to a menu item: what waits there. */
+  .nav-count {
+    @apply inline-flex min-w-5 items-center justify-center rounded-full bg-surface-3 px-1.5 text-xs
+      leading-5 font-semibold text-fg tabular-nums;
+  }
+  .nav-count-danger {
+    @apply bg-danger text-white;
+  }
+
+  /* Portal menu: a bottom tab bar on phones, a row in the header from 640 px. */
+  .portal-nav {
+    @apply fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface px-1
+      pb-[env(safe-area-inset-bottom)] shadow-raised sm:static sm:z-auto sm:flex-1 sm:gap-1
+      sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none;
+  }
+  .portal-nav:not(:has(a)) {
+    @apply hidden;
+  }
+  .portal-nav .nav-link {
+    @apply min-h-14 min-w-0 flex-1 flex-col justify-center gap-0.5 px-1 py-1.5 text-center
+      text-[0.6875rem] leading-tight sm:min-h-10 sm:flex-none sm:flex-row sm:gap-2 sm:px-3
+      sm:text-sm;
+  }
+  .portal-nav .nav-link .icon {
+    @apply sm:hidden;
+  }
+
+  /* Drop-down menu (components/dropdown + the `menu` Alpine component). */
+  .menu {
+    @apply absolute z-50 mt-2 min-w-48 rounded-card border border-border bg-surface p-1
+      shadow-overlay;
+  }
+  .menu-item {
+    @apply flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-fg
+      hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-offset-0;
+  }
+  .menu-item[aria-checked="true"],
+  .menu-item[aria-current="true"] {
+    @apply font-semibold text-accent-soft-fg;
+  }
+  .menu-label {
+    @apply px-3 pt-2 pb-1 text-xs font-medium text-muted;
+  }
+
+  /* Modal dialog (native <dialog>) and side panel (drawer). */
+  .dialog {
+    @apply m-auto w-[calc(100%-2rem)] max-w-lg rounded-sheet border border-border bg-surface p-0
+      text-fg shadow-overlay;
+  }
+  .dialog::backdrop {
+    background: var(--ln-overlay);
+  }
+  .dialog-drawer {
+    @apply mt-0 mr-0 mb-0 h-dvh max-h-dvh w-full max-w-md rounded-none rounded-l-sheet border-y-0
+      border-r-0;
+  }
+  @media (width < 40rem) {
+    .dialog:not(.dialog-drawer) {
+      @apply mb-0 w-full max-w-none rounded-b-none;
+    }
+  }
+  .dialog-header {
+    @apply flex items-start justify-between gap-4 border-b border-border px-5 py-4;
+  }
+  .dialog-title {
+    @apply text-lg font-semibold;
+  }
+  .dialog-body {
+    @apply px-5 py-4 text-sm text-fg;
+  }
+  .dialog-footer {
+    @apply flex flex-col-reverse gap-2 border-t border-border px-5 py-4 sm:flex-row sm:justify-end;
+  }
+  /* Chat with support (support/_chat_widget.html): a round button in the corner, above the
+     bottom tab bar on phones, and a panel at the edge of the screen; on phones the whole screen. */
+  .chat-launcher {
+    @apply fixed right-4 bottom-[calc(4.25rem+1px+env(safe-area-inset-bottom))] z-30 inline-flex
+      size-14 items-center justify-center rounded-full bg-accent text-accent-fg shadow-overlay
+      hover:bg-accent-hover sm:right-6 sm:bottom-6;
+  }
+  .chat-launcher .icon {
+    @apply size-6;
+  }
+  .chat-launcher .nav-count {
+    @apply absolute -top-1 -right-1;
+  }
+  .dialog.chat-panel[open] {
+    @apply flex flex-col;
+  }
+  .dialog.chat-panel {
+    @apply mt-auto mr-6 mb-6 ml-auto h-[min(35rem,calc(100dvh-3rem))] w-[min(23.75rem,calc(100vw-3rem))]
+      max-w-none;
+  }
+  @media (width < 40rem) {
+    .dialog.chat-panel {
+      @apply m-0 h-dvh max-h-dvh w-full rounded-none border-0;
+    }
+  }
+  .chat-panel-body {
+    @apply min-h-0 flex-1 text-sm;
+  }
+  .chat-panel-body:empty::before {
+    @apply text-muted;
+    content: attr(data-loading);
+  }
+  .chat-panel-body .card {
+    @apply p-3;
+  }
+  /* A chat (support/_thread.html): the messages scroll, the reply box stays under them. On a
+     page it is a box of its own height; in the widget it fills the panel. */
+  .chat {
+    @apply flex min-h-0 flex-col;
+  }
+  .chat-page {
+    @apply h-[min(42rem,calc(100dvh-14rem))] min-h-96 overflow-hidden rounded-card border border-border
+      bg-surface shadow-card;
+  }
+  .chat-scroll {
+    @apply min-h-0 flex-1 overflow-y-auto overscroll-contain p-4;
+  }
+  .chat-foot {
+    @apply border-t border-border p-3;
+  }
+  /* The reply box (support/_composer.html): a field with a clip and a send button inside. */
+  .composer {
+    @apply space-y-2 border-t border-border bg-surface p-3;
+  }
+  .composer-box {
+    @apply flex items-end gap-1 rounded-control border border-border-strong/70 bg-surface p-1
+      focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/30;
+  }
+  .composer .composer-input {
+    @apply max-h-32 min-h-9 min-w-0 flex-1 resize-none border-0 bg-transparent px-2 py-1.5
+      shadow-none focus:ring-0;
+  }
+  .composer-tool,
+  .composer-send {
+    @apply inline-flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors;
+  }
+  .composer-tool {
+    @apply cursor-pointer text-muted hover:bg-surface-2 hover:text-fg
+      has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus;
+  }
+  .composer-send {
+    @apply bg-accent text-accent-fg hover:bg-accent-hover focus-visible:ring-2
+      focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:outline-none;
+  }
+  .composer-file {
+    @apply truncate text-xs text-muted;
+  }
+  .composer-extras {
+    @apply flex flex-wrap items-center gap-x-4 gap-y-2 text-xs;
+  }
+  .composer .composer-select {
+    @apply min-h-8 w-auto py-1 text-xs;
+  }
+  /* A line about a request: not a message, so no card. */
+  .chat-event {
+    @apply text-center text-xs text-muted;
+  }
+
+  /* Command palette (components/command_palette.html): a dialog near the top of the screen. */
+  .palette {
+    @apply mt-[12vh] max-w-xl;
+  }
+  .palette-open {
+    @apply flex min-h-10 w-full items-center gap-3 rounded-control border border-border bg-surface-2
+      px-3 py-2 text-sm text-muted transition-colors hover:border-border-strong hover:text-fg;
+  }
+  .palette-field {
+    @apply flex items-center gap-2 border-b border-border px-4 py-2 text-muted;
+  }
+  .palette-input {
+    @apply min-h-10 flex-1 bg-transparent text-base text-fg outline-none placeholder:text-muted/80;
+  }
+  .palette-input::-webkit-search-cancel-button {
+    display: none;
+  }
+  .palette-results {
+    @apply max-h-[60vh] space-y-3 overflow-y-auto p-2;
+  }
+  .palette-group {
+    @apply px-3 pt-1 text-xs font-semibold tracking-wide text-muted uppercase;
+  }
+  .palette-item {
+    @apply flex items-baseline justify-between gap-3 rounded-control px-3 py-2 text-fg outline-none
+      hover:bg-surface-2 focus-visible:bg-accent-soft focus-visible:text-accent-soft-fg;
+  }
+  .palette-hint {
+    @apply px-3 py-4 text-sm text-muted;
+  }
+  .overlay {
+    background: var(--ln-overlay);
+    @apply fixed inset-0 z-40;
+  }
+
+  /* Empty state: an icon, a sentence and the next step. */
+  .empty-state {
+    @apply flex flex-col items-center gap-3 rounded-card border border-dashed border-border-strong/60
+      px-6 py-10 text-center;
+  }
+  .empty-state-icon {
+    @apply flex size-12 items-center justify-center rounded-full bg-surface-2 text-muted;
+  }
+
+  /* Loading placeholders; HTMX swaps them for the real content. */
+  .skeleton {
+    @apply animate-pulse rounded-lg bg-surface-3;
+  }
+
+  /* Stat tile with an optional sparkline (templatetag `sparkline`). */
+  .stat {
+    @apply flex min-w-0 flex-col gap-1 rounded-card border border-border bg-surface p-4 shadow-card;
+  }
+  .stat-label {
+    @apply flex items-center gap-1.5 text-sm text-muted;
+  }
+  .stat-value {
+    @apply text-2xl font-semibold tracking-tight tabular-nums;
+  }
+  .stat-note {
+    @apply truncate text-xs text-muted;
+  }
+  /* A row of key numbers: two per row on phones, up to four on wide screens. */
+  .kpis {
+    @apply grid grid-cols-2 gap-3 lg:grid-cols-4;
+  }
+  a.stat {
+    @apply transition-colors hover:border-border-strong/60;
+  }
+
+  /* Segmented control: links or radio labels side by side, one of them current. */
+  /* Under a list: the page switch on the left, rows per page on the right. */
+  .pagination {
+    @apply flex flex-wrap items-center justify-between gap-3;
+  }
+
+  .segmented {
+    @apply inline-flex rounded-control border border-border bg-surface-2 p-0.5;
+  }
+  .segmented > a,
+  .segmented > label {
+    @apply inline-flex min-h-8 cursor-pointer items-center rounded-[0.375rem] px-3 text-sm
+      font-medium text-muted transition-colors hover:text-fg has-[:focus-visible]:ring-2
+      has-[:focus-visible]:ring-focus;
+  }
+  .segmented > [aria-current="page"],
+  .segmented > label:has(:checked) {
+    @apply bg-surface text-fg shadow-card;
+  }
+
+  /* A list of rows inside a card: a lead (icon or rank), the text, and a value on the right. */
+  .rows {
+    @apply divide-y divide-border;
+  }
+  .row {
+    @apply flex min-w-0 items-center gap-3 px-4 py-3 sm:px-5;
+  }
+  a.row {
+    @apply transition-colors hover:bg-surface-2/70;
+  }
+  .row-main {
+    @apply min-w-0 flex-1;
+  }
+  .row-title {
+    @apply block truncate text-sm font-medium;
+  }
+  .row-sub {
+    @apply block truncate text-xs text-muted;
+  }
+  .row-value {
+    @apply shrink-0 text-right text-sm font-medium tabular-nums;
+  }
+  .row-lead {
+    @apply flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted;
+  }
+  .row-lead-danger {
+    @apply bg-danger-soft text-danger-soft-fg;
+  }
+  .row-lead-warning {
+    @apply bg-warning-soft text-warning-soft-fg;
+  }
+  .row-lead-info {
+    @apply bg-info-soft text-info-soft-fg;
+  }
+  .row-lead-success {
+    @apply bg-success-soft text-success-soft-fg;
+  }
+
+  /* A small heading of a group of rows inside a card. */
+  .rows-head {
+    @apply border-y border-border bg-surface-2/70 px-4 py-1.5 text-xs font-medium text-muted sm:px-5;
+  }
+
+  /* Name and value pairs of an object, one per line: <dl class="facts"><div><dt/><dd/></div></dl>. */
+  .facts {
+    @apply divide-y divide-border text-sm;
+  }
+  .facts > div {
+    @apply flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2.5 first:pt-0 last:pb-0;
+  }
+  .facts dt {
+    @apply text-muted;
+  }
+  .facts dd {
+    @apply min-w-0 text-right break-words;
+  }
+
+  /* A labelled meter (server load): the name, the value under it, then the bar. Every meter of a
+     row has the same three lines, so the bars stay level in a column of any width. */
+  .meter {
+    @apply flex min-w-0 flex-col gap-1.5;
+  }
+  .meter-head {
+    @apply flex min-w-0 flex-col text-xs text-muted;
+  }
+  .meter-head > :first-child {
+    @apply truncate;
+  }
+  .meter-value {
+    @apply text-sm font-semibold text-fg tabular-nums;
+  }
+
+  /* A collapsible card: <details class="disclosure"><summary>…</summary>…</details>. */
+  .disclosure {
+    @apply rounded-card border border-border bg-surface shadow-card;
+  }
+  .disclosure > summary {
+    @apply flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-3 font-medium
+      select-none sm:px-5;
+  }
+  .disclosure > summary::-webkit-details-marker {
+    display: none;
+  }
+  .disclosure > summary::after {
+    content: "";
+    @apply ml-auto size-2 shrink-0 rotate-45 border-r-2 border-b-2 border-muted transition-transform;
+  }
+  .disclosure[open] > summary::after {
+    @apply -rotate-135;
+  }
+  .disclosure > summary > span:first-of-type {
+    @apply min-w-0 flex-1;
+  }
+  .disclosure-meta {
+    @apply flex shrink-0 items-center gap-2 text-sm font-normal text-muted;
+  }
+  .disclosure > summary:has(.disclosure-meta)::after {
+    @apply ml-0;
+  }
+  .disclosure-body {
+    @apply space-y-4 border-t border-border px-4 py-4 text-sm sm:px-5;
+  }
+
+  /* Filters of a list (components/filters.html): a folding bar above the table. */
+  .filters {
+    @apply rounded-card border border-border bg-surface shadow-card;
+  }
+  .filters > summary {
+    @apply flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-sm font-medium
+      select-none sm:px-5;
+  }
+  .filters > summary::-webkit-details-marker {
+    display: none;
+  }
+  .filters > summary::after {
+    content: "";
+    @apply ml-auto size-2 shrink-0 rotate-45 border-r-2 border-b-2 border-muted transition-transform;
+  }
+  .filters[open] > summary::after {
+    @apply -rotate-135;
+  }
+  .filters-body {
+    @apply grid gap-3 border-t border-border px-4 py-4 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]
+      sm:items-end sm:px-5;
+  }
+  .filters-actions {
+    @apply flex gap-2;
+  }
+  /* One row of equal controls: a label stays on one line, a hint is read aloud only. */
+  .filters-field .label {
+    @apply truncate;
+  }
+  .filters-field .help-text {
+    @apply sr-only;
+  }
+  .sparkline {
+    @apply h-10 w-full overflow-visible text-accent;
+  }
+
+  /* Stacked bar chart (templatetag `bar_chart`): SVG bars, HTML axis text. */
+  .bar-chart {
+    @apply space-y-3;
+  }
+  .bar-chart-body {
+    @apply flex gap-2 pb-6;
+  }
+  .bar-chart-ticks {
+    @apply relative h-44 w-14 shrink-0 text-right text-[0.6875rem] text-muted tabular-nums sm:h-56
+      sm:w-16 sm:text-xs;
+  }
+  .bar-chart-ticks > span {
+    @apply absolute right-0 translate-y-1/2 whitespace-nowrap;
+  }
+  .bar-chart-plot {
+    @apply relative h-44 min-w-0 flex-1 sm:h-56;
+  }
+  .bar-chart-plot > svg {
+    @apply absolute inset-0 size-full;
+  }
+  .bar-chart-grid {
+    @apply absolute inset-x-0 border-t border-border;
+  }
+  .bar-chart-axis {
+    @apply absolute inset-x-0 top-full mt-1 h-5 text-xs text-muted;
+  }
+  .bar-chart-axis > span {
+    @apply absolute -translate-x-1/2 text-[0.6875rem] whitespace-nowrap sm:text-xs;
+  }
+  /* The first and last labels stay inside the plot instead of hanging over its edges. */
+  .bar-chart-axis > span:first-child {
+    @apply translate-x-0;
+  }
+  .bar-chart-axis > span:last-child:not(:first-child) {
+    @apply -translate-x-full;
+  }
+  /* Phones get fewer axis labels than wide screens. */
+  .bar-chart-axis-wide {
+    @apply hidden sm:block;
+  }
+  .bar-chart-axis-narrow {
+    @apply sm:hidden;
+  }
+  /* A column's slot over the bars: tints on hover or tap and shows its tooltip. */
+  .bar-chart-col {
+    @apply absolute inset-y-0 rounded-sm;
+  }
+  .bar-chart-col[data-active="true"] {
+    @apply bg-fg/5;
+  }
+  .bar-chart-tip {
+    @apply pointer-events-none absolute top-1 z-10 hidden w-max max-w-60 space-y-1 rounded-control
+      border border-border bg-surface px-3 py-2 text-xs text-fg shadow-raised;
+  }
+  .bar-chart-col[data-active="true"] > .bar-chart-tip {
+    @apply block;
+  }
+  @media (hover: hover) {
+    .bar-chart-col:hover {
+      @apply bg-fg/5;
+    }
+    .bar-chart-col:hover > .bar-chart-tip {
+      @apply block;
+    }
+  }
+  .bar-chart-tip-start {
+    @apply left-0;
+  }
+  .bar-chart-tip-centre {
+    @apply left-1/2 -translate-x-1/2;
+  }
+  .bar-chart-tip-end {
+    @apply right-0;
+  }
+  .bar-chart-swatch {
+    @apply inline-block size-3 rounded-sm;
+  }
+  .bar-chart-1 {
+    @apply bg-chart-1 fill-chart-1;
+  }
+  .bar-chart-2 {
+    @apply bg-chart-2 fill-chart-2;
+  }
+
+  .progress {
+    @apply h-2 overflow-hidden rounded-full bg-surface-3;
+  }
+  .progress-bar {
+    @apply h-full rounded-full bg-accent;
+  }
+  .progress-bar-warning {
+    @apply bg-warning;
+  }
+  .progress-bar-danger {
+    @apply bg-danger;
+  }
+
+  /* A radio or checkbox as a selectable card (device and server choice in the portal). */
+  .choice {
+    @apply flex min-h-14 cursor-pointer items-center gap-3 rounded-card border border-border bg-surface
+      p-3 transition-colors hover:border-border-strong has-[:checked]:border-accent
+      has-[:checked]:bg-accent-soft has-[:checked]:text-accent-soft-fg has-[:focus-visible]:ring-2
+      has-[:focus-visible]:ring-focus;
+  }
+
+  /* A card that is a link as a whole (a key, a device, a section). */
+  .card-link {
+    @apply transition-colors hover:border-border-strong hover:bg-surface-2;
+  }
+
+  /* A QR code: always dark on white, so phone cameras read it in the dark theme too. */
+  .qr {
+    @apply mx-auto w-full max-w-sm rounded-card bg-white p-3 shadow-card;
+  }
+
+  .link {
+    /* Underlined: in running text a colour alone does not mark a link (WCAG 1.4.1). */
+    @apply text-link underline decoration-1 underline-offset-4 hover:decoration-2;
+  }
+  .link-danger {
+    /* A dangerous action shown as text, inside a row or a sentence; the same everywhere. */
+    @apply cursor-pointer text-danger-soft-fg hover:underline;
+  }
+  .kbd {
+    @apply rounded border border-border bg-surface-2 px-1.5 py-0.5 font-mono text-xs;
+  }
+
+  /* Rendered Markdown of FAQ articles. */
+  .markdown {
+    @apply space-y-3 leading-relaxed;
+  }
+  .markdown h2 {
+    @apply pt-2 text-lg font-semibold;
+  }
+  .markdown h3 {
+    @apply font-semibold;
+  }
+  .markdown a {
+    @apply text-link underline;
+  }
+  .markdown ul {
+    @apply list-disc space-y-1 pl-6;
+  }
+  .markdown ol {
+    @apply list-decimal space-y-1 pl-6;
+  }
+  .markdown code {
+    @apply rounded bg-surface-2 px-1 py-0.5 text-sm;
+  }
+  .markdown pre {
+    @apply overflow-x-auto rounded-lg bg-surface-2 p-3 text-sm;
+  }
+  .markdown pre code {
+    @apply bg-transparent p-0;
+  }
+  .markdown blockquote {
+    @apply border-l-4 border-border-strong pl-4 text-muted;
+  }
+}

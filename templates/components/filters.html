@@ -1,0 +1,13 @@
+{% load i18n ui %}{# Filters of a list (`form`, sent with GET): folded on phones unless something is filtered, open on wider screens. #}
+{% with active=form|active_filters %}
+<details class="filters" data-open-wide{% if active %} open{% endif %}>
+  <summary>{% icon "filter" "icon-sm text-muted" %}<span>{% translate "Filters" %}</span>{% if active %}<span class="nav-count">{{ active }}</span>{% endif %}</summary>
+  <form method="get" class="filters-body">
+    {% for field in form %}{% if field.is_hidden %}{{ field }}{% else %}<div class="filters-field">{{ field.as_field_group }}</div>{% endif %}{% endfor %}
+    <div class="filters-actions">
+      <button type="submit" class="btn btn-secondary">{% translate "Apply" %}</button>
+      {% if active %}<a href="{{ request.path }}" class="btn btn-ghost">{% translate "Reset" %}</a>{% endif %}
+    </div>
+  </form>
+</details>
+{% endwith %}

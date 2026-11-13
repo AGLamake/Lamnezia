@@ -1,0 +1,8 @@
+{% extends "components/modal.html" %}
+{% load i18n %}
+{% block title %}{% translate "Revoke key?" %}{% endblock %}
+{% block body %}{% translate "The device loses access right away. This cannot be undone." %}{% endblock %}
+{% block footer %}
+  <button type="button" class="btn btn-secondary" data-dialog-close>{% translate "Cancel" %}</button>
+  <button type="button" class="btn btn-danger" data-dialog-close>{% translate "Revoke" %}</button>
+{% endblock %}

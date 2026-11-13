@@ -1,0 +1,19 @@
+{% load i18n %}
+<section id="server-check" class="card space-y-2"
+         {% if checking %}hx-get="{% url 'support:check' conversation.pk %}" hx-trigger="every {{ poll_seconds }}s" hx-swap="outerHTML"{% endif %}>
+  <h2 class="text-lg font-semibold">{% translate "Server check" %}</h2>
+  {% if report %}
+    <ul class="space-y-1">
+      <li>{% if report.answered %}{% translate "The server answers." %}{% else %}{% translate "The server does not answer." %}{% endif %}</li>
+      {% if report.answered %}
+        <li>{% if report.stopped %}{% translate "The VPN service is stopped." %}{% else %}{% translate "The VPN service runs." %}{% endif %}</li>
+      {% endif %}
+      <li>{% if report.user_seen %}{% blocktranslate with at=report.user_seen|date:"SHORT_DATETIME_FORMAT" %}Your device last connected at {{ at }}.{% endblocktranslate %}{% else %}{% translate "Your devices have not connected to this server yet." %}{% endif %}</li>
+    </ul>
+    <p class="help-text">{% blocktranslate with at=report.checked|date:"SHORT_DATETIME_FORMAT" %}Checked at {{ at }}.{% endblocktranslate %}</p>
+  {% elif checking %}
+    <p class="help-text">{% translate "Checking the server…" %}</p>
+  {% elif check_failed %}
+    <p class="help-text">{% translate "The check did not finish. We will look at the server ourselves." %}</p>
+  {% endif %}
+</section>

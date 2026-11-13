@@ -1,0 +1,88 @@
+# Russian translation of Lamnezia (apps.traffic).
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "Apply speed limits"
+msgstr "Применение ограничений скорости"
+
+msgid "Apply the speed limits"
+msgstr "Применение ограничений скорости"
+
+msgid "Check that xray serves the limits"
+msgstr "Проверка, что xray работает с ограничениями"
+
+msgid "Install nftables in the container"
+msgstr "Установка nftables в контейнер"
+
+msgid "Install tc in the container"
+msgstr "Установка tc в контейнер"
+
+msgid "Keep the limits after a restart"
+msgstr "Сохранение ограничений после перезапуска"
+
+msgid "Lock the server"
+msgstr "Блокировка сервера"
+
+msgid "checked at"
+msgstr "проверено"
+
+msgid "collected at"
+msgstr "собрано"
+
+msgid "container started"
+msgstr "контейнер запущен"
+
+msgid "hour"
+msgstr "час"
+
+msgid "hourly traffic"
+msgstr "трафик по часам"
+
+msgid "latest activity"
+msgstr "последняя активность"
+
+msgid "latest handshake"
+msgstr "последнее рукопожатие"
+
+msgid "on the server"
+msgstr "есть на сервере"
+
+msgid "public key"
+msgstr "публичный ключ"
+
+msgid "received, bytes"
+msgstr "получено, байт"
+
+msgid "sent, bytes"
+msgstr "отправлено, байт"
+
+msgid "source"
+msgstr "источник"
+
+msgid "statistics available"
+msgstr "статистика доступна"
+
+msgid "the access term is over"
+msgstr "срок доступа закончился"
+
+msgid "the traffic in total is used up"
+msgstr "весь трафик израсходован"
+
+msgid "the traffic of the period is used up"
+msgstr "трафик за период израсходован"
+
+msgid "traffic counter"
+msgstr "счётчик трафика"
+
+msgid "traffic counters"
+msgstr "счётчики трафика"
+
+msgid "traffic source"
+msgstr "источник трафика"
+
+msgid "traffic sources"
+msgstr "источники трафика"

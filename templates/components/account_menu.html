@@ -1,0 +1,30 @@
+{% load i18n ui %}
+{% comment %} Signed-in user menu: the switch between the admin and the portal (team only), the profile and logout (a POST, as Django requires).
+   `up` opens it upwards (sidebar footer); `area="admin"` marks the admin layout, so the switch leads to the portal.
+{% endcomment %}
+{% if user.is_authenticated %}
+<div class="relative" x-data="menu" @keydown.escape="close" @click.outside="closeOutside">
+  <button type="button" class="btn btn-ghost btn-sm max-w-48 gap-2" x-ref="button" @click="toggle"
+          aria-haspopup="menu" :aria-expanded="expanded()" aria-controls="account-menu">
+    <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-soft-fg">{% icon "user" "icon-sm" %}</span>
+    <span class="sr-only truncate sm:not-sr-only">{{ user.get_username }}</span>
+    {% icon "chevron-down" "icon-sm" %}
+  </button>
+  <div id="account-menu" class="menu {% if up %}bottom-full mb-2{% else %}right-0{% endif %}" role="menu" x-ref="items" x-show="open" x-cloak
+       x-transition.opacity @keydown="move($event)" aria-label="{% translate 'Account' %}">
+    {% if user.is_staff_member %}
+      {% if area == "admin" %}
+        <a href="{% url 'portal:index' %}" class="menu-item" role="menuitem">{% icon "key" %}{% translate "My access" %}</a>
+      {% else %}
+        <a href="{% url 'dashboard:index' %}" class="menu-item" role="menuitem">{% icon "dashboard" %}{% translate "Control panel" %}</a>
+      {% endif %}
+      <div class="divider my-1" role="separator"></div>
+    {% endif %}
+    <a href="{% url 'accounts:profile' %}" class="menu-item" role="menuitem">{% icon "user" %}{% translate "Profile" %}</a>
+    <form method="post" action="{% url 'accounts:logout' %}" role="none">
+      {% csrf_token %}
+      <button type="submit" class="menu-item" role="menuitem">{% icon "logout" %}{% translate "Log out" %}</button>
+    </form>
+  </div>
+</div>
+{% endif %}

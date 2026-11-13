@@ -1,0 +1,12 @@
+{% extends "layouts/auth.html" %}
+{% load i18n %}
+{% block title %}{% translate "Sign in" %} · {{ site_name }}{% endblock %}
+{% block heading %}{% translate "Sign in" %}{% endblock %}
+
+{% block content %}
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  <p>{% blocktranslate with username=account.get_username %}Sign in as {{ username }}?{% endblocktranslate %}</p>
+  <button type="submit" class="btn btn-primary w-full">{% translate "Sign in" %}</button>
+</form>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% load i18n ui %}{# Usage: {% include "components/alert.html" with level="success" text=_("Saved") %}; level: info, success, warning, error. #}
+<div class="alert alert-{{ level|default:'info' }}" role="{% if level == 'error' %}alert{% else %}status{% endif %}"
+     x-data="{ shown: true }" x-show="shown">
+  {% icon level|default:"info" "icon mt-px" %}
+  <p class="min-w-0 flex-1 break-words">{{ text }}</p>
+  <button type="button" class="-m-1 rounded p-1 opacity-70 hover:opacity-100" @click="shown = false"
+          aria-label="{% translate 'Close' %}">{% icon "close" "icon-sm" %}</button>
+</div>

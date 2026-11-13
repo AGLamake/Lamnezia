@@ -1,0 +1,16 @@
+{% load i18n ui %}{# One per page (base.html): ui.js shows it for forms and buttons with data-confirm. #}
+<dialog id="confirm-dialog" class="dialog max-w-md" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+  <form method="dialog">
+    <div class="dialog-body flex gap-4 pt-5">
+      <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-danger-soft text-danger-soft-fg">{% icon "warning" %}</span>
+      <div class="space-y-1">
+        <h2 id="confirm-title" class="dialog-title">{% translate "Are you sure?" %}</h2>
+        <p id="confirm-text" class="text-muted" data-confirm-text></p>
+      </div>
+    </div>
+    <div class="dialog-footer border-t-0 pt-0">
+      <button type="submit" value="cancel" class="btn btn-secondary" data-confirm-cancel>{% translate "Cancel" %}</button>
+      <button type="submit" value="confirm" class="btn btn-danger" data-confirm-accept data-default-label="{% translate 'Confirm' %}">{% translate "Confirm" %}</button>
+    </div>
+  </form>
+</dialog>

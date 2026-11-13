@@ -1,0 +1,37 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Chats" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="inbox" %}{% endblock %}
+
+{% block content %}
+{% include "support/inbox/_tabs.html" with tab="chats" %}
+{% include "support/inbox/_filters.html" %}
+{# Fetched again when a user writes or another staff member answers. #}
+<div id="inbox-list" hx-get="{{ request.get_full_path }}" hx-select="#inbox-list" hx-swap="outerHTML" hx-trigger="support:unread from:body, support:inbox from:body">
+{% if object_list %}
+  <div class="card card-flush">
+    <ul class="rows">
+      {% for conversation in object_list %}
+        <li>
+          <a href="{% url 'support:inbox-conversation' conversation.pk %}" class="row">
+            <span class="row-lead{% if conversation.waiting %} row-lead-danger{% endif %}">{% icon "message" "icon-sm" %}</span>
+            <span class="row-main">
+              <span class="row-title">{{ conversation.user.username }}</span>
+              <span class="row-sub">{% if not conversation.waiting %}{% translate "Support:" %} {% endif %}{% if conversation.last_text %}{{ conversation.last_text|truncatechars:120 }}{% else %}{% translate "Screenshot" %}{% endif %}</span>
+            </span>
+            <span class="flex shrink-0 flex-col items-end gap-1">
+              <time class="text-xs text-muted" datetime="{{ conversation.updated_at|date:'c' }}">{{ conversation.updated_at|date:"SHORT_DATETIME_FORMAT" }}</time>
+              {% if conversation.unread %}<span class="badge badge-danger">{{ conversation.unread }}</span>{% elif conversation.waiting %}<span class="badge badge-warning">{% translate "Waiting" %}</span>{% endif %}
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% include "support/inbox/_pages.html" %}
+{% else %}
+  {% translate "No chats found." as empty_title %}
+  {% include "components/empty_state.html" with icon="message" title=empty_title %}
+{% endif %}
+</div>
+{% endblock %}

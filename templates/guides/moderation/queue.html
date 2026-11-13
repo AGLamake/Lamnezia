@@ -1,0 +1,60 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{% translate "Article suggestions" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="suggestions" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Article suggestions" %}</h1>
+    <p class="page-lead">{% translate "Articles and fixes the users sent for the guides: read, accept or decline." %}</p>
+  </div>
+</div>
+
+<section class="space-y-3">
+  <h2 class="section-title">{% translate "Waiting for review" %}{% if pending %} <span class="nav-count nav-count-danger">{{ pending|length }}</span>{% endif %}</h2>
+  {% if pending %}
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead><tr><th>{% translate "Title" %}</th><th>{% translate "What" %}</th><th>{% translate "Topic" %}</th><th>{% translate "Author" %}</th><th>{% translate "Sent" %}</th></tr></thead>
+        <tbody>
+          {% for suggestion in pending %}
+            <tr>
+              <td class="cell-title font-medium"><a href="{% url 'guides:moderation-review' suggestion.pk %}" class="hover:underline">{{ suggestion.title }}</a></td>
+              <td data-label="{% translate 'What' %}">{{ suggestion.get_kind_display }}</td>
+              <td data-label="{% translate 'Topic' %}">{{ suggestion.get_topic_display }} · {{ suggestion.get_language_display }}</td>
+              <td data-label="{% translate 'Author' %}">{{ suggestion.author.username }}</td>
+              <td data-label="{% translate 'Sent' %}">{{ suggestion.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {% translate "No suggestions are waiting." as empty_title %}
+    {% include "components/empty_state.html" with icon="file-text" title=empty_title %}
+  {% endif %}
+</section>
+
+{% if decided %}
+  <details class="disclosure">
+    <summary><span>{% translate "Recent decisions" %}</span></summary>
+    <div class="disclosure-body table-wrap">
+      <table class="table table-cards">
+        <thead><tr><th>{% translate "Title" %}</th><th>{% translate "Author" %}</th><th>{% translate "Decision" %}</th><th>{% translate "Reviewed by" %}</th><th>{% translate "Reviewed" %}</th></tr></thead>
+        <tbody>
+          {% for suggestion in decided %}
+            <tr>
+              <td class="cell-title">{{ suggestion.title }}</td>
+              <td data-label="{% translate 'Author' %}">{{ suggestion.author.username }}</td>
+              <td data-label="{% translate 'Decision' %}" class="cell-wrap">{{ suggestion.get_status_display }}{% if suggestion.reject_reason %}: {{ suggestion.reject_reason }}{% endif %}</td>
+              <td data-label="{% translate 'Reviewed by' %}">{{ suggestion.reviewed_by.username|default:"—" }}</td>
+              <td data-label="{% translate 'Reviewed' %}">{{ suggestion.reviewed_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+{% endif %}
+{% endblock %}

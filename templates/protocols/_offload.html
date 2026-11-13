@@ -1,0 +1,41 @@
+{% load i18n ui %}
+{% if shown %}
+<details class="disclosure">
+  <summary>{% icon "arrow-up" "icon-sm text-muted" %}<span>{% translate "Upload speed through the VPN (TSO/GSO)" %}</span>
+    <span class="disclosure-meta">{% if workaround.enabled %}<span class="badge badge-success">{% translate "workaround on" %}</span>{% else %}<span class="badge badge-muted">{% translate "workaround off" %}</span>{% endif %}</span>
+  </summary>
+  <div class="disclosure-body">
+    <p class="help-text">{% translate "On some VPS upload through the VPN drops several times: the network interface of the AmneziaWG or WireGuard container glues TCP packets together (TSO/GSO) and the glued packets are lost on the way. The workaround turns TSO/GSO off on that interface and a systemd timer on the server keeps it off after container restarts and reboots. Configs and keys do not change." %}</p>
+    <p>
+      {% if workaround.checked_at %}<span class="help-text">{% blocktranslate with date=workaround.checked_at|date:"SHORT_DATETIME_FORMAT" %}Checked {{ date }}.{% endblocktranslate %}</span>{% else %}<span class="help-text">{% translate "Not checked yet." %}</span>{% endif %}
+    </p>
+    {% if workaround.interfaces %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>{% translate "Container" %}</th><th>{% translate "Interface" %}</th><th>TSO</th><th>GSO</th></tr></thead>
+          <tbody>
+            {% for row in workaround.interfaces %}
+              <tr><td>{{ row.container }}</td><td>{{ row.interface }}</td><td>{{ row.tso }}</td><td>{{ row.gso }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="help-text">{% translate "on: the interface glues packets; off: the workaround works; -: ethtool is not installed on the server." %}</p>
+    {% endif %}
+    <div class="flex flex-wrap gap-2">
+      <form method="post" action="{% url 'protocols:offload' server.pk 'check' %}">
+        {% csrf_token %}<button type="submit" class="btn btn-secondary">{% translate "Check" %}</button>
+      </form>
+      {% if workaround.enabled %}
+        <form method="post" action="{% url 'protocols:offload' server.pk 'disable' %}" data-confirm="{% translate "Turn the workaround off? TSO/GSO are turned back on and the timer is removed from the server." %}">
+          {% csrf_token %}<button type="submit" class="btn btn-secondary">{% translate "Turn off" %}</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'protocols:offload' server.pk 'enable' %}">
+          {% csrf_token %}<button type="submit" class="btn btn-primary">{% translate "Turn on" %}</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</details>
+{% endif %}

@@ -1,0 +1,6 @@
+{% load i18n %}{# The staff's thread: the messages scroll, the reply box stays under them. #}
+{% url 'support:inbox-conversation' conversation.pk as send_url %}
+<section id="thread" class="chat chat-page">
+  <div id="thread-scroll" class="chat-scroll" data-chat-scroll>{% include "support/inbox/_messages.html" %}</div>
+  {% include "support/_composer.html" with staff=True %}
+</section>

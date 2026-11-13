@@ -1,0 +1,29 @@
+{% load static i18n %}{% get_current_language as LANGUAGE_CODE %}<!doctype html>
+{# Error pages. Standalone on purpose: 500 is rendered without a request and without the database, so only static files, gettext and {% url %} are used here. #}
+<html lang="{{ LANGUAGE_CODE }}" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% block title %}{% endblock %}</title>
+  <script src="{% static 'js/theme.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="icon" href="{% static 'brand/favicon.svg' %}" type="image/svg+xml">
+</head>
+<body class="h-full">
+  <main id="main" class="flex min-h-full flex-col items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md space-y-6 text-center">
+      {% include "components/logo_mark.html" with uid="logo" size="h-14 mx-auto" %}
+      <section class="card space-y-4 shadow-raised">
+        <p class="text-sm font-semibold tracking-wider text-muted">{% block code %}{% endblock %}</p>
+        <h1 class="page-title">{% block heading %}{% endblock %}</h1>
+        <p class="text-muted">{% block text %}{% endblock %}</p>
+        <div class="flex flex-wrap justify-center gap-2 pt-2">
+          {% block primary %}<a href="{% url 'home' %}" class="btn btn-primary">{% translate "To the home page" %}</a>{% endblock %}
+          {% block actions %}{% endblock %}
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

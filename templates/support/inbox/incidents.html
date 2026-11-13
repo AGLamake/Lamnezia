@@ -1,0 +1,41 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{% translate "Incidents" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="inbox" %}{% endblock %}
+
+{% block content %}
+{% include "support/inbox/_tabs.html" with tab="incidents" %}
+<p class="help-text">{% translate "Reports that a server does not work, grouped by server. While an incident is open, users see the server as having problems." %}</p>
+{% if object_list %}
+  <ul class="space-y-3">
+    {% for incident in object_list %}
+      <li class="card space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span>
+            <span class="font-medium">{{ incident.server.name }}</span>
+            <span class="help-text block">{% blocktranslate count reports=incident.reports %}{{ reports }} person reported{% plural %}{{ reports }} people reported{% endblocktranslate %} · {{ incident.opened_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+          </span>
+          {% if incident.is_open %}
+            <span class="badge badge-danger">{% translate "open" %}</span>
+          {% else %}
+            <span class="badge badge-muted">{% blocktranslate with at=incident.closed_at|date:"SHORT_DATETIME_FORMAT" %}closed at {{ at }}{% endblocktranslate %}</span>
+          {% endif %}
+        </div>
+        <a href="{% url 'support:inbox' %}?type=server_down&server={{ incident.server_id }}" class="help-text hover:underline">{% translate "Reports of the server" %}</a>
+        {% if incident.is_open %}
+          <form method="post" action="{% url 'support:incident-close' incident.pk %}" class="space-y-3">
+            {% csrf_token %}
+            {{ close_form }}
+            <button type="submit" class="btn btn-primary">{% translate "Close the incident" %}</button>
+            <p class="help-text">{% translate "Closes every request of the incident and tells the users the server works again." %}</p>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  {% include "support/inbox/_pages.html" %}
+{% else %}
+  {% translate "No incidents yet." as empty_title %}
+  {% include "components/empty_state.html" with icon="radar" title=empty_title %}
+{% endif %}
+{% endblock %}

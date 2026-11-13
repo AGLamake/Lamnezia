@@ -1,0 +1,32 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{{ key.name }} · Lamnezia{% endblock %}
+{% block nav %}{% include "keys/_nav.html" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'keys:list' %}">{% translate "Keys" %}</a></li><li><a href="{% url 'keys:detail' key.pk %}">{{ key.name }}</a></li><li aria-current="page">{% translate "Key" %}</li>{% endblock %}
+
+{% block content %}
+<div>
+  <h1 class="page-title">{% translate "Key" %}</h1>
+</div>
+
+<section class="card space-y-3" x-data="copy">
+  <h2 class="text-lg font-semibold">{% translate "Link for the Amnezia app" %}</h2>
+  <textarea x-ref="source" readonly rows="4" class="input font-mono text-xs">{{ vpn_link }}</textarea>
+  <div class="flex flex-wrap gap-2">
+    <button type="button" class="btn btn-primary" @click="copy">
+      <span x-show="!copied">{% translate "Copy" %}</span><span x-show="copied" x-cloak>{% translate "Copied" %}</span>
+    </button>
+    {% for file in files %}<a href="{% url 'keys:file' key.pk file.extension %}" class="btn btn-secondary">{{ file.label }}</a>{% endfor %}
+  </div>
+</section>
+{% if vless_link %}{% include "keys/_vless.html" %}{% endif %}
+
+<section class="card space-y-3">
+  <h2 class="text-lg font-semibold">{% translate "QR code" %}</h2>
+  {% if qr_codes|length > 1 %}<p class="help-text">{% translate "Scan all codes one after another in the Amnezia app." %}</p>{% endif %}
+  <div class="flex flex-wrap gap-4">
+    {% for svg in qr_codes %}<div class="rounded bg-white p-2">{{ svg|safe }}</div>{% endfor %}
+  </div>
+</section>
+{% endblock %}
