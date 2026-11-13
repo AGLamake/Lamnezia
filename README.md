@@ -7,7 +7,7 @@
 
 # Lamnezia
 
-[![CI](https://github.com/AGLamake/Lamnezia/actions/workflows/ci.yml/badge.svg)](https://github.com/AGLamake/Lamnezia/actions/workflows/ci.yml)
+[![CI](https://github.com/AGLamake/Lamnezia/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/AGLamake/Lamnezia/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/github/license/AGLamake/Lamnezia)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/AGLamake/Lamnezia?include_prereleases)](https://github.com/AGLamake/Lamnezia/releases)
 
