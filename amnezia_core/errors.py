@@ -38,5 +38,9 @@ class VpnLinkError(AmneziaFormatError):
     """A vpn:// link or QR payload cannot be decoded."""
 
 
+class RelayFormatError(AmneziaFormatError):
+    """The relay config or the state file of its agent has an unexpected shape."""
+
+
 class ReleaseFormatError(AmneziaFormatError):
     """A GitHub release response of amnezia-client has an unexpected shape."""
