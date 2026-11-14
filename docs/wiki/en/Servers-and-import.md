@@ -179,14 +179,20 @@ each of them. A server is either standalone or a member of one group.
   the group takes its port.
 - **Join the group**: a standalone AmneziaWG 3.1 server on the same port and subnet takes the files
   of the group in a background operation. If it has its own clients, the panel warns how many keys
-  stop working, keeps a snapshot of its files first and revokes those keys. A clean server joins
-  without a warning.
+  stop working, keeps a snapshot of its files first and revokes those keys, and users who had keys
+  on it get keys of the group. A clean server joins without a warning.
 - **Leave the group**: the server keeps a snapshot of its files and gets a clean AmneziaWG with a new
   key and no clients.
 - The leading server cannot leave; a group with only its leader left can be deleted, and the leader
   stays as it is.
 
-Keys of a group are issued on its leading server.
+Keys of a group are issued on its leading server. Issuing, disabling, enabling and revoking a key
+run on every member that answers, without waiting for the others. A member the panel cannot reach
+is marked **lagging**: the relay sends no clients to it. Every `LAMNEZIA_GROUP_CATCH_UP_INTERVAL`
+seconds the panel checks the lagging members and, once a server is online again, copies the group
+files onto it in the background operation "Catch up with the server group": its keys then match the
+group, revoked ones are gone, and it is back in the relay list. If no member answers, the operation
+fails and changes nothing.
 
 ## Server access
 

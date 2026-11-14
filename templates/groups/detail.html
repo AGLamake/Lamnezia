@@ -29,7 +29,7 @@
         {% for member in members %}
           <tr>
             <td><a href="{% url 'servers:detail' member.instance.server_id %}" class="font-medium hover:underline">{{ member.instance.server.name }}</a>{% if member.leading %} <span class="badge badge-muted">{% translate "leading" %}</span>{% endif %}</td>
-            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}</td>
+            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The server missed key changes while it was unreachable. The relay skips it until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% endif %}</td>
             <td>
               {% if not member.leading and member.state != "leaving" %}
               <form method="post" action="{% url 'groups:leave' member.pk %}" data-confirm="{% translate "The server gets a clean AmneziaWG with a new key and no clients. Keys of the group stop working on it. A snapshot of its files is kept first. Continue?" %}">
@@ -47,7 +47,7 @@
 
 <section class="card space-y-3">
   <h2 class="card-title">{% translate "Add a server" %}</h2>
-  <p class="help-text">{% translate "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced." %}</p>
+  <p class="help-text">{% translate "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced. Users who had keys on it get keys of the group." %}</p>
   {% for instance, keys in candidates %}
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>

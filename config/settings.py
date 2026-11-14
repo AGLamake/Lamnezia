@@ -251,6 +251,8 @@ TRAFFIC_ONLINE_WINDOW = 180
 METRICS_TOKEN = env.str("METRICS_TOKEN", default="")
 # Seconds between comparisons of the panel keys with the server files (drift).
 RECONCILE_INTERVAL = env.int("RECONCILE_INTERVAL", default=900)
+# Seconds between attempts to give lagging group members the group files (FALLBACK.md 6).
+GROUP_CATCH_UP_INTERVAL = env.int("GROUP_CATCH_UP_INTERVAL", default=300)
 # Seconds between copies of the protocol files of every server into the panel, for a restore.
 PROTOCOL_BACKUP_INTERVAL = env.int("PROTOCOL_BACKUP_INTERVAL", default=3600)
 # Seconds between server health readings; a server is offline after two intervals without an answer.
@@ -273,6 +275,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": TRAFFIC_INTERVAL,
     },
     "keys-reconcile": {"task": "keys.reconcile", "schedule": RECONCILE_INTERVAL},
+    "groups-catch-up": {"task": "groups.catch_up", "schedule": GROUP_CATCH_UP_INTERVAL},
     "backups-save-protocols": {
         "task": "backups.save_protocols",
         "schedule": PROTOCOL_BACKUP_INTERVAL,

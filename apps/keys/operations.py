@@ -18,6 +18,7 @@ from apps.keys.services.backends import KeyBackend, ReissueOutcome, WgKeys, back
 from apps.keys.services.instances import Instance, instances
 from apps.keys.services.issued import IssuedKeys
 from apps.keys.services.peers import PeerManager, read_registry
+from apps.keys.services.replicas import GroupKeys, key_groups
 from apps.keys.signals import clients_adding, keys_written
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
@@ -32,10 +33,21 @@ subjects.register("key_id", lambda pk: reverse("keys:detail", args=[pk]), priori
 
 @contextmanager
 def _backend(ctx: OperationContext, source: str) -> Iterator[KeyBackend]:
-    """The backend of the instance; once its change is on the server, others are told."""
+    """The backend of the instance; once its change is on the server, others are told.
+
+    A key of a server group is changed on every member of the group that answers.
+    """
     instance = instances.get(source)
-    with instance.connect() as host:
-        yield backend_for(instance, host, ctx)
+    group = key_groups.of(source)
+    if group is None:
+        with instance.connect() as host:
+            yield backend_for(instance, host, ctx)
+    else:
+        try:
+            with GroupKeys.connect(instance, group, ctx) as backend:
+                yield backend
+        finally:
+            group.finish()
     keys_written.send(KeyBackend, source=instance.source)
 
 

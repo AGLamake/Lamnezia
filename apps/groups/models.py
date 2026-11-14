@@ -77,6 +77,9 @@ class GroupMember(models.Model):
         _("state"), max_length=16, choices=MemberState, default=MemberState.JOINING
     )
     joined_at = models.DateTimeField(_("joined at"), null=True, blank=True)
+    # Since when the server misses key changes of the group: it was unreachable when one was
+    # made. The relay skips it until the catch-up copies the group files onto it.
+    lagging_since = models.DateTimeField(_("lagging since"), null=True, blank=True)
 
     class Meta:
         verbose_name = _("group member")
@@ -96,3 +99,7 @@ class GroupMember(models.Model):
     @property
     def joined(self) -> bool:
         return self.state == MemberState.MEMBER
+
+    @property
+    def lagging(self) -> bool:
+        return self.lagging_since is not None

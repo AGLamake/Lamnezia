@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Server groups**: AmneziaWG 3.1 servers join a group as clones of its leading server, so one
   key works on each of them. Joining and leaving run as background operations with a snapshot of
   the server files; a server is either standalone or in one group.
+- **Keys of a server group** change on every member that answers. A member that misses a change
+  is marked lagging, left out of the relay list and caught up by a periodic operation
+  (`LAMNEZIA_GROUP_CATCH_UP_INTERVAL`). Users of a joining server get keys of the group.
 
 ## [1.0.0] - 2026-11-13
 

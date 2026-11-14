@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 import pytest
 
 from amnezia_core.awg import AWG_CLIENTS_TABLE_PATH, AwgServerConfig
@@ -7,37 +5,28 @@ from amnezia_core.awg_group import AwgGroupIdentity
 from amnezia_core.clients_table import ClientsTable
 from apps.accounts.models import User
 from apps.backups.models import ProtocolBackup, ProtocolSnapshot, SnapshotReason
-from apps.groups.models import GroupMember, MemberState, ServerGroup
-from apps.groups.services.membership import start_join, start_leave
-from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, server_files
+from apps.groups.models import GroupMember, MemberState
+from apps.groups.services.membership import start_leave
+from apps.groups.tests.conftest import (
+    JOINER_HOST,
+    LEADER_HOST,
+    Fakes,
+    Run,
+    server_files,
+    succeeded,
+)
 from apps.keys.models import KeyStatus
-from apps.operations.models import Operation, OperationStatus
+from apps.operations.models import OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import Start, issued_key
-from apps.protocols.tests.fake_awg import FakeAwgServer
 
 pytestmark = pytest.mark.django_db
-
-Run = Callable[[], Operation]
-Fakes = dict[str, FakeAwgServer]
-
-
-@pytest.fixture
-def join(
-    servers: Fakes, group: ServerGroup, joiner: ProtocolInstance, admin: User, start: Start
-) -> Run:
-    """Run the joining of the standalone server into the group."""
-    return lambda: start(lambda: start_join(group, joiner, user=admin))
 
 
 @pytest.fixture
 def leave(joiner: ProtocolInstance, admin: User, start: Start) -> Run:
     """Run the leaving of the joined server."""
     return lambda: start(lambda: start_leave(GroupMember.objects.get(instance=joiner), user=admin))
-
-
-def succeeded(operation: Operation) -> None:
-    assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
 
 
 def is_clone(servers: Fakes) -> bool:

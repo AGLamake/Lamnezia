@@ -7,6 +7,7 @@ from typing import Any
 from django.utils import timezone
 from django.utils.functional import Promise
 
+from apps.accounts.models import User
 from apps.operations.models import Operation, OperationStep, StepStatus
 
 
@@ -24,6 +25,11 @@ class OperationContext:
     @property
     def params(self) -> dict[str, Any]:
         return dict(self._operation.params)
+
+    @property
+    def user(self) -> User | None:
+        """Who started the operation; None for a scheduled one or a deleted account."""
+        return self._operation.created_by
 
     @contextmanager
     def step(self, title: str | Promise) -> Iterator[None]:

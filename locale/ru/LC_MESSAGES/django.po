@@ -518,6 +518,9 @@ msgstr "Отмена"
 msgid "Careful"
 msgstr "Осторожно"
 
+msgid "Catch up with the server group"
+msgstr "Догон группы серверов"
+
 msgid "Change"
 msgstr "Изменить"
 
@@ -1042,6 +1045,10 @@ msgstr "Передать другому пользователю"
 
 msgid "Group"
 msgstr "Группа"
+
+#, python-format
+msgid "Group keys issued to users: %(count)d."
+msgstr "Пользователям выдано ключей группы: %(count)d."
 
 msgid "Guides"
 msgstr "Инструкции"
@@ -2313,8 +2320,8 @@ msgstr "Скорость"
 msgid "Speed test by port"
 msgstr "Замер скорости по портам"
 
-msgid "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced."
-msgstr "Одиночные серверы AmneziaWG 3.1 на порту группы. Вступающий сервер получает файлы группы: его собственные ключ, настройки и клиенты заменяются."
+msgid "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced. Users who had keys on it get keys of the group."
+msgstr "Отдельные серверы AmneziaWG 3.1 на порту группы. Вступающий сервер получает файлы группы: его ключ, настройки и клиенты заменяются. Пользователи, у которых были ключи на нём, получают ключи группы."
 
 msgid "Start"
 msgstr "Запустить"
@@ -2568,6 +2575,9 @@ msgstr "На новую почту придёт ссылка; почта сме�
 msgid "The old key is revoked. The new one will be ready in a moment."
 msgstr "Старый ключ отозван. Новый будет готов через мгновение."
 
+msgid "The operation has no author to issue the group keys."
+msgstr "У операции нет автора, от имени которого выдать ключи группы."
+
 msgid "The owners are notified that their keys must be imported again."
 msgstr "Владельцы получат уведомление, что ключи нужно импортировать заново."
 
@@ -2681,6 +2691,12 @@ msgstr "Сервер уже не вступает в группу и не вых
 
 msgid "The server listens on another port than the group."
 msgstr "Сервер слушает другой порт, чем группа."
+
+msgid "The server missed key changes while it was unreachable. The relay skips it until the panel copies the group files onto it."
+msgstr "Сервер пропустил изменения ключей, пока был недоступен. Ретранслятор обходит его, пока панель не скопирует на него файлы группы."
+
+msgid "The server no longer lags behind the group: nothing to do."
+msgstr "Сервер больше не отстаёт от группы: делать нечего."
 
 msgid "The server runs AmneziaWG with other keys than the panel has."
 msgstr "AmneziaWG на сервере работает с другими ключами, чем в панели."
@@ -3230,6 +3246,12 @@ msgstr "ключей не больше"
 
 msgid "kind"
 msgstr "вид"
+
+msgid "lagging"
+msgstr "отстаёт"
+
+msgid "lagging since"
+msgstr "отстаёт с"
 
 msgid "language"
 msgstr "язык"

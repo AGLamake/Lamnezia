@@ -1,6 +1,7 @@
 import pytest
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.groups.models import GroupMember, MemberState, ServerGroup
@@ -47,3 +48,12 @@ def test_join_starts_an_operation(
     browser.post(reverse("groups:join", args=[group.pk, joiner.pk]))
 
     assert GroupMember.objects.get(instance=joiner).state == MemberState.JOINING
+
+
+def test_lagging_member_is_marked(browser: Client, group: ServerGroup) -> None:
+    detail = reverse("groups:detail", args=[group.pk])
+    assert "lagging</span>" not in browser.get(detail).content.decode()
+
+    group.members.update(lagging_since=timezone.now())
+
+    assert "lagging</span>" in browser.get(detail).content.decode()

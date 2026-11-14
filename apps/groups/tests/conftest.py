@@ -21,14 +21,18 @@ from amnezia_core.keys import KeyPair
 from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.groups.models import ServerGroup
-from apps.groups.services.membership import create_group
-from apps.operations.models import Operation
+from apps.groups.services.membership import create_group, start_join
+from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import InstanceOrigin, ProtocolInstance
 from apps.protocols.tests.awg_case import APP_CONFIG, PSK, START, OnCommit, Start, fixture
 from apps.protocols.tests.fake_awg import START_SCRIPT, FakeAwgServer
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
+from apps.ssh.errors import ErrorCode, SshError
 from apps.ssh.services import RemoteHost
+
+Run = Callable[[], Operation]
+Fakes = dict[str, FakeAwgServer]
 
 LEADER_HOST = "203.0.113.10"
 JOINER_HOST = "203.0.113.20"
@@ -91,16 +95,33 @@ def joiner_awg() -> FakeAwgServer:
 
 
 @pytest.fixture
+def down() -> set[str]:
+    """Addresses of the fake servers that do not answer now."""
+    return set()
+
+
+@pytest.fixture
 def servers(
-    leader_awg: FakeAwgServer, joiner_awg: FakeAwgServer, monkeypatch: pytest.MonkeyPatch
+    leader_awg: FakeAwgServer,
+    joiner_awg: FakeAwgServer,
+    down: set[str],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, FakeAwgServer]:
     fakes = {LEADER_HOST: leader_awg, JOINER_HOST: joiner_awg}
 
     @contextmanager
     def connect(server: Server) -> Iterator[RemoteHost]:
+        if server.host in down:
+            raise SshError(ErrorCode.HOST_UNREACHABLE, server.host)
         yield fakes[server.host].host()
 
-    monkeypatch.setattr("apps.groups.services.cloning.connect", connect)
+    for module in (
+        "groups.services.cloning",
+        "groups.services.replication",
+        "protocols.providers",
+        "backups.services.snapshot",
+    ):
+        monkeypatch.setattr(f"apps.{module}.connect", connect)
     return fakes
 
 
@@ -135,6 +156,18 @@ def start(django_capture_on_commit_callbacks: OnCommit) -> Start:
         return operation
 
     return runner
+
+
+@pytest.fixture
+def join(
+    servers: Fakes, group: ServerGroup, joiner: ProtocolInstance, admin: User, start: Start
+) -> Run:
+    """Run the joining of the standalone server into the group."""
+    return lambda: start(lambda: start_join(group, joiner, user=admin))
+
+
+def succeeded(operation: Operation) -> None:
+    assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
 
 
 def server_files(awg: FakeAwgServer) -> AwgServerFiles:

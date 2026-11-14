@@ -46,6 +46,10 @@ msgstr "Применить список отзыва"
 msgid "Bring back the previous revocation list"
 msgstr "Возврат предыдущего списка отзыва"
 
+#, python-format
+msgid "Change the keys on %(server)s"
+msgstr "Изменение ключей на %(server)s"
+
 msgid "Check the server again and choose an action for what it shows now."
 msgstr "Проверьте сервер ещё раз и выберите действие для того, что он показывает сейчас."
 
@@ -57,6 +61,13 @@ msgstr "Сверка ключей с сервером"
 
 msgid "Compare with the panel"
 msgstr "Сравнить с панелью"
+
+msgid "Connect to the servers of the group"
+msgstr "Подключение к серверам группы"
+
+#, python-format
+msgid "Copy the change to %(server)s"
+msgstr "Перенос изменения на %(server)s"
 
 msgid "Device name"
 msgstr "Имя устройства"
@@ -125,6 +136,10 @@ msgstr "Ключей готово к показу: %(count)d."
 msgid "Keys reissued: %(count)d."
 msgstr "Перевыпущено ключей: %(count)d."
 
+#, python-format
+msgid "Leave %(server)s to catch up later"
+msgstr "%(server)s догонит группу позже"
+
 msgid "Lock the server"
 msgstr "Блокировка сервера"
 
@@ -133,6 +148,12 @@ msgstr "Считать активным"
 
 msgid "Mark as revoked"
 msgstr "Считать отозванным"
+
+msgid "No server of the group can be reached."
+msgstr "Ни один сервер группы не отвечает."
+
+msgid "Nothing was changed. Run the operation again when a server of the group is online."
+msgstr "Ничего не изменено. Запустите операцию снова, когда сервер группы будет в сети."
 
 msgid "OpenVPN did not start again after the revocation list changed."
 msgstr "OpenVPN не запустился снова после изменения списка отзыва."
@@ -370,7 +391,7 @@ msgid "key"
 msgstr "ключ"
 
 msgid "name"
-msgstr "имя"
+msgstr "название"
 
 msgid "off in the panel, but on the server"
 msgstr "выключен в панели, но есть на сервере"

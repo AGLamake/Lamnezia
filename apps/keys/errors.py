@@ -31,6 +31,7 @@ class PeerErrorCode(StrEnum):
     OPENVPN_DOWN = "openvpn_down"
     IPSEC_REJECTED = "ipsec_rejected"
     NOT_ALL_REISSUED = "not_all_reissued"
+    NO_GROUP_SERVER = "no_group_server"
 
 
 ERROR_CATALOG: dict[PeerErrorCode, ErrorDescription] = {
@@ -89,6 +90,10 @@ ERROR_CATALOG: dict[PeerErrorCode, ErrorDescription] = {
     PeerErrorCode.NOT_ALL_REISSUED: ErrorDescription(
         _("Some keys were not reissued; they keep their old keys."),
         _("The step log names them and why. Run the operation again: it retries only them."),
+    ),
+    PeerErrorCode.NO_GROUP_SERVER: ErrorDescription(
+        _("No server of the group can be reached."),
+        _("Nothing was changed. Run the operation again when a server of the group is online."),
     ),
 }
 

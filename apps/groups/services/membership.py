@@ -112,18 +112,21 @@ def start_leave(member: GroupMember, *, user: User, ip: str | None = None) -> Op
 
 
 @transaction.atomic
-def take_identity(instance: ProtocolInstance, files: AwgServerFiles) -> int:
-    """Save the server key and settings the server now runs with; the number of keys revoked.
+def take_identity(instance: ProtocolInstance, files: AwgServerFiles) -> list[AccessKey]:
+    """Save the server key and settings the server now runs with; the keys it revoked.
 
     Keys issued for the old server key do not connect any more: they are revoked without a
     notice, the group gives their owners its own keys.
     """
     config = AwgServerConfig.parse(files.config)
     private_key = config.private_key or ""
-    revoked = 0
+    revoked: list[AccessKey] = []
     if private_key != instance.private_key:
         keys = AccessKey.objects.filter(source=instance.source).exclude(status__in=GONE_STATUSES)
-        revoked = keys.update(status=KeyStatus.REVOKED, revoked_at=timezone.now())
+        revoked = list(keys.select_related("user").select_for_update(of=("self",)))
+        keys.filter(pk__in=[key.pk for key in revoked]).update(
+            status=KeyStatus.REVOKED, revoked_at=timezone.now()
+        )
     instance.private_key = private_key
     instance.public_key = KeyPair.from_private_key(private_key).public_key
     instance.preshared_key = files.preshared_key
