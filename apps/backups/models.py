@@ -62,6 +62,40 @@ class ProtocolBackup(models.Model):
         return f"{self.instance} @ {self.taken_at:%Y-%m-%d %H:%M}"
 
 
+class SnapshotReason(models.TextChoices):
+    GROUP_JOIN = "group_join", _("before joining a server group")
+    GROUP_LEAVE = "group_leave", _("before leaving a server group")
+
+
+class ProtocolSnapshot(models.Model):
+    """The AmneziaWG 2.0 files of a server taken before a change replaces its identity.
+
+    Unlike `ProtocolBackup`, which the hourly copy refreshes, a snapshot is never overwritten:
+    it keeps the server key, the preshared key and the clients the server had before it joined
+    or left a group. Stored encrypted; deleting the server refuses while a snapshot is there.
+    """
+
+    instance = models.ForeignKey(
+        "protocols.ProtocolInstance",
+        verbose_name=_("protocol"),
+        on_delete=keep_from_server_deletion,
+        related_name="snapshots",
+    )
+    reason = models.CharField(_("reason"), max_length=16, choices=SnapshotReason)
+    config = EncryptedTextField(_("server configuration"))
+    clients_table = EncryptedTextField(_("client list"), blank=True)
+    preshared_key = EncryptedTextField(_("preshared key"), blank=True)
+    taken_at = models.DateTimeField(_("saved at"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("protocol snapshot")
+        verbose_name_plural = _("protocol snapshots")
+        ordering = ("-taken_at", "-pk")
+
+    def __str__(self) -> str:
+        return f"{self.instance} @ {self.taken_at:%Y-%m-%d %H:%M}"
+
+
 class ServiceBackup(models.Model):
     """The state folders of a service container as read last time: a tar.gz in `archive`.
 

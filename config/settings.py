@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "apps.audit",
     "apps.backups",
     "apps.billing",
+    "apps.groups",
     # Django apps that extend the panel, such as payment providers (docs/wiki Billing-plugins).
     *env.list("PLUGINS", default=[]),
 ]

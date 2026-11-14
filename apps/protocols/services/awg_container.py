@@ -5,6 +5,7 @@ amnezia-awg2 (server_scripts/awg/), amnezia-awg (awg_legacy/) and amnezia-wiregu
 settings.
 """
 
+import shlex
 from ipaddress import IPv4Network
 
 from django.utils.translation import gettext as _
@@ -95,6 +96,16 @@ class AwgContainer(ProtocolContainer):
 
     def awg_is_up(self) -> bool:
         return self.shell.sh(f"{self._show} >/dev/null 2>&1").ok
+
+    def restart_awg(self) -> bool:
+        """Bring the interface down and up with its config; False if it does not come up."""
+        conf = shlex.quote(self.kind.config_path)
+        quick = f"{self.kind.tool}-quick"
+        self.shell.sh(f"{quick} down {conf}")
+        result = self.shell.sh(f"{quick} up {conf}")
+        if not result.ok:
+            self._ctx.log(result.errors.strip())
+        return result.ok and self.awg_is_up()
 
     def check_header_protection(self) -> None:
         """The interface runs with the AmneziaWG 3.1 settings of its config.

@@ -1,0 +1,36 @@
+{% extends "servers/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Server groups" %} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li aria-current="page">{% translate "Server groups" %}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Server groups" %}</h1>
+    <p class="page-lead">{% translate "Servers of a group are clones of its leading server: one key works on each of them." %}</p>
+  </div>
+  <a href="{% url 'groups:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "New group" %}</a>
+</div>
+
+{% if groups %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr><th>{% translate "Group" %}</th><th>{% translate "Port" %}</th><th>{% translate "Servers" %}</th></tr>
+      </thead>
+      <tbody>
+        {% for group in groups %}
+          <tr>
+            <td><a href="{% url 'groups:detail' group.pk %}" class="font-medium hover:underline">{{ group.name }}</a></td>
+            <td data-label="{% translate 'Port' %}" class="font-mono text-xs">{{ group.port }}</td>
+            <td data-label="{% translate 'Servers' %}">{% for member in group.members.all %}{{ member.instance.server.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card"><p class="help-text">{% translate "No groups yet. A group starts from a standalone AmneziaWG 3.1 server." %}</p></div>
+{% endif %}
+{% endblock %}

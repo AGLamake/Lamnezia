@@ -10,7 +10,6 @@ way, with a fresh image. A new client subnet moves the container too, since star
 subnet when the container starts; the server and every client keep their host part in it.
 """
 
-import shlex
 from collections.abc import Callable, Mapping
 from contextlib import ExitStack
 from dataclasses import dataclass, replace
@@ -206,15 +205,8 @@ class AwgReconfiguration:
         raise SetupError(SetupErrorCode.AWG_NOT_RUNNING, self._kind.interface)
 
     def _bring_up(self, text: str) -> bool:
-        shell = self._docker.shell
-        shell.write_file_atomic(self._kind.config_path, text.encode())
-        conf = shlex.quote(self._kind.config_path)
-        quick = f"{self._kind.tool}-quick"
-        shell.sh(f"{quick} down {conf}")
-        result = shell.sh(f"{quick} up {conf}")
-        if not result.ok:
-            self._ctx.log(result.errors.strip())
-        return result.ok and self._docker.awg_is_up()
+        self._docker.shell.write_file_atomic(self._kind.config_path, text.encode())
+        return self._docker.restart_awg()
 
     def _move(
         self,

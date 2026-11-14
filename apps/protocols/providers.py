@@ -14,15 +14,18 @@ from apps.servers.services.connection import connect
 from apps.traffic.services.targets import PollTarget, poll_targets
 
 
-def _instances(containers: Iterable[str]) -> list[ProtocolInstance]:
+def _instances(containers: Iterable[str], *, clones: bool = True) -> list[ProtocolInstance]:
     """Instances with a container on the server, grouped by server.
 
     A removed one has no clients to manage. Secrets are left unread: titles and lookups never
-    decrypt them, and a connection loads the server's credentials when it opens.
+    decrypt them, and a connection loads the server's credentials when it opens. Without
+    `clones`, group members other than the leading server are left out.
     """
     instances = ProtocolInstance.objects.filter(
         container__in=list(containers), container_removed_at__isnull=True
     )
+    if not clones:
+        instances = instances.exclude(group_member__leading=False)
     return list(instances.select_related("server").defer(*_SECRETS).order_by("server_id", "pk"))
 
 
@@ -45,7 +48,8 @@ _KEY_CONTAINERS: dict[str, WgContainer | XrayContainer | OpenVpnContainer | Ipse
 
 @instances.register
 def key_instances() -> Iterator[Instance]:
-    for instance in _instances(_KEY_CONTAINERS):
+    # Keys of a group are issued on its leading server; the members are its clones.
+    for instance in _instances(_KEY_CONTAINERS, clones=False):
         server = instance.server
         yield Instance(
             instance.source,

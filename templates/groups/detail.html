@@ -1,0 +1,66 @@
+{% extends "servers/base.html" %}
+{% load i18n %}
+{% block title %}{{ group.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'groups:list' %}">{% translate "Server groups" %}</a></li><li aria-current="page">{{ group.name }}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ group.name }}</h1>
+    <p class="page-lead">{% blocktranslate with port=group.port %}AmneziaWG 3.1, UDP port {{ port }}.{% endblocktranslate %}{% if group.domain %} {{ group.domain }}{% endif %}{% if group.relay %} · {% blocktranslate with relay=group.relay.name %}relay {{ relay }}{% endblocktranslate %}{% endif %}</p>
+  </div>
+  {% if members|length == 1 %}
+  <form method="post" action="{% url 'groups:delete' group.pk %}" data-confirm="{% translate "Delete the group? Its leading server stays as it is, with its keys." %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary">{% translate "Delete the group" %}</button>
+  </form>
+  {% endif %}
+</div>
+
+<section class="card space-y-3">
+  <h2 class="card-title">{% translate "Servers of the group" %}</h2>
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr><th>{% translate "Server" %}</th><th>{% translate "State" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr>
+      </thead>
+      <tbody>
+        {% for member in members %}
+          <tr>
+            <td><a href="{% url 'servers:detail' member.instance.server_id %}" class="font-medium hover:underline">{{ member.instance.server.name }}</a>{% if member.leading %} <span class="badge badge-muted">{% translate "leading" %}</span>{% endif %}</td>
+            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}</td>
+            <td>
+              {% if not member.leading and member.state != "leaving" %}
+              <form method="post" action="{% url 'groups:leave' member.pk %}" data-confirm="{% translate "The server gets a clean AmneziaWG with a new key and no clients. Keys of the group stop working on it. A snapshot of its files is kept first. Continue?" %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% translate "Leave the group" %}</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card space-y-3">
+  <h2 class="card-title">{% translate "Add a server" %}</h2>
+  <p class="help-text">{% translate "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced." %}</p>
+  {% for instance, keys in candidates %}
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <p>{{ instance.server.name }} · {{ instance.title }}</p>
+        {% if keys %}<p class="help-text">{% blocktranslate count count=keys %}{{ count }} key of this server stops working.{% plural %}{{ count }} keys of this server stop working.{% endblocktranslate %}</p>{% endif %}
+      </div>
+      <form method="post" action="{% url 'groups:join' group.pk instance.pk %}"{% if keys %} data-confirm="{% blocktranslate count count=keys %}The server has {{ count }} key of its own. It stops working when the server joins; a snapshot of the server files is kept first. Continue?{% plural %}The server has {{ count }} keys of its own. They stop working when the server joins; a snapshot of the server files is kept first. Continue?{% endblocktranslate %}"{% endif %}>
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">{% translate "Join the group" %}</button>
+      </form>
+    </div>
+  {% empty %}
+    <p class="help-text">{% translate "No standalone AmneziaWG 3.1 server on this port." %}</p>
+  {% endfor %}
+</section>
+{% endblock %}

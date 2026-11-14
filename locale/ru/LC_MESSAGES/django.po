@@ -35,6 +35,13 @@ msgstr[1] "%(count)s ключа, выданных панелью, перенос
 msgstr[2] "%(count)s ключей, выданных панелью, переносятся на новый адрес."
 
 #, python-format
+msgid "%(count)s key of this server stops working."
+msgid_plural "%(count)s keys of this server stop working."
+msgstr[0] "%(count)s ключ этого сервера перестанет работать."
+msgstr[1] "%(count)s ключа этого сервера перестанут работать."
+msgstr[2] "%(count)s ключей этого сервера перестанут работать."
+
+#, python-format
 msgid "%(counter)s key in total."
 msgid_plural "%(counter)s keys in total."
 msgstr[0] "Всего %(counter)s ключ."
@@ -134,6 +141,18 @@ msgstr[1] "сообщили %(reports)s человека"
 msgstr[2] "сообщили %(reports)s человек"
 
 #, python-format
+msgid "%(server)s runs with other keys: skipped."
+msgstr "%(server)s работает с другими ключами: пропущен."
+
+#, python-format
+msgid "%(server)s: %(error)s"
+msgstr "%(server)s: %(error)s"
+
+#, python-format
+msgid "%(server)s: the server files cannot be read."
+msgstr "%(server)s: файлы сервера не читаются."
+
+#, python-format
 msgid "%(size)s per %(days)s days"
 msgstr "%(size)s за %(days)s дн."
 
@@ -188,8 +207,14 @@ msgstr "Тариф задаёт серверы, протоколы и лимит
 msgid "A revoked key stops working at once and cannot be turned back on."
 msgstr "Отозванный ключ сразу перестаёт работать, вернуть его нельзя."
 
+msgid "A server is either standalone or a member of one group. Let it leave first."
+msgstr "Сервер либо одиночный, либо участник одной группы. Сначала выведите его из группы."
+
 msgid "A small STUN responder on a UDP port. Users' browsers ask it and warn when the server cannot be reached from their network. It keeps no logs."
 msgstr "Маленький STUN-ответчик на UDP-порту. Браузеры пользователей обращаются к нему и предупреждают, если сервер недоступен из их сети. Журналов он не ведёт."
+
+msgid "A standalone AmneziaWG 3.1 server. Its keys, settings and clients become the group's."
+msgstr "Одиночный сервер AmneziaWG 3.1. Его ключи, настройки и клиенты становятся ключами, настройками и клиентами группы."
 
 msgid "A user cannot be their own moderator."
 msgstr "Пользователь не может быть своим же модератором."
@@ -283,6 +308,9 @@ msgstr "После сохранения панель подключится к �
 msgid "After the password, signing in will also ask for a code from an app on your phone."
 msgstr "После пароля вход будет спрашивать ещё код из приложения на телефоне."
 
+msgid "After writing the files the server still differs from the group."
+msgstr "После записи файлов сервер всё ещё отличается от группы."
+
 msgid "Alerts and toasts"
 msgstr "Уведомления и всплывающие сообщения"
 
@@ -307,6 +335,13 @@ msgstr "Amnezia VPN для %(device)s"
 
 msgid "Amnezia containers"
 msgstr "Контейнеры Amnezia"
+
+msgid "AmneziaWG 3.1"
+msgstr "AmneziaWG 3.1"
+
+#, python-format
+msgid "AmneziaWG 3.1, UDP port %(port)s."
+msgstr "AmneziaWG 3.1, UDP-порт %(port)s."
 
 msgid "AmneziaWG version, as the Amnezia app determines it from the parameters"
 msgstr "Версия AmneziaWG, как её определяет по параметрам приложение Amnezia"
@@ -529,6 +564,9 @@ msgstr "Проверить снова"
 msgid "Check now"
 msgstr "Проверить сейчас"
 
+msgid "Check that the server is a clone"
+msgstr "Проверить, что сервер — клон"
+
 msgid "Check your email"
 msgstr "Проверьте почту"
 
@@ -609,6 +647,9 @@ msgstr "Подтвердите email"
 msgid "Connect"
 msgstr "Подключение"
 
+msgid "Connect to the server"
+msgstr "Подключиться к серверу"
+
 msgid "Container"
 msgstr "Контейнер"
 
@@ -642,6 +683,9 @@ msgstr "Создать инвайт"
 
 msgid "Create link"
 msgstr "Создать ссылку"
+
+msgid "Create the group"
+msgstr "Создать группу"
 
 msgid "Created"
 msgstr "Создан"
@@ -696,6 +740,12 @@ msgstr "Удалить ссылку"
 
 msgid "Delete the channel"
 msgstr "Удалить канал"
+
+msgid "Delete the group"
+msgstr "Удалить группу"
+
+msgid "Delete the group? Its leading server stays as it is, with its keys."
+msgstr "Удалить группу? Ведущий сервер останется как есть, со своими ключами."
 
 msgid "Delete the key? It stops working at once."
 msgstr "Удалить ключ? Он сразу перестанет работать."
@@ -914,6 +964,9 @@ msgstr "Фильтры"
 msgid "Filters and details that do not need a page of their own."
 msgstr "Фильтры и подробности, которым не нужна отдельная страница."
 
+msgid "Find the server in the group"
+msgstr "Найти сервер в группе"
+
 msgid "Finish the move and remove the old container"
 msgstr "Завершить перевод и удалить старый контейнер"
 
@@ -987,6 +1040,9 @@ msgstr "Передать пользователю"
 msgid "Give to another user"
 msgstr "Передать другому пользователю"
 
+msgid "Group"
+msgstr "Группа"
+
 msgid "Guides"
 msgstr "Инструкции"
 
@@ -999,6 +1055,9 @@ msgstr "Скрыть до завтра"
 #, python-format
 msgid "Hide until tomorrow: %(text)s"
 msgstr "Скрыть до завтра: %(text)s"
+
+msgid "Host name whose A record points to the relay; keys of the group use it."
+msgstr "Имя хоста, A-запись которого указывает на ретранслятор; его используют ключи группы."
 
 msgid "How much traffic your keys used and how long your limit lasts."
 msgstr "Сколько трафика израсходовали ваши ключи и на сколько хватит лимита."
@@ -1050,6 +1109,9 @@ msgstr "Импорт с сервера"
 
 msgid "Import reads the Amnezia containers and clients of a server set up in the Amnezia app. Nothing is changed on the server."
 msgstr "Импорт читает контейнеры Amnezia и клиентов сервера, настроенного в приложении Amnezia. На сервере ничего не меняется."
+
+msgid "Import the protocol from the server again, then join."
+msgstr "Импортируйте протокол с сервера заново, затем вступайте."
 
 msgid "Important dates"
 msgstr "Важные даты"
@@ -1153,6 +1215,12 @@ msgstr "Выпущен для %(ip)s"
 msgid "Its config does not turn the query logs off: they stay as the image has them."
 msgstr "Его конфиг не выключает журнал запросов: он остаётся таким, как в образе."
 
+msgid "Join a server group"
+msgstr "Вступление в группу серверов"
+
+msgid "Join the group"
+msgstr "Вступить в группу"
+
 msgid "Key"
 msgstr "Ключ"
 
@@ -1184,6 +1252,14 @@ msgstr "Ключей не больше"
 msgid "Keys change on the servers in the background; the report shows every operation."
 msgstr "Ключи меняются на серверах в фоне; в отчёте видна каждая операция."
 
+#, python-format
+msgid "Keys of the old server key revoked: %(count)d."
+msgstr "Отозвано ключей старого ключа сервера: %(count)d."
+
+#, python-format
+msgid "Keys revoked: %(count)d."
+msgstr "Отозвано ключей: %(count)d."
+
 msgid "Kind"
 msgstr "Вид"
 
@@ -1212,6 +1288,9 @@ msgstr "Позже"
 msgid "Latest operation"
 msgstr "Последняя операция"
 
+msgid "Leading server"
+msgstr "Ведущий сервер"
+
 msgid "Least free disk"
 msgstr "Минимум свободного места"
 
@@ -1221,6 +1300,18 @@ msgstr "Минимум свободного диска по дням с %(since)
 
 msgid "Leave"
 msgstr "Покинуть"
+
+msgid "Leave a server group"
+msgstr "Выход из группы серверов"
+
+msgid "Leave the group"
+msgstr "Выйти из группы"
+
+msgid "Let the other servers leave first, then delete the group."
+msgstr "Сначала выведите остальные серверы, затем удалите группу."
+
+msgid "Let them leave first: then the leading server stays as a standalone one."
+msgstr "Сначала выведите их: тогда ведущий сервер останется одиночным."
 
 msgid "Light"
 msgstr "Светлая"
@@ -1316,6 +1407,9 @@ msgstr "Зона модератора"
 msgid "Most phones need arm64-v8a. Your Android version is in Settings → About phone."
 msgstr "Большинству телефонов подходит arm64-v8a. Версия Android — в Настройках → О телефоне."
 
+msgid "Move the AmneziaWG 2.0 server to 3.1 on its card first."
+msgstr "Сначала переведите сервер AmneziaWG 2.0 на 3.1 в его карточке."
+
 msgid "Move the clients to AmneziaWG 3.1"
 msgstr "Перевести клиентов на AmneziaWG 3.1"
 
@@ -1354,6 +1448,9 @@ msgstr "Новые коды заменяют все прежние. Чтобы �
 
 msgid "New email"
 msgstr "Новая почта"
+
+msgid "New group"
+msgstr "Новая группа"
 
 msgid "New link"
 msgstr "Новая ссылка"
@@ -1408,6 +1505,9 @@ msgstr "Без срока"
 
 msgid "No events found."
 msgstr "Событий не найдено."
+
+msgid "No groups yet. A group starts from a standalone AmneziaWG 3.1 server."
+msgstr "Групп пока нет. Группа создаётся из одиночного сервера AmneziaWG 3.1."
 
 msgid "No incidents yet."
 msgstr "Инцидентов пока нет."
@@ -1466,6 +1566,9 @@ msgstr "Пока ни один сервер не может выдавать к�
 msgid "No server is available to you yet. Ask the administrator."
 msgstr "Пока вам не доступен ни один сервер. Обратитесь к администратору."
 
+msgid "No server of the group could be read."
+msgstr "Не удалось прочитать ни один сервер группы."
+
 msgid "No servers are available to you yet."
 msgstr "Вам пока не доступен ни один сервер."
 
@@ -1480,6 +1583,9 @@ msgstr "Серверов пока нет."
 
 msgid "No servers yet. Add a VPS you can log in to over SSH as root or a user with sudo."
 msgstr "Серверов пока нет. Добавьте VPS, на который можно войти по SSH как root или пользователь с sudo."
+
+msgid "No standalone AmneziaWG 3.1 server on this port."
+msgstr "Нет одиночных серверов AmneziaWG 3.1 на этом порту."
 
 msgid "No suggestions are waiting."
 msgstr "Нет предложений, ждущих проверки."
@@ -1520,6 +1626,9 @@ msgstr "Не привязан"
 msgid "Not now"
 msgstr "Не сейчас"
 
+msgid "Nothing changes on the leading server: the group takes its keys, settings and clients as they are."
+msgstr "На ведущем сервере ничего не меняется: группа берёт его ключи, настройки и клиентов как есть."
+
 msgid "Nothing else waits for you today."
 msgstr "На сегодня больше ничего не ждёт вас."
 
@@ -1550,6 +1659,9 @@ msgstr "Одна ссылка для v2rayN, v2RayTun, Hiddify и других �
 
 msgid "Online now"
 msgstr "Сейчас онлайн"
+
+msgid "Only AmneziaWG 3.1 servers can be in a group."
+msgstr "В группе могут быть только серверы AmneziaWG 3.1."
 
 msgid "Only the staff see it."
 msgstr "Его видит только персонал."
@@ -1797,6 +1909,12 @@ msgstr "Перевыпуск даст новый ключ, а старый ср�
 msgid "Reachability probe"
 msgstr "Проверка доступности"
 
+msgid "Read the files of the group"
+msgstr "Прочитать файлы группы"
+
+msgid "Read the server files"
+msgstr "Прочитать файлы сервера"
+
 msgid "Ready answers the staff put into a reply with one click."
 msgstr "Готовые ответы, которые сотрудники вставляют в ответ одним щелчком."
 
@@ -1900,6 +2018,9 @@ msgstr "Перезапустить контейнер? Клиенты переп
 msgid "Restore on this server"
 msgstr "Восстановить на этом сервере"
 
+msgid "Restore the protocol on the server card first."
+msgstr "Сначала восстановите протокол в карточке сервера."
+
 msgid "Restore the selected entries"
 msgstr "Вернуть выбранные записи"
 
@@ -1933,6 +2054,9 @@ msgstr "Строк"
 msgid "Rows per page"
 msgstr "Строк на странице"
 
+msgid "Run the operation again. If it repeats, report a bug."
+msgstr "Запустите операцию снова. Если повторится — сообщите об ошибке."
+
 msgid "Running"
 msgstr "Выполняются"
 
@@ -1952,8 +2076,14 @@ msgstr "Отпечаток SSH"
 msgid "Save"
 msgstr "Сохранить"
 
+msgid "Save a snapshot of the server files"
+msgstr "Сохранить снимок файлов сервера"
+
 msgid "Save the password"
 msgstr "Сохранить пароль"
+
+msgid "Save the result in the panel"
+msgstr "Сохранить результат в панели"
 
 msgid "Saved."
 msgstr "Сохранено."
@@ -2026,6 +2156,9 @@ msgstr "Проверка сервера"
 msgid "Server error"
 msgstr "Ошибка сервера"
 
+msgid "Server groups"
+msgstr "Группы серверов"
+
 msgid "Server, user or key"
 msgstr "Сервер, пользователь или ключ"
 
@@ -2035,6 +2168,12 @@ msgstr "Сервер: %(title)s"
 
 msgid "Servers"
 msgstr "Серверы"
+
+msgid "Servers of a group are clones of its leading server: one key works on each of them."
+msgstr "Серверы группы — клоны ведущего сервера: один ключ работает на каждом из них."
+
+msgid "Servers of the group"
+msgstr "Серверы группы"
 
 msgid "Servers online"
 msgstr "Серверов онлайн"
@@ -2050,6 +2189,12 @@ msgstr "Задать новый пароль"
 
 msgid "Set the bot token above to start the bot."
 msgstr "Задайте токен бота выше, чтобы запустить его."
+
+msgid "Set the port of the group in the protocol settings of the server, then join."
+msgstr "Установите порт группы в настройках протокола сервера, затем вступайте."
+
+msgid "Set the subnet of the group in the protocol settings of the server, then join."
+msgstr "Установите подсеть группы в настройках протокола сервера, затем вступайте."
 
 msgid "Settings"
 msgstr "Настройки"
@@ -2168,6 +2313,9 @@ msgstr "Скорость"
 msgid "Speed test by port"
 msgstr "Замер скорости по портам"
 
+msgid "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced."
+msgstr "Одиночные серверы AmneziaWG 3.1 на порту группы. Вступающий сервер получает файлы группы: его собственные ключ, настройки и клиенты заменяются."
+
 msgid "Start"
 msgstr "Запустить"
 
@@ -2176,6 +2324,9 @@ msgstr "Запустить заново"
 
 msgid "Started"
 msgstr "Запущена"
+
+msgid "State"
+msgstr "Состояние"
 
 msgid "Statistics"
 msgstr "Статистика"
@@ -2269,6 +2420,9 @@ msgstr "Сертификат сервера IPsec выпущен для %(ip)s. 
 msgid "The IPsec server certificate is issued for %(ip)s. On a VPS with another IP, reissue it on this card after the restore, or IPsec clients are refused."
 msgstr "Сертификат сервера IPsec выпущен для %(ip)s. На VPS с другим IP перевыпустите его на этой карточке после восстановления, иначе клиенты IPsec не подключатся."
 
+msgid "The VPN interface runs with the old files again."
+msgstr "VPN-интерфейс снова работает со старыми файлами."
+
 msgid "The VPN service is stopped."
 msgstr "VPN-сервис остановлен."
 
@@ -2335,8 +2489,18 @@ msgstr "Устройство сразу потеряет доступ. Это н
 msgid "The device name"
 msgstr "Название устройства"
 
+#, python-format
+msgid "The files of %(server)s are copied."
+msgstr "Файлы %(server)s скопированы."
+
 msgid "The form is out of date"
 msgstr "Форма устарела"
+
+msgid "The group is deleted; its leading server stays as it is."
+msgstr "Группа удалена; ведущий сервер остался как есть."
+
+msgid "The group still has other servers."
+msgstr "В группе ещё есть другие серверы."
 
 msgid "The invite is deleted."
 msgstr "Инвайт удалён."
@@ -2373,6 +2537,9 @@ msgstr "Ключ будет переименован через мгновени
 
 msgid "The keys and the backup are kept: restore the protocol in the Backup section."
 msgstr "Ключи и бэкап сохранены: восстановите протокол в разделе «Резервная копия»."
+
+msgid "The leading server cannot leave while other servers are in the group."
+msgstr "Ведущий сервер не может выйти, пока в группе есть другие серверы."
 
 msgid "The limit is reached: the keys are off until the period resets."
 msgstr "Лимит исчерпан: ключи отключены до сброса периода."
@@ -2412,6 +2579,9 @@ msgstr "Панель недоступна. Проверьте подключен
 
 msgid "The panel compares its keys with the server files regularly. A difference appears when clients are added or removed in the Amnezia app or by hand."
 msgstr "Панель регулярно сравнивает свои ключи с файлами на серверах. Расхождение появляется, когда клиентов добавляют или удаляют в приложении Amnezia или вручную."
+
+msgid "The panel copies the files of a member that answers. Check that one is online."
+msgstr "Панель копирует файлы отвечающего участника. Проверьте, что хотя бы один в сети."
 
 msgid "The panel could not finish the request. Try again in a minute; if it repeats, tell the administrator."
 msgstr "Панель не смогла выполнить запрос. Попробуйте через минуту; если повторится, сообщите администратору."
@@ -2459,6 +2629,9 @@ msgstr "Порты открываются для TCP и UDP. Если у хос�
 msgid "The preview failed. Save the article to see it."
 msgstr "Предпросмотр не удался. Сохраните статью, чтобы увидеть её."
 
+msgid "The protocol container is removed from the server."
+msgstr "Контейнер протокола удалён с сервера."
+
 msgid "The request is closed. If the problem comes back, open a new one."
 msgstr "Обращение закрыто. Если проблема вернётся, откройте новое."
 
@@ -2469,6 +2642,9 @@ msgstr "Обращение закрыто: можно добавить толь�
 msgid "The server address is now <strong>%(host)s</strong>. The vpn:// link of every key carries the address, so the clients must import their keys again."
 msgstr "Теперь адрес сервера — <strong>%(host)s</strong>. Адрес входит в ссылку vpn:// каждого ключа, поэтому клиентам нужно заново импортировать ключи."
 
+msgid "The server already has the files of the group."
+msgstr "На сервере уже файлы группы."
+
 msgid "The server answers."
 msgstr "Сервер отвечает."
 
@@ -2478,8 +2654,36 @@ msgstr "Сервер не понял запрос. Вернитесь назад
 msgid "The server does not answer."
 msgstr "Сервер не отвечает."
 
+msgid "The server gets a clean AmneziaWG with a new key and no clients. Keys of the group stop working on it. A snapshot of its files is kept first. Continue?"
+msgstr "Сервер получит чистый AmneziaWG с новым ключом и без клиентов. Ключи группы на нём перестанут работать. Сначала сохраняется снимок его файлов. Продолжить?"
+
+#, python-format
+msgid "The server has %(count)s key of its own. It stops working when the server joins; a snapshot of the server files is kept first. Continue?"
+msgid_plural "The server has %(count)s keys of its own. They stop working when the server joins; a snapshot of the server files is kept first. Continue?"
+msgstr[0] "У сервера %(count)s свой ключ. Он перестанет работать после вступления; сначала сохраняется снимок файлов сервера. Продолжить?"
+msgstr[1] "У сервера %(count)s своих ключа. Они перестанут работать после вступления; сначала сохраняется снимок файлов сервера. Продолжить?"
+msgstr[2] "У сервера %(count)s своих ключей. Они перестанут работать после вступления; сначала сохраняется снимок файлов сервера. Продолжить?"
+
+msgid "The server has another client subnet than the group."
+msgstr "У сервера другая подсеть клиентов, чем у группы."
+
+msgid "The server has no clients: no snapshot is needed."
+msgstr "У сервера нет клиентов: снимок не нужен."
+
 msgid "The server has not answered yet."
 msgstr "Сервер ещё ни разу не ответил."
+
+msgid "The server is already in a group."
+msgstr "Сервер уже в группе."
+
+msgid "The server is no longer joining or leaving the group: nothing to do."
+msgstr "Сервер уже не вступает в группу и не выходит из неё: делать нечего."
+
+msgid "The server listens on another port than the group."
+msgstr "Сервер слушает другой порт, чем группа."
+
+msgid "The server runs AmneziaWG with other keys than the panel has."
+msgstr "AmneziaWG на сервере работает с другими ключами, чем в панели."
 
 msgid "The service restarts on the server and its clients reconnect. A new port, domain or transport mode changes the address users connect to: give them the new one."
 msgstr "Сервис перезапустится на сервере, его клиенты переподключатся. Новый порт, домен или режим транспорта меняют адрес подключения — передайте пользователям новый."
@@ -2741,6 +2945,9 @@ msgstr "Действует до"
 msgid "Version %(version)s from %(date)s."
 msgstr "Версия %(version)s от %(date)s."
 
+msgid "Wait for other operations on the server"
+msgstr "Дождаться других операций на сервере"
+
 msgid "Waiting"
 msgstr "Ждёт ответа"
 
@@ -2811,6 +3018,12 @@ msgstr "Бессрочно"
 
 msgid "Without traffic"
 msgstr "Без трафика"
+
+msgid "Write a clean AmneziaWG"
+msgstr "Записать чистый AmneziaWG"
+
+msgid "Write the files of the group"
+msgstr "Записать файлы группы"
 
 msgid "Write the text."
 msgstr "Напишите текст."
@@ -2960,6 +3173,9 @@ msgstr "устройство"
 msgid "disabled"
 msgstr "отключён"
 
+msgid "domain"
+msgstr "домен"
+
 msgid "due today"
 msgstr "сегодня"
 
@@ -2971,6 +3187,15 @@ msgstr "получено"
 
 msgid "found, not supported"
 msgstr "найден, не поддерживается"
+
+msgid "group"
+msgstr "группа"
+
+msgid "group member"
+msgstr "участник группы"
+
+msgid "group members"
+msgstr "участники группы"
 
 #, python-format
 msgid "in %(days)s day"
@@ -2994,6 +3219,12 @@ msgstr "инвайт"
 msgid "invites"
 msgstr "инвайты"
 
+msgid "joined at"
+msgstr "вступил"
+
+msgid "joining"
+msgstr "вступает"
+
 msgid "keys at most"
 msgstr "ключей не больше"
 
@@ -3009,6 +3240,15 @@ msgstr "последний раз в сети"
 #, python-format
 msgid "last sign-in %(date)s"
 msgstr "последний вход %(date)s"
+
+msgid "leading"
+msgstr "ведущий"
+
+msgid "leading server"
+msgstr "ведущий сервер"
+
+msgid "leaving"
+msgstr "выходит"
 
 msgid "link"
 msgstr "ссылка"
@@ -3032,6 +3272,9 @@ msgstr "привязан"
 msgid "maintenance"
 msgstr "обслуживание"
 
+msgid "member"
+msgstr "участник"
+
 msgid "messenger"
 msgstr "мессенджер"
 
@@ -3040,6 +3283,9 @@ msgstr "модель"
 
 msgid "moderator"
 msgstr "модератор"
+
+msgid "name"
+msgstr "название"
 
 msgid "name in the messenger"
 msgstr "имя в мессенджере"
@@ -3148,6 +3394,9 @@ msgstr "простой"
 msgid "plan"
 msgstr "тариф"
 
+msgid "port"
+msgstr "порт"
+
 #, python-format
 msgid "port %(port)s"
 msgstr "порт %(port)s"
@@ -3155,8 +3404,14 @@ msgstr "порт %(port)s"
 msgid "position"
 msgstr "порядок"
 
+msgid "priority"
+msgstr "приоритет"
+
 msgid "problems"
 msgstr "проблемы"
+
+msgid "protocol"
+msgstr "протокол"
 
 msgid "published"
 msgstr "опубликована"
@@ -3180,6 +3435,13 @@ msgstr "регистраций"
 
 msgid "registrations at most"
 msgstr "регистраций не больше"
+
+msgid "relay"
+msgstr "ретранслятор"
+
+#, python-format
+msgid "relay %(relay)s"
+msgstr "ретранслятор %(relay)s"
 
 msgid "release"
 msgstr "релиз"
@@ -3218,6 +3480,12 @@ msgstr "прочитано"
 msgid "sent at"
 msgstr "отправлено"
 
+msgid "server group"
+msgstr "группа серверов"
+
+msgid "server groups"
+msgstr "группы серверов"
+
 msgid "servers of the moderator"
 msgstr "серверы модератора"
 
@@ -3234,6 +3502,9 @@ msgstr "с %(date)s"
 
 msgid "source"
 msgstr "источник"
+
+msgid "state"
+msgstr "состояние"
 
 msgid "status"
 msgstr "статус"

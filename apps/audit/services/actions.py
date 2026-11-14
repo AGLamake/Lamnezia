@@ -31,6 +31,8 @@ _LABELS: dict[str, Promise] = {
     "bots.restart": _("Restart bot"),
     "bots.leave": _("Bot leaves server"),
     "core.settings_change": _("Change site settings"),
+    "groups.create": _("Create server group"),
+    "groups.delete": _("Delete server group"),
     "guides.suggestion_accept": _("Publish article suggestion"),
     "guides.suggestion_reject": _("Decline article suggestion"),
     "keys.view": _("Show key"),

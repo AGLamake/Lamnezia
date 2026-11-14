@@ -101,11 +101,20 @@ msgstr "Копии файлов сервера нет: используются 
 msgid "Without the copy the old keys cannot work again. Install the protocol anew and issue new keys."
 msgstr "Без копии старые ключи заново не заработают. Установите протокол заново и выдайте новые ключи."
 
+msgid "before joining a server group"
+msgstr "перед вступлением в группу серверов"
+
+msgid "before leaving a server group"
+msgstr "перед выходом из группы серверов"
+
 msgid "client list"
 msgstr "список клиентов"
 
 msgid "container files"
 msgstr "файлы контейнера"
+
+msgid "preshared key"
+msgstr "общий ключ"
 
 msgid "protocol"
 msgstr "протокол"
@@ -115,6 +124,15 @@ msgstr "копия протокола"
 
 msgid "protocol backups"
 msgstr "копии протоколов"
+
+msgid "protocol snapshot"
+msgstr "снимок протокола"
+
+msgid "protocol snapshots"
+msgstr "снимки протоколов"
+
+msgid "reason"
+msgstr "причина"
 
 msgid "saved at"
 msgstr "сохранено"

@@ -51,6 +51,9 @@ msgstr "Создание тарифа"
 msgid "Create reply template"
 msgstr "Создание шаблона ответа"
 
+msgid "Create server group"
+msgstr "Создание группы серверов"
+
 msgid "Decline article suggestion"
 msgstr "Отказ в предложенной статье"
 
@@ -65,6 +68,9 @@ msgstr "Удаление тарифа"
 
 msgid "Delete reply template"
 msgstr "Удаление шаблона ответа"
+
+msgid "Delete server group"
+msgstr "Удаление группы серверов"
 
 msgid "Delete subscription link"
 msgstr "Удалить ссылку-подписку"

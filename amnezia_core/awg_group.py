@@ -2,18 +2,20 @@
 
 Members of a group are clones (docs/FALLBACK.md section 3): the client verifies the server key and
 the obfuscation parameters, so each member has the same server key, [Interface], subnet, port,
-peers and clientsTable as the leading server.
+peers and clientsTable as the leading server. A server leaving the group gets clean files.
 """
 
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from ipaddress import IPv4Interface
 
 from amnezia_core.awg import AwgServerConfig, Peer
-from amnezia_core.awg_backup import AwgServerFiles
+from amnezia_core.awg_backup import AwgServerFiles, interface_config
+from amnezia_core.awg_install import generate_awg_params
 from amnezia_core.clients_table import ClientsTable
 from amnezia_core.errors import ConfigFormatError
-from amnezia_core.keys import decode_key
+from amnezia_core.keys import KeyPair, decode_key, generate_preshared_key
 
 # userData fields the app fills with one server's statistics when it lists users
 # (UsersController in upstream usersController.cpp); members differ in them by nature.
@@ -79,6 +81,23 @@ class AwgGroupIdentity:
                 ClientsTable.parse(member.clients_table),
             ),
         ]
+
+
+def standalone_files(address: IPv4Interface, port: int) -> AwgServerFiles:
+    """A clean server leaving a group: a new key, PSK and obfuscation, no peers or clients.
+
+    The address and the port stay: the container runs with them (start.sh, published port).
+    """
+    config = interface_config(KeyPair.generate().private_key, address, port, generate_awg_params())
+    return AwgServerFiles(
+        config.serialize(), ClientsTable([]).serialize(), generate_preshared_key()
+    )
+
+
+def has_clients(files: AwgServerFiles) -> bool:
+    """The server has peers or clients someone may still use: replacing them needs a backup."""
+    config = AwgServerConfig.parse(files.config)
+    return bool(config.peers or ClientsTable.parse(files.clients_table).client_ids)
 
 
 def _interface_divergences(leader: AwgServerConfig, member: AwgServerConfig) -> list[Divergence]:

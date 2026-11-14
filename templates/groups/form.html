@@ -1,0 +1,22 @@
+{% extends "servers/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "New group" %} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'groups:list' %}">{% translate "Server groups" %}</a></li><li aria-current="page">{% translate "New group" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "New group" %}</h1>
+  <p class="help-text">{% translate "Nothing changes on the leading server: the group takes its keys, settings and clients as they are." %}</p>
+</div>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {{ form.name.as_field_group }}
+  {{ form.leader.as_field_group }}
+  {{ form.domain.as_field_group }}
+  {{ form.relay.as_field_group }}
+  <button type="submit" class="btn btn-primary">{% translate "Create the group" %}</button>
+</form>
+{% endblock %}

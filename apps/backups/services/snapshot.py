@@ -1,6 +1,7 @@
 """Copies of the protocol and service files of every server, kept in the panel for a restore.
 
 Taking a copy only reads the files, without the server lock, as the reconciliation does.
+A snapshot is a copy kept for good before a change replaces the identity of a server.
 """
 
 import logging
@@ -10,16 +11,17 @@ from functools import partial
 from django.utils import timezone
 
 from amnezia_core.awg import AwgServerConfig
+from amnezia_core.awg_backup import AwgServerFiles
 from amnezia_core.containers import AWG2
 from amnezia_core.errors import AmneziaFormatError
-from apps.backups.models import ProtocolBackup, ServiceBackup
+from apps.backups.models import ProtocolBackup, ProtocolSnapshot, ServiceBackup, SnapshotReason
 from apps.backups.services.archived import archived_protocols
 from apps.backups.services.archived_services import archived_services
 from apps.protocols.models import ProtocolInstance, ServiceInstance
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.ssh.errors import RemoteFileNotFoundError, SshError
-from apps.ssh.services import RemoteHost
+from apps.ssh.services import RemoteHost, ShellTarget
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,37 @@ def save_backup(instance: ProtocolInstance, host: RemoteHost) -> ProtocolBackup 
         defaults={"config": config, "clients_table": clients_table, "taken_at": timezone.now()},
     )
     return backup
+
+
+def read_awg_files(host: RemoteHost) -> AwgServerFiles:
+    """The amnezia-awg2 files that make the server what it is; missing optional files are empty."""
+    container = host.container(AWG2.name)
+    config = container.read_file(AWG2.config_path).decode()
+    return AwgServerFiles(
+        config,
+        _optional_file(container, AWG2.clients_table_path),
+        _optional_file(container, AWG2.psk_path).strip(),
+    )
+
+
+def _optional_file(container: ShellTarget, path: str) -> str:
+    try:
+        return container.read_file(path).decode()
+    except RemoteFileNotFoundError:
+        return ""
+
+
+def take_snapshot(
+    instance: ProtocolInstance, files: AwgServerFiles, reason: SnapshotReason
+) -> ProtocolSnapshot:
+    """Keep the files read from the server before a change replaces its identity."""
+    return ProtocolSnapshot.objects.create(
+        instance=instance,
+        reason=reason,
+        config=files.config,
+        clients_table=files.clients_table,
+        preshared_key=files.preshared_key,
+    )
 
 
 def backed_up_containers() -> tuple[str, ...]:

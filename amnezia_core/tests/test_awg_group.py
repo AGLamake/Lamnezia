@@ -6,7 +6,14 @@ import pytest
 
 from amnezia_core.awg import AWG_CLIENTS_TABLE_PATH, AWG_CONFIG_PATH, AWG_PSK_PATH, AwgServerConfig
 from amnezia_core.awg_backup import AwgServerFiles
-from amnezia_core.awg_group import AwgGroupIdentity, Divergence, Mismatch
+from amnezia_core.awg_export import has_awg3_params
+from amnezia_core.awg_group import (
+    AwgGroupIdentity,
+    Divergence,
+    Mismatch,
+    has_clients,
+    standalone_files,
+)
 from amnezia_core.errors import ConfigFormatError, InvalidKeyError
 from amnezia_core.keys import KeyPair
 from amnezia_core.tests.conftest import FIRST_PEER, SECOND_PEER
@@ -180,3 +187,28 @@ class TestLeader:
     def test_needs_a_valid_preshared_key(self, leader: AwgServerFiles) -> None:
         with pytest.raises(InvalidKeyError):
             AwgGroupIdentity(AwgServerFiles(leader.config, leader.clients_table, "nope"))
+
+
+def test_standalone_files_keep_the_address_and_port_with_a_new_identity(
+    leader: AwgServerFiles,
+) -> None:
+    old = AwgServerConfig.parse(leader.config)
+
+    fresh = standalone_files(old.address, 55424)
+
+    config = AwgServerConfig.parse(fresh.config)
+    assert config.address == old.address
+    assert config.listen_port == 55424
+    assert config.private_key not in {None, old.private_key}
+    assert config.peers == []
+    assert has_awg3_params(config.awg_params)
+    assert fresh.preshared_key != leader.preshared_key
+    assert not has_clients(fresh)
+
+
+def test_server_with_peers_or_clients_has_clients(leader: AwgServerFiles) -> None:
+    fresh = standalone_files(AwgServerConfig.parse(leader.config).address, 55424)
+    only_clients = AwgServerFiles(fresh.config, leader.clients_table, PSK)
+
+    assert has_clients(leader)
+    assert has_clients(only_clients)

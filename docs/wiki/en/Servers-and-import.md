@@ -169,6 +169,25 @@ the AWG port or detects the protocol by DPI, it still shows "reachable". It also
 in a cloud firewall, or when the client's network blocks STUN; with WebRTC turned off in the
 browser the result is "unknown".
 
+## Server groups
+
+**Servers → Server groups** joins AmneziaWG 3.1 servers into a group whose members are clones of
+its leading server: the same server key, settings, port, subnet and clients, so one key works on
+each of them. A server is either standalone or a member of one group.
+
+- **New group**: pick a standalone AmneziaWG 3.1 server as the leading one. Nothing changes on it;
+  the group takes its port.
+- **Join the group**: a standalone AmneziaWG 3.1 server on the same port and subnet takes the files
+  of the group in a background operation. If it has its own clients, the panel warns how many keys
+  stop working, keeps a snapshot of its files first and revokes those keys. A clean server joins
+  without a warning.
+- **Leave the group**: the server keeps a snapshot of its files and gets a clean AmneziaWG with a new
+  key and no clients.
+- The leading server cannot leave; a group with only its leader left can be deleted, and the leader
+  stays as it is.
+
+Keys of a group are issued on its leading server.
+
 ## Server access
 
 The panel connects to servers over SSH as `root` or as a user with passwordless sudo
