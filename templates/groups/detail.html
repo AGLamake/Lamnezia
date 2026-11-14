@@ -18,6 +18,9 @@
   {% endif %}
 </div>
 
+{% for warning in domain_warnings %}{% include "components/alert.html" with level="warning" text=warning %}{% endfor %}
+<p class="help-text">{% if client_host %}{% blocktranslate with host=client_host port=group.port %}Keys of the group connect to {{ host }}:{{ port }} through the relay.{% endblocktranslate %}{% else %}{% translate "Keys of the group connect to the leading server until the relay of the group is installed; then they move to the relay, and their owners are told to import them again." %}{% endif %}</p>
+
 <section class="card space-y-3">
   <h2 class="card-title">{% translate "Servers of the group" %}</h2>
   <div class="table-wrap">

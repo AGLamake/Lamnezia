@@ -107,6 +107,9 @@ msgstr "Ключи нужно импортировать заново"
 msgid "Keys revoked"
 msgstr "Ключи отозваны"
 
+msgid "Keys updated for a server group"
+msgstr "Ключи обновлены для группы серверов"
+
 msgid "Limit reached"
 msgstr "Достигнут лимит"
 
@@ -333,6 +336,10 @@ msgid "Your VPN keys on {server} are moved to AmneziaWG 3.1. Open the personal a
 msgstr "Ваши ключи VPN на {server} переведены на AmneziaWG 3.1. Откройте личный кабинет и импортируйте новые ключи в приложение Amnezia: старые скоро перестанут работать."
 
 #, python-brace-format
+msgid "Your VPN keys on {server} are updated"
+msgstr "Ваши ключи VPN на {server} обновлены"
+
+#, python-brace-format
 msgid "Your request: {topic}"
 msgstr "Ваше обращение: {topic}"
 
@@ -425,6 +432,10 @@ msgstr "{server} недоступен с ретранслятора"
 #, python-brace-format
 msgid "{server} lags behind the group {group}"
 msgstr "{server} отстаёт от группы {group}"
+
+#, python-brace-format
+msgid "{server} now works in a group of servers that keeps the VPN up when one of them is blocked. Open your keys in the personal account and import them into the Amnezia app again, once: the old ones may stop working."
+msgstr "{server} теперь работает в группе серверов, которая сохраняет VPN, когда один из них заблокирован. Откройте свои ключи в личном кабинете и один раз заново импортируйте их в приложение Amnezia: старые могут перестать работать."
 
 #, python-brace-format
 msgid "{server} works again"

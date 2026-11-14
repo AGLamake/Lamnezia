@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -10,9 +12,12 @@ class TrafficCounter(models.Model):
 
     `active_at` is the latest reading in which counters without a handshake (XRay) grew;
     `present` is whether the latest reading of the source listed the peer at all.
+    `key_source` is the source of the key the peer belongs to: the same as `source`, except on a
+    clone in a server group, whose peers are keys of the leading server.
     """
 
     source = models.CharField(_("source"), max_length=100)
+    key_source = models.CharField(_("source of the key"), max_length=100)
     public_key = models.CharField(_("public key"), max_length=64)
     rx_bytes = models.PositiveBigIntegerField(_("received, bytes"), default=0)
     tx_bytes = models.PositiveBigIntegerField(_("sent, bytes"), default=0)
@@ -29,9 +34,15 @@ class TrafficCounter(models.Model):
                 fields=["source", "public_key"], name="traffic_counter_unique_peer"
             ),
         )
+        indexes = (models.Index(fields=["key_source", "public_key"]),)
 
     def __str__(self) -> str:
         return f"{self.source} {self.public_key}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """A counter saved without `key_source` is one of a key of its own source."""
+        self.key_source = self.key_source or self.source
+        super().save(*args, **kwargs)
 
 
 class TrafficHourly(models.Model):

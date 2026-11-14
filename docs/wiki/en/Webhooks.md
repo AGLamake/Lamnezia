@@ -37,6 +37,7 @@ zone), `data` depends on the event.
 | `keys_changed` | The protocol settings of a server changed; the user must import their keys again. Also sent to the user. | `user`, `server` — server name |
 | `keys_revoked` | The protocol was removed from a server with its backups; the user's keys on it are revoked. Also sent to the user. | `user`, `server` — server name |
 | `keys_moved` | The clients of legacy AmneziaWG on a server got new keys on AmneziaWG 3.1; the user must import them. Also sent to the user. | `user`, `server` — server name |
+| `keys_updated` | A server joined a group behind a relay, or the relay of its group was installed: the user's keys now carry the relay address and must be imported again, once. Also sent to the user. | `user`, `server` — server name |
 | `registration_pending` | A new user waits for approval. | `user`, `email` |
 | `ticket_created` | A user opened a support request. | `user`, `number` — request number, `type`, `subject` |
 | `chat_message` | Messages in the support chat; those of one user within two minutes come as one. | `user`, `number` — chat number, `text` — the messages, one a line; `count` — how many, when more than one |
@@ -81,6 +82,8 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/keys_revoked"}}}},
     {"if": {"properties": {"event": {"const": "keys_moved"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/keys_moved"}}}},
+    {"if": {"properties": {"event": {"const": "keys_updated"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/keys_updated"}}}},
     {"if": {"properties": {"event": {"const": "registration_pending"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/registration_pending"}}}},
     {"if": {"properties": {"event": {"const": "ticket_created"}}},
@@ -142,6 +145,11 @@ may be added: ignore what you do not know.
       "properties": {"user": {"type": "string"}, "server": {"type": "string"}}
     },
     "keys_moved": {
+      "type": "object",
+      "required": ["user", "server"],
+      "properties": {"user": {"type": "string"}, "server": {"type": "string"}}
+    },
+    "keys_updated": {
       "type": "object",
       "required": ["user", "server"],
       "properties": {"user": {"type": "string"}, "server": {"type": "string"}}

@@ -63,6 +63,9 @@ msgstr "отправлено, байт"
 msgid "source"
 msgstr "источник"
 
+msgid "source of the key"
+msgstr "источник ключа"
+
 msgid "statistics available"
 msgstr "статистика доступна"
 

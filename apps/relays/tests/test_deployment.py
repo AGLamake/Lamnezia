@@ -7,20 +7,24 @@ import pytest
 
 from amnezia_core.awg import AWG_CONFIG_PATH, AwgServerConfig
 from apps.accounts.models import User
+from apps.accounts.tests.factories import UserFactory
 from apps.groups.models import ServerGroup
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT, Fakes, succeeded
 from apps.keys.services.drift import compare
 from apps.keys.services.peers import read_registry
 from apps.keys.services.service_peers import service_peers
+from apps.notifications.events import Event
+from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
-from apps.protocols.tests.awg_case import OnCommit, Start
+from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
 from apps.protocols.tests.fake_awg import FakeAwgServer
 from apps.relays.errors import RelayError, RelayErrorCode
 from apps.relays.models import Relay, ServicePeer
 from apps.relays.services import deployment
 from apps.relays.services.container import FOLDER
 from apps.relays.services.deployment import INSTALL_KIND, REMOVE_KIND, UPDATE_KIND, sync_relays
+from apps.relays.tests.conftest import RELAY_HOST
 from apps.relays.tests.fake_relay import FakeRelayServer
 from apps.servers.models import Server
 
@@ -52,6 +56,24 @@ def test_install_puts_the_service_peer_on_every_member(
     assert peer.public_key in peers_of(servers[JOINER_HOST])
     relay = Relay.objects.get(server=relay_server)
     assert relay.installed and relay.synced and relay.synced_at
+
+
+def test_install_moves_the_keys_of_the_group_to_the_relay(
+    relayed: ServerGroup,
+    leader: ProtocolInstance,
+    relay_server: Server,
+    admin: User,
+    start: Start,
+) -> None:
+    owner = UserFactory()
+    key = issued_key(leader, owner)
+
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+
+    key.refresh_from_db()
+    profile = json.loads(key.profile)
+    assert (profile["host"], profile["port"]) == (RELAY_HOST, PORT)
+    assert Notification.objects.get(event=Event.KEYS_UPDATED).user == owner
 
 
 @pytest.mark.usefixtures("relayed")

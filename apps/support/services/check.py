@@ -96,7 +96,7 @@ def _last_seen(server: Server, user: User | None = None) -> str:
     sources = ProtocolInstance.sources_of(server)
     peers = TrafficCounter.objects.filter(source__in=sources)
     if user is not None:
-        keys = user.access_keys.filter(source__in=sources).values("public_key")
+        keys = user.access_keys.filter(source__in=peers.values("key_source")).values("public_key")
         peers = peers.filter(public_key__in=keys)
     latest = peers.aggregate(handshake=Max("latest_handshake"), active=Max("active_at"))
     seen = max(filter(None, latest.values()), default=None)

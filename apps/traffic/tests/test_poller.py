@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 from contextlib import nullcontext
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -58,6 +59,18 @@ def test_one_command_per_server_and_failed_container_is_skipped() -> None:
     assert sum("awg show all dump" in command for command, _ in runner.calls) == 1
     assert set(TrafficCounter.objects.values_list("source", flat=True)) == {"awg:1"}
     assert TrafficCounter.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_peers_of_a_clone_count_for_the_keys_of_its_leading_server() -> None:
+    runner = FakeRunner(
+        {"awg show all dump": result(stdout=marker_output(("amnezia-awg2", 0, DUMP)))}
+    )
+    clone = target(runner, {"awg:2": "amnezia-awg2"})
+
+    TrafficPoller(clock=lambda: NOW).poll(replace(clone, key_sources={"awg:2": "awg:1"}))
+
+    assert set(TrafficCounter.objects.values_list("source", "key_source")) == {("awg:2", "awg:1")}
 
 
 ALICE = client_fingerprint("6f0c3e52-1b7a-4c8e-9d2f-0a1b2c3d4e5f")

@@ -100,13 +100,21 @@ class TrafficPoller:
 
     def poll(self, target: PollTarget) -> None:
         with target.connect() as host:
-            self.read(host, target.name, target.containers)
+            self.read(host, target.name, target.containers, target.key_sources)
 
-    def read(self, host: RemoteHost, server: str, containers: Mapping[str, str]) -> None:
+    def read(
+        self,
+        host: RemoteHost,
+        server: str,
+        containers: Mapping[str, str],
+        key_sources: Mapping[str, str] | None = None,
+    ) -> None:
         """Read and store the counters of `containers` (source -> container) of one server.
 
         A container that gives no reading marks its source unavailable: its traffic is unknown.
+        `key_sources` names whose keys the peers of a source are, as `PollTarget` has it.
         """
+        key_sources = key_sources or {}
         output = host.run(dump_script(containers.values()))
         at = self._clock()
         dumps = split_dumps(output)
@@ -122,4 +130,4 @@ class TrafficPoller:
                 logger.warning("bad counters from %s on %s: %s", container, server, error)
                 self._recorder.unavailable(source, at)
                 continue
-            self._recorder.record(source, readings, at, dump.started)
+            self._recorder.record(source, readings, at, dump.started, key_sources.get(source, ""))

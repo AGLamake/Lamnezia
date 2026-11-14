@@ -20,6 +20,8 @@ from apps.keys.errors import PeerErrorCode
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.actions import KeyActions
 from apps.keys.services.peers import PeerManager
+from apps.notifications.events import Event
+from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
@@ -189,3 +191,5 @@ def test_users_of_a_joined_server_get_keys_of_the_group(
     assert key.name == "iPhone"
     assert peer(servers, LEADER_HOST, key) is not None
     assert peer(servers, JOINER_HOST, key) is not None
+    notification = Notification.objects.get(event=Event.KEYS_UPDATED)
+    assert (notification.user, notification.data["server"]) == (owner, joiner.server.name)

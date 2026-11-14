@@ -107,7 +107,12 @@ class ProtocolInstance(models.Model):
 
     @property
     def source(self) -> str:
-        return f"{_SOURCE_PREFIX}{self.pk}"
+        return self.source_for(self.pk)
+
+    @staticmethod
+    def source_for(pk: int) -> str:
+        """The `source` of the instance with this id, without loading it."""
+        return f"{_SOURCE_PREFIX}{pk}"
 
     @staticmethod
     def pk_of(source: str) -> int | None:

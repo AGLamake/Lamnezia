@@ -22,6 +22,7 @@ from apps.backups.models import SnapshotReason
 from apps.backups.services.snapshot import read_awg_files, save_backup, take_snapshot
 from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, MemberState
+from apps.groups.services.addressing import tell_owners
 from apps.groups.services.membership import take_identity
 from apps.keys.models import AccessKey
 from apps.keys.services.actions import KeyActions
@@ -198,6 +199,7 @@ class GroupJoin(_Cloning):
         for key in owned:
             actions.issue(leader.instance.source, key.name, key.user)
         self._ctx.log(_("Group keys issued to users: %(count)d.") % {"count": len(owned)})
+        tell_owners(owned, self._instance.server.name)
 
 
 class MemberCatchUp(_Cloning):

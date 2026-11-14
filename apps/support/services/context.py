@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from django.db.models import OuterRef, Subquery
+from django.db.models import F, OuterRef, Subquery
 
 from apps.accounts.models import User
 from apps.guides.services.devices import DetectedDevice
@@ -40,17 +40,23 @@ class KeySeen:
 
 def keys_seen(user: User) -> list[KeySeen]:
     """Keys in use, oldest first. XRay clients have no handshake, only traffic, so the later of
-    the two says when a key was last seen.
+    the two says when a key was last seen; a key of a group, on any of its servers.
     """
     counter = TrafficCounter.objects.filter(
-        source=OuterRef("source"), public_key=OuterRef("public_key")
+        key_source=OuterRef("source"), public_key=OuterRef("public_key")
     )
     keys = (
         AccessKey.objects.filter(user=user)
         .exclude(status=KeyStatus.REVOKED)
         .annotate(
-            handshake=Subquery(counter.values("latest_handshake")[:1]),
-            active=Subquery(counter.values("active_at")[:1]),
+            handshake=Subquery(
+                counter.order_by(F("latest_handshake").desc(nulls_last=True)).values(
+                    "latest_handshake"
+                )[:1]
+            ),
+            active=Subquery(
+                counter.order_by(F("active_at").desc(nulls_last=True)).values("active_at")[:1]
+            ),
         )
         .order_by("created_at")
     )

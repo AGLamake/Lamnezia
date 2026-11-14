@@ -228,6 +228,22 @@ a member lagging longer than `LAMNEZIA_GROUP_LAG_ALERT` come as notifications
 ([Notifications](Notifications.md)). Clients of a group are seen by the members at the relay's
 address; the panel shows no client addresses.
 
+### Keys of a group behind the relay
+
+Once the relay of a group is installed, the `vpn://` links and `.conf` files of its keys carry the
+**Domain** of the group, or the relay address when the domain is empty, and the port of the group.
+Keys the leading server had before move to that address in the same operation, and their owners,
+like the owners of keys revoked when their server joined, get the notification **Keys updated for
+a server group** in the personal account channel: they import the key into the Amnezia app again,
+once. A key that keeps the old address goes on working while the leading server is up.
+
+The domain needs only an A record with the relay address. The group page warns when the domain
+does not resolve, points elsewhere, or has an AAAA record: the Amnezia app on a computer may take
+the IPv6 address and miss the relay.
+
+Traffic, online status and limits of a group key are summed over all members: whichever server the
+relay sends the client to, its traffic counts for the same key.
+
 ## Server access
 
 The panel connects to servers over SSH as `root` or as a user with passwordless sudo

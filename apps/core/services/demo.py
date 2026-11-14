@@ -191,6 +191,7 @@ class DemoSeed:
         )
         TrafficCounter.objects.create(
             source=key.source,
+            key_source=key.source,
             public_key=key.public_key,
             rx_bytes=self._rng.randint(1, 50) * GIB,
             tx_bytes=self._rng.randint(1, 5) * GIB,

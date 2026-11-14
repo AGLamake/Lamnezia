@@ -63,8 +63,24 @@ msgstr[1] "осталось %(days)s дня"
 msgstr[2] "осталось %(days)s дней"
 
 #, python-format
+msgid "%(domain)s does not resolve: keys of the group do not connect until its A record points to the relay %(relay)s."
+msgstr "%(domain)s не разрешается: ключи группы не подключатся, пока его A-запись не укажет на ретранслятор %(relay)s."
+
+#, python-format
+msgid "%(domain)s has an AAAA record. The Amnezia app on a computer may take the IPv6 address and miss the relay: keep only the A record."
+msgstr "У %(domain)s есть AAAA-запись. Приложение Amnezia на компьютере может взять IPv6-адрес и пройти мимо ретранслятора: оставьте только A-запись."
+
+#, python-format
+msgid "%(domain)s points to %(found)s, not to the relay %(relay)s (%(expected)s)."
+msgstr "%(domain)s указывает на %(found)s, а не на ретранслятор %(relay)s (%(expected)s)."
+
+#, python-format
 msgid "%(first)s or %(second)s"
 msgstr "%(first)s или %(second)s"
+
+#, python-format
+msgid "%(group)s: keys moved: %(count)d."
+msgstr "%(group)s: перенесено ключей: %(count)d."
 
 #, python-format
 msgid "%(keys)s key"
@@ -1307,6 +1323,13 @@ msgid "Keys change on the servers in the background; the report shows every oper
 msgstr "Ключи меняются на серверах в фоне; в отчёте видна каждая операция."
 
 #, python-format
+msgid "Keys of the group connect to %(host)s:%(port)s through the relay."
+msgstr "Ключи группы подключаются к %(host)s:%(port)s через ретранслятор."
+
+msgid "Keys of the group connect to the leading server until the relay of the group is installed; then they move to the relay, and their owners are told to import them again."
+msgstr "Ключи группы подключаются к ведущему серверу, пока не установлен ретранслятор группы; затем они переходят на ретранслятор, а их владельцам приходит просьба импортировать их заново."
+
+#, python-format
 msgid "Keys of the old server key revoked: %(count)d."
 msgstr "Отозвано ключей старого ключа сервера: %(count)d."
 
@@ -1478,6 +1501,9 @@ msgstr "Сначала переведите сервер AmneziaWG 2.0 на 3.1 
 
 msgid "Move the clients to AmneziaWG 3.1"
 msgstr "Перевести клиентов на AmneziaWG 3.1"
+
+msgid "Move the keys of the groups to the relay address"
+msgstr "Перенести ключи групп на адрес ретранслятора"
 
 msgid "Move the server to AmneziaWG 3.1? The container is rebuilt, clients are cut off for a few minutes and then import their keys again. If something fails, the server stays on 2.0."
 msgstr "Перевести сервер на AmneziaWG 3.1? Контейнер пересоберётся, клиенты отключатся на несколько минут, а затем заново импортируют свои ключи. Если что-то пойдёт не так, сервер останется на 2.0."

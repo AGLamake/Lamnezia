@@ -2,7 +2,7 @@
 
 from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from apps.core.services.providers import Providers
 from apps.ssh.services import RemoteHost
@@ -12,12 +12,14 @@ from apps.ssh.services import RemoteHost
 class PollTarget:
     """One server and its containers with client counters, keyed by the source of each.
 
-    `name` is the server's name, unique among the targets.
+    `name` is the server's name, unique among the targets. `key_sources` maps the source of a
+    clone in a server group to the source of the keys its peers are: those of the leading server.
     """
 
     name: str
     connect: Callable[[], AbstractContextManager[RemoteHost]]
     containers: Mapping[str, str]
+    key_sources: Mapping[str, str] = field(default_factory=dict)
 
 
 class PollTargets(Providers[PollTarget]):

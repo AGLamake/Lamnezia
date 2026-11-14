@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   group page shows the active member and who the relay and the panel reach; the relay card shows
   the channel load. New events: `relay_switched`, `member_unreachable`, `group_unreachable`,
   `relay_down` and `member_lagging` (`LAMNEZIA_GROUP_LAG_ALERT`).
+- **Keys of a group go through the relay**: with the relay installed, their `vpn://` links and
+  `.conf` files carry the domain of the group (or the relay address) and its port, and the group
+  page checks the DNS records of the domain. Owners of moved keys and of keys revoked at a join
+  get the new event `keys_updated`. Traffic, online status and limits of a group key are summed
+  over all members.
 
 ## [1.0.0] - 2026-11-13
 

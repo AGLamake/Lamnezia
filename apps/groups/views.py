@@ -15,6 +15,7 @@ from apps.accounts.permissions import AdminRequiredMixin
 from apps.groups.errors import GroupError
 from apps.groups.forms import GroupForm
 from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.services.addressing import DomainCheck, client_host
 from apps.groups.services.membership import (
     create_group,
     delete_group,
@@ -75,6 +76,8 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
             members=[(member, *_seen_by_relay(member, health)) for member in members],
             relay=relay,
             health=health,
+            client_host=client_host(group),
+            domain_warnings=DomainCheck(group).warnings(),
             candidates=candidates,
             **kwargs,
         )

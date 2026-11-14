@@ -26,6 +26,7 @@ class Event(StrEnum):
     KEYS_CHANGED = "keys_changed"
     KEYS_REVOKED = "keys_revoked"
     KEYS_MOVED = "keys_moved"
+    KEYS_UPDATED = "keys_updated"
     REGISTRATION_PENDING = "registration_pending"
     TICKET_CREATED = "ticket_created"
     CHAT_MESSAGE = "chat_message"
@@ -145,6 +146,18 @@ EVENTS: dict[Event, EventType] = {
         _(
             "Your VPN keys on {server} are moved to AmneziaWG 3.1. Open the personal account "
             "and import the new keys into the Amnezia app: the old ones stop working soon."
+        ),
+        to_user=True,
+    ),
+    # A server joined a group behind a relay (docs/FALLBACK.md section 6): the key of the user
+    # now carries the address of the relay, which a key already in the app cannot learn.
+    Event.KEYS_UPDATED: EventType(
+        _("Keys updated for a server group"),
+        _("Your VPN keys on {server} are updated"),
+        _(
+            "{server} now works in a group of servers that keeps the VPN up when one of them is "
+            "blocked. Open your keys in the personal account and import them into the Amnezia "
+            "app again, once: the old ones may stop working."
         ),
         to_user=True,
     ),

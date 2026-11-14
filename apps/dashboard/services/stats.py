@@ -186,10 +186,10 @@ class TrafficStats:
         return sorted(rows, key=lambda row: (-row.total, row.key.name))
 
     def online(self) -> list[AccessKey]:
-        """Keys online now by `OnlineRule` (DESIGN.md 5.5)."""
+        """Keys online now by `OnlineRule` (DESIGN.md 5.5), on any server of their group."""
         recent = TrafficCounter.objects.filter(
             self._online.filter(self._window.now),
-            source=OuterRef("source"),
+            key_source=OuterRef("source"),
             public_key=OuterRef("public_key"),
         )
         keys = self._scope.keys().exclude(status=KeyStatus.REVOKED).filter(Exists(recent))

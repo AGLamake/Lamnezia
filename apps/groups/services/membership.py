@@ -17,6 +17,7 @@ from apps.accounts.models import User
 from apps.audit.services import journal as audit
 from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.services.addressing import GroupKeyAddress
 from apps.keys.models import GONE_STATUSES, AccessKey, KeyStatus
 from apps.operations.models import Operation
 from apps.operations.services.launcher import launch
@@ -58,12 +59,14 @@ def create_group(
     group: ServerGroup, leader: ProtocolInstance, *, actor: User, ip: str | None = None
 ) -> ServerGroup:
     """Save the new `group` with the leader as it is as its identity: nothing changes on the
-    server; the group takes the leader's port.
+    server; the group takes the leader's port. With its relay running, the leader's keys move to
+    the relay address.
     """
     check_standalone(leader)
     group.port = leader.port
     group.save()
     _add_member(group, leader, leading=True, state=MemberState.MEMBER, joined_at=timezone.now())
+    GroupKeyAddress(group).apply()
     audit.log(CREATE_KIND, actor=actor, target=group, data={"leader": leader.pk}, ip=ip)
     return group
 

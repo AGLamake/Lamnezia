@@ -104,6 +104,19 @@ def test_sources_are_independent() -> None:
     assert TrafficCounter.objects.get(source="awg:2").rx_bytes == 100
 
 
+def test_clones_count_traffic_for_the_keys_of_the_leading_server() -> None:
+    # Two members of a group run one identity: their peers are keys of the leading server.
+    recorder = TrafficRecorder()
+    for n, (first, second) in enumerate([(1000, 0), (1500, 0), (1500, 300)]):
+        recorder.record("awg:2", [peer(first, 0)], START + STEP * n, key_source=SOURCE)
+        recorder.record("awg:3", [peer(second, 0)], START + STEP * n, key_source=SOURCE)
+
+    assert total() == (500 + 300, 0)
+    assert not TrafficHourly.objects.exclude(source=SOURCE).exists()
+    counters = TrafficCounter.objects.order_by("source")
+    assert [(c.source, c.key_source) for c in counters] == [("awg:2", SOURCE), ("awg:3", SOURCE)]
+
+
 def test_growth_without_handshake_marks_activity() -> None:
     # XRay has no handshake: growth of the counters is the only sign of use.
     recorder = TrafficRecorder()

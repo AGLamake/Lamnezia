@@ -8,6 +8,7 @@ from amnezia_core.containers import WG_CONTAINERS, WgContainer
 from amnezia_core.ipsec import IPSEC, IPSEC_CONTAINER, IpsecContainer
 from amnezia_core.openvpn import OPENVPN, OPENVPN_CONTAINER, OpenVpnContainer
 from amnezia_core.xray import XRAY, XRAY_CONTAINER, XrayContainer
+from apps.groups.services.addressing import client_hosts, key_sources
 from apps.keys.services.instances import Instance, instances
 from apps.protocols.models import ProtocolInstance
 from apps.servers.services.connection import connect
@@ -48,13 +49,15 @@ _KEY_CONTAINERS: dict[str, WgContainer | XrayContainer | OpenVpnContainer | Ipse
 
 @instances.register
 def key_instances() -> Iterator[Instance]:
-    # Keys of a group are issued on its leading server; the members are its clones.
+    # Keys of a group are issued on its leading server; the members are its clones. Behind a
+    # running relay, the keys send clients to the address of the group.
+    relayed = client_hosts()
     for instance in _instances(_KEY_CONTAINERS, clones=False):
         server = instance.server
         yield Instance(
             instance.source,
             f"{server.name} · {instance.title}",
-            server.host,
+            relayed.get(instance.source, server.host),
             partial(connect, server),
             port=instance.port,
             server_id=server.pk,
@@ -74,10 +77,14 @@ _TRAFFIC_CONTAINERS = (*WG_CONTAINERS, XRAY_CONTAINER)
 
 @poll_targets.register
 def traffic_targets() -> Iterator[PollTarget]:
+    # Traffic of a group member counts for the keys of its leading server.
+    leaders = key_sources()
     by_server = groupby(_instances(_TRAFFIC_CONTAINERS), key=lambda instance: instance.server)
     for server, group in by_server:
+        containers = {instance.source: instance.container for instance in group}
         yield PollTarget(
             server.name,
             partial(connect, server),
-            {instance.source: instance.container for instance in group},
+            containers,
+            {source: leaders[source] for source in containers if source in leaders},
         )

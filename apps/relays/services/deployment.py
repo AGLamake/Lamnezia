@@ -14,6 +14,7 @@ from django.utils.translation import gettext as _
 
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
+from apps.groups.services.addressing import GroupKeyAddress
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.operations.services.launcher import launch
@@ -115,9 +116,19 @@ class RelayDeployment:
             return config.to_json().encode()
 
     def _synced(self, plan: RelayPlan) -> None:
+        """Save what the relay runs; the keys of its groups now send clients to it."""
         self._relay.synced = plan.digest()
         self._relay.synced_at = timezone.now()
         self._relay.save(update_fields=["installed_at", "synced", "synced_at"])
+        moves = [GroupKeyAddress(group) for group, _members in plan.groups]
+        if not any(move.outdated for move in moves):
+            return
+        with self._ctx.step(_("Move the keys of the groups to the relay address")):
+            for move in moves:
+                self._ctx.log(
+                    _("%(group)s: keys moved: %(count)d.")
+                    % {"group": move.group.name, "count": move.apply()}
+                )
 
 
 def _refuse_reserved(ports: set[int]) -> None:
