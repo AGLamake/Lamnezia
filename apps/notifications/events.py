@@ -41,6 +41,11 @@ class Event(StrEnum):
     SUGGESTION_ACCEPTED = "suggestion_accepted"
     SUGGESTION_REJECTED = "suggestion_rejected"
     PAYMENT_RECEIVED = "payment_received"
+    RELAY_SWITCHED = "relay_switched"
+    MEMBER_UNREACHABLE = "member_unreachable"
+    GROUP_UNREACHABLE = "group_unreachable"
+    RELAY_DOWN = "relay_down"
+    MEMBER_LAGGING = "member_lagging"
     TEST = "test"
 
 
@@ -247,6 +252,46 @@ EVENTS: dict[Event, EventType] = {
         _("Payment received"),
         _("Payment received: {user}"),
         _("{user} paid {amount} {currency} for the plan {plan} ({provider})."),
+    ),
+    Event.RELAY_SWITCHED: EventType(
+        _("Relay switched"),
+        _("{group}: traffic moved to {to}"),
+        _(
+            "The relay {relay} cannot reach the server {from}, so the clients of the group "
+            "{group} go through {to} now. Their connection drops for a few seconds."
+        ),
+    ),
+    Event.MEMBER_UNREACHABLE: EventType(
+        _("Group server unreachable from the relay"),
+        _("{server} is unreachable from the relay"),
+        _(
+            "The relay {relay} cannot reach the server {server} of the group {group}. "
+            "The relay sends no clients to it until it answers again."
+        ),
+    ),
+    Event.GROUP_UNREACHABLE: EventType(
+        _("No group server reachable"),
+        _("{group}: no server is reachable"),
+        _(
+            "The relay {relay} reaches no server of the group {group}. "
+            "The clients of the group have no connection."
+        ),
+    ),
+    Event.RELAY_DOWN: EventType(
+        _("Relay does not answer"),
+        _("Relay {relay} does not answer"),
+        _(
+            "The panel cannot read the state of the relay {relay} ({host}). Last reading: "
+            "{last_seen}. The relay may still forward the clients on its own."
+        ),
+    ),
+    Event.MEMBER_LAGGING: EventType(
+        _("Group server lags behind"),
+        _("{server} lags behind the group {group}"),
+        _(
+            "The server {server} has missed key changes of the group {group} since {since}. "
+            "The relay skips it until the panel copies the group files onto it."
+        ),
     ),
     Event.TEST: EventType(
         _("Test"),

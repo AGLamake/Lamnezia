@@ -47,6 +47,11 @@
 | Инцидент закрыт | `incident_closed` | `server` |
 | Новое предложение статьи | `suggestion_created` | `user`, `kind`, `title` |
 | Оплата получена | `payment_received` | `user`, `plan`, `amount`, `currency`, `provider` |
+| Ретранслятор переключился | `relay_switched` | `group`, `relay`, `from`, `to` |
+| Сервер группы недоступен с ретранслятора | `member_unreachable` | `group`, `relay`, `server` |
+| Ни один сервер группы не доступен | `group_unreachable` | `group`, `relay` |
+| Ретранслятор не отвечает | `relay_down` | `relay`, `host`, `last_seen` |
+| Сервер группы отстаёт | `member_lagging` | `group`, `server`, `since` |
 
 Уведомления о пользователе уходят туда, что он выбрал на странице **Мессенджеры**: по умолчанию
 на email или в привязанный Telegram или Discord ([Telegram и Discord](Messengers.md)).

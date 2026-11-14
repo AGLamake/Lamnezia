@@ -219,6 +219,15 @@ the relay by itself every `LAMNEZIA_RELAY_SYNC_INTERVAL` seconds. **Update** on 
 once. **Remove** drops the container and the image; the service peers stay on the members, and
 clients of the groups lose the connection until another relay is installed.
 
+Every `LAMNEZIA_RELAY_MONITOR_INTERVAL` seconds the panel reads the state the agent writes. The
+group page shows for each member whether the relay reaches it, which one is **active** now and
+whether the panel itself reaches it over SSH, with the time of the last switch. The relay card
+shows the channel load and where the traffic of each group goes. A switch, a member the relay
+cannot reach, a group with no member left, a relay whose state is not read for two intervals and
+a member lagging longer than `LAMNEZIA_GROUP_LAG_ALERT` come as notifications
+([Notifications](Notifications.md)). Clients of a group are seen by the members at the relay's
+address; the panel shows no client addresses.
+
 ## Server access
 
 The panel connects to servers over SSH as `root` or as a user with passwordless sudo

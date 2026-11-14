@@ -78,6 +78,12 @@ msgstr "События"
 msgid "Failed"
 msgstr "Ошибка"
 
+msgid "Group server lags behind"
+msgstr "Сервер группы отстаёт"
+
+msgid "Group server unreachable from the relay"
+msgstr "Сервер группы недоступен с ретранслятора"
+
 msgid "Incident closed"
 msgstr "Инцидент закрыт"
 
@@ -149,6 +155,9 @@ msgstr "Новое обращение №{number} от {user}: {subject}"
 msgid "New support request"
 msgstr "Новое обращение в поддержку"
 
+msgid "No group server reachable"
+msgstr "Ни один сервер группы не доступен"
+
 #, python-brace-format
 msgid "Notifications from Lamnezia reach the channel {channel}."
 msgstr "Уведомления Lamnezia доходят до канала {channel}."
@@ -162,6 +171,16 @@ msgstr "Оплата получена"
 #, python-brace-format
 msgid "Payment received: {user}"
 msgstr "Оплата получена: {user}"
+
+msgid "Relay does not answer"
+msgstr "Ретранслятор не отвечает"
+
+msgid "Relay switched"
+msgstr "Ретранслятор переключился"
+
+#, python-brace-format
+msgid "Relay {relay} does not answer"
+msgstr "Ретранслятор {relay} не отвечает"
 
 msgid "Request answered in a messenger"
 msgstr "Ответ на обращение в мессенджер"
@@ -239,8 +258,24 @@ msgid "The keys of {user} are turned off: {reason}."
 msgstr "Ключи пользователя {user} отключены: {reason}."
 
 #, python-brace-format
+msgid "The panel cannot read the state of the relay {relay} ({host}). Last reading: {last_seen}. The relay may still forward the clients on its own."
+msgstr "Панель не может прочитать состояние ретранслятора {relay} ({host}). Последнее чтение: {last_seen}. Сам ретранслятор при этом может продолжать пересылать клиентов."
+
+#, python-brace-format
 msgid "The problem with {server} you reported is fixed. Thank you for telling us."
 msgstr "Проблема с {server}, о которой вы сообщили, устранена. Спасибо, что рассказали."
+
+#, python-brace-format
+msgid "The relay {relay} cannot reach the server {from}, so the clients of the group {group} go through {to} now. Their connection drops for a few seconds."
+msgstr "Ретранслятор {relay} не достучался до сервера {from}, поэтому клиенты группы {group} теперь идут через {to}. Их соединение прерывается на несколько секунд."
+
+#, python-brace-format
+msgid "The relay {relay} cannot reach the server {server} of the group {group}. The relay sends no clients to it until it answers again."
+msgstr "Ретранслятор {relay} не достучался до сервера {server} группы {group}. Ретранслятор не отправляет на него клиентов, пока он снова не ответит."
+
+#, python-brace-format
+msgid "The relay {relay} reaches no server of the group {group}. The clients of the group have no connection."
+msgstr "Ретранслятор {relay} не достучался ни до одного сервера группы {group}. У клиентов группы нет соединения."
 
 #, python-brace-format
 msgid "The request is now {status}."
@@ -249,6 +284,10 @@ msgstr "Статус обращения: {status}."
 #, python-brace-format
 msgid "The server {server} ({host}) does not answer. Last answer: {last_seen}."
 msgstr "Сервер {server} ({host}) не отвечает. Последний ответ: {last_seen}."
+
+#, python-brace-format
+msgid "The server {server} has missed key changes of the group {group} since {since}. The relay skips it until the panel copies the group files onto it."
+msgstr "Сервер {server} пропускает изменения ключей группы {group} с {since}. Ретранслятор обходит его, пока панель не скопирует на него файлы группы."
 
 #, python-brace-format
 msgid "The settings of {server} have changed. Open your keys in the personal account and import them into the Amnezia app again: the old ones no longer connect."
@@ -370,6 +409,22 @@ msgstr "пользователю"
 
 msgid "user"
 msgstr "пользователь"
+
+#, python-brace-format
+msgid "{group}: no server is reachable"
+msgstr "{group}: ни один сервер не доступен"
+
+#, python-brace-format
+msgid "{group}: traffic moved to {to}"
+msgstr "{group}: трафик переведён на {to}"
+
+#, python-brace-format
+msgid "{server} is unreachable from the relay"
+msgstr "{server} недоступен с ретранслятора"
+
+#, python-brace-format
+msgid "{server} lags behind the group {group}"
+msgstr "{server} отстаёт от группы {group}"
 
 #, python-brace-format
 msgid "{server} works again"

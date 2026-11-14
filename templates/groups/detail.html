@@ -1,5 +1,5 @@
 {% extends "servers/base.html" %}
-{% load i18n %}
+{% load i18n relays %}
 {% block title %}{{ group.name }} · Lamnezia{% endblock %}
 
 {% block breadcrumbs %}<li><a href="{% url 'groups:list' %}">{% translate "Server groups" %}</a></li><li aria-current="page">{{ group.name }}</li>{% endblock %}
@@ -23,13 +23,15 @@
   <div class="table-wrap">
     <table class="table table-cards">
       <thead>
-        <tr><th>{% translate "Server" %}</th><th>{% translate "State" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr>
+        <tr><th>{% translate "Server" %}</th><th>{% translate "State" %}</th><th>{% translate "From the relay" %}</th><th>{% translate "From the panel" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr>
       </thead>
       <tbody>
-        {% for member in members %}
+        {% for member, reachable, active in members %}
           <tr>
             <td><a href="{% url 'servers:detail' member.instance.server_id %}" class="font-medium hover:underline">{{ member.instance.server.name }}</a>{% if member.leading %} <span class="badge badge-muted">{% translate "leading" %}</span>{% endif %}</td>
             <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The server missed key changes while it was unreachable. The relay skips it until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% endif %}</td>
+            <td data-label="{% translate 'From the relay' %}">{% if reachable is None %}<span class="text-muted">—</span>{% elif reachable %}<span class="badge badge-success">{% translate "reachable" %}</span>{% else %}<span class="badge badge-danger">{% translate "unreachable" %}</span>{% endif %}{% if active %} <span class="badge badge-info" title="{% translate "The relay sends the clients of the group to this server now." %}">{% translate "active" %}</span>{% endif %}</td>
+            <td data-label="{% translate 'From the panel' %}">{% with online=member.instance.server.online %}{% if online is None %}<span class="text-muted">—</span>{% elif online %}<span class="badge badge-success">{% translate "online" %}</span>{% else %}<span class="badge badge-danger">{% translate "offline" %}</span>{% endif %}{% endwith %}</td>
             <td>
               {% if not member.leading and member.state != "leaving" %}
               <form method="post" action="{% url 'groups:leave' member.pk %}" data-confirm="{% translate "The server gets a clean AmneziaWG with a new key and no clients. Keys of the group stop working on it. A snapshot of its files is kept first. Continue?" %}">
@@ -43,6 +45,9 @@
       </tbody>
     </table>
   </div>
+  {% if relay %}
+    <p class="help-text">{% if relay.read_error %}{% translate "The panel cannot read the relay state now; the columns show the last reading." %} {% endif %}{% if relay.read_at %}{% blocktranslate with when=relay.read_at|date:"SHORT_DATETIME_FORMAT" %}Relay state read {{ when }}.{% endblocktranslate %}{% endif %}{% if health.switched_at %} {% blocktranslate with when=health.switched_at|unix_time|date:"SHORT_DATETIME_FORMAT" %}Last switch {{ when }}.{% endblocktranslate %}{% endif %}</p>
+  {% endif %}
 </section>
 
 <section class="card space-y-3">

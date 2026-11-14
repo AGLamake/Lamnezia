@@ -157,6 +157,10 @@ msgid "%(size)s per %(days)s days"
 msgstr "%(size)s за %(days)s дн."
 
 #, python-format
+msgid "%(size)s/s"
+msgstr "%(size)s/с"
+
+#, python-format
 msgid "%(speed)s Mbit/s"
 msgstr "%(speed)s Мбит/с"
 
@@ -549,6 +553,10 @@ msgstr[2] "Смена порта или параметров протокола 
 
 msgid "Channel"
 msgstr "Канал"
+
+#, python-format
+msgid "Channel load: %(incoming)s from the clients, %(outgoing)s to them."
+msgstr "Нагрузка на канал: %(incoming)s от клиентов, %(outgoing)s к ним."
 
 #, python-format
 msgid "Chat with %(user)s"
@@ -1033,6 +1041,12 @@ msgstr "Свободно на диске"
 msgid "Frequently asked questions"
 msgstr "Частые вопросы"
 
+msgid "From the panel"
+msgstr "Из панели"
+
+msgid "From the relay"
+msgstr "С ретранслятора"
+
 msgid "Get a key"
 msgstr "Получить ключ"
 
@@ -1321,6 +1335,14 @@ msgstr "Последняя чистка"
 
 msgid "Last message"
 msgstr "Последнее сообщение"
+
+#, python-format
+msgid "Last reading %(when)s."
+msgstr "Последнее чтение %(when)s."
+
+#, python-format
+msgid "Last switch %(when)s."
+msgstr "Последнее переключение %(when)s."
 
 msgid "Later"
 msgstr "Позже"
@@ -2028,6 +2050,10 @@ msgstr "Отклонить"
 msgid "Relay"
 msgstr "Ретранслятор"
 
+#, python-format
+msgid "Relay state read %(when)s."
+msgstr "Состояние ретранслятора прочитано %(when)s."
+
 msgid "Release notes"
 msgstr "Что нового"
 
@@ -2666,6 +2692,12 @@ msgstr "Страница была открыта слишком долго ил�
 msgid "The panel cannot be reached. Check the internet connection and try again."
 msgstr "Панель недоступна. Проверьте подключение к интернету и попробуйте ещё раз."
 
+msgid "The panel cannot read the relay state now; the columns show the last reading."
+msgstr "Панель сейчас не может прочитать состояние ретранслятора; в столбцах — последнее прочитанное."
+
+msgid "The panel cannot read the relay state. The relay may still forward the clients on its own."
+msgstr "Панель не может прочитать состояние ретранслятора. Сам ретранслятор при этом может продолжать пересылать клиентов."
+
 msgid "The panel compares its keys with the server files regularly. A difference appears when clients are added or removed in the Amnezia app or by hand."
 msgstr "Панель регулярно сравнивает свои ключи с файлами на серверах. Расхождение появляется, когда клиентов добавляют или удаляют в приложении Amnezia или вручную."
 
@@ -2741,6 +2773,9 @@ msgstr "Контейнер ретранслятора всё ещё на сер�
 
 msgid "The relay forwards to an IPv4 address: check the DNS name of the server."
 msgstr "Ретранслятор пересылает на IPv4-адрес: проверьте DNS-имя сервера."
+
+msgid "The relay sends the clients of the group to this server now."
+msgstr "Сейчас ретранслятор отправляет клиентов группы на этот сервер."
 
 msgid "The relay takes clients of the groups that name this server and forwards them to a live member. Its agent probes the members and switches by itself, even when the panel is down."
 msgstr "Ретранслятор принимает клиентов групп, назначивших этот сервер, и пересылает их живому участнику. Его агент сам проверяет участников и переключается, даже когда панель недоступна."
@@ -3266,6 +3301,12 @@ msgstr "встроенные записи"
 msgid "built-in entry"
 msgstr "встроенная запись"
 
+msgid "bytes per second from clients"
+msgstr "байт в секунду от клиентов"
+
+msgid "bytes per second to clients"
+msgstr "байт в секунду к клиентам"
+
 msgid "can be installed"
 msgstr "можно установить"
 
@@ -3330,6 +3371,9 @@ msgstr "участник группы"
 
 msgid "group members"
 msgstr "участники группы"
+
+msgid "health"
+msgstr "состояние"
 
 #, python-format
 msgid "in %(days)s day"
@@ -3460,6 +3504,9 @@ msgstr "без срока"
 msgid "no limit"
 msgstr "без ограничения"
 
+msgid "no server reachable"
+msgstr "ни один сервер не доступен"
+
 msgid "not finished"
 msgstr "не завершена"
 
@@ -3575,8 +3622,14 @@ msgctxt "material"
 msgid "published"
 msgstr "опубликован"
 
+msgid "reachable"
+msgstr "доступен"
+
 msgid "reached"
 msgstr "исчерпан"
+
+msgid "reading error"
+msgstr "ошибка чтения"
 
 msgid "reason"
 msgstr "причина"
@@ -3673,6 +3726,9 @@ msgstr "источник"
 msgid "state"
 msgstr "состояние"
 
+msgid "state read at"
+msgstr "состояние прочитано"
+
 msgid "status"
 msgstr "статус"
 
@@ -3715,6 +3771,10 @@ msgstr "заголовок (русский)"
 msgid "topic"
 msgstr "тема"
 
+#, python-format
+msgid "traffic goes to %(server)s"
+msgstr "трафик идёт на %(server)s"
+
 msgid "trial"
 msgstr "пробный"
 
@@ -3723,6 +3783,12 @@ msgstr "адрес в туннеле"
 
 msgid "unknown"
 msgstr "неизвестно"
+
+msgid "unreachable"
+msgstr "недоступен"
+
+msgid "unreachable:"
+msgstr "недоступны:"
 
 #, python-format
 msgid "until %(date)s"

@@ -24,6 +24,8 @@ from apps.groups.services.membership import (
     start_leave,
 )
 from apps.protocols.models import ProtocolInstance
+from apps.relays.models import Relay
+from apps.relays.services.health import GroupHealth
 
 
 class GroupListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
@@ -66,11 +68,24 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
             for instance in standalone_instances()
             if instance.port == group.port
         ]
+        relay = Relay.objects.filter(server_id=group.relay_id).first() if group.relay_id else None
+        health = relay.group_health(group.port) if relay else None
+        members = group.members.select_related("instance__server")
         return super().get_context_data(
-            members=group.members.select_related("instance__server"),
+            members=[(member, *_seen_by_relay(member, health)) for member in members],
+            relay=relay,
+            health=health,
             candidates=candidates,
             **kwargs,
         )
+
+
+def _seen_by_relay(member: GroupMember, health: GroupHealth | None) -> tuple[bool | None, bool]:
+    """Whether the relay reaches the member (None: unknown) and whether it is the active one."""
+    if health is None:
+        return None, False
+    active = health.active is not None and health.active.id == member.pk
+    return health.reachable(member.pk), active
 
 
 class GroupJoinView(AdminRequiredMixin, View):

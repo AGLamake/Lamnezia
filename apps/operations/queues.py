@@ -17,6 +17,8 @@ POLL_TASKS = frozenset(
         "servers.monitor_server",
         "traffic.collect",
         "traffic.collect_server",
+        "relays.monitor",
+        "relays.monitor_relay",
     }
 )
 

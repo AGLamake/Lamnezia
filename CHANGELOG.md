@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Its ports are checked before the installation; its agent probes the members through a service
   peer and switches clients to a live one by itself, even while the panel is down. The panel
   updates the relay when its groups change (`LAMNEZIA_RELAY_SYNC_INTERVAL`).
+- **Relay monitoring**: the panel reads the agent state (`LAMNEZIA_RELAY_MONITOR_INTERVAL`). The
+  group page shows the active member and who the relay and the panel reach; the relay card shows
+  the channel load. New events: `relay_switched`, `member_unreachable`, `group_unreachable`,
+  `relay_down` and `member_lagging` (`LAMNEZIA_GROUP_LAG_ALERT`).
 
 ## [1.0.0] - 2026-11-13
 

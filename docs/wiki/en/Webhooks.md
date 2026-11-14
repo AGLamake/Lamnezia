@@ -44,6 +44,11 @@ zone), `data` depends on the event.
 | `incident_closed` | The incident is closed. | `server` |
 | `suggestion_created` | A user suggested a link or a text for the guides. | `user`, `kind` (`Link to an article`, `My own text`), `title` |
 | `payment_received` | A user paid for a plan ([Billing plugins](Billing-plugins.md)). | `user`, `plan`, `amount`, `currency`, `provider` — payment method key |
+| `relay_switched` | The relay of a group sends its clients to another member: the previous one stopped answering. | `group`, `relay` — relay server name, `from`, `to` — names of the previous and the new member |
+| `member_unreachable` | The relay stopped reaching a member of a group. Once until the member answers again. | `group`, `relay`, `server` — member name |
+| `group_unreachable` | The relay reaches no member of a group: its clients have no connection. | `group`, `relay` |
+| `relay_down` | The panel has not read the relay state for two monitoring intervals: the relay or its agent does not answer. Once until a reading succeeds. | `relay`, `host`, `last_seen` — time of the last reading or an empty string |
+| `member_lagging` | A group member has missed key changes longer than `LAMNEZIA_GROUP_LAG_ALERT`. Once per lag. | `group`, `server`, `since` — when it started to lag |
 | `test` | **Send test** on the channel page. | `channel` — channel name |
 
 Chat messages are sent once the support chat is available. New events and new `data` fields
@@ -90,6 +95,16 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/suggestion_created"}}}},
     {"if": {"properties": {"event": {"const": "payment_received"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/payment_received"}}}},
+    {"if": {"properties": {"event": {"const": "relay_switched"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/relay_switched"}}}},
+    {"if": {"properties": {"event": {"const": "member_unreachable"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/member_unreachable"}}}},
+    {"if": {"properties": {"event": {"const": "group_unreachable"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/group_unreachable"}}}},
+    {"if": {"properties": {"event": {"const": "relay_down"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/relay_down"}}}},
+    {"if": {"properties": {"event": {"const": "member_lagging"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/member_lagging"}}}},
     {"if": {"properties": {"event": {"const": "test"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/test"}}}}
   ],
@@ -185,6 +200,31 @@ may be added: ignore what you do not know.
         "currency": {"type": "string"},
         "provider": {"type": "string"}
       }
+    },
+    "relay_switched": {
+      "type": "object",
+      "required": ["group", "relay", "from", "to"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}, "from": {"type": "string"}, "to": {"type": "string"}}
+    },
+    "member_unreachable": {
+      "type": "object",
+      "required": ["group", "relay", "server"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}, "server": {"type": "string"}}
+    },
+    "group_unreachable": {
+      "type": "object",
+      "required": ["group", "relay"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}}
+    },
+    "relay_down": {
+      "type": "object",
+      "required": ["relay", "host", "last_seen"],
+      "properties": {"relay": {"type": "string"}, "host": {"type": "string"}, "last_seen": {"anyOf": [{"type": "string", "format": "date-time"}, {"const": ""}]}}
+    },
+    "member_lagging": {
+      "type": "object",
+      "required": ["group", "server", "since"],
+      "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
     },
     "test": {
       "type": "object",

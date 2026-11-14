@@ -1,4 +1,4 @@
-{% load i18n ui %}
+{% load i18n ui relays %}
 {% with relay=server.relay_role groups=server.relayed_groups.all %}
 <details class="disclosure"{% if groups and not relay.installed %} open{% endif %}>
   <summary>{% icon "switch" "icon-sm text-muted" %}<span>{% translate "Relay" %}</span>
@@ -15,6 +15,17 @@
     {% endif %}
     {% if relay.installed %}
       <p>{% blocktranslate with when=relay.synced_at|date:"SHORT_DATETIME_FORMAT" %}Members written {{ when }}.{% endblocktranslate %}</p>
+      {% if relay.read_error %}
+        <p class="text-sm text-danger-soft-fg">{% translate "The panel cannot read the relay state. The relay may still forward the clients on its own." %}{% if relay.read_at %} {% blocktranslate with when=relay.read_at|date:"SHORT_DATETIME_FORMAT" %}Last reading {{ when }}.{% endblocktranslate %}{% endif %}</p>
+      {% endif %}
+      {% if relay.read_at %}
+        <p>{% blocktranslate with incoming=relay.rate_from_clients|per_second outgoing=relay.rate_to_clients|per_second %}Channel load: {{ incoming }} from the clients, {{ outgoing }} to them.{% endblocktranslate %}</p>
+        <ul class="space-y-1">
+          {% for health in relay.groups_health %}
+            <li>UDP {{ health.port }}: {% if health.active %}{% blocktranslate with server=health.active.name %}traffic goes to {{ server }}{% endblocktranslate %}{% else %}{% translate "no server reachable" %}{% endif %}{% if health.down %} · {% translate "unreachable:" %} {% for member in health.down %}{{ member.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     {% endif %}
     <div class="flex flex-wrap items-end gap-2">
       {% if relay.installed %}

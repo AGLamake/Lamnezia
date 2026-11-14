@@ -46,6 +46,11 @@ channels hear each event.
 | Incident closed | `incident_closed` | `server` |
 | New article suggestion | `suggestion_created` | `user`, `kind`, `title` |
 | Payment received | `payment_received` | `user`, `plan`, `amount`, `currency`, `provider` |
+| Relay switched | `relay_switched` | `group`, `relay`, `from`, `to` |
+| Group server unreachable from the relay | `member_unreachable` | `group`, `relay`, `server` |
+| No group server reachable | `group_unreachable` | `group`, `relay` |
+| Relay does not answer | `relay_down` | `relay`, `host`, `last_seen` |
+| Group server lags behind | `member_lagging` | `group`, `server`, `since` |
 
 Notifications about the user go where they chose on their **Messengers** page: email by default,
 or their linked Telegram or Discord ([Telegram and Discord](Messengers.md)).

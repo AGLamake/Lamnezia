@@ -256,6 +256,10 @@ RECONCILE_INTERVAL = env.int("RECONCILE_INTERVAL", default=900)
 GROUP_CATCH_UP_INTERVAL = env.int("GROUP_CATCH_UP_INTERVAL", default=300)
 # Seconds between checks that every relay forwards the groups and members of now.
 RELAY_SYNC_INTERVAL = env.int("RELAY_SYNC_INTERVAL", default=60)
+# Seconds between readings of the relay agent state; a relay is reported after two without one.
+RELAY_MONITOR_INTERVAL = env.int("RELAY_MONITOR_INTERVAL", default=60)
+# Seconds a group member may lag behind its group before the panel notifies of it.
+GROUP_LAG_ALERT = env.int("GROUP_LAG_ALERT", default=3600)
 # Seconds between copies of the protocol files of every server into the panel, for a restore.
 PROTOCOL_BACKUP_INTERVAL = env.int("PROTOCOL_BACKUP_INTERVAL", default=3600)
 # Seconds between server health readings; a server is offline after two intervals without an answer.
@@ -280,6 +284,11 @@ CELERY_BEAT_SCHEDULE = {
     "keys-reconcile": {"task": "keys.reconcile", "schedule": RECONCILE_INTERVAL},
     "groups-catch-up": {"task": "groups.catch_up", "schedule": GROUP_CATCH_UP_INTERVAL},
     "relays-sync": {"task": "relays.sync", "schedule": RELAY_SYNC_INTERVAL},
+    "relays-monitor": {
+        "task": "relays.monitor",
+        "schedule": RELAY_MONITOR_INTERVAL,
+        "options": {"expires": RELAY_MONITOR_INTERVAL},
+    },
     "backups-save-protocols": {
         "task": "backups.save_protocols",
         "schedule": PROTOCOL_BACKUP_INTERVAL,
