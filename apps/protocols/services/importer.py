@@ -50,6 +50,7 @@ from apps.accounts.models import User
 from apps.keys.errors import explained_format_errors
 from apps.keys.services.adoption import adopt_certificate_client, adopt_peer, adopt_xray_client
 from apps.keys.services.ipsec_clients import IpsecDatabase
+from apps.keys.services.service_peers import service_peers
 from apps.keys.services.xray_profiles import follow_short_id
 from apps.operations.models import Operation
 from apps.operations.services.context import OperationContext
@@ -114,12 +115,15 @@ class AwgFiles:
         }
 
     def adopt(self, source: str) -> tuple[int, int]:
+        """Keys for the peers of users; the panel's own service peers are not keys."""
+        service = service_peers.of(source)
+        peers = [peer for peer in self.config.peers if peer.public_key not in service]
         new = 0
-        for number, peer in enumerate(self.config.peers, start=1):
+        for number, peer in enumerate(peers, start=1):
             fallback = _("Imported client %(number)d") % {"number": number}
             _key, created = adopt_peer(source, peer, self.clients, fallback)
             new += created
-        return new, len(self.config.peers) - new
+        return new, len(peers) - new
 
 
 @dataclass(frozen=True, repr=False)

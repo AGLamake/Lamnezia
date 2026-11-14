@@ -194,6 +194,31 @@ files onto it in the background operation "Catch up with the server group": its 
 group, revoked ones are gone, and it is back in the relay list. If no member answers, the operation
 fails and changes nothing.
 
+### Relay
+
+Clients of a group connect to the relay, which forwards their traffic to a live member. Any added
+server can be the relay, including the panel's own machine.
+
+1. In the group settings, pick the server in the **Relay** field.
+2. On that server's card, open **Relay** and press **Install**. A background operation checks the
+   OS, adds the service peer "Lamnezia relay" to every member, builds the `lamnezia-relay`
+   container and publishes the ports of the groups as UDP.
+
+The port of a group is checked before the installation: ports 80 and 443 belong to the panel's web
+server, and a port another program or container listens on is refused with a clear error. So a
+member of the group cannot be on the relay server with the same port. The container runs in its own
+network, without `network_mode: host`, and publishes only the ports of the groups.
+
+The agent inside the container probes the members in order every few seconds with a new handshake
+through the service peer and sends clients to the first live one. Before a switch the candidate is
+probed again, the `nftables` rules change in one transaction, and old connections are dropped. The
+agent does not need the panel: switching works even while the panel is down.
+
+When the members, their order, the lagging ones or the port of a group change, the panel updates
+the relay by itself every `LAMNEZIA_RELAY_SYNC_INTERVAL` seconds. **Update** on the card does it at
+once. **Remove** drops the container and the image; the service peers stay on the members, and
+clients of the groups lose the connection until another relay is installed.
+
 ## Server access
 
 The panel connects to servers over SSH as `root` or as a user with passwordless sudo

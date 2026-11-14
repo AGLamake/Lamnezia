@@ -1,0 +1,37 @@
+{% load i18n ui %}
+{% with relay=server.relay_role groups=server.relayed_groups.all %}
+<details class="disclosure"{% if groups and not relay.installed %} open{% endif %}>
+  <summary>{% icon "switch" "icon-sm text-muted" %}<span>{% translate "Relay" %}</span>
+    <span class="disclosure-meta">{% if relay.installed %}<span class="badge badge-success">{% translate "installed" %}</span>{% elif relay %}<span class="badge badge-warning">{% translate "not finished" %}</span>{% else %}<span class="badge badge-muted">{% translate "not installed" %}</span>{% endif %}</span>
+  </summary>
+  <div class="disclosure-body">
+    <p class="help-text">{% translate "The relay takes clients of the groups that name this server and forwards them to a live member. Its agent probes the members and switches by itself, even when the panel is down." %}</p>
+    {% if groups %}
+      <ul class="space-y-1">
+        {% for group in groups %}<li><a href="{% url 'groups:detail' group.pk %}" class="text-link hover:underline">{{ group.name }}</a> · UDP {{ group.port }}</li>{% endfor %}
+      </ul>
+    {% else %}
+      <p class="help-text">{% translate "No group names this server as its relay yet." %}</p>
+    {% endif %}
+    {% if relay.installed %}
+      <p>{% blocktranslate with when=relay.synced_at|date:"SHORT_DATETIME_FORMAT" %}Members written {{ when }}.{% endblocktranslate %}</p>
+    {% endif %}
+    <div class="flex flex-wrap items-end gap-2">
+      {% if relay.installed %}
+        <form method="post" action="{% url 'relays:update' server.pk %}">
+          {% csrf_token %}<button type="submit" class="btn btn-secondary">{% translate "Update" %}</button>
+        </form>
+      {% endif %}
+      <form method="post" action="{% url 'relays:install' server.pk %}">
+        {% csrf_token %}<button type="submit" class="btn btn-secondary">{% if relay %}{% translate "Reinstall" %}{% else %}{% translate "Install" %}{% endif %}</button>
+      </form>
+      {% if relay %}
+        <form method="post" action="{% url 'relays:remove' server.pk %}" data-confirm="{% translate "Remove the relay? Clients of its groups lose the connection until another relay is installed." %}">
+          {% csrf_token %}<button type="submit" class="btn btn-secondary">{% translate "Remove" %}</button>
+        </form>
+      {% endif %}
+    </div>
+    <p class="help-text">{% translate "The ports of the groups are published on the server as UDP; a port another program uses is refused before the installation. Ports 80 and 443 belong to the panel." %}</p>
+  </div>
+</details>
+{% endwith %}

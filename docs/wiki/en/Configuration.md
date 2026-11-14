@@ -29,6 +29,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_TRAFFIC_INTERVAL` | `300` | Seconds between traffic readings from the servers; limits are applied as often ([Users, plans and limits](Users-plans-limits.md#applying-limits)). |
 | `LAMNEZIA_RECONCILE_INTERVAL` | `900` | Seconds between comparisons of the panel keys with the servers. |
 | `LAMNEZIA_GROUP_CATCH_UP_INTERVAL` | `300` | Seconds between checks of the lagging members of server groups and their catch-up ([Server groups](Servers-and-import.md#server-groups)). |
+| `LAMNEZIA_RELAY_SYNC_INTERVAL` | `60` | Seconds between checks of the relays; one whose groups or members changed is updated ([Relay](Servers-and-import.md#relay)). |
 | `LAMNEZIA_PROTOCOL_BACKUP_INTERVAL` | `3600` | Seconds between copies of the server files (`awg0.conf`, `clientsTable`) into the panel ([Backup](Backup.md#copies-of-the-server-files)). |
 | `LAMNEZIA_BACKUP_INTERVAL` | `86400` | Seconds between backups of the database and uploaded files. |
 | `LAMNEZIA_BACKUP_KEEP` | `14` | Backups of each kind to keep. |

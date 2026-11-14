@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Keys of a server group** change on every member that answers. A member that misses a change
   is marked lagging, left out of the relay list and caught up by a periodic operation
   (`LAMNEZIA_GROUP_CATCH_UP_INTERVAL`). Users of a joining server get keys of the group.
+- **Relay of a server group**, installed with one button on any server, the panel's machine too.
+  Its ports are checked before the installation; its agent probes the members through a service
+  peer and switches clients to a live one by itself, even while the panel is down. The panel
+  updates the relay when its groups change (`LAMNEZIA_RELAY_SYNC_INTERVAL`).
 
 ## [1.0.0] - 2026-11-13
 

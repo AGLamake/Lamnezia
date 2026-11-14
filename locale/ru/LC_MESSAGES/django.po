@@ -281,6 +281,10 @@ msgstr "Добавьте ключ в приложение"
 msgid "Add the link to v2rayN, v2RayTun, Hiddify, Streisand or another XRay client as a subscription. The client fetches your active XRay keys by it and updates them itself: a re-issued key or a changed server reaches it without a new link. The Amnezia app does not read subscription links: add keys to it one by one."
 msgstr "Добавьте ссылку в v2rayN, v2RayTun, Hiddify, Streisand или другой клиент XRay как подписку. Клиент забирает по ней ваши действующие ключи XRay и обновляет их сам: перевыпущенный ключ или изменённый сервер приходят без новой ссылки. Приложение Amnezia ссылки-подписки не читает: в него ключи добавляются по одному."
 
+#, python-format
+msgid "Add the service peer on %(server)s"
+msgstr "Добавить служебный пир на %(server)s"
+
 msgid "Added"
 msgstr "Добавлен"
 
@@ -367,6 +371,9 @@ msgstr "Приглашение сразу выдаёт свой тариф пр�
 
 msgid "Android version"
 msgstr "Версия Android"
+
+msgid "Another program or container listens on it, see the step log. A member of the group cannot be on the relay server with the same port: pick another relay."
+msgstr "Его слушает другая программа или контейнер, см. журнал шага. Участник группы не может стоять на сервере ретранслятора с тем же портом: выберите другой ретранслятор."
 
 msgid "Anyone with the link gets your keys. If it leaked, make a new one: the old link stops working."
 msgstr "Кто знает ссылку, тот получает ваши ключи. Если она утекла, сделайте новую: старая перестанет работать."
@@ -497,6 +504,9 @@ msgstr "Навигационная цепочка"
 msgid "Browsers signed in to your account. Only the browser, the system and the sign-in time are kept."
 msgstr "Браузеры, в которых выполнен вход в ваш аккаунт. Хранятся только браузер, система и время входа."
 
+msgid "Build the relay image"
+msgstr "Собрать образ ретранслятора"
+
 msgid "Buttons"
 msgstr "Кнопки"
 
@@ -567,8 +577,14 @@ msgstr "Проверить снова"
 msgid "Check now"
 msgstr "Проверить сейчас"
 
+msgid "Check that the members are online; the relay is updated again on the next sync."
+msgstr "Проверьте, что участники на связи; ретранслятор обновится снова при следующей синхронизации."
+
 msgid "Check that the server is a clone"
 msgstr "Проверить, что сервер — клон"
+
+msgid "Check the ports of the groups"
+msgstr "Проверить порты групп"
 
 msgid "Check your email"
 msgstr "Проверьте почту"
@@ -652,6 +668,10 @@ msgstr "Подключение"
 
 msgid "Connect to the server"
 msgstr "Подключиться к серверу"
+
+#, python-format
+msgid "Connect to the servers of %(group)s"
+msgstr "Подключиться к серверам группы %(group)s"
 
 msgid "Container"
 msgstr "Контейнер"
@@ -967,6 +987,9 @@ msgstr "Фильтры"
 msgid "Filters and details that do not need a page of their own."
 msgstr "Фильтры и подробности, которым не нужна отдельная страница."
 
+msgid "Find the relay"
+msgstr "Найти ретранслятор"
+
 msgid "Find the server in the group"
 msgstr "Найти сервер в группе"
 
@@ -1049,6 +1072,10 @@ msgstr "Группа"
 #, python-format
 msgid "Group keys issued to users: %(count)d."
 msgstr "Пользователям выдано ключей группы: %(count)d."
+
+#, python-format
+msgid "Groups forwarded: %(count)d."
+msgstr "Групп пересылается: %(count)d."
 
 msgid "Guides"
 msgstr "Инструкции"
@@ -1186,6 +1213,12 @@ msgstr "Установите приложение"
 
 msgid "Install the protocol on this server with the saved keys?"
 msgstr "Установить протокол на этот сервер с сохранёнными ключами?"
+
+msgid "Install the relay"
+msgstr "Установить ретранслятор"
+
+msgid "Install the relay on the server card again."
+msgstr "Установите ретранслятор заново в карточке сервера."
 
 msgid "Install the service on this server from the saved copy?"
 msgstr "Установить сервис на этот сервер из сохранённой копии?"
@@ -1399,6 +1432,10 @@ msgstr "Бот покинет этот сервер. Продолжить?"
 msgid "Markdown."
 msgstr "Markdown."
 
+#, python-format
+msgid "Members written %(when)s."
+msgstr "Участники записаны %(when)s."
+
 msgid "Memory"
 msgstr "Память"
 
@@ -1513,6 +1550,9 @@ msgstr "Без срока"
 msgid "No events found."
 msgstr "Событий не найдено."
 
+msgid "No group names this server as its relay yet."
+msgstr "Пока ни одна группа не назначила этот сервер ретранслятором."
+
 msgid "No groups yet. A group starts from a standalone AmneziaWG 3.1 server."
 msgstr "Групп пока нет. Группа создаётся из одиночного сервера AmneziaWG 3.1."
 
@@ -1536,6 +1576,9 @@ msgstr "Ключей нет."
 
 msgid "No materials yet."
 msgstr "Материалов пока нет."
+
+msgid "No member of the group could be reached to add the service peer."
+msgstr "Ни один участник группы не ответил, служебный пир добавить некуда."
 
 msgid "No operations found."
 msgstr "Операции не найдены."
@@ -1847,6 +1890,12 @@ msgstr "Порт"
 msgid "Portal layout"
 msgstr "Макет портала"
 
+msgid "Ports 80 and 443 belong to the panel's web server (HTTPS and HTTP/3) on its machine. Give the group another port."
+msgstr "Порты 80 и 443 занимает веб-сервер панели (HTTPS и HTTP/3) на её машине. Назначьте группе другой порт."
+
+msgid "Prepare the list of members"
+msgstr "Подготовить список участников"
+
 msgid "Preview"
 msgstr "Предпросмотр"
 
@@ -1888,6 +1937,9 @@ msgstr "Опубликовать как полезный материал"
 
 msgid "Publish as an FAQ article"
 msgstr "Опубликовать как статью FAQ"
+
+msgid "Publish the ports of the groups"
+msgstr "Опубликовать порты групп"
 
 msgid "Published"
 msgstr "Опубликовано"
@@ -1973,6 +2025,9 @@ msgstr "Перевыпустить ключи, импортированные с
 msgid "Reject"
 msgstr "Отклонить"
 
+msgid "Relay"
+msgstr "Ретранслятор"
+
 msgid "Release notes"
 msgstr "Что нового"
 
@@ -1981,6 +2036,15 @@ msgstr "Удалить"
 
 msgid "Remove the container"
 msgstr "Удалить контейнер"
+
+msgid "Remove the relay"
+msgstr "Удалить ретранслятор"
+
+msgid "Remove the relay container"
+msgstr "Удалить контейнер ретранслятора"
+
+msgid "Remove the relay? Clients of its groups lose the connection until another relay is installed."
+msgstr "Удалить ретранслятор? Клиенты его групп потеряют связь, пока не будет установлен другой ретранслятор."
 
 msgid "Remove the service? What it keeps on the server is deleted with the container."
 msgstr "Удалить сервис? Всё, что он хранит на сервере, удалится вместе с контейнером."
@@ -2118,6 +2182,9 @@ msgstr "Разделы"
 
 msgid "Security"
 msgstr "Безопасность"
+
+msgid "See the step log; remove it with `docker rm -f lamnezia-relay` and try again."
+msgstr "См. журнал шага; удалите его командой `docker rm -f lamnezia-relay` и повторите."
 
 msgid "Send"
 msgstr "Отправить"
@@ -2329,6 +2396,9 @@ msgstr "Запустить"
 msgid "Start again"
 msgstr "Запустить заново"
 
+msgid "Start the relay container"
+msgstr "Запустить контейнер ретранслятора"
+
 msgid "Started"
 msgstr "Запущена"
 
@@ -2439,11 +2509,20 @@ msgstr "VPN-сервис работает."
 msgid "The VPS the panel manages: their state, payment and quick actions."
 msgstr "VPS под управлением панели: состояние, оплата и быстрые действия."
 
+msgid "The address of a member server could not be found."
+msgstr "Не удалось найти адрес сервера-участника."
+
 msgid "The administrator has not set up the Discord application."
 msgstr "Администратор не настроил приложение Discord."
 
 msgid "The administrator has not set up the Telegram bot."
 msgstr "Администратор не настроил Telegram-бота."
+
+msgid "The agent is up to date."
+msgstr "Агент актуален."
+
+msgid "The agent is updated."
+msgstr "Агент обновлён."
 
 msgid "The author asks not to be named."
 msgstr "Автор просит не указывать его имя."
@@ -2633,14 +2712,38 @@ msgstr "Оплата получена, доступ продлён."
 msgid "The port is above 9999: some providers block or throttle UDP on it and the VPN may not connect or be slow."
 msgstr "Порт выше 9999: часть провайдеров блокирует или режет на нём UDP, VPN может не подключиться или работать медленно."
 
+msgid "The port of a group is already used on the relay server."
+msgstr "Порт группы уже занят на сервере ретранслятора."
+
+msgid "The port of a group is one the web server of the panel needs."
+msgstr "Порт группы нужен веб-серверу панели."
+
 msgid "The ports are opened for TCP and UDP. Open them in the firewall of the hosting provider if it has one."
 msgstr "Порты открываются для TCP и UDP. Если у хостинга есть свой файрвол, откройте их и там."
+
+msgid "The ports of the groups are published on the server as UDP; a port another program uses is refused before the installation. Ports 80 and 443 belong to the panel."
+msgstr "Порты групп публикуются на сервере как UDP; порт, занятый другой программой, отклоняется до установки. Порты 80 и 443 принадлежат панели."
 
 msgid "The preview failed. Save the article to see it."
 msgstr "Предпросмотр не удался. Сохраните статью, чтобы увидеть её."
 
 msgid "The protocol container is removed from the server."
 msgstr "Контейнер протокола удалён с сервера."
+
+msgid "The relay container is not on the server."
+msgstr "Контейнера ретранслятора нет на сервере."
+
+msgid "The relay container is running."
+msgstr "Контейнер ретранслятора запущен."
+
+msgid "The relay container is still on the server."
+msgstr "Контейнер ретранслятора всё ещё на сервере."
+
+msgid "The relay forwards to an IPv4 address: check the DNS name of the server."
+msgstr "Ретранслятор пересылает на IPv4-адрес: проверьте DNS-имя сервера."
+
+msgid "The relay takes clients of the groups that name this server and forwards them to a live member. Its agent probes the members and switches by itself, even when the panel is down."
+msgstr "Ретранслятор принимает клиентов групп, назначивших этот сервер, и пересылает их живому участнику. Его агент сам проверяет участников и переключается, даже когда панель недоступна."
 
 msgid "The request is closed. If the problem comes back, open a new one."
 msgstr "Обращение закрыто. Если проблема вернётся, откройте новое."
@@ -2685,6 +2788,9 @@ msgstr "Сервер ещё ни разу не ответил."
 
 msgid "The server is already in a group."
 msgstr "Сервер уже в группе."
+
+msgid "The server is no longer a relay: nothing to do."
+msgstr "Сервер больше не ретранслятор: делать нечего."
 
 msgid "The server is no longer joining or leaving the group: nothing to do."
 msgstr "Сервер уже не вступает в группу и не выходит из неё: делать нечего."
@@ -2892,8 +2998,17 @@ msgstr "Отвязать этот аккаунт?"
 msgid "Unlinked."
 msgstr "Отвязано."
 
+msgid "Update"
+msgstr "Обновить"
+
 msgid "Update the keys"
 msgstr "Обновить ключи"
+
+msgid "Update the relay"
+msgstr "Обновить ретранслятор"
+
+msgid "Update the relay agent"
+msgstr "Обновить агент ретранслятора"
 
 msgid "Upload speed through the VPN (TSO/GSO)"
 msgstr "Скорость отдачи через VPN (TSO/GSO)"
@@ -3040,6 +3155,9 @@ msgstr "Записать чистый AmneziaWG"
 
 msgid "Write the files of the group"
 msgstr "Записать файлы группы"
+
+msgid "Write the relay configuration"
+msgstr "Записать настройки ретранслятора"
 
 msgid "Write the text."
 msgstr "Напишите текст."
@@ -3226,6 +3344,12 @@ msgstr "выполняется"
 msgid "in the panel"
 msgstr "в панели"
 
+msgid "installed"
+msgstr "установлен"
+
+msgid "installed at"
+msgstr "установлен"
+
 msgid "internal note"
 msgstr "внутренняя заметка"
 
@@ -3336,6 +3460,9 @@ msgstr "без срока"
 msgid "no limit"
 msgstr "без ограничения"
 
+msgid "not finished"
+msgstr "не завершена"
+
 msgid "not imported yet"
 msgstr "ещё не импортирован"
 
@@ -3429,11 +3556,17 @@ msgstr "порядок"
 msgid "priority"
 msgstr "приоритет"
 
+msgid "private key"
+msgstr "приватный ключ"
+
 msgid "problems"
 msgstr "проблемы"
 
 msgid "protocol"
 msgstr "протокол"
+
+msgid "public key"
+msgstr "публичный ключ"
 
 msgid "published"
 msgstr "опубликована"
@@ -3464,6 +3597,9 @@ msgstr "ретранслятор"
 #, python-format
 msgid "relay %(relay)s"
 msgstr "ретранслятор %(relay)s"
+
+msgid "relays"
+msgstr "ретрансляторы"
 
 msgid "release"
 msgstr "релиз"
@@ -3502,6 +3638,9 @@ msgstr "прочитано"
 msgid "sent at"
 msgstr "отправлено"
 
+msgid "server"
+msgstr "сервер"
+
 msgid "server group"
 msgstr "группа серверов"
 
@@ -3510,6 +3649,12 @@ msgstr "группы серверов"
 
 msgid "servers of the moderator"
 msgstr "серверы модератора"
+
+msgid "service peer"
+msgstr "служебный пир"
+
+msgid "service peers"
+msgstr "служебные пиры"
 
 #, python-format
 msgid "signed in %(when)s"
@@ -3540,6 +3685,12 @@ msgstr "предложение"
 msgid "suggestions"
 msgstr "предложения"
 
+msgid "synced at"
+msgstr "синхронизирован"
+
+msgid "synced digest"
+msgstr "отпечаток синхронизации"
+
 msgid "text"
 msgstr "текст"
 
@@ -3566,6 +3717,9 @@ msgstr "тема"
 
 msgid "trial"
 msgstr "пробный"
+
+msgid "tunnel address"
+msgstr "адрес в туннеле"
 
 msgid "unknown"
 msgstr "неизвестно"

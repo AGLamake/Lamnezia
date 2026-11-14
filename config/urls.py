@@ -29,6 +29,7 @@ urlpatterns = [
     path("operations/", include("apps.operations.urls")),
     path("plans/", include("apps.plans.urls")),
     path("servers/groups/", include("apps.groups.urls")),
+    path("servers/relays/", include("apps.relays.urls")),
     path("servers/", include("apps.servers.urls")),
     path("settings/bots/", include("apps.bots.urls")),
     path("settings/", include("apps.core.urls")),

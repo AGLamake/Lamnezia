@@ -22,6 +22,7 @@ from apps.keys.errors import PeerError
 from apps.keys.models import DISABLED_STATUSES, AccessKey, Drift, DriftKind, KeyStatus
 from apps.keys.services.instances import Instance, instances
 from apps.keys.services.peers import read_registry
+from apps.keys.services.service_peers import service_peers
 from apps.keys.services.xray_profiles import XrayProfiles
 from apps.operations.models import Operation
 from apps.operations.services.launcher import launch
@@ -57,12 +58,16 @@ class Finding:
     key: AccessKey | None = None
 
 
-def compare(registry: AwgPeerRegistry, keys: Iterable[AccessKey]) -> list[Finding]:
+def compare(
+    registry: AwgPeerRegistry, keys: Iterable[AccessKey], service: Iterable[str] = ()
+) -> list[Finding]:
     """Differences between the server files and the keys of the same instance.
 
-    Keys being issued or revoked are left out: their operation adds or removes the peer.
+    Keys being issued or revoked are left out: their operation adds or removes the peer. So are
+    the `service` peers the panel keeps on the server for itself.
     """
-    peers = {peer.public_key: peer for peer in registry.config.peers}
+    skipped = set(service)
+    peers = {p.public_key: p for p in registry.config.peers if p.public_key not in skipped}
     known = {
         key.public_key: key
         for key in keys
@@ -111,7 +116,8 @@ def record(source: str, findings: Iterable[Finding]) -> list[Drift]:
 
 def reconcile(instance: Instance, registry: AwgPeerRegistry) -> list[Drift]:
     keys = AccessKey.objects.filter(source=instance.source)
-    return record(instance.source, compare(registry, keys))
+    found = compare(registry, keys, service_peers.of(instance.source))
+    return record(instance.source, found)
 
 
 def reconcile_all() -> None:
