@@ -15,6 +15,9 @@ msgstr "Новую копию сохранить не удалось: для в�
 msgid "Another AmneziaWG 2.0 server with other keys already runs on this server."
 msgstr "На этом сервере уже работает другой AmneziaWG 2.0 с другими ключами."
 
+msgid "Change the port of the protocol back in its settings, then restore the snapshot."
+msgstr "Верните порт протокола в его настройках и восстановите снимок снова."
+
 #, python-format
 msgid "Clients to restore: %(count)d."
 msgstr "Клиентов к восстановлению: %(count)d."
@@ -33,12 +36,24 @@ msgstr "Возвращено файлов: %(count)d."
 msgid "Import the protocol from the server again, or install it anew and issue new keys."
 msgstr "Импортируйте протокол с сервера ещё раз или установите его заново и выдайте новые ключи."
 
+#, python-format
+msgid "Imported client %(number)d"
+msgstr "Импортированный клиент %(number)d"
+
 msgid "Install the protocol anew and issue new keys."
 msgstr "Установите протокол заново и выдайте новые ключи."
 
 #, python-format
 msgid "Keys issued after the copy: %(count)d. They may not connect; reissue them."
 msgstr "Ключей, выданных после копии: %(count)d. Они могут не подключаться — перевыпустите их."
+
+#, python-format
+msgid "Keys of the snapshot active again: %(count)d."
+msgstr "Ключей снимка снова активно: %(count)d."
+
+#, python-format
+msgid "Keys revoked: %(count)d."
+msgstr "Отозвано ключей: %(count)d."
 
 msgid "Load the saved database"
 msgstr "Загрузить сохранённую базу данных"
@@ -52,6 +67,12 @@ msgstr "Подготовить файлы из панели"
 msgid "Put the saved files into the container"
 msgstr "Положить сохранённые файлы в контейнер"
 
+msgid "Read the server files"
+msgstr "Прочитать файлы сервера"
+
+msgid "Restore a snapshot of the protocol"
+msgstr "Восстановление снимка протокола"
+
 msgid "Restore the protocol"
 msgstr "Восстановление протокола"
 
@@ -60,6 +81,18 @@ msgstr "Восстановление сервиса"
 
 msgid "Save a copy of the server files"
 msgstr "Сохранить копию файлов сервера"
+
+msgid "Save a snapshot of the server files"
+msgstr "Сохранить снимок файлов сервера"
+
+msgid "Save the result in the panel"
+msgstr "Сохранить результат в панели"
+
+msgid "Take the server out of the group first, then restore the snapshot."
+msgstr "Сначала выведите сервер из группы, затем восстановите снимок."
+
+msgid "The Amnezia app may have changed the server meanwhile. Run the restore again."
+msgstr "Возможно, приложение Amnezia тем временем изменило сервер. Запустите восстановление ещё раз."
 
 msgid "The container already has its files, they are kept."
 msgstr "В контейнере уже есть свои файлы, они сохранены."
@@ -95,17 +128,38 @@ msgstr "Сохранённая копия относится к другим к�
 msgid "The saved copy of the protocol files cannot be read."
 msgstr "Сохранённую копию файлов протокола не удаётся прочитать."
 
+msgid "The server already has the files of the snapshot."
+msgstr "На сервере уже файлы снимка."
+
+msgid "The server files differ from the snapshot after writing them."
+msgstr "После записи файлы сервера отличаются от снимка."
+
+msgid "The server is in a server group: its files are the files of the group."
+msgstr "Сервер состоит в группе серверов: его файлы — это файлы группы."
+
+msgid "The snapshot listens on another port than the protocol now."
+msgstr "В снимке другой порт, чем сейчас у протокола."
+
 msgid "There is no copy of the server files: the panel settings are used."
 msgstr "Копии файлов сервера нет: используются настройки из панели."
 
+msgid "Wait for other operations on the server"
+msgstr "Дождаться других операций на сервере"
+
 msgid "Without the copy the old keys cannot work again. Install the protocol anew and issue new keys."
 msgstr "Без копии старые ключи заново не заработают. Установите протокол заново и выдайте новые ключи."
+
+msgid "Write the files of the snapshot"
+msgstr "Записать файлы снимка"
 
 msgid "before joining a server group"
 msgstr "перед вступлением в группу серверов"
 
 msgid "before leaving a server group"
 msgstr "перед выходом из группы серверов"
+
+msgid "before restoring a snapshot"
+msgstr "перед восстановлением снимка"
 
 msgid "client list"
 msgstr "список клиентов"

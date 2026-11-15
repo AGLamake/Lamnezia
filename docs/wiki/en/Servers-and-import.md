@@ -182,7 +182,8 @@ each of them. A server is either standalone or a member of one group.
   stop working, keeps a snapshot of its files first and revokes those keys, and users who had keys
   on it get keys of the group. A clean server joins without a warning.
 - **Leave the group**: the server keeps a snapshot of its files and gets a clean AmneziaWG with a new
-  key and no clients.
+  key and no clients. The snapshot taken when it joined can be put back after leaving
+  ([Backup](Backup.md#amneziawg-snapshots-around-a-group)).
 - **Make leading**: another member takes the lead. A background operation first compares its files
   with those of the group and refuses if the server differs from the group. Keys of the group,
   with their traffic history, pass to the new leading server, and new keys are issued on it; if

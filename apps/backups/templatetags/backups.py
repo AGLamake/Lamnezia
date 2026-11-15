@@ -1,4 +1,4 @@
-"""Template tags of the backups: the backup card of a server and the restore check of a protocol."""
+"""Template tags of the backups: the backup card of a server and the restore checks."""
 
 from typing import Any
 
@@ -17,9 +17,13 @@ register = template.Library()
 @register.inclusion_tag("backups/_server.html", takes_context=True)
 def protocol_backups(context: dict[str, Any], server: Server) -> dict[str, Any]:
     """Saved copies of the server protocols and services with the restore buttons."""
-    instances = ProtocolInstance.objects.filter(
-        server=server, container__in=snapshot.backed_up_containers()
-    ).select_related("backup")
+    instances = (
+        ProtocolInstance.objects.filter(
+            server=server, container__in=snapshot.backed_up_containers()
+        )
+        .select_related("backup", "group_member")
+        .prefetch_related("snapshots")
+    )
     services = ServiceInstance.objects.filter(
         server=server, container__in=archived_services.containers()
     ).select_related("backup")
@@ -46,3 +50,9 @@ def ipsec_identity(instance: ProtocolInstance) -> IpsecIdentity | None:
 def service_restorable(service: ServiceInstance) -> bool:
     """Whether the panel has a copy to install the service again from."""
     return snapshot.service_restorable(service)
+
+
+@register.filter
+def in_group(instance: ProtocolInstance) -> bool:
+    """Whether the protocol is in a server group: its snapshots wait until it leaves."""
+    return hasattr(instance, "group_member")

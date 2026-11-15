@@ -28,6 +28,25 @@
         </form>
         {% endif %}
       </div>
+      {% with snapshots=instance.snapshots.all %}{% if snapshots %}
+        <div class="flex flex-col gap-2">
+          <p class="help-text">{% translate "Snapshots taken before the server identity changed. A restore puts their files back on the server; the current files are saved as a snapshot first." %}</p>
+          {% if instance|in_group %}
+            <p class="help-text">{% translate "The server is in a server group: take it out of the group to restore a snapshot." %}</p>
+          {% endif %}
+          {% for snapshot in snapshots %}
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <p class="help-text">{{ snapshot.taken_at|date:"SHORT_DATETIME_FORMAT" }} · {{ snapshot.get_reason_display }}</p>
+              {% if not instance|in_group %}
+              <form method="post" action="{% url 'backups:restore-snapshot' snapshot.pk %}" data-confirm="{% translate "Put the files of this snapshot back on the server? Keys issued since then stop working." %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% translate "Restore" %}</button>
+              </form>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}{% endwith %}
     {% endfor %}
     {% for service in services %}
       <div class="flex flex-wrap items-center justify-between gap-2">

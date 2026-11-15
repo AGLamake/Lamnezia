@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Restoring a snapshot** of an AmneziaWG server from the backup section of its card: a background
+  operation saves the current files as a snapshot, puts the snapshot files back with a rollback if
+  the interface does not come up, and the panel reads the keys again, so the old keys connect.
+  A group member is refused until it leaves the group.
 - **Server groups**: AmneziaWG 3.1 servers join a group as clones of its leading server, so one
   key works on each of them. Joining and leaving run as background operations with a snapshot of
   the server files; a server is either standalone or in one group.

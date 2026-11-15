@@ -121,6 +121,7 @@ def servers(
         "groups.services.replication",
         "protocols.providers",
         "backups.services.snapshot",
+        "backups.services.snapshot_restore",
     ):
         monkeypatch.setattr(f"apps.{module}.connect", connect)
     return fakes

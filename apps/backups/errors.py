@@ -13,6 +13,9 @@ class RestoreErrorCode(StrEnum):
     NO_BACKUP = "no_backup"
     BACKUP_INVALID = "backup_invalid"
     BACKUP_OF_OTHER_SERVER = "backup_of_other_server"
+    IN_GROUP = "in_group"
+    OTHER_PORT = "other_port"
+    NOT_RESTORED = "not_restored"
 
 
 RESTORE_ERRORS: dict[RestoreErrorCode, ErrorDescription] = {
@@ -44,6 +47,18 @@ RESTORE_ERRORS: dict[RestoreErrorCode, ErrorDescription] = {
     RestoreErrorCode.BACKUP_OF_OTHER_SERVER: ErrorDescription(
         _("The saved copy belongs to other server keys than the panel has for the protocol."),
         _("Import the protocol from the server again, or install it anew and issue new keys."),
+    ),
+    RestoreErrorCode.IN_GROUP: ErrorDescription(
+        _("The server is in a server group: its files are the files of the group."),
+        _("Take the server out of the group first, then restore the snapshot."),
+    ),
+    RestoreErrorCode.OTHER_PORT: ErrorDescription(
+        _("The snapshot listens on another port than the protocol now."),
+        _("Change the port of the protocol back in its settings, then restore the snapshot."),
+    ),
+    RestoreErrorCode.NOT_RESTORED: ErrorDescription(
+        _("The server files differ from the snapshot after writing them."),
+        _("The Amnezia app may have changed the server meanwhile. Run the restore again."),
     ),
 }
 

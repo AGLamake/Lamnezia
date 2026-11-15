@@ -1,9 +1,13 @@
+from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 
 from apps.accounts.permissions import AdminRequiredMixin
+from apps.backups.errors import RestoreError
+from apps.backups.models import ProtocolSnapshot
 from apps.backups.services.restore import start_restore, start_service_restore
+from apps.backups.services.snapshot_restore import start_snapshot_restore
 from apps.protocols.models import ProtocolInstance, ServiceInstance
 
 
@@ -23,3 +27,17 @@ class ServiceRestoreView(AdminRequiredMixin, View):
         service = get_object_or_404(ServiceInstance, pk=service_pk)
         start_service_restore(service, self.member, self.client_ip)
         return redirect("servers:detail", pk=service.server_id)
+
+
+class SnapshotRestoreView(AdminRequiredMixin, View):
+    """Start putting the files of a snapshot back on its server; refused while in a group."""
+
+    def post(self, request: HttpRequest, snapshot_pk: int) -> HttpResponse:
+        snapshot = get_object_or_404(
+            ProtocolSnapshot.objects.select_related("instance"), pk=snapshot_pk
+        )
+        try:
+            start_snapshot_restore(snapshot, self.member, self.client_ip)
+        except RestoreError as error:
+            messages.error(request, f"{error.message} {error.hint}")
+        return redirect("servers:detail", pk=snapshot.instance.server_id)

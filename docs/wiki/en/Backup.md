@@ -204,6 +204,23 @@ container with keys of its own. The panel marks such a container, and **Restore*
 removes it and installs the service anew instead of refusing it. A container the panel did not
 leave this way is still never overwritten.
 
+## AmneziaWG snapshots around a group
+
+Before a server joins a group (if it has clients) and before it leaves one, the panel keeps a
+snapshot of its AmneziaWG files: the server key, the preshared key and the clients. Snapshots are
+never overwritten and are listed with their date and reason under **Backup** on the server card.
+
+**Restore** next to a snapshot starts a background operation: the panel takes the server lock,
+saves the current files as a new snapshot ("before restoring a snapshot"), puts the snapshot files
+in place (`awg0.conf` last) and restarts the interface. If the interface does not come up, the
+old files come back. The panel then reads the server key and the clients again: keys of the
+snapshot are active and connect again, keys issued after the snapshot are revoked, and clients
+the panel did not know appear as imported keys.
+
+A group member does not restore a snapshot: take the server out of the group first. The restore
+is also refused while the protocol listens on another port than in the snapshot: change the port
+back in the protocol settings.
+
 ## Full recovery
 
 When both the panel and a VPN server are lost:

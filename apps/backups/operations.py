@@ -7,10 +7,12 @@ from django.utils.translation import gettext_lazy
 
 from amnezia_core.containers import AWG2
 from apps.backups.errors import RestoreError, RestoreErrorCode
+from apps.backups.models import ProtocolSnapshot
 from apps.backups.services.archive_restore import ArchiveRestorer, ServiceRestorer
 from apps.backups.services.archived import archived_protocols
 from apps.backups.services.archived_services import archived_services
 from apps.backups.services.restore import RESTORE_KIND, RESTORE_SERVICE_KIND, ProtocolRestorer
+from apps.backups.services.snapshot_restore import SNAPSHOT_RESTORE_KIND, SnapshotRestorer
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
 from apps.protocols.models import ProtocolInstance, ServiceInstance
@@ -42,3 +44,11 @@ def restore_service(ctx: OperationContext) -> None:
         with ctx.step(_("Connect to the server")):
             host = stack.enter_context(connect(service.server))
         ServiceRestorer(service, host, ctx, archived).run()
+
+
+@operations.register(SNAPSHOT_RESTORE_KIND, gettext_lazy("Restore a snapshot of the protocol"))
+def restore_snapshot(ctx: OperationContext) -> None:
+    snapshot = ProtocolSnapshot.objects.select_related("instance__server").get(
+        pk=ctx.params["snapshot_id"]
+    )
+    SnapshotRestorer(snapshot, ctx).run()

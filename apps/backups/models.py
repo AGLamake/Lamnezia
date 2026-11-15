@@ -65,6 +65,7 @@ class ProtocolBackup(models.Model):
 class SnapshotReason(models.TextChoices):
     GROUP_JOIN = "group_join", _("before joining a server group")
     GROUP_LEAVE = "group_leave", _("before leaving a server group")
+    SNAPSHOT_RESTORE = "restore", _("before restoring a snapshot")
 
 
 class ProtocolSnapshot(models.Model):
@@ -72,7 +73,8 @@ class ProtocolSnapshot(models.Model):
 
     Unlike `ProtocolBackup`, which the hourly copy refreshes, a snapshot is never overwritten:
     it keeps the server key, the preshared key and the clients the server had before it joined
-    or left a group. Stored encrypted; deleting the server refuses while a snapshot is there.
+    or left a group, or before another snapshot was restored on it. Stored encrypted; deleting
+    the server refuses while a snapshot is there.
     """
 
     instance = models.ForeignKey(
