@@ -21,13 +21,17 @@ from apps.groups.services.membership import (
     create_group,
     delete_group,
     live_keys,
+    port_taken,
+    servers_without_awg,
     standalone_instances,
+    start_install,
     start_join,
     start_leave,
 )
 from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay
 from apps.relays.services.health import GroupHealth
+from apps.servers.models import Server
 
 
 class GroupListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
@@ -57,7 +61,7 @@ class GroupCreateView(AdminRequiredMixin, CreateView):  # type: ignore[type-arg]
 
 
 class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
-    """The members of a group and the standalone servers that may join it."""
+    """The members of a group, the standalone servers that may join it and those without AWG."""
 
     model = ServerGroup
     template_name = "groups/detail.html"
@@ -80,6 +84,9 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
             client_host=client_host(group),
             domain_warnings=DomainCheck(group).warnings(),
             candidates=candidates,
+            bare_servers=[
+                (server, port_taken(server, group.port)) for server in servers_without_awg()
+            ],
             **kwargs,
         )
 
@@ -98,6 +105,17 @@ class GroupJoinView(AdminRequiredMixin, View):
         instance = get_object_or_404(ProtocolInstance, pk=instance_pk)
         try:
             start_join(group, instance, user=self.member, ip=self.client_ip)
+        except GroupError as error:
+            messages.error(request, f"{error.message} {error.hint}")
+        return redirect("groups:detail", pk=group.pk)
+
+
+class GroupInstallView(AdminRequiredMixin, View):
+    def post(self, request: HttpRequest, pk: int, server_pk: int) -> HttpResponse:
+        group = get_object_or_404(ServerGroup, pk=pk)
+        server = get_object_or_404(Server, pk=server_pk)
+        try:
+            start_install(group, server, user=self.member, ip=self.client_ip)
         except GroupError as error:
             messages.error(request, f"{error.message} {error.hint}")
         return redirect("groups:detail", pk=group.pk)

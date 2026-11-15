@@ -22,6 +22,10 @@ class GroupErrorCode(StrEnum):
     DIVERGED = "diverged"
     HANDOVER_RUNNING = "handover_running"
     KEYS_CHANGING = "keys_changing"
+    AWG_ON_SERVER = "awg_on_server"
+    PORT_TAKEN = "port_taken"
+    RELAY_SERVER = "relay_server"
+    JOIN_RUNNING = "join_running"
 
 
 GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
@@ -80,6 +84,22 @@ GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
     GroupErrorCode.KEYS_CHANGING: ErrorDescription(
         _("Keys of the group are being changed now."),
         _("Wait until the key operations finish, then try again."),
+    ),
+    GroupErrorCode.AWG_ON_SERVER: ErrorDescription(
+        _("The server already has AmneziaWG of its own."),
+        _("Join it as a standalone AmneziaWG 3.1 server, or remove its AmneziaWG first."),
+    ),
+    GroupErrorCode.PORT_TAKEN: ErrorDescription(
+        _("The port of the group is taken on the server."),
+        _("Free the UDP port of the group on the server, then join."),
+    ),
+    GroupErrorCode.RELAY_SERVER: ErrorDescription(
+        _("The server runs a relay."),
+        _("Install AmneziaWG of the group on a server without a relay."),
+    ),
+    GroupErrorCode.JOIN_RUNNING: ErrorDescription(
+        _("The server is already joining a group."),
+        _("Wait until that operation finishes."),
     ),
 }
 

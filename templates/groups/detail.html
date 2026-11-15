@@ -77,4 +77,25 @@
     <p class="help-text">{% translate "No standalone AmneziaWG 3.1 server on this port." %}</p>
   {% endfor %}
 </section>
+
+<section class="card space-y-3">
+  <h2 class="card-title">{% translate "Add a server without AmneziaWG" %}</h2>
+  <p class="help-text">{% translate "AmneziaWG 3.1 is installed straight with the files of the group: the server key, settings, port and clients. The UDP port of the group must be free on the server." %}</p>
+  {% for server, taken in bare_servers %}
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <p>{{ server.name }}</p>
+        {% if taken %}<p class="help-text">{% blocktranslate with port=group.port %}UDP port {{ port }} is taken on this server.{% endblocktranslate %}</p>{% endif %}
+      </div>
+      {% if not taken %}
+        <form method="post" action="{% url 'groups:install' group.pk server.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary">{% translate "Install and join" %}</button>
+        </form>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p class="help-text">{% translate "Every server already has AmneziaWG or runs a relay." %}</p>
+  {% endfor %}
+</section>
 {% endblock %}

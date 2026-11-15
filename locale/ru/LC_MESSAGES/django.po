@@ -3945,3 +3945,52 @@ msgstr "работает"
 
 msgid "your device"
 msgstr "ваше устройство"
+
+msgid "The server already has AmneziaWG of its own."
+msgstr "На сервере уже есть свой AmneziaWG."
+
+msgid "Join it as a standalone AmneziaWG 3.1 server, or remove its AmneziaWG first."
+msgstr "Добавьте его как одиночный сервер AmneziaWG 3.1 или сначала удалите его AmneziaWG."
+
+msgid "The port of the group is taken on the server."
+msgstr "Порт группы на сервере занят."
+
+msgid "Free the UDP port of the group on the server, then join."
+msgstr "Освободите UDP-порт группы на сервере, затем вступайте."
+
+msgid "The server runs a relay."
+msgstr "На сервере работает ретранслятор."
+
+msgid "Install AmneziaWG of the group on a server without a relay."
+msgstr "Установите AmneziaWG группы на сервер без ретранслятора."
+
+msgid "The server is already joining a group."
+msgstr "Сервер уже вступает в группу."
+
+msgid "Install AmneziaWG of a server group"
+msgstr "Установка AmneziaWG группы серверов"
+
+msgid "Find the group"
+msgstr "Поиск группы"
+
+msgid "The group no longer exists: nothing to do."
+msgstr "Группы больше нет: делать нечего."
+
+msgid "The server has older files of the group: they are replaced."
+msgstr "На сервере старые файлы группы: они заменяются."
+
+msgid "Add a server without AmneziaWG"
+msgstr "Добавить сервер без AmneziaWG"
+
+msgid "AmneziaWG 3.1 is installed straight with the files of the group: the server key, settings, port and clients. The UDP port of the group must be free on the server."
+msgstr "AmneziaWG 3.1 устанавливается сразу с файлами группы: ключом сервера, настройками, портом и клиентами. UDP-порт группы на сервере должен быть свободен."
+
+#, python-format
+msgid "UDP port %(port)s is taken on this server."
+msgstr "UDP-порт %(port)s на этом сервере занят."
+
+msgid "Install and join"
+msgstr "Установить и вступить"
+
+msgid "Every server already has AmneziaWG or runs a relay."
+msgstr "На всех серверах уже есть AmneziaWG или работает ретранслятор."

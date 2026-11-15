@@ -3,11 +3,13 @@
 All run in a background operation under the server lock (DESIGN.md 5.4): read the files,
 keep a snapshot of a server with clients, write the new files with awg0.conf last, restart
 the interface, read them back and save what the server now runs with. A server joining the
-group or catching up with it copies the files of a member that stays locked meanwhile.
+group or catching up with it copies the files of a member that stays locked meanwhile; a server
+without AmneziaWG gets it installed straight with those files.
 """
 
 from collections.abc import Iterator, Mapping
 from contextlib import ExitStack, contextmanager
+from ipaddress import IPv4Network
 
 from django.db import transaction
 from django.utils import timezone
@@ -16,20 +18,24 @@ from django.utils.translation import gettext as _
 from amnezia_core.awg import AwgServerConfig
 from amnezia_core.awg_backup import AwgServerFiles
 from amnezia_core.awg_group import AwgGroupIdentity, has_clients, standalone_files
+from amnezia_core.awg_install import AwgInstallSettings
 from amnezia_core.containers import AWG2
 from amnezia_core.errors import AmneziaFormatError
 from apps.backups.models import SnapshotReason
+from apps.backups.services.guard import IdentityGuard
 from apps.backups.services.snapshot import read_awg_files, save_backup, take_snapshot
 from apps.groups.errors import GroupError, GroupErrorCode
-from apps.groups.models import GroupMember, MemberState
+from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.groups.services.addressing import tell_owners
-from apps.groups.services.membership import take_identity
+from apps.groups.services.membership import add_installed, take_identity
 from apps.keys.models import AccessKey
 from apps.keys.services.actions import KeyActions
 from apps.operations.services.context import OperationContext
 from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.protocols.services.awg_container import AwgContainer
+from apps.protocols.services.awg_installer import AwgInstaller
 from apps.protocols.services.awg_settings import kept_files
+from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.ssh.errors import SshError
 from apps.ssh.services import RemoteHost
@@ -51,14 +57,22 @@ def locked_source(
     member: GroupMember, ctx: OperationContext
 ) -> Iterator[tuple[GroupMember, AwgGroupIdentity]]:
     """As `locked_identity`, with the member whose files they are."""
+    with locked_group_source(member.group_id, ctx, exclude=member.pk) as found:
+        yield found
+
+
+@contextmanager
+def locked_group_source(
+    group_id: int, ctx: OperationContext, *, exclude: int | None = None
+) -> Iterator[tuple[GroupMember, AwgGroupIdentity]]:
+    """As `locked_source`, for a server that is not a member: any up-to-date member will do."""
     others = (
-        GroupMember.objects.filter(
-            group_id=member.group_id, state=MemberState.MEMBER, lagging_since=None
-        )
-        .exclude(pk=member.pk)
+        GroupMember.objects.filter(group_id=group_id, state=MemberState.MEMBER, lagging_since=None)
         .select_related("instance__server")
         .order_by("-leading", "priority", "pk")
     )
+    if exclude is not None:
+        others = others.exclude(pk=exclude)
     for other in others:
         with ExitStack() as stack:
             identity = _read_locked(other, stack, ctx)
@@ -67,7 +81,7 @@ def locked_source(
             ctx.log(_("The files of %(server)s are read.") % {"server": other.instance.server})
             yield other, identity
             return
-    raise GroupError(GroupErrorCode.NO_IDENTITY, str(member.group_id))
+    raise GroupError(GroupErrorCode.NO_IDENTITY, str(group_id))
 
 
 def _read_locked(
@@ -219,6 +233,67 @@ class MemberCatchUp(_Cloning):
             take_identity(self._instance, files)
             GroupMember.objects.filter(pk=self._member.pk).update(lagging_since=None)
         save_backup(self._instance, host)
+
+
+class GroupInstall:
+    """Installs AmneziaWG 3.1 on a server without it straight with the files of the group.
+
+    The server never runs a standalone AmneziaWG of its own and has no clients: no snapshot is
+    taken. The installer checks the port before it builds anything. A retry keeps a container
+    that already has the key of the group; one with another key is refused untouched.
+    """
+
+    def __init__(self, group: ServerGroup, server: Server, ctx: OperationContext) -> None:
+        self._group = group
+        self._server = server
+        self._ctx = ctx
+
+    def run(self) -> None:
+        with ExitStack() as stack:
+            with self._ctx.step(_("Read the files of the group")):
+                _source, identity = stack.enter_context(
+                    locked_group_source(self._group.pk, self._ctx)
+                )
+            with self._ctx.step(_("Connect to the server")):
+                host = stack.enter_context(connect(self._server))
+            self._installer(host, identity).run()
+            with self._ctx.step(_("Wait for other operations on the server")):
+                stack.enter_context(host.lock())
+            with self._ctx.step(_("Check that the server is a clone")):
+                if identity.compare(read_awg_files(host)):
+                    # A retry kept the files of an earlier attempt; the group has changed since.
+                    self._ctx.log(_("The server has older files of the group: they are replaced."))
+                    MemberFiles(host, self._ctx).replace(identity.member_files())
+                files = read_awg_files(host)
+                left = identity.compare(files)
+                if left:
+                    raise GroupError(
+                        GroupErrorCode.NOT_CLONE, ", ".join(sorted({d.kind for d in left}))
+                    )
+            with self._ctx.step(_("Save the result in the panel")):
+                member = add_installed(self._group, self._server, files)
+                save_backup(member.instance, host)
+
+    def _installer(self, host: RemoteHost, identity: AwgGroupIdentity) -> AwgInstaller:
+        config = AwgServerConfig.parse(identity.files.config)
+        settings = AwgInstallSettings(
+            port=identity.port,
+            subnet=IPv4Network(identity.subnet.network),
+            params=config.awg_params,
+        )
+        installer = AwgInstaller(host, self._ctx, settings, identity.files)
+        installer.guard = IdentityGuard(
+            self._ctx,
+            path=AWG2.config_path,
+            identity=_private_key,
+            expected=config.private_key or "",
+            refusal=GroupError(GroupErrorCode.AWG_ON_SERVER, self._server.name),
+        )
+        return installer
+
+
+def _private_key(config: str) -> str:
+    return AwgServerConfig.parse(config).private_key or ""
 
 
 class GroupLeave:

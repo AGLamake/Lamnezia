@@ -3,13 +3,14 @@
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from apps.groups.models import GroupMember, MemberState
-from apps.groups.services.cloning import GroupJoin, GroupLeave, MemberCatchUp
+from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.services.cloning import GroupInstall, GroupJoin, GroupLeave, MemberCatchUp
 from apps.groups.services.handover import HANDOVER_KIND, LeaderHandover
-from apps.groups.services.membership import JOIN_KIND, LEAVE_KIND
+from apps.groups.services.membership import INSTALL_KIND, JOIN_KIND, LEAVE_KIND
 from apps.groups.services.replication import CATCH_UP_KIND
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
+from apps.servers.models import Server
 
 
 @operations.register(JOIN_KIND, gettext_lazy("Join a server group"))
@@ -17,6 +18,17 @@ def join_group(ctx: OperationContext) -> None:
     member = _member(ctx, MemberState.JOINING)
     if member is not None:
         GroupJoin(member, ctx).run()
+
+
+@operations.register(INSTALL_KIND, gettext_lazy("Install AmneziaWG of a server group"))
+def install_member(ctx: OperationContext) -> None:
+    with ctx.step(_("Find the group")):
+        group = ServerGroup.objects.filter(pk=ctx.params["group_id"]).first()
+        if group is None:
+            ctx.log(_("The group no longer exists: nothing to do."))
+    if group is not None:
+        server = Server.objects.get(pk=ctx.params["server_id"])
+        GroupInstall(group, server, ctx).run()
 
 
 @operations.register(LEAVE_KIND, gettext_lazy("Leave a server group"))

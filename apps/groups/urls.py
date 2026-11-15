@@ -5,6 +5,7 @@ from apps.groups.views import (
     GroupDeleteView,
     GroupDetailView,
     GroupHandoverView,
+    GroupInstallView,
     GroupJoinView,
     GroupLeaveView,
     GroupListView,
@@ -18,6 +19,7 @@ urlpatterns = [
     path("<int:pk>/", GroupDetailView.as_view(), name="detail"),
     path("<int:pk>/delete/", GroupDeleteView.as_view(), name="delete"),
     path("<int:pk>/join/<int:instance_pk>/", GroupJoinView.as_view(), name="join"),
+    path("<int:pk>/install/<int:server_pk>/", GroupInstallView.as_view(), name="install"),
     path("members/<int:member_pk>/leave/", GroupLeaveView.as_view(), name="leave"),
     path("members/<int:member_pk>/lead/", GroupHandoverView.as_view(), name="lead"),
 ]

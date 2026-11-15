@@ -181,6 +181,10 @@ each of them. A server is either standalone or a member of one group.
   of the group in a background operation. If it has its own clients, the panel warns how many keys
   stop working, keeps a snapshot of its files first and revokes those keys, and users who had keys
   on it get keys of the group. A clean server joins without a warning.
+- **Install and join**: a server without AmneziaWG gets AmneziaWG 3.1 installed straight with the
+  files of the group, with no standalone step and no snapshot. The UDP port of the group must be
+  free: a port the panel knows to be taken hides the button, and the installation checks the port
+  on the server before it builds anything. A server that runs a relay is not offered.
 - **Leave the group**: the server keeps a snapshot of its files and gets a clean AmneziaWG with a new
   key and no clients. The snapshot taken when it joined can be put back after leaving
   ([Backup](Backup.md#amneziawg-snapshots-around-a-group)).

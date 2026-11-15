@@ -1,4 +1,4 @@
-"""The check a restore makes of a container already on the server, before the installer starts it.
+"""The check a restore or a group join makes of a container already on the server, before the start.
 
 A container left by an earlier attempt or by the Amnezia app is kept when it holds the keys
 the panel has; one with other keys is refused before it is started, configured or seeded.
@@ -9,7 +9,6 @@ from collections.abc import Callable
 from django.utils.translation import gettext as _
 
 from amnezia_core.errors import AmneziaFormatError
-from apps.backups.errors import RestoreError
 from apps.operations.services.context import OperationContext
 from apps.protocols.services.container import ProtocolContainer
 
@@ -29,7 +28,7 @@ class IdentityGuard:
         path: str,
         identity: Callable[[str], str],
         expected: str,
-        refusal: RestoreError,
+        refusal: Exception,
     ) -> None:
         self._ctx = ctx
         self._path = path

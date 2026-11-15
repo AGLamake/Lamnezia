@@ -2,6 +2,7 @@
 
 The panel side only: who may join, the member rows and the operations. Joining and leaving
 change files on the server, so they run as background operations (`apps.groups.operations`).
+A server without AmneziaWG joins by an install straight with the files of the group.
 """
 
 from django.db import IntegrityError, transaction
@@ -19,13 +20,16 @@ from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.groups.services.addressing import GroupKeyAddress
 from apps.keys.models import GONE_STATUSES, AccessKey, KeyStatus
-from apps.operations.models import Operation
+from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
-from apps.protocols.models import ProtocolInstance
+from apps.protocols.models import InstanceOrigin, ProtocolInstance
+from apps.protocols.services.installation import used_ports
+from apps.servers.models import Server
 
 CREATE_KIND = "groups.create"
 DELETE_KIND = "groups.delete"
 JOIN_KIND = "groups.join"
+INSTALL_KIND = "groups.install"
 LEAVE_KIND = "groups.leave"
 
 
@@ -45,6 +49,34 @@ def standalone_instances() -> list[ProtocolInstance]:
         container=AWG2.name, container_removed_at__isnull=True, group_member__isnull=True
     ).select_related("server")
     return [instance for instance in candidates if instance.awg_version == AWG3_VERSION]
+
+
+def servers_without_awg() -> list[Server]:
+    """Servers that may get AmneziaWG 3.1 straight with the files of a group.
+
+    They have no amnezia-awg2 container, known to the panel or seen on the server, and no relay.
+    """
+    servers = Server.objects.exclude(instances__container=AWG2.name).filter(relay_role__isnull=True)
+    return [server for server in servers if not _has_awg_container(server)]
+
+
+def port_taken(server: Server, port: int) -> bool:
+    """Whether the panel knows the UDP `port` to be taken on the server."""
+    return (port, "udp") in used_ports(server)
+
+
+def check_without_awg(group: ServerGroup, server: Server) -> None:
+    """Raise GroupError unless the server may get AmneziaWG with the files of the group."""
+    if _has_awg_container(server) or server.instances.filter(container=AWG2.name).exists():
+        raise GroupError(GroupErrorCode.AWG_ON_SERVER, server.name)
+    if hasattr(server, "relay_role"):
+        raise GroupError(GroupErrorCode.RELAY_SERVER, server.name)
+    if port_taken(server, group.port):
+        raise GroupError(GroupErrorCode.PORT_TAKEN, f"{server.name}: udp {group.port}")
+
+
+def _has_awg_container(server: Server) -> bool:
+    return any(container.get("name") == AWG2.name for container in server.containers)
 
 
 def live_keys(instance: ProtocolInstance) -> int:
@@ -99,6 +131,34 @@ def start_join(
     return operation
 
 
+def start_install(
+    group: ServerGroup, server: Server, *, user: User, ip: str | None = None
+) -> Operation:
+    """Start installing AmneziaWG on a server without it, straight with the files of the group.
+
+    The server has no clients, so nothing is kept first; it becomes a member when the install
+    succeeds.
+    """
+    with transaction.atomic():
+        server = Server.objects.select_for_update().get(pk=server.pk)
+        check_without_awg(group, server)
+        if _installing(server):
+            raise GroupError(GroupErrorCode.JOIN_RUNNING, server.name)
+        params = {"group_id": group.pk, "server_id": server.pk}
+        operation = launch(INSTALL_KIND, params, user=user, subject=f"{group} · {server}")
+        data = {"operation": operation.pk, "server": server.pk}
+        audit.log(INSTALL_KIND, actor=user, target=group, data=data, ip=ip)
+    return operation
+
+
+def _installing(server: Server) -> bool:
+    return Operation.objects.filter(
+        kind=INSTALL_KIND,
+        status__in=(OperationStatus.PENDING, OperationStatus.RUNNING),
+        params__server_id=server.pk,
+    ).exists()
+
+
 def start_leave(member: GroupMember, *, user: User, ip: str | None = None) -> Operation:
     """Start giving the member's server a clean AmneziaWG; the group keeps its keys."""
     with transaction.atomic():
@@ -140,6 +200,38 @@ def take_identity(instance: ProtocolInstance, files: AwgServerFiles) -> list[Acc
         update_fields=["private_key", "public_key", "preshared_key", "params", "port", "subnet"]
     )
     return revoked
+
+
+@transaction.atomic
+def add_installed(group: ServerGroup, server: Server, files: AwgServerFiles) -> GroupMember:
+    """Save the AmneziaWG an install put on `server` with the files of the group as a member.
+
+    Run again after a failure, it finds the member already saved; an instance of another
+    AmneziaWG on the server is refused.
+    """
+    existing = ProtocolInstance.objects.filter(server=server, container=AWG2.name).first()
+    if existing is not None:
+        member = GroupMember.objects.filter(instance=existing, group=group).first()
+        if member is None:
+            raise GroupError(GroupErrorCode.AWG_ON_SERVER, server.name)
+        return member
+    config = AwgServerConfig.parse(files.config)
+    private_key = config.private_key or ""
+    port = config.listen_port or group.port
+    instance = ProtocolInstance.objects.create(
+        server=server,
+        container=AWG2.name,
+        port=port,
+        subnet=str(config.address.network),
+        params=config.awg_params,
+        private_key=private_key,
+        public_key=KeyPair.from_private_key(private_key).public_key,
+        preshared_key=files.preshared_key,
+        origin=InstanceOrigin.INSTALLED,
+    )
+    others = [c for c in server.containers if c.get("name") != AWG2.name]
+    server.record_containers([*others, {"name": AWG2.name, "port": port, "transport": "udp"}])
+    return _add_member(group, instance, state=MemberState.MEMBER, joined_at=timezone.now())
 
 
 def _add_member(group: ServerGroup, instance: ProtocolInstance, **fields: object) -> GroupMember:
