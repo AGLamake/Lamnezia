@@ -1,16 +1,24 @@
 """Key changes reaching every member of a group, lagging members and their catch-up.
 
 docs/FALLBACK.md section 6: a change goes to the members that answer; one that does not is
-marked lagging, left out of the relay backends and caught up by a periodic operation.
+marked lagging, left out of the relay backends and caught up by a periodic operation. A member
+whose peers or clients drift from the leading server (edited in the Amnezia app or by hand)
+lags too: the catch-up gives it the group files back, and the keys of the panel stay as they are.
 """
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from functools import partial
+from itertools import groupby
+from operator import attrgetter
 
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from amnezia_core.awg_backup import AwgServerFiles
+from amnezia_core.awg_group import AwgGroupIdentity, Divergence, Mismatch
+from amnezia_core.errors import AmneziaFormatError
+from apps.backups.services.snapshot import read_awg_files
 from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.keys.services.replicas import GroupServer, key_groups
 from apps.operations.models import Operation, OperationStatus
@@ -68,15 +76,80 @@ class GroupReplicas:
 @key_groups.register
 def group_of(source: str) -> GroupReplicas | None:
     """The group whose leading server issues the keys of `source`; None for a standalone one."""
+    group_id = _led_group(source)
+    return None if group_id is None else GroupReplicas(group_id)
+
+
+def replica_instances(source: str) -> list[int]:
+    """Instances of the up-to-date members that clone the leading server of `source`."""
+    group_id = _led_group(source)
+    if group_id is None:
+        return []
+    replicas = _up_to_date(group_id).filter(leading=False)
+    return list(replicas.values_list("instance_id", flat=True))
+
+
+def _led_group(source: str) -> int | None:
     instance_id = ProtocolInstance.pk_of(source)
     if instance_id is None:
         return None
-    group_id = (
+    return (
         GroupMember.objects.filter(instance_id=instance_id, leading=True)
         .values_list("group_id", flat=True)
         .first()
     )
-    return None if group_id is None else GroupReplicas(group_id)
+
+
+def check_replicas() -> None:
+    """Mark lagging every up-to-date member whose peers or clients differ from the leader's.
+
+    Only the servers are read: the drift of a member is never recorded and changes no key of
+    the panel. A group whose leading server does not answer and a member that does not answer
+    are left as they are.
+    """
+    leaders = {
+        member.group_id: member
+        for member in GroupMember.objects.filter(leading=True).select_related("instance__server")
+    }
+    replicas = (
+        GroupMember.objects.filter(state=MemberState.MEMBER, lagging_since=None, leading=False)
+        .select_related("instance__server")
+        .order_by("group_id", "pk")
+    )
+    for group_id, members in groupby(replicas, key=attrgetter("group_id")):
+        leader = leaders.get(group_id)
+        files = None if leader is None else _read_files(leader)
+        if files is None:
+            continue
+        identity = AwgGroupIdentity(files)
+        for member in members:
+            current = _read_files(member)
+            if current is not None and _key_divergences(identity.compare(current)):
+                logger.info("group member %s differs from its leading server", member.pk)
+                GroupMember.objects.filter(pk=member.pk, lagging_since=None).update(
+                    lagging_since=timezone.now()
+                )
+
+
+# Peers and clients are the keys of the group; [Interface] changes go by the group settings.
+_KEY_MISMATCHES = frozenset(Mismatch) - {
+    Mismatch.PRIVATE_KEY,
+    Mismatch.PRESHARED_KEY,
+    Mismatch.INTERFACE,
+}
+
+
+def _key_divergences(divergences: Iterable[Divergence]) -> bool:
+    return any(divergence.kind in _KEY_MISMATCHES for divergence in divergences)
+
+
+def _read_files(member: GroupMember) -> AwgServerFiles | None:
+    try:
+        with connect(member.instance.server) as host:
+            return read_awg_files(host)
+    except (SshError, AmneziaFormatError) as error:
+        logger.info("group member %s cannot be compared: %s", member.pk, type(error).__name__)
+        return None
 
 
 def catch_up_lagging() -> None:

@@ -121,7 +121,8 @@ the panel no longer knows the proxy by.
 **Keys issued just now are in the copy too.** Besides the hourly copy, a key issued, disabled,
 enabled or revoked asks for one more copy of its protocol about 30 seconds later; the key
 operations of those 30 seconds share it. If the server does not answer at that moment, the last
-copy stays and the next hourly copy catches up.
+copy stays and the next hourly copy catches up. In a server group each member the change reached
+gets such a copy, not only the leading server.
 
 **Deleting a server does not delete its copies.** A server whose protocols or services have
 copies cannot be deleted in one go: the panel refuses. Remove its protocols and services first

@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Keys of a server group** change on every member that answers. A member that misses a change
   is marked lagging, left out of the relay list and caught up by a periodic operation
   (`LAMNEZIA_GROUP_CATCH_UP_INTERVAL`). Users of a joining server get keys of the group.
+  After a key change every member it reached gets a fresh backup copy. A member whose peers or
+  clients differ from the leading server (edited in the Amnezia app or by hand) is marked lagging
+  every `LAMNEZIA_RECONCILE_INTERVAL`, and catch-up gives it the group files back.
 - **Protocol settings of a server group** (DNS, subnet, AmneziaWG parameters) change on the group
   page and apply on every member that answers; a member that misses them lags and catch-up brings
   them, moving its container into a new subnet if needed. The card of a member shows them read only.

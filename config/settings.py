@@ -283,6 +283,8 @@ CELERY_BEAT_SCHEDULE = {
     },
     "keys-reconcile": {"task": "keys.reconcile", "schedule": RECONCILE_INTERVAL},
     "groups-catch-up": {"task": "groups.catch_up", "schedule": GROUP_CATCH_UP_INTERVAL},
+    # Members are compared with the keys of their group as often as servers with the panel.
+    "groups-check-replicas": {"task": "groups.check_replicas", "schedule": RECONCILE_INTERVAL},
     "relays-sync": {"task": "relays.sync", "schedule": RELAY_SYNC_INTERVAL},
     "relays-monitor": {
         "task": "relays.monitor",

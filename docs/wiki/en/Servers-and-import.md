@@ -208,6 +208,10 @@ every key of the group and only the client list differs, catch-up rewrites only 
 without restarting AmneziaWG. Members get the client record in `clientsTable` with the same date
 as the leading server, and a batch reissue of keys changes each member in one config update. If no member answers, the operation
 fails and changes nothing.
+Every `LAMNEZIA_RECONCILE_INTERVAL` seconds the panel compares the peers and the client list of
+each member with the leading server. A member where a peer was added in the Amnezia app or removed
+by hand is marked lagging too, and catch-up gives it the group files back. The keys of the panel
+stay as they are: the comparison with the panel (drift) reads only the leading server.
 
 **Protocol settings** on the group page change the DNS, the client subnet and the AmneziaWG
 parameters of every member at once; the card of a member shows them read only with a link to the

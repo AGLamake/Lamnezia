@@ -27,7 +27,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_SSH_COMMAND_TIMEOUT` | `120` | Seconds one command on a server may run. |
 | `LAMNEZIA_SSH_LOCK_TIMEOUT` | `300` | Seconds to wait while another operation changes the same server. |
 | `LAMNEZIA_TRAFFIC_INTERVAL` | `300` | Seconds between traffic readings from the servers; limits are applied as often ([Users, plans and limits](Users-plans-limits.md#applying-limits)). |
-| `LAMNEZIA_RECONCILE_INTERVAL` | `900` | Seconds between comparisons of the panel keys with the servers. |
+| `LAMNEZIA_RECONCILE_INTERVAL` | `900` | Seconds between comparisons of the panel keys with the servers and of group members with the leading server. |
 | `LAMNEZIA_GROUP_CATCH_UP_INTERVAL` | `300` | Seconds between checks of the lagging members of server groups and their catch-up ([Server groups](Servers-and-import.md#server-groups)). |
 | `LAMNEZIA_RELAY_SYNC_INTERVAL` | `60` | Seconds between checks of the relays; one whose groups or members changed is updated ([Relay](Servers-and-import.md#relay)). |
 | `LAMNEZIA_RELAY_MONITOR_INTERVAL` | `60` | Seconds between readings of the relay state: the active member, who the relay reaches and the channel load. A relay without a reading for two intervals is reported (`relay_down`). |
