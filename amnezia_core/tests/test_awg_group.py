@@ -212,3 +212,20 @@ def test_server_with_peers_or_clients_has_clients(leader: AwgServerFiles) -> Non
 
     assert has_clients(leader)
     assert has_clients(only_clients)
+
+
+@pytest.mark.parametrize(
+    ("kind", "in_clients_table"),
+    [
+        (Mismatch.CLIENT_MISSING, True),
+        (Mismatch.CLIENT_EXTRA, True),
+        (Mismatch.CLIENT_CHANGED, True),
+        (Mismatch.PEER_MISSING, False),
+        (Mismatch.INTERFACE, False),
+        (Mismatch.PRESHARED_KEY, False),
+    ],
+)
+def test_only_client_list_differences_leave_the_interface_alone(
+    kind: Mismatch, in_clients_table: bool
+) -> None:
+    assert Divergence(kind).in_clients_table is in_clients_table

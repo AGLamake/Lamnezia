@@ -3415,6 +3415,9 @@ msgstr "Без трафика"
 msgid "Write a clean AmneziaWG"
 msgstr "Записать чистый AmneziaWG"
 
+msgid "Write the client list of the group"
+msgstr "Записать список клиентов группы"
+
 msgid "Write the files of the group"
 msgstr "Записать файлы группы"
 

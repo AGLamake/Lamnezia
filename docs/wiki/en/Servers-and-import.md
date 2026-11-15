@@ -203,7 +203,10 @@ run on every member that answers, without waiting for the others. A member the p
 is marked **lagging**: the relay sends no clients to it. Every `LAMNEZIA_GROUP_CATCH_UP_INTERVAL`
 seconds the panel checks the lagging members and, once a server is online again, copies the group
 files onto it in the background operation "Catch up with the server group": its keys then match the
-group, revoked ones are gone, and it is back in the relay list. If no member answers, the operation
+group, revoked ones are gone, and it is back in the relay list. When a lagging member already has
+every key of the group and only the client list differs, catch-up rewrites only `clientsTable`
+without restarting AmneziaWG. Members get the client record in `clientsTable` with the same date
+as the leading server, and a batch reissue of keys changes each member in one config update. If no member answers, the operation
 fails and changes nothing.
 
 **Protocol settings** on the group page change the DNS, the client subnet and the AmneziaWG

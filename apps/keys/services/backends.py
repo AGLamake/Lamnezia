@@ -6,6 +6,7 @@ Operations work with `KeyBackend` and do not care which protocol an instance run
 import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
+from datetime import datetime
 from ipaddress import IPv4Address
 from typing import Protocol
 
@@ -44,8 +45,10 @@ class Reissue:
     old: AccessKey
     new: AccessKey
 
-    def swap(self, client_id: Callable[[AccessKey], str]) -> Swap:
-        record = ClientRecord(self.new.name, timezone.localtime(), self.new.user_id)
+    def swap(
+        self, client_id: Callable[[AccessKey], str], created_at: datetime | None = None
+    ) -> Swap:
+        record = ClientRecord(self.new.name, created_at or timezone.localtime(), self.new.user_id)
         old = "" if self.old.status == KeyStatus.REVOKED else client_id(self.old)
         return Swap(client_id(self.new), record, old)
 
@@ -152,13 +155,14 @@ class WgKeys:
         self._fill(key, peer, *self.peers.server_settings())
 
     def reissue(self, pairs: Sequence[Reissue]) -> ReissueOutcome:
-        swaps = [pair.swap(_public_key) for pair in pairs]
+        swaps = [pair.swap(_public_key, self.peers.clock.now()) for pair in pairs]
         old_keys = [pair.old.pk for pair in pairs]
         return self._swap(pairs, swaps, self._reserved(self._instance.source, old_keys))
 
     def move(self, pairs: Sequence[Reissue]) -> ReissueOutcome:
         """Issue the new keys of `pairs` here in one change; the old ones stay where they are."""
-        swaps = [replace(pair.swap(_public_key), old="") for pair in pairs]
+        now = self.peers.clock.now()
+        swaps = [replace(pair.swap(_public_key, now), old="") for pair in pairs]
         return self._swap(pairs, swaps, self._reserved(self._instance.source))
 
     def _swap(
@@ -198,13 +202,22 @@ class WgKeys:
 
     def enable(self, key: AccessKey) -> None:
         """Add the peer of the key with its stored address and preshared key."""
+        self.peers.enable(self._stored_peer(key), key.name, user_id=key.user_id)
+
+    def copy(self, pairs: Sequence[Reissue]) -> None:
+        """Make reissues done on another member of the group here, in one change."""
+        now = self.peers.clock.now()
+        swaps = [(self._stored_peer(pair.new), pair.swap(_public_key, now)) for pair in pairs]
+        self.peers.copy(swaps)
+
+    def _stored_peer(self, key: AccessKey) -> Peer:
+        """The peer of the key as the panel keeps it: its address and preshared key."""
         preshared_key = (
             ServerProfile.from_json(key.profile).preshared_key
             if key.profile
             else self.peers.preshared_key()
         )
-        peer = Peer(key.public_key, (f"{key.client_ip}/32",), preshared_key)
-        self.peers.enable(peer, key.name, user_id=key.user_id)
+        return Peer(key.public_key, (f"{key.client_ip}/32",), preshared_key)
 
     def revoke(self, key: AccessKey) -> None:
         self.peers.revoke(key.public_key)

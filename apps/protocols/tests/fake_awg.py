@@ -51,6 +51,9 @@ class FakeAwgServer(FakeDebianServer):
     # The container set aside under PREVIOUS: (state, files, published port).
     previous: tuple[str, dict[str, bytes], int | None] | None = None
     docker_calls: list[str] = field(default_factory=list)
+    # How many times the interface was brought up and how many syncconf it took.
+    awg_starts_count: int = 0
+    syncconf_count: int = 0
     # What `docker logs` prints; Amnezia containers run with `--log-driver none`.
     container_log: bytes = (
         b"Error response from daemon: configured logging driver does not support reading\n"
@@ -129,6 +132,7 @@ class FakeAwgServer(FakeDebianServer):
         if script.startswith(f"{self._quick} "):
             return self._awg_quick(script)
         if f"{self.kind.tool} syncconf" in script:
+            self.syncconf_count += 1
             return result()
         if script == f"{self.kind.tool} show all dump":
             return result(stdout=self._dump().encode())
@@ -178,6 +182,7 @@ class FakeAwgServer(FakeDebianServer):
         if self.awg_refuses and self.awg_refuses in config:
             return result(1, stderr=b"Line unrecognized\n")
         self.awg_up = True
+        self.awg_starts_count += 1
         return result()
 
     def _docker_ps(self, words: list[str]) -> CommandResult:

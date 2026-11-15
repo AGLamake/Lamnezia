@@ -1,7 +1,8 @@
 """Adding, disabling, enabling and revoking peers in a WireGuard-family container of a server."""
 
-from collections.abc import Callable, Iterable, Sequence
-from contextlib import AbstractContextManager, ExitStack
+from collections.abc import Callable, Iterable, Iterator, Sequence
+from contextlib import AbstractContextManager, ExitStack, contextmanager
+from datetime import datetime
 from ipaddress import IPv4Address
 from typing import Protocol
 
@@ -63,6 +64,29 @@ class StepRecorder(Protocol):
     def log(self, line: str) -> None: ...
 
 
+class ClientClock:
+    """The creationDate a change writes into clientsTable.
+
+    The servers of a group take one change in turn; a frozen clock gives them the same moment,
+    so their clientsTable stay equal byte for byte.
+    """
+
+    def __init__(self) -> None:
+        self._frozen: datetime | None = None
+
+    def now(self) -> datetime:
+        return self._frozen or timezone.localtime()
+
+    @contextmanager
+    def frozen(self) -> Iterator[None]:
+        """Every record written inside the block gets the moment the block started."""
+        self._frozen = timezone.localtime()
+        try:
+            yield
+        finally:
+            self._frozen = None
+
+
 class PeerManager:
     """Peer changes by the safe write protocol (DESIGN.md 5.4).
 
@@ -72,7 +96,14 @@ class PeerManager:
     AmneziaWG 2.0, legacy AmneziaWG and WireGuard containers.
     """
 
-    def __init__(self, host: RemoteHost, steps: StepRecorder, kind: WgContainer = AWG2) -> None:
+    def __init__(
+        self,
+        host: RemoteHost,
+        steps: StepRecorder,
+        kind: WgContainer = AWG2,
+        clock: ClientClock | None = None,
+    ) -> None:
+        self.clock = clock or ClientClock()
         self._host = host
         self._kind = kind
         self._container: DockerContainer = host.container(kind.name)
@@ -94,7 +125,7 @@ class PeerManager:
         return self._change(
             lambda registry: registry.add_client(
                 public_key,
-                ClientRecord(name, timezone.localtime(), user_id),
+                ClientRecord(name, self.clock.now(), user_id),
                 preshared_key=self.preshared_key(),
                 reserved=reserved,
             )
@@ -102,7 +133,7 @@ class PeerManager:
 
     def enable(self, peer: Peer, name: str, *, user_id: int | None = None) -> None:
         """Put a disabled peer back with the address and keys stored in the panel."""
-        record = ClientRecord(name, timezone.localtime(), user_id)
+        record = ClientRecord(name, self.clock.now(), user_id)
         self._change(lambda registry: registry.enable(peer, record))
 
     def disable(self, public_key: str) -> None:
@@ -141,6 +172,19 @@ class PeerManager:
             return result
 
         return self._change(change)
+
+    def copy(self, swaps: Sequence[tuple[Peer, Swap]]) -> None:
+        """Make swaps done on another server here in one change: each new peer comes with its
+        address and keys, then its old one is revoked, in the order they were made there.
+        """
+
+        def change(registry: AwgPeerRegistry) -> None:
+            for peer, swap in swaps:
+                registry.enable(peer, swap.record)
+                if swap.old:
+                    registry.revoke(swap.old)
+
+        self._change(change)
 
     def server_settings(self) -> tuple[AwgServerSettings, str]:
         """Server half of client profiles: settings from the config and the server public key."""

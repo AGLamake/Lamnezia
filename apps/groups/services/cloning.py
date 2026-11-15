@@ -17,7 +17,7 @@ from django.utils.translation import gettext as _
 
 from amnezia_core.awg import AwgServerConfig
 from amnezia_core.awg_backup import AwgServerFiles
-from amnezia_core.awg_group import AwgGroupIdentity, has_clients, standalone_files
+from amnezia_core.awg_group import AwgGroupIdentity, Divergence, has_clients, standalone_files
 from amnezia_core.awg_install import AwgInstallSettings
 from amnezia_core.containers import AWG2
 from amnezia_core.errors import AmneziaFormatError
@@ -126,6 +126,10 @@ class MemberFiles:
             self._ctx.log(_("The VPN interface runs with the old files again."))
         raise SetupError(SetupErrorCode.AWG_NOT_RUNNING, AWG2.interface)
 
+    def write_clients_table(self, text: str) -> None:
+        """Only the client list differs: it is written alone, the interface keeps running."""
+        self._docker.shell.write_file_atomic(AWG2.clients_table_path, text.encode())
+
     def _bring_up(self, files: Mapping[str, bytes]) -> bool:
         for path, data in files.items():
             self._docker.shell.write_file_atomic(path, data)
@@ -155,21 +159,32 @@ class _Cloning:
                 stack.enter_context(host.lock())
             with self._ctx.step(_("Read the server files")):
                 current = read_awg_files(host)
-                differs = bool(identity.compare(current))
-                if not differs:
+                divergences = identity.compare(current)
+                if not divergences:
                     self._ctx.log(_("The server already has the files of the group."))
-            if differs:
-                self._clone(host, current, identity)
+            if divergences:
+                self._clone(host, current, identity, divergences)
             with self._ctx.step(_("Save the result in the panel")):
                 self._save(host, identity.files)
 
-    def _clone(self, host: RemoteHost, current: AwgServerFiles, identity: AwgGroupIdentity) -> None:
+    def _clone(
+        self,
+        host: RemoteHost,
+        current: AwgServerFiles,
+        identity: AwgGroupIdentity,
+        divergences: list[Divergence],
+    ) -> None:
         config = AwgServerConfig.parse(current.config)
         if config.address.network != identity.subnet.network:
             self._fit_subnet(host, identity)
         self._keep(current, config)
-        with self._ctx.step(_("Write the files of the group")):
-            MemberFiles(host, self._ctx).replace(identity.member_files())
+        files = MemberFiles(host, self._ctx)
+        if all(divergence.in_clients_table for divergence in divergences):
+            with self._ctx.step(_("Write the client list of the group")):
+                files.write_clients_table(identity.files.clients_table)
+        else:
+            with self._ctx.step(_("Write the files of the group")):
+                files.replace(identity.member_files())
         with self._ctx.step(_("Check that the server is a clone")):
             left = identity.compare(read_awg_files(host))
             if left:

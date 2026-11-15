@@ -42,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   history move to the new leading server, which then issues keys; the former leader may leave. A
   leading server that does not answer is left behind as lagging.
 
+### Changed
+
+- **Server group members** get the clientsTable record of a new key byte for byte as the leading
+  server writes it. Catch-up of a member that already has every key of the group rewrites only
+  clientsTable and does not restart AmneziaWG. A batch reissue changes each member under one lock
+  with one `syncconf` instead of one per key.
+
 ## [1.0.0] - 2026-11-13
 
 The first release: a self-hosted web panel for Amnezia VPN servers, compatible with the Amnezia

@@ -1,9 +1,13 @@
 from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from itertools import count
 from typing import Any
 
 import pytest
+from django.utils import timezone
 
-from amnezia_core.awg import AwgServerConfig, Peer
+from amnezia_core.awg import AWG_CLIENTS_TABLE_PATH, AwgServerConfig, Peer
+from amnezia_core.clients_table import CREATION_DATE, ClientsTable
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
 from apps.groups.models import GroupMember, ServerGroup
@@ -20,6 +24,7 @@ from apps.keys.errors import PeerErrorCode
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.actions import KeyActions
 from apps.keys.services.peers import PeerManager
+from apps.keys.services.reissue import KeyReissue
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
@@ -193,3 +198,68 @@ def test_users_of_a_joined_server_get_keys_of_the_group(
     assert peer(servers, JOINER_HOST, key) is not None
     notification = Notification.objects.get(event=Event.KEYS_UPDATED)
     assert (notification.user, notification.data["server"]) == (owner, joiner.server.name)
+
+
+@pytest.fixture
+def ticking_clock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every reading of the clock is a second later: the members are written in turn."""
+    first = datetime(2026, 11, 15, 12, 0, tzinfo=UTC)
+    moments = (first + timedelta(seconds=n) for n in count())
+    monkeypatch.setattr(timezone, "localtime", lambda *args: next(moments))
+
+
+@pytest.mark.usefixtures("ticking_clock")
+def test_member_gets_the_client_record_of_the_leader_byte_for_byte(
+    servers: Fakes, joined: GroupMember, issue: Issue
+) -> None:
+    issue("Phone")
+
+    on_member = servers[JOINER_HOST].container_files[AWG_CLIENTS_TABLE_PATH]
+    assert on_member == servers[LEADER_HOST].container_files[AWG_CLIENTS_TABLE_PATH]
+
+
+def test_catch_up_of_a_member_with_every_key_keeps_its_interface_running(
+    servers: Fakes,
+    joined: GroupMember,
+    issue: Issue,
+    catch_up: Callable[[], list[Operation]],
+) -> None:
+    issue("Phone")
+    member = servers[JOINER_HOST]
+    table = ClientsTable.parse(server_files(member).clients_table)
+    table.update(table.client_ids[-1], {CREATION_DATE: "Sun Nov 15 12:00:01 2026"})
+    member.container_files[AWG_CLIENTS_TABLE_PATH] = table.serialize().encode()
+    GroupMember.objects.filter(pk=joined.pk).update(lagging_since=timezone.now())
+    starts = member.awg_starts_count
+
+    (operation,) = catch_up()
+
+    succeeded(operation)
+    assert member.awg_starts_count == starts
+    assert server_files(member) == server_files(servers[LEADER_HOST])
+    assert not lagging(joined)
+
+
+def test_reissue_makes_one_syncconf_on_each_member(
+    servers: Fakes,
+    joined: GroupMember,
+    issue: Issue,
+    admin: User,
+    django_capture_on_commit_callbacks: OnCommit,
+) -> None:
+    keys = [issue(name) for name in ("Phone", "Laptop", "Tablet")]
+    member = servers[JOINER_HOST]
+    syncs = member.syncconf_count
+
+    with django_capture_on_commit_callbacks(execute=True):
+        started = KeyReissue(admin).start(keys)
+
+    (operation,) = started.operations
+    operation.refresh_from_db()
+    succeeded(operation)
+    assert member.syncconf_count == syncs + 1
+    assert server_files(member) == server_files(servers[LEADER_HOST])
+    for new in AccessKey.objects.filter(pk__in=[key.pk for key in started.issued]):
+        assert new.status == KeyStatus.ACTIVE
+        assert peer(servers, JOINER_HOST, new) == peer(servers, LEADER_HOST, new)
+    assert not lagging(joined)

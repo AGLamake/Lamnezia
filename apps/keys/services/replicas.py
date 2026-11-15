@@ -12,11 +12,12 @@ from typing import Protocol
 
 from django.utils.translation import gettext as _
 
+from amnezia_core.containers import WgContainer
 from apps.keys.errors import PeerError, PeerErrorCode
-from apps.keys.models import AccessKey, KeyStatus
-from apps.keys.services.backends import KeyBackend, Reissue, ReissueOutcome, backend_for
+from apps.keys.models import AccessKey
+from apps.keys.services.backends import Reissue, ReissueOutcome, WgKeys
 from apps.keys.services.instances import Instance
-from apps.keys.services.peers import StepRecorder
+from apps.keys.services.peers import ClientClock, PeerManager, StepRecorder
 from apps.ssh.errors import CatalogError, SshError
 from apps.ssh.services import RemoteHost
 
@@ -69,20 +70,23 @@ class GroupKeys:
 
     The first one must succeed: it gives a new key its address, which the others take as is.
     A member that cannot be reached or fails is marked lagging and the change goes on without
-    it. Each member is changed by the safe write protocol of its own backend.
+    it. Each member is changed by the safe write protocol of its own backend; one clock frozen
+    for the change gives every member the same clientsTable record.
     """
 
     def __init__(
         self,
-        primary: tuple[GroupServer, KeyBackend],
-        replicas: Sequence[tuple[GroupServer, KeyBackend]],
+        primary: tuple[GroupServer, WgKeys],
+        replicas: Sequence[tuple[GroupServer, WgKeys]],
         group: KeyGroup,
         steps: StepRecorder,
+        clock: ClientClock,
     ) -> None:
         self._primary = primary
         self._replicas = replicas
         self._group = group
         self._steps = steps
+        self._clock = clock
 
     @classmethod
     @contextmanager
@@ -90,8 +94,11 @@ class GroupKeys:
         cls, instance: Instance, group: KeyGroup, steps: StepRecorder
     ) -> Iterator["GroupKeys"]:
         """Connect to every member; with none reachable nothing changes and nobody lags."""
+        kind = instance.container
+        assert isinstance(kind, WgContainer), "the servers of a group run AmneziaWG"
+        clock = ClientClock()
         with ExitStack() as stack:
-            reached: list[tuple[GroupServer, KeyBackend]] = []
+            reached: list[tuple[GroupServer, WgKeys]] = []
             missed: list[tuple[GroupServer, str]] = []
             with steps.step(_("Connect to the servers of the group")):
                 for server in group.members():
@@ -101,28 +108,26 @@ class GroupKeys:
                         missed.append((server, error.message))
                         steps.log(f"{server.name}: {error.message}")
                         continue
-                    reached.append((server, backend_for(instance, host, steps)))
+                    peers = PeerManager(host, steps, kind, clock)
+                    reached.append((server, WgKeys(instance, kind, peers)))
                 if not reached:
                     raise PeerError(PeerErrorCode.NO_GROUP_SERVER, instance.source)
-            backends = cls(reached[0], reached[1:], group, steps)
+            backends = cls(reached[0], reached[1:], group, steps, clock)
             for server, reason in missed:
                 backends._leave_behind(server, reason)
             yield backends
 
     def issue(self, key: AccessKey) -> None:
-        self._on_primary(lambda backend: backend.issue(key))
-        self._on_replicas(lambda backend: backend.enable(key))
+        with self._clock.frozen():
+            self._on_primary(lambda backend: backend.issue(key))
+            self._on_replicas(lambda backend: backend.enable(key))
 
     def reissue(self, pairs: Sequence[Reissue]) -> ReissueOutcome:
-        outcome: ReissueOutcome = self._on_primary(lambda backend: backend.reissue(pairs))
-
-        def copy(backend: KeyBackend) -> None:
-            for pair in outcome.done:
-                backend.enable(pair.new)
-                if pair.old.status != KeyStatus.REVOKED:
-                    backend.revoke(pair.old)
-
-        self._on_replicas(copy)
+        """One change of each member for the whole batch: one lock and one syncconf."""
+        with self._clock.frozen():
+            outcome: ReissueOutcome = self._on_primary(lambda backend: backend.reissue(pairs))
+            if outcome.done:
+                self._on_replicas(lambda backend: backend.copy(outcome.done))
         return outcome
 
     def disable(self, key: AccessKey) -> None:
@@ -139,19 +144,21 @@ class GroupKeys:
 
     def assign(self, key: AccessKey) -> None:
         # A member puts the peer back with its address in the group, never a new one.
-        self._on_primary(lambda backend: backend.assign(key))
-        self._on_replicas(lambda backend: backend.enable(key))
+        with self._clock.frozen():
+            self._on_primary(lambda backend: backend.assign(key))
+            self._on_replicas(lambda backend: backend.enable(key))
 
-    def _on_all(self, change: Callable[[KeyBackend], None]) -> None:
-        self._on_primary(change)
-        self._on_replicas(change)
+    def _on_all(self, change: Callable[[WgKeys], None]) -> None:
+        with self._clock.frozen():
+            self._on_primary(change)
+            self._on_replicas(change)
 
-    def _on_primary[T](self, change: Callable[[KeyBackend], T]) -> T:
+    def _on_primary[T](self, change: Callable[[WgKeys], T]) -> T:
         server, backend = self._primary
         with self._steps.step(_("Change the keys on %(server)s") % {"server": server.name}):
             return change(backend)
 
-    def _on_replicas(self, change: Callable[[KeyBackend], None]) -> None:
+    def _on_replicas(self, change: Callable[[WgKeys], None]) -> None:
         for server, backend in self._replicas:
             try:
                 with self._steps.step(_("Copy the change to %(server)s") % {"server": server.name}):

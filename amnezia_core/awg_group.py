@@ -38,6 +38,11 @@ class Mismatch(StrEnum):
     CLIENT_CHANGED = "client_changed"
 
 
+_CLIENT_MISMATCHES = frozenset(
+    {Mismatch.CLIENT_MISSING, Mismatch.CLIENT_EXTRA, Mismatch.CLIENT_CHANGED}
+)
+
+
 @dataclass(frozen=True)
 class Divergence:
     """One difference of a member: `subject` is an [Interface] entry name or a peer public key.
@@ -47,6 +52,11 @@ class Divergence:
 
     kind: Mismatch
     subject: str = ""
+
+    @property
+    def in_clients_table(self) -> bool:
+        """Only clientsTable differs here: the interface does not read it, no restart is needed."""
+        return self.kind in _CLIENT_MISMATCHES
 
 
 class AwgGroupIdentity:
