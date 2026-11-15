@@ -206,6 +206,15 @@ files onto it in the background operation "Catch up with the server group": its 
 group, revoked ones are gone, and it is back in the relay list. If no member answers, the operation
 fails and changes nothing.
 
+**Protocol settings** on the group page change the DNS, the client subnet and the AmneziaWG
+parameters of every member at once; the card of a member shows them read only with a link to the
+group. The port stays the port of the group, and the container log is set on each server. The
+background operation "Change the protocol settings of a group" locks every member that answers,
+applies the settings on each and keeps them clones. A member that does not answer or does not take
+the settings is marked lagging and catch-up gives it the new settings, moving its container into a
+new subnet if needed. If no member answers, nothing changes. A DNS-only change does not touch the
+servers. A settings change and a handover of one group do not run at the same time.
+
 ### Relay
 
 Clients of a group connect to the relay, which forwards their traffic to a live member. Any added

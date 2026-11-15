@@ -31,6 +31,8 @@ DELETE_KIND = "groups.delete"
 JOIN_KIND = "groups.join"
 INSTALL_KIND = "groups.install"
 LEAVE_KIND = "groups.leave"
+# Started from apps/groups/services/settings.py; a handover waits for it to finish.
+SETTINGS_KIND = "groups.change_settings"
 
 
 def check_standalone(instance: ProtocolInstance) -> None:

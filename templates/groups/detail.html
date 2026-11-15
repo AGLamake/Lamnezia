@@ -10,12 +10,15 @@
     <h1 class="page-title">{{ group.name }}</h1>
     <p class="page-lead">{% blocktranslate with port=group.port %}AmneziaWG 3.1, UDP port {{ port }}.{% endblocktranslate %}{% if group.domain %} {{ group.domain }}{% endif %}{% if group.relay %} · {% blocktranslate with relay=group.relay.name %}relay {{ relay }}{% endblocktranslate %}{% endif %}</p>
   </div>
+  <div class="flex flex-wrap gap-2">
+  <a href="{% url 'groups:settings' group.pk %}" class="btn btn-secondary">{% translate "Protocol settings" %}</a>
   {% if members|length == 1 %}
   <form method="post" action="{% url 'groups:delete' group.pk %}" data-confirm="{% translate "Delete the group? Its leading server stays as it is, with its keys." %}">
     {% csrf_token %}
     <button type="submit" class="btn btn-secondary">{% translate "Delete the group" %}</button>
   </form>
   {% endif %}
+  </div>
 </div>
 
 {% for warning in domain_warnings %}{% include "components/alert.html" with level="warning" text=warning %}{% endfor %}
@@ -32,7 +35,7 @@
         {% for member, reachable, active in members %}
           <tr>
             <td><a href="{% url 'servers:detail' member.instance.server_id %}" class="font-medium hover:underline">{{ member.instance.server.name }}</a>{% if member.leading %} <span class="badge badge-muted">{% translate "leading" %}</span>{% endif %}</td>
-            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The server missed key changes while it was unreachable. The relay skips it until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% endif %}</td>
+            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The server missed changes of the keys or the settings while it was unreachable. The relay skips it until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the relay' %}">{% if reachable is None %}<span class="text-muted">—</span>{% elif reachable %}<span class="badge badge-success">{% translate "reachable" %}</span>{% else %}<span class="badge badge-danger">{% translate "unreachable" %}</span>{% endif %}{% if active %} <span class="badge badge-info" title="{% translate "The relay sends the clients of the group to this server now." %}">{% translate "active" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the panel' %}">{% with online=member.instance.server.online %}{% if online is None %}<span class="text-muted">—</span>{% elif online %}<span class="badge badge-success">{% translate "online" %}</span>{% else %}<span class="badge badge-danger">{% translate "offline" %}</span>{% endif %}{% endwith %}</td>
             <td><div class="flex flex-wrap gap-2">

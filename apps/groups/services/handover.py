@@ -23,6 +23,7 @@ from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.groups.services.addressing import GroupKeyAddress, client_host
 from apps.groups.services.cloning import locked_source
+from apps.groups.services.membership import SETTINGS_KIND
 from apps.keys.models import AccessKey, Drift
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
@@ -42,10 +43,11 @@ def start_handover(member: GroupMember, *, user: User, ip: str | None = None) ->
         group = ServerGroup.objects.select_for_update().get(pk=member.group_id)
         member = GroupMember.objects.select_related("instance").get(pk=member.pk)
         _check_candidate(member)
-        if Operation.objects.filter(
-            kind=HANDOVER_KIND, status__in=_UNFINISHED, params__group_id=group.pk
-        ).exists():
+        running = Operation.objects.filter(status__in=_UNFINISHED, params__group_id=group.pk)
+        if running.filter(kind=HANDOVER_KIND).exists():
             raise GroupError(GroupErrorCode.HANDOVER_RUNNING, str(group.pk))
+        if running.filter(kind=SETTINGS_KIND).exists():
+            raise GroupError(GroupErrorCode.SETTINGS_RUNNING, str(group.pk))
         leader = group.leader
         if leader is not None and keys_changing(leader.instance.source):
             raise GroupError(GroupErrorCode.KEYS_CHANGING, leader.instance.source)

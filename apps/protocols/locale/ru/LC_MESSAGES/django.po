@@ -1018,6 +1018,9 @@ msgstr "На сервере остался контейнер от прерва�
 msgid "The service runs with the old settings again."
 msgstr "Сервис снова работает со старыми настройками."
 
+msgid "The settings of a group member change on the group page."
+msgstr "Настройки участника группы меняются на странице группы."
+
 msgid "The speed test container could not be built or started."
 msgstr "Не удалось собрать или запустить контейнер замера скорости."
 

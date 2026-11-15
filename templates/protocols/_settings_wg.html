@@ -1,11 +1,11 @@
 {% load i18n %}
   <div class="space-y-2">
     <div class="grid gap-4 sm:grid-cols-3">
-      {{ form.port.as_field_group }}
+      {% if "port" in form.fields %}{{ form.port.as_field_group }}{% endif %}
       {{ form.primary_dns.as_field_group }}
       {{ form.secondary_dns.as_field_group }}
     </div>
-    {% include "protocols/_port_hint.html" with server=instance.server %}
+    {% if "port" in form.fields %}{% include "protocols/_port_hint.html" with server=instance.server %}{% endif %}
     {{ form.subnet.as_field_group }}
   </div>
   <p class="help-text">{% translate "DNS goes only into client profiles: changing it alone does not touch the server, but clients get it after importing the key again." %}</p>

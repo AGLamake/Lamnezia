@@ -1,0 +1,33 @@
+{% extends "servers/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Protocol settings" %} · {{ group.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'groups:list' %}">{% translate "Server groups" %}</a></li><li><a href="{% url 'groups:detail' group.pk %}">{{ group.name }}</a></li><li aria-current="page">{% translate "Protocol settings" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Protocol settings" %} · {{ group.name }}</h1>
+  <p class="page-lead">{% blocktranslate with port=group.port %}AmneziaWG 3.1 of every server of the group, UDP port {{ port }}.{% endblocktranslate %}</p>
+</div>
+
+<p class="help-text">{% translate "The servers of a group are clones: the settings apply on every one that answers. A server that does not answer lags and gets them when the panel catches it up. The port is the port of the group; the container log is set on each server." %}</p>
+{% if busy %}{% translate "The group is changing its settings or its leading server now. Wait until that operation finishes." as running %}{% include "components/alert.html" with level="info" text=running %}{% endif %}
+
+{% blocktranslate asvar warning count keys=keys %}Changing the subnet or the protocol parameters restarts the protocol on every server of the group and breaks the connection of {{ keys }} key until its owner imports it into the Amnezia app again.{% plural %}Changing the subnet or the protocol parameters restarts the protocol on every server of the group and breaks the connection of {{ keys }} keys until their owners import them into the Amnezia app again.{% endblocktranslate %}
+{% include "components/alert.html" with level="warning" text=warning %}
+
+<form method="post" class="card space-y-6">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {% include form.fields_template %}
+
+  <div class="space-y-3">
+    {% if imported %}
+      {{ form.reissue.as_field_group }}
+      <p class="help-text">{% blocktranslate count keys=imported %}{{ keys }} key was imported from the server.{% plural %}{{ keys }} keys were imported from the server.{% endblocktranslate %}</p>
+    {% endif %}
+    {{ form.confirm.as_field_group }}
+  </div>
+  <div><button type="submit" class="btn btn-primary">{% translate "Apply to the group" %}</button></div>
+</form>
+{% endblock %}

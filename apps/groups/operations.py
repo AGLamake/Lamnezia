@@ -3,13 +3,16 @@
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
+from apps.accounts.models import User
 from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.groups.services.cloning import GroupInstall, GroupJoin, GroupLeave, MemberCatchUp
 from apps.groups.services.handover import HANDOVER_KIND, LeaderHandover
-from apps.groups.services.membership import INSTALL_KIND, JOIN_KIND, LEAVE_KIND
+from apps.groups.services.membership import INSTALL_KIND, JOIN_KIND, LEAVE_KIND, SETTINGS_KIND
 from apps.groups.services.replication import CATCH_UP_KIND
+from apps.groups.services.settings import GroupSettingsChange
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
+from apps.protocols.services.awg_settings import AwgSettings
 from apps.servers.models import Server
 
 
@@ -68,6 +71,20 @@ def hand_over(ctx: OperationContext) -> None:
             ctx.log(_("The server already leads the group: nothing to do."))
     if member is not None and not member.leading:
         LeaderHandover(member, ctx).run()
+
+
+@operations.register(SETTINGS_KIND, gettext_lazy("Change the protocol settings of a group"))
+def change_group_settings(ctx: OperationContext) -> None:
+    """The members that answer take the settings; the others catch up with them later."""
+    with ctx.step(_("Find the group")):
+        group = ServerGroup.objects.filter(pk=ctx.params["group_id"]).first()
+        if group is None:
+            ctx.log(_("The group no longer exists: nothing to do."))
+    if group is not None:
+        actor = User.objects.filter(pk=ctx.params["user_id"]).first()
+        GroupSettingsChange(group, ctx).run(
+            AwgSettings.from_params(ctx.params), actor=actor, reissue=ctx.params["reissue"]
+        )
 
 
 def _member(ctx: OperationContext, state: MemberState) -> GroupMember | None:

@@ -139,19 +139,23 @@ class AwgReconfiguration:
         with ExitStack() as stack:
             with self._ctx.step(_("Wait for other operations on the server")):
                 stack.enter_context(self._host.lock())
-            with self._ctx.step(_("Read the server config")):
-                text = self._docker.shell.read_file(self._kind.config_path).decode()
-                config = AwgServerConfig.parse(text)
-                before = config.serialize()
-                new_port = config.listen_port != settings.port
-                config.update_interface(settings.port, settings.params)
-                renumbers = self._renumber(config, settings.subnet)
-                moves = new_port or renumbers or self._docker.keeps_log() != settings.logs
-            if moves:
-                self._move(config, settings.port, logs=settings.logs, check_port=new_port)
-            elif config.serialize() != before:
-                with self._ctx.step(_("Restart the VPN interface")):
-                    self._restart(config.serialize(), previous=text)
+            return self.apply_locked(settings)
+
+    def apply_locked(self, settings: AwgSettings) -> AwgServerConfig:
+        """As `apply`, on a server the caller has already locked."""
+        with self._ctx.step(_("Read the server config")):
+            text = self._docker.shell.read_file(self._kind.config_path).decode()
+            config = AwgServerConfig.parse(text)
+            before = config.serialize()
+            new_port = config.listen_port != settings.port
+            config.update_interface(settings.port, settings.params)
+            renumbers = self._renumber(config, settings.subnet)
+            moves = new_port or renumbers or self._docker.keeps_log() != settings.logs
+        if moves:
+            self._move(config, settings.port, logs=settings.logs, check_port=new_port)
+        elif config.serialize() != before:
+            with self._ctx.step(_("Restart the VPN interface")):
+                self._restart(config.serialize(), previous=text)
         return config
 
     def upgrade(self, port: int) -> AwgServerConfig:

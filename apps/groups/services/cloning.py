@@ -34,7 +34,7 @@ from apps.operations.services.context import OperationContext
 from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.protocols.services.awg_container import AwgContainer
 from apps.protocols.services.awg_installer import AwgInstaller
-from apps.protocols.services.awg_settings import kept_files
+from apps.protocols.services.awg_settings import AwgReconfiguration, AwgSettings, kept_files
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.ssh.errors import SshError
@@ -166,7 +166,7 @@ class _Cloning:
     def _clone(self, host: RemoteHost, current: AwgServerFiles, identity: AwgGroupIdentity) -> None:
         config = AwgServerConfig.parse(current.config)
         if config.address.network != identity.subnet.network:
-            raise GroupError(GroupErrorCode.OTHER_SUBNET, self._instance.source)
+            self._fit_subnet(host, identity)
         self._keep(current, config)
         with self._ctx.step(_("Write the files of the group")):
             MemberFiles(host, self._ctx).replace(identity.member_files())
@@ -176,6 +176,10 @@ class _Cloning:
                 raise GroupError(
                     GroupErrorCode.NOT_CLONE, ", ".join(sorted({d.kind for d in left}))
                 )
+
+    def _fit_subnet(self, host: RemoteHost, identity: AwgGroupIdentity) -> None:
+        """The server has another client subnet than the group; a joining one is refused."""
+        raise GroupError(GroupErrorCode.OTHER_SUBNET, self._instance.source)
 
     def _keep(self, current: AwgServerFiles, config: AwgServerConfig) -> None:
         """Deal with the files the group files are about to replace; nothing by default."""
@@ -226,7 +230,22 @@ class GroupJoin(_Cloning):
 
 
 class MemberCatchUp(_Cloning):
-    """A lagging member gets the files of the group and goes back behind the relay."""
+    """A lagging member gets the files of the group and goes back behind the relay.
+
+    It may have missed a new subnet of the group: start.sh takes the subnet when the container
+    starts, so the container moves into it first, as a settings change does.
+    """
+
+    def _fit_subnet(self, host: RemoteHost, identity: AwgGroupIdentity) -> None:
+        settings = AwgSettings(
+            identity.port,
+            AwgServerConfig.parse(identity.files.config).awg_params,
+            self._instance.dns,
+            self._instance.container_logs,
+            str(identity.subnet.network),
+        )
+        with self._ctx.step(_("Move the server into the subnet of the group")):
+            AwgReconfiguration(host, self._ctx, AWG2).apply_locked(settings)
 
     def _save(self, host: RemoteHost, files: AwgServerFiles) -> None:
         with transaction.atomic():

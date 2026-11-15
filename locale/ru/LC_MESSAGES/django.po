@@ -157,6 +157,10 @@ msgstr[1] "сообщили %(reports)s человека"
 msgstr[2] "сообщили %(reports)s человек"
 
 #, python-format
+msgid "%(server)s catches up with the settings later."
+msgstr "%(server)s получит настройки позже, при догоне."
+
+#, python-format
 msgid "%(server)s did not answer: it catches up with the group later."
 msgstr "%(server)s не ответил: он догонит группу позже."
 
@@ -294,6 +298,9 @@ msgstr "Добавить тариф"
 msgid "Add a server"
 msgstr "Добавить сервер"
 
+msgid "Add a server without AmneziaWG"
+msgstr "Добавить сервер без AmneziaWG"
+
 msgid "Add a template"
 msgstr "Добавить шаблон"
 
@@ -371,6 +378,13 @@ msgstr "Контейнеры Amnezia"
 msgid "AmneziaWG 3.1"
 msgstr "AmneziaWG 3.1"
 
+msgid "AmneziaWG 3.1 is installed straight with the files of the group: the server key, settings, port and clients. The UDP port of the group must be free on the server."
+msgstr "AmneziaWG 3.1 устанавливается сразу с файлами группы: ключом сервера, настройками, портом и клиентами. UDP-порт группы на сервере должен быть свободен."
+
+#, python-format
+msgid "AmneziaWG 3.1 of every server of the group, UDP port %(port)s."
+msgstr "AmneziaWG 3.1 всех серверов группы, UDP-порт %(port)s."
+
 #, python-format
 msgid "AmneziaWG 3.1, UDP port %(port)s."
 msgstr "AmneziaWG 3.1, UDP-порт %(port)s."
@@ -414,6 +428,13 @@ msgstr "Применить"
 
 msgid "Apply the action to the ticked keys?"
 msgstr "Применить действие к отмеченным ключам?"
+
+#, python-format
+msgid "Apply the settings on %(server)s"
+msgstr "Применить настройки на %(server)s"
+
+msgid "Apply to the group"
+msgstr "Применить ко всей группе"
 
 msgid "Approve"
 msgstr "Подтвердить"
@@ -565,6 +586,9 @@ msgstr "Изменить"
 msgid "Change email"
 msgstr "Сменить почту"
 
+msgid "Change the protocol settings of a group"
+msgstr "Смена настроек протокола группы"
+
 msgid "Changes apply within five minutes."
 msgstr "Изменения применятся в течение пяти минут."
 
@@ -574,6 +598,13 @@ msgid_plural "Changing the port or the protocol parameters restarts the protocol
 msgstr[0] "Смена порта или параметров протокола перезапускает протокол на сервере и обрывает подключение %(keys)s ключа, пока владелец не импортирует его в приложение Amnezia заново."
 msgstr[1] "Смена порта или параметров протокола перезапускает протокол на сервере и обрывает подключение %(keys)s ключей, пока владельцы не импортируют их в приложение Amnezia заново."
 msgstr[2] "Смена порта или параметров протокола перезапускает протокол на сервере и обрывает подключение %(keys)s ключей, пока владельцы не импортируют их в приложение Amnezia заново."
+
+#, python-format
+msgid "Changing the subnet or the protocol parameters restarts the protocol on every server of the group and breaks the connection of %(keys)s key until its owner imports it into the Amnezia app again."
+msgid_plural "Changing the subnet or the protocol parameters restarts the protocol on every server of the group and breaks the connection of %(keys)s keys until their owners import them into the Amnezia app again."
+msgstr[0] "Смена подсети или параметров протокола перезапускает протокол на всех серверах группы и обрывает подключение %(keys)s ключа, пока владелец не импортирует его в приложение Amnezia заново."
+msgstr[1] "Смена подсети или параметров протокола перезапускает протокол на всех серверах группы и обрывает подключение %(keys)s ключей, пока владельцы не импортируют их в приложение Amnezia заново."
+msgstr[2] "Смена подсети или параметров протокола перезапускает протокол на всех серверах группы и обрывает подключение %(keys)s ключей, пока владельцы не импортируют их в приложение Amnezia заново."
 
 msgid "Channel"
 msgstr "Канал"
@@ -707,6 +738,9 @@ msgstr "Подключиться к серверу"
 #, python-format
 msgid "Connect to the servers of %(group)s"
 msgstr "Подключиться к серверам группы %(group)s"
+
+msgid "Connect to the servers of the group"
+msgstr "Подключиться к серверам группы"
 
 msgid "Container"
 msgstr "Контейнер"
@@ -990,6 +1024,9 @@ msgstr "Трафик был у всех активных ключей."
 msgid "Every notification the panel sent, where to and whether it arrived."
 msgstr "Все уведомления панели: куда отправлены и дошли ли."
 
+msgid "Every server already has AmneziaWG or runs a relay."
+msgstr "На всех серверах уже есть AmneziaWG или работает ретранслятор."
+
 msgid "Every server matches the panel"
 msgstr "Все серверы совпадают с панелью"
 
@@ -1025,6 +1062,9 @@ msgstr "Фильтры"
 
 msgid "Filters and details that do not need a page of their own."
 msgstr "Фильтры и подробности, которым не нужна отдельная страница."
+
+msgid "Find the group"
+msgstr "Поиск группы"
 
 msgid "Find the relay"
 msgstr "Найти ретранслятор"
@@ -1068,6 +1108,9 @@ msgstr "Форма"
 
 msgid "Free disk space"
 msgstr "Свободно на диске"
+
+msgid "Free the UDP port of the group on the server, then join."
+msgstr "Освободите UDP-порт группы на сервере, затем вступайте."
 
 msgid "Frequently asked questions"
 msgstr "Частые вопросы"
@@ -1250,8 +1293,17 @@ msgstr "Установка Amnezia VPN"
 msgid "Install Amnezia VPN for %(device)s"
 msgstr "Установите Amnezia VPN для %(device)s"
 
+msgid "Install AmneziaWG of a server group"
+msgstr "Установка AmneziaWG группы серверов"
+
+msgid "Install AmneziaWG of the group on a server without a relay."
+msgstr "Установите AmneziaWG группы на сервер без ретранслятора."
+
 msgid "Install an authenticator app: Google Authenticator, Microsoft Authenticator, Aegis, 2FAS or another one."
 msgstr "Установите приложение-аутентификатор: Google Authenticator, Microsoft Authenticator, Aegis, 2FAS или другое."
+
+msgid "Install and join"
+msgstr "Установить и вступить"
 
 msgid "Install the app"
 msgstr "Установите приложение"
@@ -1302,6 +1354,9 @@ msgstr "Его конфиг не выключает журнал запросо�
 
 msgid "Join a server group"
 msgstr "Вступление в группу серверов"
+
+msgid "Join it as a standalone AmneziaWG 3.1 server, or remove its AmneziaWG first."
+msgstr "Добавьте его как одиночный сервер AmneziaWG 3.1 или сначала удалите его AmneziaWG."
 
 msgid "Join the group"
 msgstr "Вступить в группу"
@@ -1412,6 +1467,10 @@ msgstr "Минимум свободного диска по дням с %(since)
 msgid "Leave"
 msgstr "Покинуть"
 
+#, python-format
+msgid "Leave %(server)s to catch up"
+msgstr "Оставить %(server)s для догона"
+
 msgid "Leave a server group"
 msgstr "Выход из группы серверов"
 
@@ -1494,6 +1553,9 @@ msgstr "Сделать новую ссылку? Старая перестане�
 msgid "Make a new secret? The links given out so far stop working."
 msgstr "Выпустить новый секрет? Выданные ранее ссылки перестанут работать."
 
+msgid "Make a server of the group the leading one first."
+msgstr "Сначала сделайте один из серверов группы ведущим."
+
 msgid "Make a server the leading one of its group"
 msgstr "Сделать сервер ведущим в группе"
 
@@ -1539,6 +1601,9 @@ msgstr "Перевести клиентов на AmneziaWG 3.1"
 
 msgid "Move the keys of the groups to the relay address"
 msgstr "Перенести ключи групп на адрес ретранслятора"
+
+msgid "Move the server into the subnet of the group"
+msgstr "Перенести сервер в подсеть группы"
 
 msgid "Move the server to AmneziaWG 3.1? The container is rebuilt, clients are cut off for a few minutes and then import their keys again. If something fails, the server stays on 2.0."
 msgstr "Перевести сервер на AmneziaWG 3.1? Контейнер пересоберётся, клиенты отключатся на несколько минут, а затем заново импортируют свои ключи. Если что-то пойдёт не так, сервер останется на 2.0."
@@ -1702,6 +1767,9 @@ msgstr "Пока ни один сервер не может выдавать к�
 msgid "No server is available to you yet. Ask the administrator."
 msgstr "Пока вам не доступен ни один сервер. Обратитесь к администратору."
 
+msgid "No server of the group answers."
+msgstr "Ни один сервер группы не отвечает."
+
 msgid "No server of the group could be read."
 msgstr "Не удалось прочитать ни один сервер группы."
 
@@ -1772,6 +1840,9 @@ msgstr "На сегодня больше ничего не ждёт вас."
 msgid "Nothing found for «%(text)s»."
 msgstr "По запросу «%(text)s» ничего не найдено."
 
+msgid "Nothing is changed. Check that the servers of the group are online, then try again."
+msgstr "Ничего не изменено. Проверьте, что серверы группы в сети, и повторите."
+
 msgid "Nothing was sent yet."
 msgstr "Пока ничего не отправлялось."
 
@@ -1801,6 +1872,9 @@ msgstr "В группе могут быть только серверы AmneziaW
 
 msgid "Only a joined server that has every key change of the group can lead it."
 msgstr "Ведущим может стать только вступивший сервер, у которого есть все изменения ключей группы."
+
+msgid "Only the DNS changes: the servers are not touched."
+msgstr "Меняется только DNS: серверы не затрагиваются."
 
 msgid "Only the staff see it."
 msgstr "Его видит только персонал."
@@ -2372,6 +2446,9 @@ msgstr "Установите подсеть группы в настройках
 msgid "Settings"
 msgstr "Настройки"
 
+msgid "Settings of the group"
+msgstr "Настройки группы"
+
 msgid "Share"
 msgstr "Поделиться"
 
@@ -2572,6 +2649,9 @@ msgstr "Telegram и Discord: боты и ваши уведомления."
 msgid "Telegram did not confirm the account. Try again."
 msgstr "Telegram не подтвердил аккаунт. Попробуйте ещё раз."
 
+msgid "Tell the owners of the keys"
+msgstr "Уведомить владельцев ключей"
+
 msgid "Template"
 msgstr "Шаблон"
 
@@ -2684,11 +2764,23 @@ msgstr "Файлы %(server)s прочитаны."
 msgid "The form is out of date"
 msgstr "Форма устарела"
 
+msgid "The group has no leading server."
+msgstr "У группы нет ведущего сервера."
+
 msgid "The group is already changing its leading server."
 msgstr "В группе уже идёт смена ведущего сервера."
 
+msgid "The group is already changing its settings or its leading server."
+msgstr "Группа уже меняет настройки или ведущий сервер."
+
+msgid "The group is changing its settings or its leading server now. Wait until that operation finishes."
+msgstr "Группа сейчас меняет настройки или ведущий сервер. Дождитесь окончания этой операции."
+
 msgid "The group is deleted; its leading server stays as it is."
 msgstr "Группа удалена; ведущий сервер остался как есть."
+
+msgid "The group no longer exists: nothing to do."
+msgstr "Группы больше нет: делать нечего."
 
 msgid "The group still has other servers."
 msgstr "В группе ещё есть другие серверы."
@@ -2829,6 +2921,9 @@ msgstr "Порт группы уже занят на сервере ретран
 msgid "The port of a group is one the web server of the panel needs."
 msgstr "Порт группы нужен веб-серверу панели."
 
+msgid "The port of the group is taken on the server."
+msgstr "Порт группы на сервере занят."
+
 msgid "The ports are opened for TCP and UDP. Open them in the firewall of the hosting provider if it has one."
 msgstr "Порты открываются для TCP и UDP. Если у хостинга есть свой файрвол, откройте их и там."
 
@@ -2868,6 +2963,9 @@ msgstr "Обращение закрыто: можно добавить толь�
 #, python-format
 msgid "The server address is now <strong>%(host)s</strong>. The vpn:// link of every key carries the address, so the clients must import their keys again."
 msgstr "Теперь адрес сервера — <strong>%(host)s</strong>. Адрес входит в ссылку vpn:// каждого ключа, поэтому клиентам нужно заново импортировать ключи."
+
+msgid "The server already has AmneziaWG of its own."
+msgstr "На сервере уже есть свой AmneziaWG."
 
 msgid "The server already has the files of the group."
 msgstr "На сервере уже файлы группы."
@@ -2909,14 +3007,24 @@ msgstr "У сервера нет клиентов: снимок не нужен.
 msgid "The server has not answered yet."
 msgstr "Сервер ещё ни разу не ответил."
 
+msgid "The server has older files of the group: they are replaced."
+msgstr "На сервере старые файлы группы: они заменяются."
+
 msgid "The server is a clone of the group."
 msgstr "Сервер — клон группы."
 
 msgid "The server is already in a group."
 msgstr "Сервер уже в группе."
 
+msgid "The server is already joining a group."
+msgstr "Сервер уже вступает в группу."
+
 msgid "The server is in a server group: take it out of the group to restore a snapshot."
 msgstr "Сервер состоит в группе серверов: чтобы восстановить снимок, выведите его из группы."
+
+#, python-format
+msgid "The server is in the group %(name)s: its servers are clones, so the settings change for the whole group on its page. Here they are read only."
+msgstr "Сервер входит в группу %(name)s: её серверы — клоны, поэтому настройки меняются для всей группы на её странице. Здесь они только для чтения."
 
 msgid "The server is no longer a relay: nothing to do."
 msgstr "Сервер больше не ретранслятор: делать нечего."
@@ -2930,14 +3038,20 @@ msgstr "Сервер уже не вступает в группу и не вых
 msgid "The server listens on another port than the group."
 msgstr "Сервер слушает другой порт, чем группа."
 
-msgid "The server missed key changes while it was unreachable. The relay skips it until the panel copies the group files onto it."
-msgstr "Сервер пропустил изменения ключей, пока был недоступен. Ретранслятор обходит его, пока панель не скопирует на него файлы группы."
+msgid "The server missed changes of the keys or the settings while it was unreachable. The relay skips it until the panel copies the group files onto it."
+msgstr "Сервер пропустил изменения ключей или настроек, пока был недоступен. Ретранслятор обходит его, пока панель не скопирует на него файлы группы."
 
 msgid "The server no longer lags behind the group: nothing to do."
 msgstr "Сервер больше не отстаёт от группы: делать нечего."
 
 msgid "The server runs AmneziaWG with other keys than the panel has."
 msgstr "AmneziaWG на сервере работает с другими ключами, чем в панели."
+
+msgid "The server runs a relay."
+msgstr "На сервере работает ретранслятор."
+
+msgid "The servers of a group are clones: the settings apply on every one that answers. A server that does not answer lags and gets them when the panel catches it up. The port is the port of the group; the container log is set on each server."
+msgstr "Серверы группы — клоны: настройки применяются на каждом, который отвечает. Сервер, который не ответил, отстаёт и получает их, когда панель его догоняет. Порт — порт группы, журнал контейнера настраивается на каждом сервере."
 
 msgid "The service restarts on the server and its clients reconnect. A new port, domain or transport mode changes the address users connect to: give them the new one."
 msgstr "Сервис перезапустится на сервере, его клиенты переподключатся. Новый порт, домен или режим транспорта меняют адрес подключения — передайте пользователям новый."
@@ -3111,6 +3225,10 @@ msgstr "Для администраторов двухфакторная аут�
 
 msgid "Type a server, user or key name."
 msgstr "Введите имя сервера, пользователя или ключа."
+
+#, python-format
+msgid "UDP port %(port)s is taken on this server."
+msgstr "UDP-порт %(port)s на этом сервере занят."
 
 msgid "UDP port of AmneziaWG 2.0"
 msgstr "UDP-порт AmneziaWG 2.0"
@@ -3945,52 +4063,3 @@ msgstr "работает"
 
 msgid "your device"
 msgstr "ваше устройство"
-
-msgid "The server already has AmneziaWG of its own."
-msgstr "На сервере уже есть свой AmneziaWG."
-
-msgid "Join it as a standalone AmneziaWG 3.1 server, or remove its AmneziaWG first."
-msgstr "Добавьте его как одиночный сервер AmneziaWG 3.1 или сначала удалите его AmneziaWG."
-
-msgid "The port of the group is taken on the server."
-msgstr "Порт группы на сервере занят."
-
-msgid "Free the UDP port of the group on the server, then join."
-msgstr "Освободите UDP-порт группы на сервере, затем вступайте."
-
-msgid "The server runs a relay."
-msgstr "На сервере работает ретранслятор."
-
-msgid "Install AmneziaWG of the group on a server without a relay."
-msgstr "Установите AmneziaWG группы на сервер без ретранслятора."
-
-msgid "The server is already joining a group."
-msgstr "Сервер уже вступает в группу."
-
-msgid "Install AmneziaWG of a server group"
-msgstr "Установка AmneziaWG группы серверов"
-
-msgid "Find the group"
-msgstr "Поиск группы"
-
-msgid "The group no longer exists: nothing to do."
-msgstr "Группы больше нет: делать нечего."
-
-msgid "The server has older files of the group: they are replaced."
-msgstr "На сервере старые файлы группы: они заменяются."
-
-msgid "Add a server without AmneziaWG"
-msgstr "Добавить сервер без AmneziaWG"
-
-msgid "AmneziaWG 3.1 is installed straight with the files of the group: the server key, settings, port and clients. The UDP port of the group must be free on the server."
-msgstr "AmneziaWG 3.1 устанавливается сразу с файлами группы: ключом сервера, настройками, портом и клиентами. UDP-порт группы на сервере должен быть свободен."
-
-#, python-format
-msgid "UDP port %(port)s is taken on this server."
-msgstr "UDP-порт %(port)s на этом сервере занят."
-
-msgid "Install and join"
-msgstr "Установить и вступить"
-
-msgid "Every server already has AmneziaWG or runs a relay."
-msgstr "На всех серверах уже есть AmneziaWG или работает ретранслятор."

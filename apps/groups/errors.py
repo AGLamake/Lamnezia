@@ -26,6 +26,9 @@ class GroupErrorCode(StrEnum):
     PORT_TAKEN = "port_taken"
     RELAY_SERVER = "relay_server"
     JOIN_RUNNING = "join_running"
+    SETTINGS_RUNNING = "settings_running"
+    NO_MEMBER_ANSWERS = "no_member_answers"
+    NO_LEADER = "no_leader"
 
 
 GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
@@ -100,6 +103,18 @@ GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
     GroupErrorCode.JOIN_RUNNING: ErrorDescription(
         _("The server is already joining a group."),
         _("Wait until that operation finishes."),
+    ),
+    GroupErrorCode.SETTINGS_RUNNING: ErrorDescription(
+        _("The group is already changing its settings or its leading server."),
+        _("Wait until that operation finishes."),
+    ),
+    GroupErrorCode.NO_MEMBER_ANSWERS: ErrorDescription(
+        _("No server of the group answers."),
+        _("Nothing is changed. Check that the servers of the group are online, then try again."),
+    ),
+    GroupErrorCode.NO_LEADER: ErrorDescription(
+        _("The group has no leading server."),
+        _("Make a server of the group the leading one first."),
     ),
 }
 

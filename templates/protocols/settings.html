@@ -15,8 +15,15 @@
   </div>
 {% endif %}
 
+{% if group %}
+  <div class="alert alert-info" role="status">
+    <p class="flex-1">{% blocktranslate with name=group.name %}The server is in the group {{ name }}: its servers are clones, so the settings change for the whole group on its page. Here they are read only.{% endblocktranslate %}
+      <a href="{% url 'groups:settings' group.pk %}" class="underline">{% translate "Settings of the group" %}</a></p>
+  </div>
+{% else %}
 {% blocktranslate asvar warning count keys=keys %}Changing the port or the protocol parameters restarts the protocol on the server and breaks the connection of {{ keys }} key until its owner imports it into the Amnezia app again.{% plural %}Changing the port or the protocol parameters restarts the protocol on the server and breaks the connection of {{ keys }} keys until their owners import them into the Amnezia app again.{% endblocktranslate %}
 {% include "components/alert.html" with level="warning" text=warning %}
+{% endif %}
 
 <form method="post" class="card space-y-6" x-data="{ port: '{{ form.port.value|default_if_none:''|escapejs }}' }">
   {% csrf_token %}
@@ -25,6 +32,7 @@
 
   {{ form.container_logs.as_field_group }}
 
+  {% if not group %}
   <div class="space-y-3">
     {% if imported %}
       {{ form.reissue.as_field_group }}
@@ -33,5 +41,6 @@
     {{ form.confirm.as_field_group }}
   </div>
   <div><button type="submit" class="btn btn-primary">{% translate "Apply" %}</button></div>
+  {% endif %}
 </form>
 {% endblock %}

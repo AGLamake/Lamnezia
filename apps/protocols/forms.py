@@ -153,9 +153,12 @@ class ProtocolSettingsForm(SettingsForm):
         return str(subnet)
 
     def _other_subnets(self) -> list[IPv4Network]:
-        instances = ProtocolInstance.objects.filter(server=self.instance.server).exclude(
-            pk=self.instance.pk
-        )
+        return self.other_subnets(self.instance)
+
+    @staticmethod
+    def other_subnets(instance: ProtocolInstance) -> list[IPv4Network]:
+        """The networks on the server of `instance` its subnet must not overlap."""
+        instances = ProtocolInstance.objects.filter(server=instance.server).exclude(pk=instance.pk)
         subnets = [IPv4Network(AMNEZIA_NETWORK_SUBNET)]
         for value in instances.values_list("subnet", flat=True):
             try:

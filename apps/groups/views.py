@@ -1,4 +1,5 @@
-"""Pages of the server groups: the list, a new group, its members, joining, leaving, the lead."""
+"""Pages of the server groups: the list, a new group, its members and settings, joining, leaving,
+the lead."""
 
 from typing import Any
 
@@ -7,13 +8,14 @@ from django.db.models import QuerySet
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views import View
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import CreateView, DetailView, FormView, ListView
 
 from apps.accounts.permissions import AdminRequiredMixin
 from apps.groups.errors import GroupError
-from apps.groups.forms import GroupForm
+from apps.groups.forms import GroupForm, GroupSettingsForm
 from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.addressing import DomainCheck, client_host
 from apps.groups.services.handover import start_handover
@@ -28,6 +30,8 @@ from apps.groups.services.membership import (
     start_join,
     start_leave,
 )
+from apps.groups.services.settings import changing_settings
+from apps.keys.services.counts import InstanceKeyCount
 from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay
 from apps.relays.services.health import GroupHealth
@@ -151,3 +155,50 @@ class GroupDeleteView(AdminRequiredMixin, View):
             return redirect("groups:detail", pk=group.pk)
         messages.success(request, _("The group is deleted; its leading server stays as it is."))
         return redirect("groups:list")
+
+
+class GroupSettingsView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
+    """The protocol settings of every member of a group; saving starts the operation."""
+
+    template_name = "groups/settings.html"
+    form_class = GroupSettingsForm
+
+    @cached_property
+    def group(self) -> ServerGroup:
+        return get_object_or_404(ServerGroup, pk=self.kwargs["pk"])
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return self._without_leader(request) or super().get(request, *args, **kwargs)
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return self._without_leader(request) or super().post(request, *args, **kwargs)
+
+    def _without_leader(self, request: HttpRequest) -> HttpResponse | None:
+        """Back to the group page if it has no leading server to take the settings from."""
+        if self.group.leader is not None:
+            return None
+        messages.error(request, _("The group has no leading server."))
+        return redirect("groups:detail", pk=self.group.pk)
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        return {**super().get_form_kwargs(), "group": self.group}
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        form: GroupSettingsForm = kwargs.get("form") or self.get_form()
+        keys = InstanceKeyCount.of(form.instance.source)
+        return super().get_context_data(
+            group=self.group,
+            instance=form.instance,
+            keys=keys.total,
+            imported=keys.imported,
+            busy=changing_settings(self.group),
+            **kwargs,
+        )
+
+    def form_valid(self, form: GroupSettingsForm) -> HttpResponse:
+        try:
+            operation = form.start(self.member, self.client_ip)
+        except GroupError as error:
+            form.add_error(None, f"{error.message} {error.hint}")
+            return self.form_invalid(form)
+        return redirect("operations:detail", pk=operation.pk)

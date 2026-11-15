@@ -21,6 +21,7 @@ from amnezia_core.proxies import (
 from amnezia_core.xray import XRAY_CONTAINER
 from apps.accounts.permissions import AdminRequiredMixin
 from apps.audit.services import journal as audit
+from apps.groups.models import ServerGroup
 from apps.keys.services.counts import InstanceKeyCount
 from apps.protocols.forms import (
     AwgMigrationForm,
@@ -209,7 +210,16 @@ class ProtocolSettingsView(AdminRequiredMixin, InstanceMixin, FormView):  # type
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         if self.instance.container not in SETTINGS_FORMS:
             raise Http404
+        if self.group is not None:
+            messages.error(request, _("The settings of a group member change on the group page."))
+            return redirect("groups:settings", pk=self.group.pk)
         return super().post(request, *args, **kwargs)
+
+    @cached_property
+    def group(self) -> ServerGroup | None:
+        """The group of a member: its servers are clones, so only the group changes settings."""
+        member = getattr(self.instance, "group_member", None)
+        return None if member is None else member.group
 
     def get_form_class(self) -> type[SettingsForm]:
         return SETTINGS_FORMS[self.instance.container]
@@ -217,10 +227,21 @@ class ProtocolSettingsView(AdminRequiredMixin, InstanceMixin, FormView):  # type
     def get_form_kwargs(self) -> dict[str, Any]:
         return {**super().get_form_kwargs(), "instance": self.instance}
 
+    def get_form(self, form_class: type[SettingsForm] | None = None) -> SettingsForm:
+        form: SettingsForm = super().get_form(form_class)
+        if self.group is not None:
+            for field in form.fields.values():
+                field.disabled = True
+        return form
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         keys = InstanceKeyCount.of(self.instance.source)
         return super().get_context_data(
-            instance=self.instance, keys=keys.total, imported=keys.imported, **kwargs
+            instance=self.instance,
+            keys=keys.total,
+            imported=keys.imported,
+            group=self.group,
+            **kwargs,
         )
 
     def form_valid(self, form: SettingsForm) -> HttpResponse:
