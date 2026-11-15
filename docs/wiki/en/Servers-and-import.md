@@ -188,6 +188,10 @@ each of them. A server is either standalone or a member of one group.
 - **Leave the group**: the server keeps a snapshot of its files and gets a clean AmneziaWG with a new
   key and no clients. The snapshot taken when it joined can be put back after leaving
   ([Backup](Backup.md#amneziawg-snapshots-around-a-group)).
+  If the leave operation fails (the server does not answer, a write fails), the member is marked
+  "leave failed" and gets two buttons: **Retry leaving** runs the leave again and brings the
+  server to a clean standalone AmneziaWG; **Keep in the group** takes it back as a lagging member —
+  the relay skips it until the catch-up copies the files of the group onto it.
 - **Make leading**: another member takes the lead. A background operation first compares its files
   with those of the group and refuses if the server differs from the group. Keys of the group,
   with their traffic history, pass to the new leading server, and new keys are issued on it; if

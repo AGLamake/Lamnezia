@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A failed leave of a server group** can be retried or undone on the group page: the retry
+  brings the server to a clean standalone AmneziaWG, and "Keep in the group" takes it back as a
+  lagging member that the catch-up brings to the files of the group.
 - **Restoring a snapshot** of an AmneziaWG server from the backup section of its card: a background
   operation saves the current files as a snapshot, puts the snapshot files back with a rollback if
   the interface does not come up, and the panel reads the keys again, so the old keys connect.
