@@ -183,8 +183,15 @@ each of them. A server is either standalone or a member of one group.
   on it get keys of the group. A clean server joins without a warning.
 - **Leave the group**: the server keeps a snapshot of its files and gets a clean AmneziaWG with a new
   key and no clients.
-- The leading server cannot leave; a group with only its leader left can be deleted, and the leader
-  stays as it is.
+- **Make leading**: another member takes the lead. A background operation first compares its files
+  with those of the group and refuses if the server differs from the group. Keys of the group,
+  with their traffic history, pass to the new leading server, and new keys are issued on it; if
+  the group has no relay, the address in the keys changes to the new leader's and their owners are
+  notified. If the former leader does not answer, the handover goes on without it and it is marked
+  lagging. A lagging member has no such button; the handover waits for key operations of the group
+  to finish.
+- The leading server cannot leave — make another server the leading one first; a group with only
+  its leader left can be deleted, and the leader stays as it is.
 
 Keys of a group are issued on its leading server. Issuing, disabling, enabling and revoking a key
 run on every member that answers, without waiting for the others. A member the panel cannot reach

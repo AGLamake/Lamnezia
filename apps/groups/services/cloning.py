@@ -42,6 +42,15 @@ def locked_identity(member: GroupMember, ctx: OperationContext) -> Iterator[AwgG
     That server stays locked until the block ends: no key change lands on it while its files
     are copied, and a change made after the block reaches the copy as a member.
     """
+    with locked_source(member, ctx) as (_source, identity):
+        yield identity
+
+
+@contextmanager
+def locked_source(
+    member: GroupMember, ctx: OperationContext
+) -> Iterator[tuple[GroupMember, AwgGroupIdentity]]:
+    """As `locked_identity`, with the member whose files they are."""
     others = (
         GroupMember.objects.filter(
             group_id=member.group_id, state=MemberState.MEMBER, lagging_since=None
@@ -55,8 +64,8 @@ def locked_identity(member: GroupMember, ctx: OperationContext) -> Iterator[AwgG
             identity = _read_locked(other, stack, ctx)
             if identity is None:
                 continue
-            ctx.log(_("The files of %(server)s are copied.") % {"server": other.instance.server})
-            yield identity
+            ctx.log(_("The files of %(server)s are read.") % {"server": other.instance.server})
+            yield other, identity
             return
     raise GroupError(GroupErrorCode.NO_IDENTITY, str(member.group_id))
 

@@ -79,13 +79,14 @@ class GroupKeyAddress:
     """Keys of the leading server whose profiles do not send clients to the relay yet.
 
     The old address goes on working while the leading server is up, so nothing changes on the
-    server: the profile gets the new address, and the owner imports the key again.
+    server: the profile gets the new address, and the owner imports the key again. `host`
+    replaces the address of the relay: a group without one sends clients to its leading server.
     """
 
-    def __init__(self, group: ServerGroup) -> None:
+    def __init__(self, group: ServerGroup, host: str | None = None) -> None:
         self.group = group
         self._leader = group.leader
-        self._host = client_host(group)
+        self._host = host or client_host(group)
         self.outdated: list[AccessKey] = []
         if self._leader is not None and self._host is not None:
             keys = (

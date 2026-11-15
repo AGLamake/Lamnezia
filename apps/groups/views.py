@@ -1,4 +1,4 @@
-"""Pages of the server groups: the list, a new group, its members, joining and leaving."""
+"""Pages of the server groups: the list, a new group, its members, joining, leaving, the lead."""
 
 from typing import Any
 
@@ -16,6 +16,7 @@ from apps.groups.errors import GroupError
 from apps.groups.forms import GroupForm
 from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.addressing import DomainCheck, client_host
+from apps.groups.services.handover import start_handover
 from apps.groups.services.membership import (
     create_group,
     delete_group,
@@ -107,6 +108,16 @@ class GroupLeaveView(AdminRequiredMixin, View):
         member = get_object_or_404(GroupMember, pk=member_pk)
         try:
             start_leave(member, user=self.member, ip=self.client_ip)
+        except GroupError as error:
+            messages.error(request, f"{error.message} {error.hint}")
+        return redirect("groups:detail", pk=member.group_id)
+
+
+class GroupHandoverView(AdminRequiredMixin, View):
+    def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
+        member = get_object_or_404(GroupMember, pk=member_pk)
+        try:
+            start_handover(member, user=self.member, ip=self.client_ip)
         except GroupError as error:
             messages.error(request, f"{error.message} {error.hint}")
         return redirect("groups:detail", pk=member.group_id)

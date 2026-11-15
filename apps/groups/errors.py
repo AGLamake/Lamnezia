@@ -1,4 +1,4 @@
-"""Errors of creating a server group, joining and leaving it, with a message and a hint."""
+"""Errors of server groups: creating, joining, leaving, handing over; a message and a hint."""
 
 from enum import StrEnum
 
@@ -18,6 +18,10 @@ class GroupErrorCode(StrEnum):
     NO_IDENTITY = "no_identity"
     OTHER_SERVER_KEY = "other_server_key"
     NOT_CLONE = "not_clone"
+    NOT_UP_TO_DATE = "not_up_to_date"
+    DIVERGED = "diverged"
+    HANDOVER_RUNNING = "handover_running"
+    KEYS_CHANGING = "keys_changing"
 
 
 GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
@@ -43,7 +47,7 @@ GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
     ),
     GroupErrorCode.LEADER_LEAVES: ErrorDescription(
         _("The leading server cannot leave while other servers are in the group."),
-        _("Let the other servers leave first, then delete the group."),
+        _("Make another server of the group the leading one first, then let this one leave."),
     ),
     GroupErrorCode.MEMBERS_LEFT: ErrorDescription(
         _("The group still has other servers."),
@@ -60,6 +64,22 @@ GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
     GroupErrorCode.NOT_CLONE: ErrorDescription(
         _("After writing the files the server still differs from the group."),
         _("Run the operation again. If it repeats, report a bug."),
+    ),
+    GroupErrorCode.NOT_UP_TO_DATE: ErrorDescription(
+        _("Only a joined server that has every key change of the group can lead it."),
+        _("Wait until the server joins or catches up with the group, then try again."),
+    ),
+    GroupErrorCode.DIVERGED: ErrorDescription(
+        _("The server differs from the group: it cannot lead it."),
+        _("Wait for the catch-up or let the server leave and join again, then try again."),
+    ),
+    GroupErrorCode.HANDOVER_RUNNING: ErrorDescription(
+        _("The group is already changing its leading server."),
+        _("Wait until that operation finishes."),
+    ),
+    GroupErrorCode.KEYS_CHANGING: ErrorDescription(
+        _("Keys of the group are being changed now."),
+        _("Wait until the key operations finish, then try again."),
     ),
 }
 

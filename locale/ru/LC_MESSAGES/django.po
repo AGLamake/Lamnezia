@@ -157,6 +157,14 @@ msgstr[1] "сообщили %(reports)s человека"
 msgstr[2] "сообщили %(reports)s человек"
 
 #, python-format
+msgid "%(server)s did not answer: it catches up with the group later."
+msgstr "%(server)s не ответил: он догонит группу позже."
+
+#, python-format
+msgid "%(server)s leads the group."
+msgstr "%(server)s теперь ведущий в группе."
+
+#, python-format
 msgid "%(server)s runs with other keys: skipped."
 msgstr "%(server)s работает с другими ключами: пропущен."
 
@@ -675,6 +683,9 @@ msgstr "Цвета и шрифт"
 msgid "Comment:"
 msgstr "Комментарий:"
 
+msgid "Compare the server with the group"
+msgstr "Сравнить сервер с группой"
+
 msgid "Confirm"
 msgstr "Подтвердить"
 
@@ -856,6 +867,10 @@ msgstr "Расхождение"
 
 msgid "Differences with servers"
 msgstr "Расхождения с серверами"
+
+#, python-format
+msgid "Differences with the group: %(kinds)s."
+msgstr "Отличия от группы: %(kinds)s."
 
 msgid "Disable"
 msgstr "Отключить"
@@ -1323,11 +1338,22 @@ msgid "Keys change on the servers in the background; the report shows every oper
 msgstr "Ключи меняются на серверах в фоне; в отчёте видна каждая операция."
 
 #, python-format
+msgid "Keys moved to the new address: %(count)d."
+msgstr "Ключей перенесено на новый адрес: %(count)d."
+
+msgid "Keys of the group are being changed now."
+msgstr "Сейчас идут изменения ключей группы."
+
+#, python-format
 msgid "Keys of the group connect to %(host)s:%(port)s through the relay."
 msgstr "Ключи группы подключаются к %(host)s:%(port)s через ретранслятор."
 
 msgid "Keys of the group connect to the leading server until the relay of the group is installed; then they move to the relay, and their owners are told to import them again."
 msgstr "Ключи группы подключаются к ведущему серверу, пока не установлен ретранслятор группы; затем они переходят на ретранслятор, а их владельцам приходит просьба импортировать их заново."
+
+#, python-format
+msgid "Keys of the group moved: %(count)d."
+msgstr "Ключей группы перенесено: %(count)d."
 
 #, python-format
 msgid "Keys of the old server key revoked: %(count)d."
@@ -1391,9 +1417,6 @@ msgstr "Выход из группы серверов"
 
 msgid "Leave the group"
 msgstr "Выйти из группы"
-
-msgid "Let the other servers leave first, then delete the group."
-msgstr "Сначала выведите остальные серверы, затем удалите группу."
 
 msgid "Let them leave first: then the leading server stays as a standalone one."
 msgstr "Сначала выведите их: тогда ведущий сервер останется одиночным."
@@ -1471,8 +1494,20 @@ msgstr "Сделать новую ссылку? Старая перестане�
 msgid "Make a new secret? The links given out so far stop working."
 msgstr "Выпустить новый секрет? Выданные ранее ссылки перестанут работать."
 
+msgid "Make a server the leading one of its group"
+msgstr "Сделать сервер ведущим в группе"
+
+msgid "Make another server of the group the leading one first, then let this one leave."
+msgstr "Сначала сделайте ведущим другой сервер группы, затем выведите этот."
+
+msgid "Make leading"
+msgstr "Сделать ведущим"
+
 msgid "Make the bot leave this server?"
 msgstr "Бот покинет этот сервер. Продолжить?"
+
+msgid "Make the server the leading one"
+msgstr "Сделать сервер ведущим"
 
 msgid "Markdown."
 msgstr "Markdown."
@@ -1637,6 +1672,9 @@ msgstr "Операций пока нет."
 msgid "No orders found."
 msgstr "Заказов не найдено."
 
+msgid "No other server of the group answers: only its keys are compared."
+msgstr "Другие серверы группы не отвечают: сравниваются только ключи."
+
 msgid "No owner"
 msgstr "Без владельца"
 
@@ -1760,6 +1798,9 @@ msgstr "Сейчас онлайн"
 
 msgid "Only AmneziaWG 3.1 servers can be in a group."
 msgstr "В группе могут быть только серверы AmneziaWG 3.1."
+
+msgid "Only a joined server that has every key change of the group can lead it."
+msgstr "Ведущим может стать только вступивший сервер, у которого есть все изменения ключей группы."
 
 msgid "Only the staff see it."
 msgstr "Его видит только персонал."
@@ -2628,11 +2669,14 @@ msgid "The device name"
 msgstr "Название устройства"
 
 #, python-format
-msgid "The files of %(server)s are copied."
-msgstr "Файлы %(server)s скопированы."
+msgid "The files of %(server)s are read."
+msgstr "Файлы %(server)s прочитаны."
 
 msgid "The form is out of date"
 msgstr "Форма устарела"
+
+msgid "The group is already changing its leading server."
+msgstr "В группе уже идёт смена ведущего сервера."
 
 msgid "The group is deleted; its leading server stays as it is."
 msgstr "Группа удалена; ведущий сервер остался как есть."
@@ -2819,11 +2863,20 @@ msgstr "Теперь адрес сервера — <strong>%(host)s</strong>. А
 msgid "The server already has the files of the group."
 msgstr "На сервере уже файлы группы."
 
+msgid "The server already leads the group: nothing to do."
+msgstr "Сервер уже ведущий в группе: делать нечего."
+
 msgid "The server answers."
 msgstr "Сервер отвечает."
 
+msgid "The server becomes the leading one: keys of the group are issued on it, and the current leading server may then leave. The panel first checks that the server is a clone of the group. Continue?"
+msgstr "Сервер станет ведущим: ключи группы будут выдаваться на нём, а текущий ведущий сможет выйти. Сначала панель проверит, что сервер — клон группы. Продолжить?"
+
 msgid "The server could not understand the request. Go back and try again."
 msgstr "Сервер не понял запрос. Вернитесь назад и попробуйте ещё раз."
+
+msgid "The server differs from the group: it cannot lead it."
+msgstr "Сервер отличается от группы и не может стать ведущим."
 
 msgid "The server does not answer."
 msgstr "Сервер не отвечает."
@@ -2847,11 +2900,17 @@ msgstr "У сервера нет клиентов: снимок не нужен.
 msgid "The server has not answered yet."
 msgstr "Сервер ещё ни разу не ответил."
 
+msgid "The server is a clone of the group."
+msgstr "Сервер — клон группы."
+
 msgid "The server is already in a group."
 msgstr "Сервер уже в группе."
 
 msgid "The server is no longer a relay: nothing to do."
 msgstr "Сервер больше не ретранслятор: делать нечего."
+
+msgid "The server is no longer in the group: nothing to do."
+msgstr "Сервера больше нет в группе: делать нечего."
 
 msgid "The server is no longer joining or leaving the group: nothing to do."
 msgstr "Сервер уже не вступает в группу и не выходит из неё: делать нечего."
@@ -3139,6 +3198,18 @@ msgstr "Версия %(version)s от %(date)s."
 
 msgid "Wait for other operations on the server"
 msgstr "Дождаться других операций на сервере"
+
+msgid "Wait for the catch-up or let the server leave and join again, then try again."
+msgstr "Дождитесь догона или выведите сервер из группы и введите снова, затем повторите."
+
+msgid "Wait until that operation finishes."
+msgstr "Дождитесь окончания этой операции."
+
+msgid "Wait until the key operations finish, then try again."
+msgstr "Дождитесь окончания операций с ключами и попробуйте снова."
+
+msgid "Wait until the server joins or catches up with the group, then try again."
+msgstr "Дождитесь, пока сервер вступит в группу или догонит её, и попробуйте снова."
 
 msgid "Waiting"
 msgstr "Ждёт ответа"

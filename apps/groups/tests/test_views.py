@@ -5,6 +5,8 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.services.handover import HANDOVER_KIND
+from apps.operations.models import Operation
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import issued_key
 
@@ -57,3 +59,36 @@ def test_lagging_member_is_marked(browser: Client, group: ServerGroup) -> None:
     group.members.update(lagging_since=timezone.now())
 
     assert "lagging</span>" in browser.get(detail).content.decode()
+
+
+def test_make_leading_is_offered_to_a_joined_member_and_starts_an_operation(
+    browser: Client, group: ServerGroup, joiner: ProtocolInstance
+) -> None:
+    member = GroupMember.objects.create(
+        group=group, instance=joiner, priority=1, state=MemberState.MEMBER
+    )
+    lead = reverse("groups:lead", args=[member.pk])
+    assert lead in browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    browser.post(lead)
+
+    assert Operation.objects.get(kind=HANDOVER_KIND).params["member_id"] == member.pk
+
+
+def test_make_leading_refused_for_a_lagging_member(
+    browser: Client, group: ServerGroup, joiner: ProtocolInstance
+) -> None:
+    member = GroupMember.objects.create(
+        group=group,
+        instance=joiner,
+        priority=1,
+        state=MemberState.MEMBER,
+        lagging_since=timezone.now(),
+    )
+    lead = reverse("groups:lead", args=[member.pk])
+    assert lead not in browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    response = browser.post(lead, follow=True)
+
+    assert not Operation.objects.filter(kind=HANDOVER_KIND).exists()
+    assert "has every key change of the group" in response.content.decode()

@@ -117,6 +117,7 @@ def servers(
 
     for module in (
         "groups.services.cloning",
+        "groups.services.handover",
         "groups.services.replication",
         "protocols.providers",
         "backups.services.snapshot",

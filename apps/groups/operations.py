@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy
 
 from apps.groups.models import GroupMember, MemberState
 from apps.groups.services.cloning import GroupJoin, GroupLeave, MemberCatchUp
+from apps.groups.services.handover import HANDOVER_KIND, LeaderHandover
 from apps.groups.services.membership import JOIN_KIND, LEAVE_KIND
 from apps.groups.services.replication import CATCH_UP_KIND
 from apps.operations.services.context import OperationContext
@@ -39,6 +40,22 @@ def catch_up(ctx: OperationContext) -> None:
             ctx.log(_("The server no longer lags behind the group: nothing to do."))
     if member is not None:
         MemberCatchUp(member, ctx).run()
+
+
+@operations.register(HANDOVER_KIND, gettext_lazy("Make a server the leading one of its group"))
+def hand_over(ctx: OperationContext) -> None:
+    with ctx.step(_("Find the server in the group")):
+        member = (
+            GroupMember.objects.filter(pk=ctx.params["member_id"], state=MemberState.MEMBER)
+            .select_related("group", "instance__server")
+            .first()
+        )
+        if member is None:
+            ctx.log(_("The server is no longer in the group: nothing to do."))
+        elif member.leading:
+            ctx.log(_("The server already leads the group: nothing to do."))
+    if member is not None and not member.leading:
+        LeaderHandover(member, ctx).run()
 
 
 def _member(ctx: OperationContext, state: MemberState) -> GroupMember | None:

@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   page checks the DNS records of the domain. Owners of moved keys and of keys revoked at a join
   get the new event `keys_updated`. Traffic, online status and limits of a group key are summed
   over all members.
+- **Lead handover in a server group**: the "Make leading" button passes the lead to a member that
+  is a clone of the group, checked before the handover. Keys of the group and their traffic
+  history move to the new leading server, which then issues keys; the former leader may leave. A
+  leading server that does not answer is left behind as lagging.
 
 ## [1.0.0] - 2026-11-13
 
