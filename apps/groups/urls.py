@@ -7,9 +7,11 @@ from apps.groups.views import (
     GroupHandoverView,
     GroupInstallView,
     GroupJoinView,
+    GroupLeaveRetryView,
     GroupLeaveView,
     GroupListView,
     GroupSettingsView,
+    GroupStayView,
 )
 
 app_name = "groups"
@@ -23,5 +25,7 @@ urlpatterns = [
     path("<int:pk>/join/<int:instance_pk>/", GroupJoinView.as_view(), name="join"),
     path("<int:pk>/install/<int:server_pk>/", GroupInstallView.as_view(), name="install"),
     path("members/<int:member_pk>/leave/", GroupLeaveView.as_view(), name="leave"),
+    path("members/<int:member_pk>/leave/retry/", GroupLeaveRetryView.as_view(), name="leave_retry"),
+    path("members/<int:member_pk>/stay/", GroupStayView.as_view(), name="stay"),
     path("members/<int:member_pk>/lead/", GroupHandoverView.as_view(), name="lead"),
 ]

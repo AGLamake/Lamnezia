@@ -1361,6 +1361,9 @@ msgstr "Добавьте его как одиночный сервер AmneziaWG
 msgid "Join the group"
 msgstr "Вступить в группу"
 
+msgid "Keep in the group"
+msgstr "Оставить в группе"
+
 msgid "Key"
 msgstr "Ключ"
 
@@ -2201,6 +2204,9 @@ msgstr "Состояние ретранслятора прочитано %(when)
 msgid "Release notes"
 msgstr "Что нового"
 
+msgid "Reload the page: another action has already changed it."
+msgstr "Обновите страницу: его состояние уже изменилось."
+
 msgid "Remove"
 msgstr "Удалить"
 
@@ -2270,6 +2276,9 @@ msgstr "Вернуть выбранные записи"
 
 msgid "Retry"
 msgstr "Повторить"
+
+msgid "Retry leaving"
+msgstr "Повторить выход"
 
 msgid "Return the money of this order? The plan of the user stays as it is."
 msgstr "Вернуть деньги за этот заказ? Тариф пользователя останется как есть."
@@ -2824,6 +2833,9 @@ msgstr "Ключи и бэкап сохранены: восстановите п
 msgid "The leading server cannot leave while other servers are in the group."
 msgstr "Ведущий сервер не может выйти, пока в группе есть другие серверы."
 
+msgid "The leave operation failed. Run it again, or keep the server in the group."
+msgstr "Операция выхода не удалась. Повторите её или оставьте сервер в группе."
+
 msgid "The limit is reached: the keys are off until the period resets."
 msgstr "Лимит исчерпан: ключи отключены до сброса периода."
 
@@ -3026,6 +3038,9 @@ msgstr "Сервер состоит в группе серверов: чтобы
 msgid "The server is in the group %(name)s: its servers are clones, so the settings change for the whole group on its page. Here they are read only."
 msgstr "Сервер входит в группу %(name)s: её серверы — клоны, поэтому настройки меняются для всей группы на её странице. Здесь они только для чтения."
 
+msgid "The server is leaving the group now."
+msgstr "Сервер сейчас выходит из группы."
+
 msgid "The server is no longer a relay: nothing to do."
 msgstr "Сервер больше не ретранслятор: делать нечего."
 
@@ -3034,6 +3049,9 @@ msgstr "Сервера больше нет в группе: делать неч�
 
 msgid "The server is no longer joining or leaving the group: nothing to do."
 msgstr "Сервер уже не вступает в группу и не выходит из неё: делать нечего."
+
+msgid "The server is not leaving the group."
+msgstr "Сервер не выходит из группы."
 
 msgid "The server listens on another port than the group."
 msgstr "Сервер слушает другой порт, чем группа."
@@ -3049,6 +3067,12 @@ msgstr "AmneziaWG на сервере работает с другими клю�
 
 msgid "The server runs a relay."
 msgstr "На сервере работает ретранслятор."
+
+msgid "The server stays in the group. The relay skips it until the panel copies the files of the group onto it again. Continue?"
+msgstr "Сервер останется в группе. Ретранслятор будет пропускать его, пока панель снова не скопирует на него файлы группы. Продолжить?"
+
+msgid "The server stays in the group; the panel copies the group files onto it."
+msgstr "Сервер остаётся в группе; панель скопирует на него файлы группы."
 
 msgid "The servers of a group are clones: the settings apply on every one that answers. A server that does not answer lags and gets them when the panel catches it up. The port is the port of the group; the container log is set on each server."
 msgstr "Серверы группы — клоны: настройки применяются на каждом, который отвечает. Сервер, который не ответил, отстаёт и получает их, когда панель его догоняет. Порт — порт группы, журнал контейнера настраивается на каждом сервере."
@@ -3666,6 +3690,9 @@ msgstr "ведущий"
 
 msgid "leading server"
 msgstr "ведущий сервер"
+
+msgid "leave failed"
+msgstr "выход не удался"
 
 msgid "leaving"
 msgstr "выходит"

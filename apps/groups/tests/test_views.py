@@ -6,7 +6,8 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.groups.services.handover import HANDOVER_KIND
-from apps.operations.models import Operation
+from apps.groups.services.membership import LEAVE_KIND
+from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import issued_key
 
@@ -92,3 +93,41 @@ def test_make_leading_refused_for_a_lagging_member(
 
     assert not Operation.objects.filter(kind=HANDOVER_KIND).exists()
     assert "has every key change of the group" in response.content.decode()
+
+
+@pytest.fixture
+def stuck(group: ServerGroup, joiner: ProtocolInstance) -> GroupMember:
+    """A member whose leave operation failed."""
+    member = GroupMember.objects.create(
+        group=group, instance=joiner, priority=1, state=MemberState.LEAVING
+    )
+    Operation.objects.create(
+        kind=LEAVE_KIND, params={"member_id": member.pk}, status=OperationStatus.FAILED
+    )
+    return member
+
+
+def test_failed_leave_offers_retry_and_stay(
+    browser: Client, group: ServerGroup, stuck: GroupMember
+) -> None:
+    detail = reverse("groups:detail", args=[group.pk])
+    retry = reverse("groups:leave_retry", args=[stuck.pk])
+    stay = reverse("groups:stay", args=[stuck.pk])
+    page = browser.get(detail).content.decode()
+    assert retry in page and stay in page
+
+    browser.post(retry)
+
+    assert Operation.objects.filter(kind=LEAVE_KIND, status=OperationStatus.PENDING).exists()
+    page = browser.get(detail).content.decode()
+    assert retry not in page and stay not in page
+
+
+def test_stay_takes_the_member_back_lagging(
+    browser: Client, group: ServerGroup, stuck: GroupMember
+) -> None:
+    browser.post(reverse("groups:stay", args=[stuck.pk]))
+
+    stuck.refresh_from_db()
+    assert stuck.state == MemberState.MEMBER
+    assert stuck.lagging

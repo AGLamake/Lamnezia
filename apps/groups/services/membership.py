@@ -31,6 +31,7 @@ DELETE_KIND = "groups.delete"
 JOIN_KIND = "groups.join"
 INSTALL_KIND = "groups.install"
 LEAVE_KIND = "groups.leave"
+STAY_KIND = "groups.stay"
 # Started from apps/groups/services/settings.py; a handover waits for it to finish.
 SETTINGS_KIND = "groups.change_settings"
 
@@ -164,15 +165,72 @@ def _installing(server: Server) -> bool:
 def start_leave(member: GroupMember, *, user: User, ip: str | None = None) -> Operation:
     """Start giving the member's server a clean AmneziaWG; the group keeps its keys."""
     with transaction.atomic():
-        member = GroupMember.objects.select_for_update().select_related("group").get(pk=member.pk)
+        member = _locked(member)
         if member.leading:
             raise GroupError(GroupErrorCode.LEADER_LEAVES, str(member.pk))
         member.state = MemberState.LEAVING
         member.save(update_fields=["state"])
-        params = {"member_id": member.pk, "server_id": member.instance.server_id}
-        operation = launch(LEAVE_KIND, params, user=user, subject=str(member))
-        data = {"operation": operation.pk, "instance": member.instance_id}
-        audit.log(LEAVE_KIND, actor=user, target=member.group, data=data, ip=ip)
+        operation = _launch_leave(member, user=user, ip=ip)
+    return operation
+
+
+def leave_failed(member: GroupMember) -> bool:
+    """Whether the member is stuck leaving: its leave operation failed and none runs now."""
+    return member.state == MemberState.LEAVING and not _leave_running(member)
+
+
+def retry_leave(member: GroupMember, *, user: User, ip: str | None = None) -> Operation:
+    """Start the leave of a member stuck leaving again; it ends on a clean standalone server."""
+    with transaction.atomic():
+        member = _stuck_leaving(member)
+        operation = _launch_leave(member, user=user, ip=ip, retry=True)
+    return operation
+
+
+@transaction.atomic
+def stay_in_group(member: GroupMember, *, user: User, ip: str | None = None) -> None:
+    """Take a member stuck leaving back into the group.
+
+    The failed leave may have changed its server files, so it comes back lagging: the relay
+    skips it until the catch-up copies the files of the group onto it.
+    """
+    member = _stuck_leaving(member)
+    member.state = MemberState.MEMBER
+    member.lagging_since = timezone.now()
+    member.save(update_fields=["state", "lagging_since"])
+    data = {"instance": member.instance_id}
+    audit.log(STAY_KIND, actor=user, target=member.group, data=data, ip=ip)
+
+
+def _locked(member: GroupMember) -> GroupMember:
+    return GroupMember.objects.select_for_update().select_related("group").get(pk=member.pk)
+
+
+def _stuck_leaving(member: GroupMember) -> GroupMember:
+    """The member locked; GroupError unless its leave failed."""
+    member = _locked(member)
+    if member.state != MemberState.LEAVING:
+        raise GroupError(GroupErrorCode.NOT_LEAVING, str(member.pk))
+    if _leave_running(member):
+        raise GroupError(GroupErrorCode.LEAVE_RUNNING, str(member.pk))
+    return member
+
+
+def _leave_running(member: GroupMember) -> bool:
+    return Operation.objects.filter(
+        kind=LEAVE_KIND,
+        status__in=(OperationStatus.PENDING, OperationStatus.RUNNING),
+        params__member_id=member.pk,
+    ).exists()
+
+
+def _launch_leave(
+    member: GroupMember, *, user: User, ip: str | None, retry: bool = False
+) -> Operation:
+    params = {"member_id": member.pk, "server_id": member.instance.server_id}
+    operation = launch(LEAVE_KIND, params, user=user, subject=str(member))
+    data = {"operation": operation.pk, "instance": member.instance_id, "retry": retry}
+    audit.log(LEAVE_KIND, actor=user, target=member.group, data=data, ip=ip)
     return operation
 
 

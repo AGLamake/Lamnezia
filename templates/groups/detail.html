@@ -32,10 +32,10 @@
         <tr><th>{% translate "Server" %}</th><th>{% translate "State" %}</th><th>{% translate "From the relay" %}</th><th>{% translate "From the panel" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr>
       </thead>
       <tbody>
-        {% for member, reachable, active in members %}
+        {% for member, reachable, active, leave_failed in members %}
           <tr>
             <td><a href="{% url 'servers:detail' member.instance.server_id %}" class="font-medium hover:underline">{{ member.instance.server.name }}</a>{% if member.leading %} <span class="badge badge-muted">{% translate "leading" %}</span>{% endif %}</td>
-            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The server missed changes of the keys or the settings while it was unreachable. The relay skips it until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% endif %}</td>
+            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The server missed changes of the keys or the settings while it was unreachable. The relay skips it until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% endif %}{% if leave_failed %} <span class="badge badge-danger" title="{% translate "The leave operation failed. Run it again, or keep the server in the group." %}">{% translate "leave failed" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the relay' %}">{% if reachable is None %}<span class="text-muted">—</span>{% elif reachable %}<span class="badge badge-success">{% translate "reachable" %}</span>{% else %}<span class="badge badge-danger">{% translate "unreachable" %}</span>{% endif %}{% if active %} <span class="badge badge-info" title="{% translate "The relay sends the clients of the group to this server now." %}">{% translate "active" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the panel' %}">{% with online=member.instance.server.online %}{% if online is None %}<span class="text-muted">—</span>{% elif online %}<span class="badge badge-success">{% translate "online" %}</span>{% else %}<span class="badge badge-danger">{% translate "offline" %}</span>{% endif %}{% endwith %}</td>
             <td><div class="flex flex-wrap gap-2">
@@ -49,6 +49,16 @@
               <form method="post" action="{% url 'groups:leave' member.pk %}" data-confirm="{% translate "The server gets a clean AmneziaWG with a new key and no clients. Keys of the group stop working on it. A snapshot of its files is kept first. Continue?" %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-secondary">{% translate "Leave the group" %}</button>
+              </form>
+              {% endif %}
+              {% if leave_failed %}
+              <form method="post" action="{% url 'groups:leave_retry' member.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% translate "Retry leaving" %}</button>
+              </form>
+              <form method="post" action="{% url 'groups:stay' member.pk %}" data-confirm="{% translate "The server stays in the group. The relay skips it until the panel copies the files of the group onto it again. Continue?" %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% translate "Keep in the group" %}</button>
               </form>
               {% endif %}
             </div></td>

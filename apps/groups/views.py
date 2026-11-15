@@ -22,13 +22,16 @@ from apps.groups.services.handover import start_handover
 from apps.groups.services.membership import (
     create_group,
     delete_group,
+    leave_failed,
     live_keys,
     port_taken,
+    retry_leave,
     servers_without_awg,
     standalone_instances,
     start_install,
     start_join,
     start_leave,
+    stay_in_group,
 )
 from apps.groups.services.settings import changing_settings
 from apps.keys.services.counts import InstanceKeyCount
@@ -82,7 +85,10 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
         health = relay.group_health(group.port) if relay else None
         members = group.members.select_related("instance__server")
         return super().get_context_data(
-            members=[(member, *_seen_by_relay(member, health)) for member in members],
+            members=[
+                (member, *_seen_by_relay(member, health), leave_failed(member))
+                for member in members
+            ],
             relay=relay,
             health=health,
             client_host=client_host(group),
@@ -132,6 +138,31 @@ class GroupLeaveView(AdminRequiredMixin, View):
             start_leave(member, user=self.member, ip=self.client_ip)
         except GroupError as error:
             messages.error(request, f"{error.message} {error.hint}")
+        return redirect("groups:detail", pk=member.group_id)
+
+
+class GroupLeaveRetryView(AdminRequiredMixin, View):
+    def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
+        member = get_object_or_404(GroupMember, pk=member_pk)
+        try:
+            retry_leave(member, user=self.member, ip=self.client_ip)
+        except GroupError as error:
+            messages.error(request, f"{error.message} {error.hint}")
+        return redirect("groups:detail", pk=member.group_id)
+
+
+class GroupStayView(AdminRequiredMixin, View):
+    def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
+        member = get_object_or_404(GroupMember, pk=member_pk)
+        try:
+            stay_in_group(member, user=self.member, ip=self.client_ip)
+        except GroupError as error:
+            messages.error(request, f"{error.message} {error.hint}")
+        else:
+            messages.success(
+                request,
+                _("The server stays in the group; the panel copies the group files onto it."),
+            )
         return redirect("groups:detail", pk=member.group_id)
 
 

@@ -5,8 +5,10 @@ from amnezia_core.awg_group import AwgGroupIdentity
 from amnezia_core.clients_table import ClientsTable
 from apps.accounts.models import User
 from apps.backups.models import ProtocolBackup, ProtocolSnapshot, SnapshotReason
+from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, MemberState
-from apps.groups.services.membership import start_leave
+from apps.groups.services.membership import leave_failed, retry_leave, start_leave, stay_in_group
+from apps.groups.services.replication import CATCH_UP_KIND, backends
 from apps.groups.tests.conftest import (
     JOINER_HOST,
     LEADER_HOST,
@@ -17,6 +19,7 @@ from apps.groups.tests.conftest import (
 )
 from apps.keys.models import KeyStatus
 from apps.operations.models import OperationStatus
+from apps.operations.services.launcher import launch
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import Start, issued_key
 
@@ -114,3 +117,96 @@ def test_left_server_gets_a_clean_amneziawg(
     assert joiner.private_key == config.private_key
     snapshot = ProtocolSnapshot.objects.get(instance=joiner, reason=SnapshotReason.GROUP_LEAVE)
     assert snapshot.config == group_files.config
+
+
+def test_failed_leave_is_retried_to_a_clean_amneziawg(
+    servers: Fakes,
+    leader: ProtocolInstance,
+    joiner: ProtocolInstance,
+    admin: User,
+    down: set[str],
+    start: Start,
+    join: Run,
+    leave: Run,
+) -> None:
+    succeeded(join())
+    down.add(JOINER_HOST)
+    failed = leave()
+    member = GroupMember.objects.get(instance=joiner)
+    assert failed.status == OperationStatus.FAILED
+    assert leave_failed(member)
+
+    down.clear()
+    succeeded(start(lambda: retry_leave(member, user=admin)))
+
+    assert not GroupMember.objects.filter(instance=joiner).exists()
+    config = AwgServerConfig.parse(server_files(servers[JOINER_HOST]).config)
+    assert config.private_key != leader.private_key
+    assert config.peers == []
+    joiner.refresh_from_db()
+    assert joiner.private_key == config.private_key
+
+
+def test_server_kept_in_the_group_catches_up_with_its_keys(
+    servers: Fakes,
+    leader: ProtocolInstance,
+    joiner: ProtocolInstance,
+    admin: User,
+    start: Start,
+    join: Run,
+    leave: Run,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    succeeded(join())
+
+    def unsaved(*args: object) -> None:
+        raise RuntimeError("the panel database is gone")
+
+    # The clean files are on the server, but the panel fails to save them.
+    with monkeypatch.context() as patch:
+        patch.setattr("apps.groups.services.cloning.take_identity", unsaved)
+        assert leave().status == OperationStatus.FAILED
+    assert not is_clone(servers)
+    member = GroupMember.objects.get(instance=joiner)
+
+    stay_in_group(member, user=admin)
+    member.refresh_from_db()
+    assert member.state == MemberState.MEMBER
+    assert member.lagging
+    assert member not in backends(member.group)
+
+    params = {"member_id": member.pk, "server_id": joiner.server_id}
+    succeeded(start(lambda: launch(CATCH_UP_KIND, params, user=admin)))
+
+    assert is_clone(servers)
+    member.refresh_from_db()
+    assert not member.lagging
+    joiner.refresh_from_db()
+    assert joiner.private_key == leader.private_key
+
+
+def test_running_leave_is_neither_retried_nor_undone(
+    servers: Fakes, joiner: ProtocolInstance, admin: User, join: Run
+) -> None:
+    succeeded(join())
+    member = GroupMember.objects.get(instance=joiner)
+    start_leave(member, user=admin)
+    member.refresh_from_db()
+
+    assert not leave_failed(member)
+    with pytest.raises(GroupError) as running:
+        retry_leave(member, user=admin)
+    assert running.value.code == GroupErrorCode.LEAVE_RUNNING
+    with pytest.raises(GroupError):
+        stay_in_group(member, user=admin)
+
+
+def test_member_not_leaving_cannot_be_kept(
+    servers: Fakes, joiner: ProtocolInstance, admin: User, join: Run
+) -> None:
+    succeeded(join())
+    member = GroupMember.objects.get(instance=joiner)
+
+    with pytest.raises(GroupError) as error:
+        stay_in_group(member, user=admin)
+    assert error.value.code == GroupErrorCode.NOT_LEAVING

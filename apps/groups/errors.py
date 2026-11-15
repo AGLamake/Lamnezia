@@ -29,6 +29,8 @@ class GroupErrorCode(StrEnum):
     SETTINGS_RUNNING = "settings_running"
     NO_MEMBER_ANSWERS = "no_member_answers"
     NO_LEADER = "no_leader"
+    NOT_LEAVING = "not_leaving"
+    LEAVE_RUNNING = "leave_running"
 
 
 GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
@@ -115,6 +117,14 @@ GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
     GroupErrorCode.NO_LEADER: ErrorDescription(
         _("The group has no leading server."),
         _("Make a server of the group the leading one first."),
+    ),
+    GroupErrorCode.NOT_LEAVING: ErrorDescription(
+        _("The server is not leaving the group."),
+        _("Reload the page: another action has already changed it."),
+    ),
+    GroupErrorCode.LEAVE_RUNNING: ErrorDescription(
+        _("The server is leaving the group now."),
+        _("Wait until that operation finishes."),
     ),
 }
 
