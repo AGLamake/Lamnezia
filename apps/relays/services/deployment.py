@@ -21,7 +21,7 @@ from apps.operations.services.launcher import launch
 from apps.protocols.services.host_setup import HostSetup
 from apps.relays.errors import RelayError, RelayErrorCode
 from apps.relays.models import Relay
-from apps.relays.services.config import RelayPlan
+from apps.relays.services.config import RelayPlan, members_on_relay
 from apps.relays.services.container import RESERVED_PORTS, RelayContainer
 from apps.relays.services.service_peers import ServicePeerPlacement
 from apps.servers.models import Server
@@ -44,8 +44,7 @@ class RelayDeployment:
 
     def install(self) -> None:
         """Prepare the server, check the ports, build and start the container, then update it."""
-        plan = RelayPlan.of(self._relay.server)
-        _refuse_reserved(plan.ports)
+        _refuse(RelayPlan.of(self._relay.server), self._relay.server)
         with ExitStack() as stack:
             host = self._connect(stack)
             setup = HostSetup(host, self._ctx)
@@ -65,11 +64,12 @@ class RelayDeployment:
 
     def update(self) -> None:
         """Write the groups and members of now; new ports are checked before they are published."""
+        _refuse(RelayPlan.of(self._relay.server), self._relay.server)
         with ExitStack() as stack:
             host = self._connect(stack)
             self._place_service_peers()
             plan = RelayPlan.of(self._relay.server)
-            _refuse_reserved(plan.ports)
+            _refuse(plan, self._relay.server)
             config = self._config(plan)
             with self._lock(host):
                 container = RelayContainer(host, self._ctx)
@@ -131,11 +131,17 @@ class RelayDeployment:
                 )
 
 
-def _refuse_reserved(ports: set[int]) -> None:
-    """Refused before the panel connects: the port is wrong on any server."""
-    reserved = sorted(ports & RESERVED_PORTS)
+def _refuse(plan: RelayPlan, server: Server) -> None:
+    """Refuse, before the panel connects, what no check on the server could make work:
+    a port of the panel's web server, or a member of a group on the relay server itself.
+    """
+    reserved = sorted(plan.ports & RESERVED_PORTS)
     if reserved:
         raise RelayError(RelayErrorCode.PORT_RESERVED, f"udp {reserved[0]}")
+    local = members_on_relay(server)
+    if local:
+        member = local[0]
+        raise RelayError(RelayErrorCode.MEMBER_ON_RELAY, f"{member.group.name}: {member.instance}")
 
 
 def start(kind: str, server: Server, *, user: User, ip: str | None = None) -> Operation:
@@ -155,6 +161,8 @@ def sync_relays() -> None:
     for relay in Relay.objects.filter(installed_at__isnull=False).select_related("server"):
         if _busy(relay) or RelayPlan.of(relay.server).digest() == relay.synced:
             continue
+        if members_on_relay(relay.server):
+            continue  # It would fail every minute; an update started by hand says why.
         launch(UPDATE_KIND, {"server_id": relay.server_id}, subject=str(relay.server))
 
 

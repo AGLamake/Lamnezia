@@ -156,6 +156,18 @@ def test_relay_server_is_refused(group: ServerGroup, bare: Server, admin: User) 
     assert error.value.code == GroupErrorCode.RELAY_SERVER
 
 
+def test_relay_of_the_group_is_refused_before_its_relay_runs(
+    group: ServerGroup, bare: Server, admin: User
+) -> None:
+    group.relay = bare
+    group.save(update_fields=["relay"])
+
+    with pytest.raises(GroupError) as error:
+        start_install(group, bare, user=admin)
+
+    assert error.value.code == GroupErrorCode.GROUP_RELAY
+
+
 def test_server_running_awg_unknown_to_the_panel_is_refused(
     group: ServerGroup, bare: Server, admin: User
 ) -> None:

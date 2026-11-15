@@ -13,6 +13,7 @@ from pathlib import Path
 
 from django.utils.translation import gettext as _
 
+from amnezia_core.containers import AWG2
 from apps.operations.services.context import OperationContext
 from apps.protocols.services.container import ProtocolContainer, Transport, log_arguments
 from apps.relays.errors import RelayError, RelayErrorCode
@@ -69,7 +70,10 @@ class RelayContainer:
         for port in wanted:
             if port in published:
                 self._ctx.log(published[port])
-                raise RelayError(RelayErrorCode.PORT_BUSY, f"udp {port}")
+                code = RelayErrorCode.PORT_BUSY
+                if published[port].startswith(f"{AWG2.name} "):
+                    code = RelayErrorCode.PORT_AWG
+                raise RelayError(code, f"udp {port}")
             self._docker.check_port(port, Transport.UDP)
 
     def install(self, ports: Iterable[int]) -> None:

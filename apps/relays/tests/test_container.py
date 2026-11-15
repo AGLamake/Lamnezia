@@ -47,7 +47,7 @@ def test_a_port_of_the_panel_web_server_is_refused(server: FakeRelayServer) -> N
 
 
 def test_a_port_another_container_publishes_is_refused(server: FakeRelayServer) -> None:
-    server.others = [f"amnezia-awg2 0.0.0.0:{PORT}->{PORT}/udp, :::{PORT}->{PORT}/udp"]
+    server.others = [f"wg-easy 0.0.0.0:{PORT}->{PORT}/udp, :::{PORT}->{PORT}/udp"]
 
     with pytest.raises(RelayError) as error:
         check(server, PORT)

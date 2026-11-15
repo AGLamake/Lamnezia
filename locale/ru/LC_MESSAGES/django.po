@@ -224,6 +224,9 @@ msgstr "3proxy.log приложения: %(size)s"
 msgid "A link"
 msgstr "Ссылка"
 
+msgid "A member of a group runs on the relay server."
+msgstr "Участник группы работает на сервере ретранслятора."
+
 msgid "A new subscription link is ready."
 msgstr "Новая ссылка-подписка готова."
 
@@ -414,8 +417,8 @@ msgstr "Приглашение сразу выдаёт свой тариф пр�
 msgid "Android version"
 msgstr "Версия Android"
 
-msgid "Another program or container listens on it, see the step log. A member of the group cannot be on the relay server with the same port: pick another relay."
-msgstr "Его слушает другая программа или контейнер, см. журнал шага. Участник группы не может стоять на сервере ретранслятора с тем же портом: выберите другой ретранслятор."
+msgid "Another program or container listens on it, see the step log. Free the port."
+msgstr "Его слушает другая программа или контейнер, см. журнал шага. Освободите порт."
 
 msgid "Anyone with the link gets your keys. If it leaked, make a new one: the old link stops working."
 msgstr "Кто знает ссылку, тот получает ваши ключи. Если она утекла, сделайте новую: старая перестанет работать."
@@ -1225,6 +1228,9 @@ msgstr "Если кнопка не работает, откройте ссылк
 
 msgid "If the phone is lost, sign in with one of these codes instead of the code from the app. Each code works once."
 msgstr "Если телефон потерян, войдите по одному из этих кодов вместо кода из приложения. Каждый код срабатывает один раз."
+
+msgid "If this AmneziaWG is a member of the group, pick a relay on another server: every member listens on the port of the group. Otherwise change its port in the protocol settings of the server."
+msgstr "Если этот AmneziaWG — участник группы, выберите ретранслятор на другом сервере: каждый участник слушает порт группы. Иначе смените его порт в настройках протокола на сервере."
 
 msgid "Import from the server"
 msgstr "Импорт с сервера"
@@ -2933,6 +2939,9 @@ msgstr "Порт группы уже занят на сервере ретран
 msgid "The port of a group is one the web server of the panel needs."
 msgstr "Порт группы нужен веб-серверу панели."
 
+msgid "The port of a group is used by AmneziaWG on the relay server."
+msgstr "Порт группы занят AmneziaWG на сервере ретранслятора."
+
 msgid "The port of the group is taken on the server."
 msgstr "Порт группы на сервере занят."
 
@@ -2960,11 +2969,17 @@ msgstr "Контейнер ретранслятора всё ещё на сер�
 msgid "The relay forwards to an IPv4 address: check the DNS name of the server."
 msgstr "Ретранслятор пересылает на IPv4-адрес: проверьте DNS-имя сервера."
 
+msgid "The relay publishes the port of the group, which every member listens on, so they cannot share a machine. Pick a relay on another server for the group, or let the member on this server leave the group."
+msgstr "Ретранслятор публикует порт группы, а его же слушает каждый участник, поэтому на одной машине они не уживутся. Выберите для группы ретранслятор на другом сервере или выведите участника на этом сервере из группы."
+
 msgid "The relay sends the clients of the group to this server now."
 msgstr "Сейчас ретранслятор отправляет клиентов группы на этот сервер."
 
 msgid "The relay takes clients of the groups that name this server and forwards them to a live member. Its agent probes the members and switches by itself, even when the panel is down."
 msgstr "Ретранслятор принимает клиентов групп, назначивших этот сервер, и пересылает их живому участнику. Его агент сам проверяет участников и переключается, даже когда панель недоступна."
+
+msgid "The relay takes the UDP port of the group on its server, and every member listens on that same port. Take a server other than the relay, or pick another relay."
+msgstr "Ретранслятор занимает UDP-порт группы на своём сервере, а каждый участник слушает тот же порт. Возьмите другой сервер или выберите другой ретранслятор."
 
 msgid "The request is closed. If the problem comes back, open a new one."
 msgstr "Обращение закрыто. Если проблема вернётся, откройте новое."
@@ -3052,6 +3067,9 @@ msgstr "Сервер уже не вступает в группу и не вых
 
 msgid "The server is not leaving the group."
 msgstr "Сервер не выходит из группы."
+
+msgid "The server is the relay of the group: it cannot be a member of it too."
+msgstr "Сервер — ретранслятор группы и не может быть ещё и её участником."
 
 msgid "The server listens on another port than the group."
 msgstr "Сервер слушает другой порт, чем группа."

@@ -72,10 +72,21 @@ def check_without_awg(group: ServerGroup, server: Server) -> None:
     """Raise GroupError unless the server may get AmneziaWG with the files of the group."""
     if _has_awg_container(server) or server.instances.filter(container=AWG2.name).exists():
         raise GroupError(GroupErrorCode.AWG_ON_SERVER, server.name)
+    check_not_relay(group, server)
     if hasattr(server, "relay_role"):
         raise GroupError(GroupErrorCode.RELAY_SERVER, server.name)
     if port_taken(server, group.port):
         raise GroupError(GroupErrorCode.PORT_TAKEN, f"{server.name}: udp {group.port}")
+
+
+def check_not_relay(group: ServerGroup, server: Server) -> None:
+    """Raise GroupError when the server is the relay of the group.
+
+    The relay publishes the port of the group, which every member listens on: a member on the
+    relay machine takes that port from it (or the relay from the member).
+    """
+    if group.relay_id is not None and group.relay_id == server.pk:
+        raise GroupError(GroupErrorCode.GROUP_RELAY, server.name)
 
 
 def _has_awg_container(server: Server) -> bool:
@@ -98,6 +109,7 @@ def create_group(
     the relay address.
     """
     check_standalone(leader)
+    check_not_relay(group, leader.server)
     group.port = leader.port
     group.save()
     _add_member(group, leader, leading=True, state=MemberState.MEMBER, joined_at=timezone.now())
@@ -121,6 +133,7 @@ def start_join(
     """Reserve the instance for the group and start copying the group files onto it."""
     with transaction.atomic():
         check_standalone(instance)
+        check_not_relay(group, instance.server)
         leader = group.leader
         if instance.port != group.port:
             raise GroupError(GroupErrorCode.OTHER_PORT, instance.source)

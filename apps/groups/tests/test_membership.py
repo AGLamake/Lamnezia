@@ -70,6 +70,27 @@ def test_server_on_another_port_cannot_join(
     assert not GroupMember.objects.filter(instance=joiner).exists()
 
 
+def test_relay_of_the_group_cannot_join(
+    group: ServerGroup, joiner: ProtocolInstance, admin: User
+) -> None:
+    group.relay = joiner.server
+    group.save(update_fields=["relay"])
+
+    with pytest.raises(GroupError) as error:
+        start_join(group, joiner, user=admin)
+
+    assert error.value.code == GroupErrorCode.GROUP_RELAY
+    assert not GroupMember.objects.filter(instance=joiner).exists()
+
+
+def test_relay_of_a_new_group_cannot_lead_it(joiner: ProtocolInstance, admin: User) -> None:
+    with pytest.raises(GroupError) as error:
+        create_group(ServerGroup(name="Asia", relay=joiner.server), joiner, actor=admin)
+
+    assert error.value.code == GroupErrorCode.GROUP_RELAY
+    assert not ServerGroup.objects.filter(name="Asia").exists()
+
+
 def test_server_in_another_subnet_cannot_join(
     group: ServerGroup, joiner: ProtocolInstance, admin: User
 ) -> None:

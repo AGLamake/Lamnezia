@@ -237,9 +237,16 @@ server can be the relay, including the panel's own machine.
    container and publishes the ports of the groups as UDP.
 
 The port of a group is checked before the installation: ports 80 and 443 belong to the panel's web
-server, and a port another program or container listens on is refused with a clear error. So a
-member of the group cannot be on the relay server with the same port. The container runs in its own
-network, without `network_mode: host`, and publishes only the ports of the groups.
+server, and a port another program or container listens on is refused with a clear error. A port
+taken by AmneziaWG on the relay server gets its own hint: if that AmneziaWG is a member of the
+group, pick a relay on another server, otherwise change its port.
+
+The relay and a member of its group cannot share a machine: every member listens on the port of the
+group, the very port the relay publishes. The panel refuses it before anything is installed: the
+relay server cannot lead or join the group, nor get AmneziaWG of the group, and installing or
+updating a relay whose server runs a member of its group fails before the panel connects. The
+periodic sync does not retry such a relay. The container runs in its own network, without
+`network_mode: host`, and publishes only the ports of the groups.
 
 The agent inside the container probes the members in order every few seconds with a new handshake
 through the service peer and sends clients to the first live one. Before a switch the candidate is

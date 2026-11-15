@@ -132,12 +132,61 @@ def test_a_busy_port_is_refused_before_the_build(
     admin: User,
     start: Start,
 ) -> None:
-    relay_fake.others = [f"amnezia-awg2 0.0.0.0:{PORT}->{PORT}/udp"]
+    relay_fake.others = [f"telemt 0.0.0.0:{PORT}->{PORT}/udp"]
 
     operation = run(INSTALL_KIND, relay_server, admin, start)
 
     assert operation.error_code == RelayErrorCode.PORT_BUSY
     assert "build" not in relay_fake.docker_calls
+
+
+@pytest.mark.usefixtures("relayed")
+def test_a_port_of_amnezia_wg_on_the_relay_server_says_what_to_do(
+    relay_server: Server,
+    relay_fake: FakeRelayServer,
+    admin: User,
+    start: Start,
+) -> None:
+    relay_fake.others = [f"amnezia-awg2 0.0.0.0:{PORT}->{PORT}/udp"]
+
+    operation = run(INSTALL_KIND, relay_server, admin, start)
+
+    assert operation.error_code == RelayErrorCode.PORT_AWG
+    assert "another server" in operation.error_hint
+    assert "build" not in relay_fake.docker_calls
+
+
+def test_a_member_on_the_relay_server_is_refused_before_connecting(
+    relayed: ServerGroup,
+    leader: ProtocolInstance,
+    relay_fake: FakeRelayServer,
+    admin: User,
+    start: Start,
+) -> None:
+    relayed.relay = leader.server
+    relayed.save(update_fields=["relay"])
+
+    operation = run(INSTALL_KIND, leader.server, admin, start)
+
+    assert operation.status == OperationStatus.FAILED
+    assert operation.error_code == RelayErrorCode.MEMBER_ON_RELAY
+    assert not relay_fake.docker_calls
+
+
+def test_sync_leaves_a_relay_with_a_member_on_its_server(
+    relayed: ServerGroup,
+    leader: ProtocolInstance,
+    relay_server: Server,
+    admin: User,
+    start: Start,
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    leader.server = relay_server
+    leader.save(update_fields=["server"])
+
+    sync_relays()
+
+    assert not Operation.objects.filter(kind=UPDATE_KIND).exists()
 
 
 @pytest.mark.usefixtures("relayed")

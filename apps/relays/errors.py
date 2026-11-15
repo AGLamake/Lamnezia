@@ -10,6 +10,8 @@ from apps.ssh.errors import CatalogError, ErrorDescription
 class RelayErrorCode(StrEnum):
     PORT_RESERVED = "port_reserved"
     PORT_BUSY = "port_busy"
+    PORT_AWG = "port_awg"
+    MEMBER_ON_RELAY = "member_on_relay"
     NOT_INSTALLED = "not_installed"
     NOT_REMOVED = "not_removed"
     NO_MEMBER = "no_member"
@@ -26,9 +28,22 @@ RELAY_ERRORS: dict[RelayErrorCode, ErrorDescription] = {
     ),
     RelayErrorCode.PORT_BUSY: ErrorDescription(
         _("The port of a group is already used on the relay server."),
+        _("Another program or container listens on it, see the step log. Free the port."),
+    ),
+    RelayErrorCode.PORT_AWG: ErrorDescription(
+        _("The port of a group is used by AmneziaWG on the relay server."),
         _(
-            "Another program or container listens on it, see the step log. A member of the "
-            "group cannot be on the relay server with the same port: pick another relay."
+            "If this AmneziaWG is a member of the group, pick a relay on another server: every "
+            "member listens on the port of the group. Otherwise change its port in the protocol "
+            "settings of the server."
+        ),
+    ),
+    RelayErrorCode.MEMBER_ON_RELAY: ErrorDescription(
+        _("A member of a group runs on the relay server."),
+        _(
+            "The relay publishes the port of the group, which every member listens on, so they "
+            "cannot share a machine. Pick a relay on another server for the group, or let the "
+            "member on this server leave the group."
         ),
     ),
     RelayErrorCode.NOT_INSTALLED: ErrorDescription(

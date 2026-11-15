@@ -25,6 +25,7 @@ class GroupErrorCode(StrEnum):
     AWG_ON_SERVER = "awg_on_server"
     PORT_TAKEN = "port_taken"
     RELAY_SERVER = "relay_server"
+    GROUP_RELAY = "group_relay"
     JOIN_RUNNING = "join_running"
     SETTINGS_RUNNING = "settings_running"
     NO_MEMBER_ANSWERS = "no_member_answers"
@@ -101,6 +102,13 @@ GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
     GroupErrorCode.RELAY_SERVER: ErrorDescription(
         _("The server runs a relay."),
         _("Install AmneziaWG of the group on a server without a relay."),
+    ),
+    GroupErrorCode.GROUP_RELAY: ErrorDescription(
+        _("The server is the relay of the group: it cannot be a member of it too."),
+        _(
+            "The relay takes the UDP port of the group on its server, and every member listens "
+            "on that same port. Take a server other than the relay, or pick another relay."
+        ),
     ),
     GroupErrorCode.JOIN_RUNNING: ErrorDescription(
         _("The server is already joining a group."),

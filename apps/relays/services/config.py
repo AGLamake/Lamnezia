@@ -62,6 +62,16 @@ class RelayPlan:
         return RelayConfig(tuple(groups))
 
 
+def members_on_relay(server: Server) -> list[GroupMember]:
+    """Members of the groups of the relay server that run on that server.
+
+    Such a member listens on the port of its group, the port the relay must publish: the relay
+    cannot forward to it, by the public address or any other.
+    """
+    found = GroupMember.objects.filter(group__relay=server, instance__server=server)
+    return list(found.select_related("group", "instance"))
+
+
 def _service_key(group: ServerGroup) -> str:
     peer = ServicePeer.objects.filter(group=group).first()
     return peer.public_key if peer else ""

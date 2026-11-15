@@ -50,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A relay and a member of its group on one machine** are refused before anything is installed,
+  with a clear error: the relay server cannot lead, join or get AmneziaWG of the group, and a relay
+  whose server runs a member of its group is not installed, updated or retried by the sync. A
+  group port taken by AmneziaWG on the relay server gets a hint on what to do.
 - **Server group members** get the clientsTable record of a new key byte for byte as the leading
   server writes it. Catch-up of a member that already has every key of the group rewrites only
   clientsTable and does not restart AmneziaWG. A batch reissue changes each member under one lock
