@@ -108,6 +108,9 @@ msgstr "Код привязки мессенджера"
 msgid "Issue subscription link"
 msgstr "Выдать ссылку-подписку"
 
+msgid "Keep server in group after failed leave"
+msgstr "Сервер оставлен в группе после неудачного выхода"
+
 msgid "Link messenger"
 msgstr "Привязка мессенджера"
 

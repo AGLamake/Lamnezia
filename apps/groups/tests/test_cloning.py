@@ -119,7 +119,7 @@ def test_left_server_gets_a_clean_amneziawg(
     assert snapshot.config == group_files.config
 
 
-def test_failed_leave_is_retried_to_a_clean_amneziawg(
+def test_failed_leave_is_retried_to_a_clean_amneziawg(  # noqa: PLR0913, PLR0917
     servers: Fakes,
     leader: ProtocolInstance,
     joiner: ProtocolInstance,
@@ -147,7 +147,7 @@ def test_failed_leave_is_retried_to_a_clean_amneziawg(
     assert joiner.private_key == config.private_key
 
 
-def test_server_kept_in_the_group_catches_up_with_its_keys(
+def test_server_kept_in_the_group_catches_up_with_its_keys(  # noqa: PLR0913, PLR0917
     servers: Fakes,
     leader: ProtocolInstance,
     joiner: ProtocolInstance,

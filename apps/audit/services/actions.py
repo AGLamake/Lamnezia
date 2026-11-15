@@ -33,6 +33,7 @@ _LABELS: dict[str, Promise] = {
     "core.settings_change": _("Change site settings"),
     "groups.create": _("Create server group"),
     "groups.delete": _("Delete server group"),
+    "groups.stay": _("Keep server in group after failed leave"),
     "guides.suggestion_accept": _("Publish article suggestion"),
     "guides.suggestion_reject": _("Decline article suggestion"),
     "keys.view": _("Show key"),
