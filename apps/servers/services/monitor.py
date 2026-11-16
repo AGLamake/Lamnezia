@@ -11,7 +11,7 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from apps.notifications.events import Event
-from apps.notifications.services.delivery import emit
+from apps.notifications.services.trouble import report_recovery, report_trouble
 from apps.servers.models import Server, ServerSample
 from apps.servers.services.connection import connect
 from apps.servers.services.metrics import METRICS_SCRIPT, CpuTimes, HostMetrics, parse_metrics
@@ -50,6 +50,8 @@ class ServerMonitor:
         else:
             sample = _sample(server, parse_metrics(output), self._clock())
         sample.save()
+        if sample.answered:
+            _report_up(server)
         server.record_sample(sample)
         if server.online is False:
             _report_down(server)
@@ -58,12 +60,28 @@ class ServerMonitor:
 
 def _report_down(server: Server) -> None:
     """Once per outage: the key holds the last answer, which changes only after a new one."""
-    last_seen = server.last_seen_at.isoformat() if server.last_seen_at else ""
-    emit(
+    last_seen = _last_seen(server)
+    report_trouble(
         Event.SERVER_DOWN,
         {"server": server.name, "host": server.host, "last_seen": last_seen},
         key=f"server_down:{server.pk}:{last_seen or 'never'}",
     )
+
+
+def _report_up(server: Server) -> None:
+    """Before an answer is kept: the outage with the same last answer ends."""
+    last_seen = _last_seen(server)
+    occurrence = f"{server.pk}:{last_seen or 'never'}"
+    report_recovery(
+        f"server_down:{occurrence}",
+        Event.SERVER_UP,
+        {"server": server.name, "host": server.host, "last_seen": last_seen},
+        key=f"server_up:{occurrence}",
+    )
+
+
+def _last_seen(server: Server) -> str:
+    return server.last_seen_at.isoformat() if server.last_seen_at else ""
 
 
 def _sample(server: Server, metrics: HostMetrics, at: datetime) -> ServerSample:

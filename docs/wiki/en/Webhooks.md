@@ -32,6 +32,7 @@ zone), `data` depends on the event.
 | `event` | When | `data` |
 |---|---|---|
 | `server_down` | A server has not answered for two monitoring intervals. Sent once until the server comes back. | `server` name, `host`, `last_seen` — time of the last answer or an empty string if it never answered |
+| `server_up` | A server answers again after an outage (`server_down`). Once per outage, even when no channel heard of `server_down`. | `server` name, `host`, `last_seen` — time of the last answer before the outage or an empty string |
 | `limit_reached` | A user's keys are turned off by a limit. | `user`, `reason`: `traffic`, `total_traffic` or `expired` |
 | `access_expiring` | The access term of a user ends within three days. Once per term. | `user`, `until` — date `YYYY-MM-DD` |
 | `keys_changed` | The protocol settings of a server changed; the user must import their keys again. Also sent to the user. | `user`, `server` — server name |
@@ -52,8 +53,8 @@ zone), `data` depends on the event.
 | `member_lagging` | A group member has missed key changes longer than `LAMNEZIA_GROUP_LAG_ALERT`. Once per lag. | `group`, `server`, `since` — when it started to lag |
 | `member_reachable` | The relay reaches again a member of a group it was told unreachable (`member_unreachable`). Once per outage. | `group`, `relay`, `server` — member name |
 | `group_reachable` | The relay reaches again a member of a group that had none (`group_unreachable`): its clients have a connection. Once per outage. | `group`, `relay` |
-| `relay_up` | The panel reads the state of a relay told down (`relay_down`) again. Once per outage. | `relay`, `host`, `last_seen` — time of the last reading before the outage or an empty string |
-| `member_caught_up` | A member told lagging (`member_lagging`) has the files of its group again. Once per lag. | `group`, `server`, `since` — when it started to lag |
+| `relay_up` | The panel reads the state of a relay again after an outage (`relay_down`). Once per outage, even when no channel heard of `relay_down`. | `relay`, `host`, `last_seen` — time of the last reading before the outage or an empty string |
+| `member_caught_up` | A lagging member (`member_lagging`) has the files of its group again. Once per lag, even when no channel heard of `member_lagging`. | `group`, `server`, `since` — when it started to lag |
 | `test` | **Send test** on the channel page. | `channel` — channel name |
 
 Chat messages are sent once the support chat is available. New events and new `data` fields
@@ -76,6 +77,8 @@ may be added: ignore what you do not know.
   "allOf": [
     {"if": {"properties": {"event": {"const": "server_down"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/server_down"}}}},
+    {"if": {"properties": {"event": {"const": "server_up"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/server_up"}}}},
     {"if": {"properties": {"event": {"const": "limit_reached"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
@@ -125,6 +128,15 @@ may be added: ignore what you do not know.
   ],
   "$defs": {
     "server_down": {
+      "type": "object",
+      "required": ["server", "host", "last_seen"],
+      "properties": {
+        "server": {"type": "string"},
+        "host": {"type": "string"},
+        "last_seen": {"anyOf": [{"type": "string", "format": "date-time"}, {"const": ""}]}
+      }
+    },
+    "server_up": {
       "type": "object",
       "required": ["server", "host", "last_seen"],
       "properties": {

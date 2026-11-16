@@ -216,11 +216,18 @@ msgstr "Отправляется"
 msgid "Sent"
 msgstr "Отправлено"
 
+msgid "Server answers again"
+msgstr "Сервер снова отвечает"
+
 msgid "Server is down"
 msgstr "Сервер недоступен"
 
 msgid "Server works again"
 msgstr "Сервер снова работает"
+
+#, python-brace-format
+msgid "Server {server} answers again"
+msgstr "Сервер {server} снова отвечает"
 
 #, python-brace-format
 msgid "Server {server} is down"
@@ -311,6 +318,10 @@ msgstr "Ретранслятор {relay} снова получает ответ 
 #, python-brace-format
 msgid "The request is now {status}."
 msgstr "Статус обращения: {status}."
+
+#, python-brace-format
+msgid "The server {server} ({host}) answers again. Answer before the outage: {last_seen}."
+msgstr "Сервер {server} ({host}) снова отвечает. Последний ответ до сбоя: {last_seen}."
 
 #, python-brace-format
 msgid "The server {server} ({host}) does not answer. Last answer: {last_seen}."

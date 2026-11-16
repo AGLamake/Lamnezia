@@ -23,9 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Relay trouble on the dashboard**: the "Needs attention" list of an administrator names the
   server groups where no member answers the relay at its last reading and the relays whose state
   cannot be read, with links to the group and server pages. It uses the stored reading, without SSH.
-- **Recovery notifications** paired with the relay events: `member_reachable`,
+- **Recovery notifications** paired with the trouble events: `server_up`, `member_reachable`,
   `group_reachable`, `relay_up` and `member_caught_up` come once when the trouble is over, only
-  after `member_unreachable`, `group_unreachable`, `relay_down` or `member_lagging` was told.
+  after `server_down`, `member_unreachable`, `group_unreachable`, `relay_down` or `member_lagging`.
+  The panel remembers an outage or a lag apart from notifications, so `server_up`, `relay_up` and
+  `member_caught_up` come even when no channel is subscribed to the trouble event.
 - **Relay load chart**: the relay card shows the load from the clients and to them for the last
   day by hour and the last week by six hours. The monitor keeps every reading, thinned and deleted
   like the server readings; the history is listed in the Storage section of the statistics.

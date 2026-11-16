@@ -21,6 +21,7 @@ from apps.traffic.signals import LimitReason
 
 class Event(StrEnum):
     SERVER_DOWN = "server_down"
+    SERVER_UP = "server_up"
     LIMIT_REACHED = "limit_reached"
     ACCESS_EXPIRING = "access_expiring"
     KEYS_CHANGED = "keys_changed"
@@ -112,6 +113,11 @@ EVENTS: dict[Event, EventType] = {
         _("Server is down"),
         _("Server {server} is down"),
         _("The server {server} ({host}) does not answer. Last answer: {last_seen}."),
+    ),
+    Event.SERVER_UP: EventType(
+        _("Server answers again"),
+        _("Server {server} answers again"),
+        _("The server {server} ({host}) answers again. Answer before the outage: {last_seen}."),
     ),
     Event.LIMIT_REACHED: EventType(
         _("Limit reached"),

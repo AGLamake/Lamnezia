@@ -32,6 +32,7 @@
 | `event` | Когда | `data` |
 |---|---|---|
 | `server_down` | Сервер не отвечает два интервала мониторинга. Один раз, пока сервер не вернётся. | `server` — имя, `host`, `last_seen` — время последнего ответа или пустая строка, если ответов не было |
+| `server_up` | Сервер после сбоя (`server_down`) снова отвечает. Один раз за сбой, даже если `server_down` не получил ни один канал. | `server` — имя, `host`, `last_seen` — время последнего ответа до сбоя или пустая строка |
 | `limit_reached` | Ключи пользователя отключены по лимиту. | `user`, `reason`: `traffic`, `total_traffic` или `expired` |
 | `access_expiring` | Срок доступа пользователя кончается в ближайшие три дня. Один раз на срок. | `user`, `until` — дата `YYYY-MM-DD` |
 | `keys_changed` | Изменились настройки протокола на сервере; пользователю нужно заново импортировать ключи. Приходит и самому пользователю. | `user`, `server` — имя сервера |
@@ -52,8 +53,8 @@
 | `member_lagging` | Участник группы пропускает изменения ключей дольше `LAMNEZIA_GROUP_LAG_ALERT`. Один раз за отставание. | `group`, `server`, `since` — с какого момента отстаёт |
 | `member_reachable` | Ретранслятор снова получает ответ от участника группы, о недоступности которого сообщил (`member_unreachable`). Один раз за сбой. | `group`, `relay`, `server` — имя участника |
 | `group_reachable` | У группы, где ни один участник не отвечал (`group_unreachable`), снова есть доступный участник: у её клиентов есть связь. Один раз за сбой. | `group`, `relay` |
-| `relay_up` | Панель снова читает состояние ретранслятора, о котором сообщила, что он не отвечает (`relay_down`). Один раз за сбой. | `relay`, `host`, `last_seen` — время последнего чтения до сбоя или пустая строка |
-| `member_caught_up` | Участник, об отставании которого сообщалось (`member_lagging`), снова получил файлы группы. Один раз за отставание. | `group`, `server`, `since` — с какого момента отставал |
+| `relay_up` | Панель снова читает состояние ретранслятора после сбоя (`relay_down`). Один раз за сбой, даже если `relay_down` не получил ни один канал. | `relay`, `host`, `last_seen` — время последнего чтения до сбоя или пустая строка |
+| `member_caught_up` | Отстававший участник (`member_lagging`) снова получил файлы группы. Один раз за отставание, даже если `member_lagging` не получил ни один канал. | `group`, `server`, `since` — с какого момента отставал |
 | `test` | **Отправить тест** на странице канала. | `channel` — название канала |
 
 Сообщения в чате начнут приходить, когда появится чат поддержки. Могут добавиться новые
@@ -76,6 +77,8 @@
   "allOf": [
     {"if": {"properties": {"event": {"const": "server_down"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/server_down"}}}},
+    {"if": {"properties": {"event": {"const": "server_up"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/server_up"}}}},
     {"if": {"properties": {"event": {"const": "limit_reached"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
@@ -125,6 +128,15 @@
   ],
   "$defs": {
     "server_down": {
+      "type": "object",
+      "required": ["server", "host", "last_seen"],
+      "properties": {
+        "server": {"type": "string"},
+        "host": {"type": "string"},
+        "last_seen": {"anyOf": [{"type": "string", "format": "date-time"}, {"const": ""}]}
+      }
+    },
+    "server_up": {
       "type": "object",
       "required": ["server", "host", "last_seen"],
       "properties": {

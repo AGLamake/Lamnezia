@@ -34,6 +34,7 @@ channels hear each event.
 | Event | `event` | `data` |
 |---|---|---|
 | Server is down | `server_down` | `server`, `host`, `last_seen` |
+| Server answers again | `server_up` | `server`, `host`, `last_seen` |
 | Limit reached | `limit_reached` | `user`, `reason` (`traffic`, `total_traffic`, `expired`) |
 | Access ends soon | `access_expiring` | `user`, `until` (date) |
 | Keys must be imported again | `keys_changed` | `user`, `server` |
@@ -57,8 +58,10 @@ channels hear each event.
 | Relay answers again | `relay_up` | `relay`, `host`, `last_seen` |
 | Group server caught up | `member_caught_up` | `group`, `server`, `since` |
 
-The last four come only after the matching notification of the trouble (`member_unreachable`,
-`group_unreachable`, `relay_down`, `member_lagging`), once when it is over.
+`server_up` and the last four come once when the matching trouble is over (`server_down`,
+`member_unreachable`, `group_unreachable`, `relay_down`, `member_lagging`). The panel remembers
+the trouble apart from notifications, so the pair comes even when no channel is subscribed to the
+trouble event.
 
 Notifications about the user go where they chose on their **Messengers** page: email by default,
 or their linked Telegram or Discord ([Telegram and Discord](Messengers.md)).
@@ -94,7 +97,7 @@ after the first message, with every message on a line of its own in `text`; `cou
 says how many there are.
 
 A server that goes down is reported once; it is reported again only after it has come back and gone
-down again.
+down again. When it answers again, `server_up` is sent.
 
 ## Delivery and the log
 

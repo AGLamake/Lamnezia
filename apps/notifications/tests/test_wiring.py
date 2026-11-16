@@ -59,6 +59,51 @@ def test_a_server_down_again_after_coming_back_is_reported_again(http: FakeHttp)
     assert events_posted(http) == ["server_down", "server_down"]
 
 
+def test_a_server_answering_again_is_reported_once_after_its_outage(http: FakeHttp) -> None:
+    ChannelFactory(events=[Event.SERVER_DOWN, Event.SERVER_UP])
+    server, servers = ServerFactory(name="Germany"), FakeServers()
+    now = timezone.now()
+    poll(servers, server, now - INTERVAL * 3.5)
+    servers.down.add(server.name)
+    poll(servers, server, now - INTERVAL * 1.5)
+    poll(servers, server, now - INTERVAL)
+    servers.down.discard(server.name)
+    poll(servers, server, now - INTERVAL * 0.5)
+    poll(servers, server, now)
+
+    assert events_posted(http) == ["server_down", "server_up"]
+    assert json.loads(http.posts[1].body)["data"]["server"] == "Germany"
+
+
+def test_a_server_answering_again_is_reported_with_nobody_told_it_was_down(
+    http: FakeHttp,
+) -> None:
+    ChannelFactory(events=[Event.SERVER_UP])
+    server, servers = ServerFactory(), FakeServers()
+    now = timezone.now()
+    poll(servers, server, now - INTERVAL * 4)
+    servers.down.add(server.name)
+    poll(servers, server, now - INTERVAL * 3)
+    poll(servers, server, now - INTERVAL * 2)
+    servers.down.discard(server.name)
+    poll(servers, server, now - INTERVAL)
+
+    assert events_posted(http) == ["server_up"]
+
+
+def test_a_server_that_never_went_down_is_not_reported_up(http: FakeHttp) -> None:
+    ChannelFactory(events=[Event.SERVER_UP])
+    server, servers = ServerFactory(), FakeServers()
+    now = timezone.now()
+    poll(servers, server, now - INTERVAL * 1.5)
+    servers.down.add(server.name)
+    poll(servers, server, now - INTERVAL)
+    servers.down.discard(server.name)
+    poll(servers, server, now)
+
+    assert not http.posts
+
+
 def test_a_registration_request_is_reported(http: FakeHttp) -> None:
     ChannelFactory(events=[Event.REGISTRATION_PENDING])
     site = configure(registration_mode=RegistrationMode.OPEN_MANUAL)

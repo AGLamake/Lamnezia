@@ -92,6 +92,17 @@ class Notification(models.Model):
         return str(EVENTS[Event(self.event)].label) if self.event in Event else self.event
 
 
+class Trouble(models.Model):
+    """An outage or lag going on now, by the key of the event that told it; the row is kept
+    whether anybody heard of the event or not and goes when the recovery is told."""
+
+    key = models.CharField(max_length=200, unique=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return self.key
+
+
 class DeliveryStatus(models.TextChoices):
     PENDING = "pending", _("Waiting")
     SENDING = "sending", _("Sending")

@@ -11,7 +11,7 @@ import pytest
 from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT
 from apps.notifications.events import Event
-from apps.notifications.models import Notification
+from apps.notifications.models import Notification, Route
 from apps.notifications.tests.factories import ChannelFactory
 from apps.relays.models import Relay
 from apps.relays.services.monitor import (
@@ -322,6 +322,24 @@ def test_a_relay_answering_again_is_told_once_after_its_outage(
     ]
 
 
+def test_a_relay_answering_again_is_told_with_nobody_told_it_was_down(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    Route.objects.exclude(event=Event.RELAY_UP).delete()
+    watch = monitor(relay_fake, clock)
+    write_state(relay_fake)
+    watch.poll(relay)
+    clock.now = NOW + 3 * INTERVAL
+    RelayMonitor(INTERVAL, connect=silent, clock=clock).poll(relay)
+
+    write_state(relay_fake, at=AT + 4 * 60)
+    clock.now = NOW + 4 * INTERVAL
+    watch.poll(relay)
+
+    assert not told(Event.RELAY_DOWN)
+    assert [notice["relay"] for notice in told(Event.RELAY_UP)] == [relay.server.name]
+
+
 def test_a_relay_not_told_down_is_not_told_up(
     relay: Relay, relay_fake: FakeRelayServer, clock: Clock
 ) -> None:
@@ -355,6 +373,23 @@ def test_a_member_caught_up_is_told_once_after_its_lag(relayed: ServerGroup) -> 
 
     assert told(Event.MEMBER_CAUGHT_UP) == [
         {"group": relayed.name, "server": joiner.instance.server.name, "since": since.isoformat()}
+    ]
+
+
+def test_a_member_caught_up_is_told_with_nobody_told_it_lagged(relayed: ServerGroup) -> None:
+    Route.objects.exclude(event=Event.MEMBER_CAUGHT_UP).delete()
+    joiner = GroupMember.objects.get(leading=False)
+    joiner.lagging_since = NOW - timedelta(hours=2)
+    joiner.save(update_fields=["lagging_since"])
+    report_lagging(timedelta(hours=1), now=NOW)
+
+    joiner.lagging_since = None
+    joiner.save(update_fields=["lagging_since"])
+    report_caught_up()
+
+    assert not told(Event.MEMBER_LAGGING)
+    assert [notice["server"] for notice in told(Event.MEMBER_CAUGHT_UP)] == [
+        joiner.instance.server.name
     ]
 
 
