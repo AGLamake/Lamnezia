@@ -209,7 +209,9 @@ leave this way is still never overwritten.
 
 Before a server joins a group (if it has clients) and before it leaves one, the panel keeps a
 snapshot of its AmneziaWG files: the server key, the preshared key and the clients. Snapshots are
-never overwritten and are listed with their date and reason under **Backup** on the server card.
+never overwritten and are listed with their date, reason, port and number of clients under
+**Backup** on the server card. **Delete** removes a snapshot you no longer need: only the record
+in the panel goes, the server is not touched, and the audit journal keeps the deletion.
 
 **Restore** next to a snapshot starts a background operation: the panel takes the server lock,
 saves the current files as a new snapshot ("before restoring a snapshot"), puts the snapshot files
@@ -217,6 +219,14 @@ in place (`awg0.conf` last) and restarts the interface. If the interface does no
 old files come back. The panel then reads the server key and the clients again: keys of the
 snapshot are active and connect again, keys issued after the snapshot are revoked, and clients
 the panel did not know appear as imported keys.
+
+A snapshot taken "before leaving a server group" holds the files of the group: after the restore
+the server runs with the group key again, and the panel warns about it before starting. A peer
+whose key lives on another server (usually a key of the group's leading server) is not added a
+second time; the operation log shows how many such peers were left out. A key that comes back to
+a user on a plan is turned off by hand when the plan does not allow this server or protocol or
+the user already has more keys than the plan allows (the newest of the returned keys go off).
+Owners of returned keys get a "keys updated" notification.
 
 A group member does not restore a snapshot: take the server out of the group first. The restore
 is also refused while the protocol listens on another port than in the snapshot: change the port

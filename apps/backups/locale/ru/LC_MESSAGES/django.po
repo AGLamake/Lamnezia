@@ -52,6 +52,10 @@ msgid "Keys of the snapshot active again: %(count)d."
 msgstr "Ключей снимка снова активно: %(count)d."
 
 #, python-format
+msgid "Keys over the plan turned off: %(count)d."
+msgstr "Отключено ключей сверх тарифа: %(count)d."
+
+#, python-format
 msgid "Keys revoked: %(count)d."
 msgstr "Отозвано ключей: %(count)d."
 
@@ -60,6 +64,14 @@ msgstr "Загрузить сохранённую базу данных"
 
 msgid "No copy could be saved: the keys of this protocol will not work again."
 msgstr "Копию сохранить не удалось: ключи этого протокола больше не заработают."
+
+#, python-format
+msgid "Owners notified: %(count)d."
+msgstr "Уведомлено владельцев: %(count)d."
+
+#, python-format
+msgid "Peers left out, their keys live on another server: %(count)d."
+msgstr "Пропущено пиров, их ключи живут на другом сервере: %(count)d."
 
 msgid "Prepare the files from the panel"
 msgstr "Подготовить файлы из панели"
@@ -136,6 +148,9 @@ msgstr "После записи файлы сервера отличаются �
 
 msgid "The server is in a server group: its files are the files of the group."
 msgstr "Сервер состоит в группе серверов: его файлы — это файлы группы."
+
+msgid "The snapshot is deleted."
+msgstr "Снимок удалён."
 
 msgid "The snapshot listens on another port than the protocol now."
 msgstr "В снимке другой порт, чем сейчас у протокола."

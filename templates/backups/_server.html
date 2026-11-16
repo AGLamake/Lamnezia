@@ -36,13 +36,21 @@
           {% endif %}
           {% for snapshot in snapshots %}
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <p class="help-text">{{ snapshot.taken_at|date:"SHORT_DATETIME_FORMAT" }} · {{ snapshot.get_reason_display }}</p>
-              {% if not instance|in_group %}
-              <form method="post" action="{% url 'backups:restore-snapshot' snapshot.pk %}" data-confirm="{% translate "Put the files of this snapshot back on the server? Keys issued since then stop working." %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-secondary">{% translate "Restore" %}</button>
-              </form>
-              {% endif %}
+              {% with config=snapshot|snapshot_config %}
+              <p class="help-text">{{ snapshot.taken_at|date:"SHORT_DATETIME_FORMAT" }} · {{ snapshot.get_reason_display }} · {% blocktranslate count clients=config.peers|length with port=config.listen_port|default:"—" %}port {{ port }}, {{ clients }} client{% plural %}port {{ port }}, {{ clients }} clients{% endblocktranslate %}</p>
+              {% endwith %}
+              <div class="flex flex-wrap gap-2">
+                {% if not instance|in_group %}
+                <form method="post" action="{% url 'backups:restore-snapshot' snapshot.pk %}" data-confirm="{% if snapshot.reason == "group_leave" %}{% translate "Put the group files back on this server? The server runs with the group key again; keys of the group stay with the group, the other peers come back as keys of this server. Keys issued since then stop working." %}{% else %}{% translate "Put the files of this snapshot back on the server? Keys issued since then stop working." %}{% endif %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-secondary">{% translate "Restore" %}</button>
+                </form>
+                {% endif %}
+                <form method="post" action="{% url 'backups:delete-snapshot' snapshot.pk %}" data-confirm="{% translate "Delete this snapshot? The server is not touched." %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-ghost">{% translate "Delete" %}</button>
+                </form>
+              </div>
             </div>
           {% endfor %}
         </div>

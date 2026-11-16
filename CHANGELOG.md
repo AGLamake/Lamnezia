@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Protocol snapshots**: the list shows the port and the number of clients of each snapshot, and
+  an administrator can delete a snapshot. Restoring a snapshot taken before leaving a group warns
+  first, does not add again peers whose keys live on another server, turns off returned keys over
+  the owner's plan and tells the owners their keys changed.
 - **Editing a server group**: the name, the domain and the relay of a group change on its page.
   A new domain moves the keys of the group at once, and a relay taken off or removed sends them
   back to the leading server; owners are told to import their keys again.

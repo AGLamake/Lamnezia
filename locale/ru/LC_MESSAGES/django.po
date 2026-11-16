@@ -872,6 +872,9 @@ msgstr "Удалить этот инвайт?"
 msgid "Delete this plan?"
 msgstr "Удалить этот тариф?"
 
+msgid "Delete this snapshot? The server is not touched."
+msgstr "Удалить этот снимок? Сервер не затрагивается."
+
 msgid "Delete this template?"
 msgstr "Удалить этот шаблон?"
 
@@ -2152,6 +2155,9 @@ msgstr "Опубликовано. Автор уведомлён."
 
 msgid "Put the files of this snapshot back on the server? Keys issued since then stop working."
 msgstr "Вернуть файлы этого снимка на сервер? Ключи, выданные после него, перестанут работать."
+
+msgid "Put the group files back on this server? The server runs with the group key again; keys of the group stay with the group, the other peers come back as keys of this server. Keys issued since then stop working."
+msgstr "Вернуть файлы группы на этот сервер? Сервер снова работает с ключом группы; ключи группы остаются у группы, остальные пиры вернутся ключами этого сервера. Ключи, выданные с тех пор, перестанут работать."
 
 msgid "QR code"
 msgstr "QR-код"
@@ -3928,6 +3934,13 @@ msgstr "порт"
 #, python-format
 msgid "port %(port)s"
 msgstr "порт %(port)s"
+
+#, python-format
+msgid "port %(port)s, %(clients)s client"
+msgid_plural "port %(port)s, %(clients)s clients"
+msgstr[0] "порт %(port)s, %(clients)s клиент"
+msgstr[1] "порт %(port)s, %(clients)s клиента"
+msgstr[2] "порт %(port)s, %(clients)s клиентов"
 
 msgid "position"
 msgstr "порядок"

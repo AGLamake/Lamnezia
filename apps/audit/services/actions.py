@@ -22,6 +22,7 @@ _LABELS: dict[str, Promise] = {
     "accounts.messenger_login": _("Sign in from a messenger"),
     "accounts.email_change": _("Change email"),
     "accounts.sessions_end": _("End sessions"),
+    "backups.delete_snapshot": _("Delete protocol snapshot"),
     "billing.checkout": _("Start payment of plan"),
     "billing.paid": _("Receive payment"),
     "billing.refunded": _("Refund payment"),

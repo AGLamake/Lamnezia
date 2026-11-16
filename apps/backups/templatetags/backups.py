@@ -4,7 +4,9 @@ from typing import Any
 
 from django import template
 
+from amnezia_core.awg import AwgServerConfig
 from amnezia_core.ipsec import IPSEC_CONTAINER
+from apps.backups.models import ProtocolSnapshot
 from apps.backups.services import snapshot
 from apps.backups.services.archived_services import archived_services
 from apps.protocols.models import ProtocolInstance, ServiceInstance
@@ -56,3 +58,9 @@ def service_restorable(service: ServiceInstance) -> bool:
 def in_group(instance: ProtocolInstance) -> bool:
     """Whether the protocol is in a server group: its snapshots wait until it leaves."""
     return hasattr(instance, "group_member")
+
+
+@register.filter
+def snapshot_config(snapshot: ProtocolSnapshot) -> AwgServerConfig:
+    """The server config of a snapshot: its port and peers for the list."""
+    return AwgServerConfig.parse(snapshot.config)

@@ -14,7 +14,9 @@ from apps.groups.models import GroupMember
 from apps.groups.services.membership import start_leave
 from apps.groups.tests.conftest import JOINER_HOST, Fakes, Run, server_files, succeeded
 from apps.keys.models import AccessKey, KeyStatus
+from apps.keys.services import actions
 from apps.operations.models import Operation, OperationStatus
+from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import PSK, Start, issued_key
 
@@ -160,3 +162,73 @@ def test_server_card_lists_the_snapshots(
     page = client.get(reverse("servers:detail", args=[joiner.server_id])).content.decode()
 
     assert reverse("backups:restore-snapshot", args=[left.pk]) in page
+
+
+def test_server_card_shows_the_port_and_clients_of_a_snapshot(
+    servers: Fakes, joiner: ProtocolInstance, left: ProtocolSnapshot, admin: User
+) -> None:
+    client = Client()
+    client.force_login(admin)
+    config = AwgServerConfig.parse(left.config)
+
+    page = client.get(reverse("servers:detail", args=[joiner.server_id])).content.decode()
+
+    assert f"port {config.listen_port}, {len(config.peers)} client" in page
+    assert reverse("backups:delete-snapshot", args=[left.pk]) in page
+
+
+def test_admin_deletes_a_snapshot(
+    servers: Fakes, joiner: ProtocolInstance, left: ProtocolSnapshot, admin: User
+) -> None:
+    client = Client()
+    client.force_login(admin)
+
+    response = client.post(reverse("backups:delete-snapshot", args=[left.pk]))
+
+    assert response.status_code == 302
+    assert not ProtocolSnapshot.objects.filter(pk=left.pk).exists()
+
+
+def test_peer_whose_key_lives_on_another_server_is_not_taken_twice(
+    servers: Fakes,
+    leader: ProtocolInstance,
+    old_key: AccessKey,
+    left: ProtocolSnapshot,
+    restore: Run,
+) -> None:
+    AccessKey.objects.create(
+        source=leader.source, name="iPhone", public_key=old_key.public_key, imported=True
+    )
+
+    succeeded(restore())
+
+    old_key.refresh_from_db()
+    assert old_key.status == KeyStatus.REVOKED
+    assert AccessKey.objects.filter(public_key=old_key.public_key).count() == 2
+
+
+def test_key_over_the_owner_plan_is_turned_off(
+    servers: Fakes,
+    leader: ProtocolInstance,
+    old_key: AccessKey,
+    left: ProtocolSnapshot,
+    restore: Run,
+) -> None:
+    owner = UserLimitsFactory(plan=PlanFactory(max_keys=1), plan_assigned_at=timezone.now()).user
+    AccessKey.objects.filter(pk=old_key.pk).update(user=owner)
+    AccessKey.objects.create(user=owner, source=leader.source, name="Laptop", public_key="other")
+
+    succeeded(restore())
+
+    assert Operation.objects.filter(kind=actions.DISABLE, params__key_id=old_key.pk).exists()
+
+
+def test_key_within_the_owner_plan_stays_on(
+    servers: Fakes, old_key: AccessKey, left: ProtocolSnapshot, restore: Run
+) -> None:
+    owner = UserLimitsFactory(plan=PlanFactory(max_keys=2), plan_assigned_at=timezone.now()).user
+    AccessKey.objects.filter(pk=old_key.pk).update(user=owner)
+
+    succeeded(restore())
+
+    assert not Operation.objects.filter(kind=actions.DISABLE).exists()

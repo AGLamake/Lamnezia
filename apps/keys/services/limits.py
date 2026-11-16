@@ -41,6 +41,23 @@ def enable_by_limit(user: User) -> list[Operation]:
     return _switch(user, KeyStatus.DISABLED_LIMIT, LIMIT_ENABLE)
 
 
+def disable_over_plan(keys: list[AccessKey]) -> list[Operation]:
+    """Start turning off active keys the plan of their owner has no place for, as by hand: the
+    limits never turn them back on."""
+    with transaction.atomic():
+        locked = list(
+            AccessKey.objects.select_for_update()
+            .select_related("user")
+            .filter(pk__in=[key.pk for key in keys], status=KeyStatus.ACTIVE)
+        )
+        busy = _busy({key.pk for key in locked})
+        return [
+            _launch(actions.DISABLE, key, {"reason": "plan"})
+            for key in locked
+            if key.pk not in busy
+        ]
+
+
 def _switch(user: User, status: KeyStatus, kind: str, **params: str) -> list[Operation]:
     """Keys with an unfinished operation are left for the next run.
 
