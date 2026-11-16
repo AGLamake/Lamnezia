@@ -8,6 +8,7 @@ from django.db.models import QuerySet
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
@@ -15,14 +16,15 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
 
 from apps.accounts.permissions import AdminRequiredMixin
-from apps.groups.errors import GroupError
+from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.forms import GroupEditForm, GroupForm, GroupSettingsForm
 from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.addressing import DomainCheck, client_host
-from apps.groups.services.handover import start_handover
+from apps.groups.services.handover import key_operations, start_handover
 from apps.groups.services.membership import (
     create_group,
     delete_group,
+    joining_operations,
     leave_failed,
     live_keys,
     port_taken,
@@ -98,7 +100,12 @@ class GroupEditView(AdminRequiredMixin, UpdateView):  # type: ignore[type-arg]
 
 
 class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
-    """The members of a group, the standalone servers that may join it and those without AWG."""
+    """The members of a group, the standalone servers that may join it and those without AWG.
+
+    The operations under way that a change of the group waits for are listed with links: joins
+    and installs, and the key operations that hold the lead. `?leader_leaves=1` (after a leading
+    server was asked to leave) offers to hand the lead to another member first.
+    """
 
     model = ServerGroup
     template_name = "groups/detail.html"
@@ -106,19 +113,25 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         group: ServerGroup = self.object
+        # A server cannot be both the relay of the group and a member: they share the port.
         candidates = [
             (instance, live_keys(instance))
             for instance in standalone_instances()
-            if instance.port == group.port
+            if instance.port == group.port and instance.server_id != group.relay_id
         ]
         relay = Relay.objects.filter(server_id=group.relay_id).first() if group.relay_id else None
         health = relay.group_health(group.port) if relay else None
-        members = group.members.select_related("instance__server")
+        members = list(group.members.select_related("instance__server"))
+        leader = next((member for member in members if member.leading), None)
         return super().get_context_data(
             members=[
                 (member, *_seen_by_relay(member, health), leave_failed(member))
                 for member in members
             ],
+            successors=[member for member in members if _may_lead(member)],
+            leader_leaves=bool(self.request.GET.get("leader_leaves")) and len(members) > 1,
+            joining=list(joining_operations(group)),
+            key_operations=list(key_operations(leader.instance.source)) if leader else [],
             relay=relay,
             health=health,
             client_host=client_host(group),
@@ -129,6 +142,11 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
             ],
             **kwargs,
         )
+
+
+def _may_lead(member: GroupMember) -> bool:
+    """Whether the page offers to make the member leading; the operation checks it again."""
+    return not member.leading and member.joined and not member.lagging
 
 
 def _seen_by_relay(member: GroupMember, health: GroupHealth | None) -> tuple[bool | None, bool]:
@@ -167,6 +185,10 @@ class GroupLeaveView(AdminRequiredMixin, View):
         try:
             start_leave(member, user=self.member, ip=self.client_ip)
         except GroupError as error:
+            if error.code == GroupErrorCode.LEADER_LEAVES:
+                # The group page shows the error with the members that may take the lead.
+                url = reverse("groups:detail", kwargs={"pk": member.group_id})
+                return redirect(f"{url}?leader_leaves=1#leader-leaves")
             messages.error(request, f"{error.message} {error.hint}")
         return redirect("groups:detail", pk=member.group_id)
 

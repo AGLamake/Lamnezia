@@ -11,14 +11,13 @@ from contextlib import ExitStack
 from dataclasses import replace
 
 from django.db import transaction
-from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from amnezia_core.containers import AWG2
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
 from apps.groups.errors import GroupError, GroupErrorCode
-from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
 from apps.groups.services.handover import HANDOVER_KIND
 from apps.groups.services.membership import SETTINGS_KIND
 from apps.groups.services.replication import backends
@@ -196,4 +195,4 @@ class GroupSettingsChange:
                 _("%(server)s catches up with the settings later.")
                 % {"server": member.instance.server}
             )
-        missed.update(lagging_since=timezone.now())
+        missed.fall_behind(LagReason.MISSED)

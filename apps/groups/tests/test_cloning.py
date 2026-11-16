@@ -6,7 +6,7 @@ from amnezia_core.clients_table import ClientsTable
 from apps.accounts.models import User
 from apps.backups.models import ProtocolBackup, ProtocolSnapshot, SnapshotReason
 from apps.groups.errors import GroupError, GroupErrorCode
-from apps.groups.models import GroupMember, MemberState
+from apps.groups.models import GroupMember, LagReason, MemberState
 from apps.groups.services.membership import leave_failed, retry_leave, start_leave, stay_in_group
 from apps.groups.services.replication import CATCH_UP_KIND, backends
 from apps.groups.tests.conftest import (
@@ -172,7 +172,7 @@ def test_server_kept_in_the_group_catches_up_with_its_keys(  # noqa: PLR0913, PL
     stay_in_group(member, user=admin)
     member.refresh_from_db()
     assert member.state == MemberState.MEMBER
-    assert member.lagging
+    assert member.lagging_reason == LagReason.STAYED
     assert member not in backends(member.group)
 
     params = {"member_id": member.pk, "server_id": joiner.server_id}

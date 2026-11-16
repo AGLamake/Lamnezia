@@ -5,6 +5,7 @@
 
 <p class="nav-group">{% translate "Infrastructure" %}</p>
 <a href="{% url 'servers:list' %}" class="nav-link"{% if active == 'servers' %} aria-current="page"{% endif %}>{% icon "server" %}<span class="nav-text">{% translate "Servers" %}</span>{% with offline=todo.offline|length %}{% if offline %}<span class="nav-count nav-count-danger" title="{% translate 'Not answering' %}">{{ offline }}</span>{% endif %}{% endwith %}</a>
+{% if user.is_admin %}<a href="{% url 'groups:list' %}" class="nav-link"{% if active == 'groups' %} aria-current="page"{% endif %}>{% icon "layers" %}<span class="nav-text">{% translate "Server groups" %}</span>{% if todo.group_problems %}<span class="nav-count nav-count-danger" title="{% translate 'Groups with a lagging or stuck server, or with no server answering the relay' %}">{{ todo.group_problems }}</span>{% endif %}</a>{% endif %}
 <a href="{% url 'operations:list' %}" class="nav-link"{% if active == 'operations' %} aria-current="page"{% endif %}>{% icon "activity" %}<span class="nav-text">{% translate "Operations" %}</span>{% if todo.failed_operations %}<span class="nav-count nav-count-danger" title="{% translate 'Failed in the last day' %}">{{ todo.failed_operations }}</span>{% endif %}</a>
 
 <p class="nav-group">{% translate "Clients" %}</p>

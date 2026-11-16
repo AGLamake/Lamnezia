@@ -6,7 +6,7 @@ A server without AmneziaWG joins by an install straight with the files of the gr
 """
 
 from django.db import IntegrityError, transaction
-from django.db.models import Max
+from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 
 from amnezia_core.awg import AwgServerConfig
@@ -17,7 +17,7 @@ from amnezia_core.keys import KeyPair
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
 from apps.groups.errors import GroupError, GroupErrorCode
-from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
 from apps.groups.services.addressing import GroupKeyAddress
 from apps.keys.models import GONE_STATUSES, AccessKey, KeyStatus
 from apps.operations.models import Operation, OperationStatus
@@ -187,6 +187,16 @@ def start_install(
     return operation
 
 
+def joining_operations(group: ServerGroup) -> QuerySet[Operation]:
+    """The joins and installs into the group that are queued or running."""
+    members = list(group.members.values_list("pk", flat=True))
+    return Operation.objects.filter(
+        Q(kind=JOIN_KIND, params__member_id__in=members)
+        | Q(kind=INSTALL_KIND, params__group_id=group.pk),
+        status__in=(OperationStatus.PENDING, OperationStatus.RUNNING),
+    ).order_by("created_at", "pk")
+
+
 def _installing(server: Server) -> bool:
     return Operation.objects.filter(
         kind=INSTALL_KIND,
@@ -230,7 +240,8 @@ def stay_in_group(member: GroupMember, *, user: User, ip: str | None = None) -> 
     member = _stuck_leaving(member)
     member.state = MemberState.MEMBER
     member.lagging_since = timezone.now()
-    member.save(update_fields=["state", "lagging_since"])
+    member.lagging_reason = LagReason.STAYED
+    member.save(update_fields=["state", "lagging_since", "lagging_reason"])
     data = {"instance": member.instance_id}
     audit.log(STAY_KIND, actor=user, target=member.group, data=data, ip=ip)
 

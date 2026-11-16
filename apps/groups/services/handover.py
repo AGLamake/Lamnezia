@@ -9,7 +9,7 @@ A leading server that does not answer is left behind as lagging and catches up l
 from contextlib import ExitStack
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -20,7 +20,7 @@ from apps.accounts.models import User
 from apps.audit.services import journal as audit
 from apps.backups.services.snapshot import read_awg_files
 from apps.groups.errors import GroupError, GroupErrorCode
-from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
 from apps.groups.services.addressing import GroupKeyAddress, client_host
 from apps.groups.services.cloning import locked_source
 from apps.groups.services.membership import SETTINGS_KIND
@@ -49,7 +49,7 @@ def start_handover(member: GroupMember, *, user: User, ip: str | None = None) ->
         if running.filter(kind=SETTINGS_KIND).exists():
             raise GroupError(GroupErrorCode.SETTINGS_RUNNING, str(group.pk))
         leader = group.leader
-        if leader is not None and keys_changing(leader.instance.source):
+        if leader is not None and key_operations(leader.instance.source).exists():
             raise GroupError(GroupErrorCode.KEYS_CHANGING, leader.instance.source)
         params = {
             "member_id": member.pk,
@@ -62,14 +62,15 @@ def start_handover(member: GroupMember, *, user: User, ip: str | None = None) ->
     return operation
 
 
-def keys_changing(source: str) -> bool:
-    """A key operation of the instance is queued or running: it may still use the old source."""
+def key_operations(source: str) -> QuerySet[Operation]:
+    """The key operations of the instance that are queued or running: they may still use the
+    old source, so the lead waits for them."""
     keys = list(AccessKey.objects.filter(source=source).values_list("pk", flat=True))
     return Operation.objects.filter(
         Q(params__key_id__in=keys) | Q(params__source=source),
         kind__startswith="keys.",
         status__in=_UNFINISHED,
-    ).exists()
+    ).order_by("created_at", "pk")
 
 
 def _check_candidate(member: GroupMember) -> None:
@@ -165,13 +166,14 @@ class LeaderHandover:
         self._ctx.log(_("%(server)s leads the group.") % {"server": target.instance.server})
 
     def _step_down(self, leader: GroupMember, *, answered: bool) -> None:
-        if keys_changing(leader.instance.source):
+        if key_operations(leader.instance.source).exists():
             raise GroupError(GroupErrorCode.KEYS_CHANGING, leader.instance.source)
         leader.leading = False
         fields = ["leading"]
         if not answered and leader.lagging_since is None:
             leader.lagging_since = timezone.now()
-            fields.append("lagging_since")
+            leader.lagging_reason = LagReason.UNREACHABLE
+            fields += ["lagging_since", "lagging_reason"]
             self._ctx.log(
                 _("%(server)s did not answer: it catches up with the group later.")
                 % {"server": leader.instance.server}

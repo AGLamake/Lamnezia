@@ -1,5 +1,5 @@
-{% extends "servers/base.html" %}
-{% load i18n relays %}
+{% extends "groups/base.html" %}
+{% load i18n operations relays ui %}
 {% block title %}{{ group.name }} · Lamnezia{% endblock %}
 
 {% block breadcrumbs %}<li><a href="{% url 'groups:list' %}">{% translate "Server groups" %}</a></li><li aria-current="page">{{ group.name }}</li>{% endblock %}
@@ -25,6 +25,33 @@
 {% for warning in domain_warnings %}{% include "components/alert.html" with level="warning" text=warning %}{% endfor %}
 <p class="help-text">{% if client_host %}{% blocktranslate with host=client_host port=group.port %}Keys of the group connect to {{ host }}:{{ port }} through the relay.{% endblocktranslate %}{% else %}{% translate "Keys of the group connect to the leading server until the relay of the group is installed; then they move to the relay, and their owners are told to import them again." %}{% endif %}</p>
 
+{% if leader_leaves %}
+<div id="leader-leaves" class="alert alert-error" role="alert">
+  {% icon "error" "icon mt-px" %}
+  <div class="min-w-0 flex-1 space-y-2">
+    <p class="break-words">{% translate "The leading server cannot leave while other servers are in the group." %} {% translate "Make another server of the group the leading one first, then let this one leave." %}</p>
+    {% if successors %}
+    <div class="flex flex-wrap gap-2">
+      {% for member in successors %}
+      <form method="post" action="{% url 'groups:lead' member.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">{% blocktranslate with server=member.instance.server.name %}Make {{ server }} leading{% endblocktranslate %}</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="help-text">{% translate "No other server of the group may lead it now: wait until one joins or catches up." %}</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% if joining %}
+<div class="alert alert-info" role="status">
+  {% icon "info" "icon mt-px" %}
+  <p class="min-w-0 flex-1 break-words">{% translate "Servers are joining the group:" %}{% for operation in joining %} <a href="{% url 'operations:detail' operation.pk %}" class="font-medium hover:underline">{{ operation.kind|operation_title }}{% if operation.subject %} · {{ operation.subject }}{% endif %}</a> ({{ operation.get_status_display }}){% if not forloop.last %},{% endif %}{% endfor %}</p>
+</div>
+{% endif %}
+
 <section class="card space-y-3">
   <h2 class="card-title">{% translate "Servers of the group" %}</h2>
   <div class="table-wrap">
@@ -36,7 +63,7 @@
         {% for member, reachable, active, leave_failed in members %}
           <tr>
             <td><a href="{% url 'servers:detail' member.instance.server_id %}" class="font-medium hover:underline">{{ member.instance.server.name }}</a>{% if member.leading %} <span class="badge badge-muted">{% translate "leading" %}</span>{% endif %}</td>
-            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The server missed changes of the keys or the settings while it was unreachable. The relay skips it until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% endif %}{% if leave_failed %} <span class="badge badge-danger" title="{% translate "The leave operation failed. Run it again, or keep the server in the group." %}">{% translate "leave failed" %}</span>{% endif %}</td>
+            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The relay skips the server until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% if member.lagging_reason %}<span class="help-text block">{{ member.get_lagging_reason_display }}</span>{% endif %}{% endif %}{% if leave_failed %} <span class="badge badge-danger" title="{% translate "The leave operation failed. Run it again, or keep the server in the group." %}">{% translate "leave failed" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the relay' %}">{% if reachable is None %}<span class="text-muted">—</span>{% elif reachable %}<span class="badge badge-success">{% translate "reachable" %}</span>{% else %}<span class="badge badge-danger">{% translate "unreachable" %}</span>{% endif %}{% if active %} <span class="badge badge-info" title="{% translate "The relay sends the clients of the group to this server now." %}">{% translate "active" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the panel' %}">{% with online=member.instance.server.online %}{% if online is None %}<span class="text-muted">—</span>{% elif online %}<span class="badge badge-success">{% translate "online" %}</span>{% else %}<span class="badge badge-danger">{% translate "offline" %}</span>{% endif %}{% endwith %}</td>
             <td><div class="flex flex-wrap gap-2">
@@ -50,6 +77,12 @@
               <form method="post" action="{% url 'groups:lead' member.pk %}" data-confirm="{% translate "The server becomes the leading one: keys of the group are issued on it, and the current leading server may then leave. The panel first checks that the server is a clone of the group. Continue?" %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-secondary">{% translate "Make leading" %}</button>
+              </form>
+              {% endif %}
+              {% if member.leading and members|length > 1 %}
+              <form method="post" action="{% url 'groups:leave' member.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% translate "Leave the group" %}</button>
               </form>
               {% endif %}
               {% if not member.leading and member.state != "leaving" %}
@@ -74,6 +107,9 @@
       </tbody>
     </table>
   </div>
+  {% if key_operations %}
+    <p class="help-text">{% translate "The lead cannot be handed over until these key operations finish:" %}{% for operation in key_operations %} <a href="{% url 'operations:detail' operation.pk %}" class="hover:underline">{{ operation.kind|operation_title }}{% if operation.subject %} · {{ operation.subject }}{% endif %}</a>{% if not forloop.last %},{% endif %}{% endfor %}</p>
+  {% endif %}
   {% if relay %}
     <p class="help-text">{% if relay.read_error %}{% translate "The panel cannot read the relay state now; the columns show the last reading." %} {% endif %}{% if relay.read_at %}{% blocktranslate with when=relay.read_at|date:"SHORT_DATETIME_FORMAT" %}Relay state read {{ when }}.{% endblocktranslate %}{% endif %}{% if health.switched_at %} {% blocktranslate with when=health.switched_at|unix_time|date:"SHORT_DATETIME_FORMAT" %}Last switch {{ when }}.{% endblocktranslate %}{% endif %}</p>
   {% endif %}

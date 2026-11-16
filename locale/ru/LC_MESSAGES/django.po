@@ -1205,6 +1205,9 @@ msgstr "Пользователям выдано ключей группы: %(cou
 msgid "Groups forwarded: %(count)d."
 msgstr "Групп пересылается: %(count)d."
 
+msgid "Groups with a lagging or stuck server, or with no server answering the relay"
+msgstr "Группы, где сервер отстаёт или застрял при выходе либо ни один сервер не отвечает ретранслятору"
+
 msgid "Guides"
 msgstr "Инструкции"
 
@@ -1613,6 +1616,10 @@ msgstr "Потеряли ключ или думаете, что он попал 
 msgid "Main menu"
 msgstr "Главное меню"
 
+#, python-format
+msgid "Make %(server)s leading"
+msgstr "Сделать ведущим %(server)s"
+
 msgid "Make a new link? The old one stops working, and the clients need the new one."
 msgstr "Сделать новую ссылку? Старая перестанет работать, в клиенты нужно будет добавить новую."
 
@@ -1808,6 +1815,10 @@ msgstr "Заказов не найдено."
 
 msgid "No other server of the group answers: only its keys are compared."
 msgstr "Другие серверы группы не отвечают: сравниваются только ключи."
+
+#
+msgid "No other server of the group may lead it now: wait until one joins or catches up."
+msgstr "Сейчас ни один другой сервер группы не может стать ведущим: дождитесь, пока какой-нибудь вступит или догонит группу."
 
 msgid "No owner"
 msgstr "Без владельца"
@@ -2511,6 +2522,10 @@ msgstr "Сервер: %(title)s"
 msgid "Servers"
 msgstr "Серверы"
 
+#
+msgid "Servers are joining the group:"
+msgstr "Серверы вступают в группу:"
+
 msgid "Servers of a group are clones of its leading server: one key works on each of them."
 msgstr "Серверы группы — клоны ведущего сервера: один ключ работает на каждом из них."
 
@@ -2938,6 +2953,9 @@ msgstr "Ключ будет переименован через мгновени
 msgid "The keys and the backup are kept: restore the protocol in the Backup section."
 msgstr "Ключи и бэкап сохранены: восстановите протокол в разделе «Резервная копия»."
 
+msgid "The lead cannot be handed over until these key operations finish:"
+msgstr "Роль ведущего нельзя передать, пока не закончатся эти операции с ключами:"
+
 msgid "The leading server cannot leave while other servers are in the group."
 msgstr "Ведущий сервер не может выйти, пока в группе есть другие серверы."
 
@@ -3098,6 +3116,10 @@ msgstr "Сейчас ретранслятор отправляет клиент�
 msgid "The relay sends the clients of the group to this server, if it reaches it. Every client of the group loses its connection for about 20 seconds. Continue?"
 msgstr "Ретранслятор отправит клиентов группы на этот сервер, если достучится до него. Все клиенты группы потеряют соединение примерно на 20 секунд. Продолжить?"
 
+#
+msgid "The relay skips the server until the panel copies the group files onto it."
+msgstr "Ретранслятор пропускает сервер, пока панель не скопирует на него файлы группы."
+
 msgid "The relay takes clients of the groups that name this server and forwards them to a live member. Its agent probes the members and switches by itself, even when the panel is down."
 msgstr "Ретранслятор принимает клиентов групп, назначивших этот сервер, и пересылает их живому участнику. Его агент сам проверяет участников и переключается, даже когда панель недоступна."
 
@@ -3196,9 +3218,6 @@ msgstr "Сервер — ретранслятор группы и не може�
 
 msgid "The server listens on another port than the group."
 msgstr "Сервер слушает другой порт, чем группа."
-
-msgid "The server missed changes of the keys or the settings while it was unreachable. The relay skips it until the panel copies the group files onto it."
-msgstr "Сервер пропустил изменения ключей или настроек, пока был недоступен. Ретранслятор обходит его, пока панель не скопирует на него файлы группы."
 
 msgid "The server no longer lags behind the group: nothing to do."
 msgstr "Сервер больше не отстаёт от группы: делать нечего."
@@ -3823,6 +3842,9 @@ msgstr "инвайт"
 msgid "invites"
 msgstr "инвайты"
 
+msgid "its files differ from the leading server"
+msgstr "его файлы расходятся с ведущим сервером"
+
 msgid "joined at"
 msgstr "вступил"
 
@@ -3891,6 +3913,9 @@ msgstr "участник"
 msgid "messenger"
 msgstr "мессенджер"
 
+msgid "missed a change of the keys or the settings"
+msgstr "пропустил изменение ключей или настроек"
+
 msgid "model"
 msgstr "модель"
 
@@ -3938,6 +3963,10 @@ msgstr "ещё не импортирован"
 
 msgid "not installed"
 msgstr "не установлен"
+
+#
+msgid "not lagging"
+msgstr "не отстаёт"
 
 msgid "not linked"
 msgstr "не привязан"
@@ -4181,6 +4210,9 @@ msgstr "состояние прочитано"
 msgid "status"
 msgstr "статус"
 
+msgid "stayed in the group after a failed leave"
+msgstr "остался в группе после неудачного выхода"
+
 msgid "suggested by"
 msgstr "предложил"
 
@@ -4278,8 +4310,14 @@ msgstr "версия %(version)s"
 msgid "vless:// link for other XRay clients"
 msgstr "Ссылка vless:// для других клиентов XRay"
 
+msgid "was unreachable during a change"
+msgstr "был недоступен во время изменения"
+
 msgid "what"
 msgstr "что"
+
+msgid "why it lags"
+msgstr "почему отстаёт"
 
 msgid "why the sync skipped"
 msgstr "почему синхронизация пропущена"

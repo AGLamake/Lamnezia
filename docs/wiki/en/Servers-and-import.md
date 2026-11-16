@@ -200,15 +200,21 @@ each of them. A server is either standalone or a member of one group.
   the group has no relay, the address in the keys changes to the new leader's and their owners are
   notified. If the former leader does not answer, the handover goes on without it and it is marked
   lagging. A lagging member has no such button; the handover waits for key operations of the group
-  to finish.
-- The leading server cannot leave — make another server the leading one first; a group with only
-  its leader left can be deleted, and the leader stays as it is.
+  to finish, and the group page lists those operations with links while they run.
+- The leading server cannot leave — make another server the leading one first: **Leave the group**
+  on the leading server shows the error with a **Make … leading** button for every member that may
+  take the lead. A group with only its leader left can be deleted, and the leader stays as it is.
 - **Edit** changes the name, the domain and the relay of the group. A server of the group cannot be
-  its relay.
+  its relay, and the relay server of the group is not offered to join it.
+- A join or an install under way is shown above the members with a link to its operation.
+- The **Server groups** item of the menu counts the groups to look at: no member answers the relay,
+  a member lags, or a member is stuck after a failed leave.
 
 Keys of a group are issued on its leading server. Issuing, disabling, enabling and revoking a key
 run on every member that answers, without waiting for the others. A member the panel cannot reach
-is marked **lagging**: the relay sends no clients to it. Every `LAMNEZIA_GROUP_CATCH_UP_INTERVAL`
+is marked **lagging**: the relay sends no clients to it. The member list says why a member lags:
+it was unreachable during a change, it missed a change (it joined or caught up meanwhile, or did not
+take new settings), its files differ from the leading server, or it stayed after a failed leave. Every `LAMNEZIA_GROUP_CATCH_UP_INTERVAL`
 seconds the panel checks the lagging members and, once a server is online again, copies the group
 files onto it in the background operation "Catch up with the server group": its keys then match the
 group, revoked ones are gone, and it is back in the relay list. When a lagging member already has

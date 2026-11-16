@@ -10,7 +10,7 @@ from amnezia_core.awg import AWG_CLIENTS_TABLE_PATH, AwgServerConfig, Peer
 from amnezia_core.clients_table import CREATION_DATE, ClientsTable
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
-from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.models import GroupMember, LagReason, ServerGroup
 from apps.groups.services.replication import CATCH_UP_KIND, backends, catch_up_lagging
 from apps.groups.tests.conftest import (
     JOINER_HOST,
@@ -99,6 +99,7 @@ def test_issue_with_a_member_down_marks_it_lagging(
     assert peer(servers, LEADER_HOST, key) is not None
     assert peer(servers, JOINER_HOST, key) is None
     assert lagging(joined)
+    assert joined.lagging_reason == LagReason.UNREACHABLE
     assert [member.pk for member in backends(group)] == [group.members.get(leading=True).pk]
 
 
@@ -125,6 +126,7 @@ def test_lagging_member_catches_up_with_the_group(  # noqa: PLR0913, PLR0917
     assert peer(servers, JOINER_HOST, new) is not None
     assert peer(servers, JOINER_HOST, old) is None
     assert not lagging(joined)
+    assert joined.lagging_reason == LagReason.NONE
     assert len(backends(group)) == 2
 
 
@@ -176,6 +178,7 @@ def test_key_issued_while_a_server_joins_reaches_it_after_the_catch_up(
     member = GroupMember.objects.get(leading=False)
     assert peer(servers, JOINER_HOST, key) is None
     assert lagging(member)
+    assert member.lagging_reason == LagReason.MISSED
 
     (operation,) = catch_up()
 

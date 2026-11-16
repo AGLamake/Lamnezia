@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Hints on the group page**: the member list says why a member lags (unreachable during a change,
+  missed a change, files differ from the leading server, stayed after a failed leave). Joins and
+  installs under way and the key operations that hold a handover are listed with links to their
+  operations. **Leave the group** on the leading server offers **Make … leading** for the members
+  that may take the lead. The relay server of a group is no longer offered to join it. The menu
+  gets a **Server groups** item with a counter of groups to look at. Members that lagged before the
+  upgrade show no reason until they lag again.
 - **Relay settings and instant sync**: the relay card sets the probe interval and the number of
   failed probes before a switch; saving writes them by a background update, without a reinstall.
   A change of the members, the port of a group, a member address or member keys updates the relay

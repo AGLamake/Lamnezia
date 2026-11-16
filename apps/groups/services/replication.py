@@ -12,14 +12,11 @@ from functools import partial
 from itertools import groupby
 from operator import attrgetter
 
-from django.db.models import QuerySet
-from django.utils import timezone
-
 from amnezia_core.awg_backup import AwgServerFiles
 from amnezia_core.awg_group import AwgGroupIdentity, Divergence, Mismatch
 from amnezia_core.errors import AmneziaFormatError
 from apps.backups.services.snapshot import read_awg_files
-from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.models import GroupMember, LagReason, MemberQuerySet, MemberState, ServerGroup
 from apps.keys.services.replicas import GroupServer, key_groups
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
@@ -37,7 +34,7 @@ def backends(group: ServerGroup) -> list[GroupMember]:
     return list(_up_to_date(group.pk))
 
 
-def _up_to_date(group_id: int) -> QuerySet[GroupMember]:
+def _up_to_date(group_id: int) -> MemberQuerySet:
     return (
         GroupMember.objects.filter(group_id=group_id, state=MemberState.MEMBER, lagging_since=None)
         .select_related("instance__server")
@@ -63,14 +60,12 @@ class GroupReplicas:
         return list(self._servers)
 
     def fall_behind(self, server: GroupServer) -> None:
-        GroupMember.objects.filter(pk=self._servers[server], lagging_since=None).update(
-            lagging_since=timezone.now()
-        )
+        GroupMember.objects.filter(pk=self._servers[server]).fall_behind(LagReason.UNREACHABLE)
 
     def finish(self) -> None:
         """A member that joined or caught up during the change may lack it: it lags."""
         missed = _up_to_date(self._group_id).exclude(pk__in=self._servers.values())
-        missed.update(lagging_since=timezone.now())
+        missed.fall_behind(LagReason.MISSED)
 
 
 @key_groups.register
@@ -126,9 +121,7 @@ def check_replicas() -> None:
             current = _read_files(member)
             if current is not None and _key_divergences(identity.compare(current)):
                 logger.info("group member %s differs from its leading server", member.pk)
-                GroupMember.objects.filter(pk=member.pk, lagging_since=None).update(
-                    lagging_since=timezone.now()
-                )
+                GroupMember.objects.filter(pk=member.pk).fall_behind(LagReason.DRIFT)
 
 
 # Peers and clients are the keys of the group; [Interface] changes go by the group settings.

@@ -5,6 +5,7 @@ the one-to-one link of `GroupMember` makes the modes exclusive.
 """
 
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
@@ -58,6 +59,24 @@ class MemberState(models.TextChoices):
     LEAVING = "leaving", _("leaving")
 
 
+class LagReason(models.TextChoices):
+    """Why a member lags behind its group; the group page shows it."""
+
+    NONE = "", _("not lagging")
+    UNREACHABLE = "unreachable", _("was unreachable during a change")
+    MISSED = "missed", _("missed a change of the keys or the settings")
+    DRIFT = "drift", _("its files differ from the leading server")
+    STAYED = "stayed", _("stayed in the group after a failed leave")
+
+
+class MemberQuerySet(models.QuerySet["GroupMember"]):
+    def fall_behind(self, reason: LagReason) -> int:
+        """Mark the members that are up to date as lagging for `reason`; returns how many."""
+        return self.filter(lagging_since=None).update(
+            lagging_since=timezone.now(), lagging_reason=reason
+        )
+
+
 class GroupMember(models.Model):
     """A protocol instance in a group; the lower `priority`, the earlier the relay picks it."""
 
@@ -80,6 +99,11 @@ class GroupMember(models.Model):
     # Since when the server misses key changes of the group: it was unreachable when one was
     # made. The relay skips it until the catch-up copies the group files onto it.
     lagging_since = models.DateTimeField(_("lagging since"), null=True, blank=True)
+    lagging_reason = models.CharField(
+        _("why it lags"), max_length=16, choices=LagReason, default=LagReason.NONE, blank=True
+    )
+
+    objects = MemberQuerySet.as_manager()
 
     class Meta:
         verbose_name = _("group member")

@@ -4,9 +4,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import User
-from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
 from apps.groups.services.handover import HANDOVER_KIND
-from apps.groups.services.membership import LEAVE_KIND
+from apps.groups.services.membership import JOIN_KIND, LEAVE_KIND
 from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import issued_key
@@ -60,6 +60,69 @@ def test_lagging_member_is_marked(browser: Client, group: ServerGroup) -> None:
     group.members.update(lagging_since=timezone.now())
 
     assert "lagging</span>" in browser.get(detail).content.decode()
+
+
+def test_lagging_member_shows_why(browser: Client, group: ServerGroup) -> None:
+    group.members.fall_behind(LagReason.DRIFT)
+
+    page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert "its files differ from the leading server" in page
+
+
+def test_relay_of_the_group_is_not_a_candidate(
+    browser: Client, group: ServerGroup, joiner: ProtocolInstance
+) -> None:
+    join = reverse("groups:join", args=[group.pk, joiner.pk])
+    detail = reverse("groups:detail", args=[group.pk])
+    assert join in browser.get(detail).content.decode()
+
+    ServerGroup.objects.filter(pk=group.pk).update(relay=joiner.server)
+
+    assert join not in browser.get(detail).content.decode()
+
+
+def test_joining_server_links_its_operation(
+    browser: Client, group: ServerGroup, joiner: ProtocolInstance
+) -> None:
+    browser.post(reverse("groups:join", args=[group.pk, joiner.pk]))
+    operation = Operation.objects.get(kind=JOIN_KIND)
+
+    page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert "Servers are joining the group" in page
+    assert reverse("operations:detail", args=[operation.pk]) in page
+
+
+def test_key_operations_holding_the_lead_are_linked(
+    browser: Client, group: ServerGroup, leader: ProtocolInstance
+) -> None:
+    detail = reverse("groups:detail", args=[group.pk])
+    assert "until these key operations finish" not in browser.get(detail).content.decode()
+    operation = Operation.objects.create(kind="keys.issue", params={"source": leader.source})
+
+    page = browser.get(detail).content.decode()
+
+    assert "until these key operations finish" in page
+    assert reverse("operations:detail", args=[operation.pk]) in page
+
+
+def test_leaving_leader_is_offered_to_make_another_member_leading(
+    browser: Client, group: ServerGroup, joiner: ProtocolInstance
+) -> None:
+    member = GroupMember.objects.create(
+        group=group, instance=joiner, priority=1, state=MemberState.MEMBER
+    )
+    leader = group.members.get(leading=True)
+
+    response = browser.post(reverse("groups:leave", args=[leader.pk]), follow=True)
+
+    page = response.content.decode()
+    assert 'id="leader-leaves"' in page
+    assert f"Make {joiner.server.name} leading" in page
+    assert reverse("groups:lead", args=[member.pk]) in page
+    leader.refresh_from_db()
+    assert leader.state == MemberState.MEMBER
 
 
 def test_make_leading_is_offered_to_a_joined_member_and_starts_an_operation(

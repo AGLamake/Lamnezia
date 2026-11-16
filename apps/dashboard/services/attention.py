@@ -18,7 +18,8 @@ from django.utils.translation import ngettext
 from apps.accounts.models import User
 from apps.accounts.services.applications import Applications
 from apps.accounts.services.zone import Zone
-from apps.groups.models import ServerGroup
+from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.services.membership import leave_failed
 from apps.guides.models import Suggestion, UsefulMaterial
 from apps.operations.models import Operation, OperationStatus
 from apps.relays.models import Relay
@@ -107,6 +108,21 @@ class Attention:
             for group in relay.server.relayed_groups.all()
             if (health := relay.group_health(group.port)) and health.all_down
         ]
+
+    @cached_property
+    def group_problems(self) -> int:
+        """Groups to look at: no member answers the relay, or a member lags or is stuck leaving."""
+        if not self._member.is_admin:
+            return 0
+        troubled = {group.pk for group in self.groups_down()}
+        troubled.update(
+            GroupMember.objects.filter(lagging_since__isnull=False).values_list(
+                "group_id", flat=True
+            )
+        )
+        leaving = GroupMember.objects.filter(state=MemberState.LEAVING)
+        troubled.update(member.group_id for member in leaving if leave_failed(member))
+        return len(troubled)
 
     def offline(self) -> list[Server]:
         return [server for server in self.servers if server.online is False]

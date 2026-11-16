@@ -4,14 +4,18 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
+from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import Role
 from apps.accounts.tests.factories import UserFactory
 from apps.dashboard.services.attention import Attention
-from apps.groups.models import ServerGroup
+from apps.groups.models import GroupMember, MemberState, ServerGroup
+from apps.groups.services.membership import LEAVE_KIND
+from apps.operations.models import Operation, OperationStatus
 from apps.operations.tests.factories import FailedOperationFactory
+from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay
 from apps.servers.tests.factories import ServerFactory
 
@@ -121,3 +125,41 @@ def test_a_moderator_is_not_told_about_relays() -> None:
     relayed_group(alive=[], down=["de1"], read_error="stale")
 
     assert Attention(UserFactory(role=Role.MODERATOR)).notices() == []
+
+
+def member_of(group: ServerGroup, **fields: Any) -> GroupMember:
+    instance = ProtocolInstance.objects.create(
+        server=ServerFactory(), container="amnezia-awg2", port=group.port
+    )
+    return GroupMember.objects.create(group=group, instance=instance, priority=1, **fields)
+
+
+def test_groups_with_trouble_are_counted_once_each() -> None:
+    admin = UserFactory(role=Role.ADMIN)
+    down = relayed_group(alive=[], down=["de1"])
+    member_of(down, lagging_since=timezone.now())
+    lagging = ServerGroup.objects.create(name="Asia", port=51821)
+    member_of(lagging, lagging_since=timezone.now())
+    stuck = ServerGroup.objects.create(name="America", port=51822)
+    member = member_of(stuck, state=MemberState.LEAVING)
+    Operation.objects.create(
+        kind=LEAVE_KIND, params={"member_id": member.pk}, status=OperationStatus.FAILED
+    )
+    leaving = ServerGroup.objects.create(name="Africa", port=51823)
+    under_way = member_of(leaving, state=MemberState.LEAVING)
+    Operation.objects.create(kind=LEAVE_KIND, params={"member_id": under_way.pk})
+
+    assert Attention(admin).group_problems == 3
+    assert Attention(UserFactory(role=Role.MODERATOR)).group_problems == 0
+
+
+def test_the_menu_counts_groups_with_trouble(client: Client) -> None:
+    admin = UserFactory(role=Role.ADMIN)
+    client.force_login(admin)
+    group = ServerGroup.objects.create(name="Asia", port=51821)
+    member_of(group, lagging_since=timezone.now())
+
+    page = client.get(reverse("dashboard:index")).content.decode()
+
+    assert reverse("groups:list") in page
+    assert "Groups with a lagging or stuck server" in page

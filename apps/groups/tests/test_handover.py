@@ -8,7 +8,7 @@ from amnezia_core.awg_group import AwgGroupIdentity
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
 from apps.groups.errors import GroupError, GroupErrorCode
-from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.models import GroupMember, LagReason, ServerGroup
 from apps.groups.services.handover import start_handover
 from apps.groups.services.membership import start_leave
 from apps.groups.tests.conftest import (
@@ -151,7 +151,7 @@ def test_leader_down_hands_over_and_lags(  # noqa: PLR0913, PLR0917
 
     assert leader_of(group) == joiner
     former = GroupMember.objects.get(instance=leader)
-    assert former.lagging
+    assert former.lagging_reason == LagReason.UNREACHABLE
 
 
 def test_leader_down_and_other_keys_on_the_server_refuse(

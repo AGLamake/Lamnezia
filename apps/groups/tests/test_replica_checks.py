@@ -5,7 +5,7 @@ import pytest
 from amnezia_core.awg import AWG_CONFIG_PATH, AwgServerConfig, Peer
 from apps.accounts.models import User
 from apps.backups.models import ProtocolBackup
-from apps.groups.models import GroupMember
+from apps.groups.models import GroupMember, LagReason
 from apps.groups.services.replication import CATCH_UP_KIND, catch_up_lagging, check_replicas
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, Fakes, Run, server_files, succeeded
 from apps.keys.models import AccessKey, Drift
@@ -81,6 +81,7 @@ def test_peer_removed_by_hand_on_a_member_comes_back_with_the_catch_up(
 
     check_replicas()
     assert lagging(joined)
+    assert joined.lagging_reason == LagReason.DRIFT
     (operation,) = catch_up()
 
     succeeded(operation)
