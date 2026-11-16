@@ -10,7 +10,14 @@ import pytest
 
 from amnezia_core.keys import KeyPair
 from amnezia_core.relay import Backend as CoreBackend
-from amnezia_core.relay import RelayConfig, RelayGroup, RelayState, ServicePeer
+from amnezia_core.relay import (
+    RelayConfig,
+    RelayGroup,
+    RelayState,
+    ServicePeer,
+    SwitchOutcome,
+    SwitchRequest,
+)
 from apps.relays.agent.relay_agent import Agent, Backend, Group, parse_counters, ruleset
 
 A = Backend("203.0.113.10", 55424)
@@ -274,6 +281,115 @@ def test_traffic_survives_a_rule_replacement(network: FakeNetwork, folder: Path)
     group = state(folder).group(PORT)
     assert group is not None
     assert (group.bytes_from_clients, group.bytes_to_clients) == (1010, 3030)
+
+
+def ask(folder: Path, backend: Backend, *, port: int = PORT, request: str = "r1") -> None:
+    """A switch request written by the panel's own model."""
+    (folder / "switch.json").write_text(SwitchRequest(request, port, core(backend)).to_json())
+
+
+def answer(folder: Path) -> tuple[str, SwitchOutcome] | None:
+    switch = state(folder).switch
+    return (switch.id, switch.outcome) if switch else None
+
+
+def test_a_switch_asked_by_the_panel_moves_the_group(network: FakeNetwork, folder: Path) -> None:
+    agent = agent_for(network, folder)
+    agent.tick()
+    ask(folder, C)
+    mark = len(network.calls)
+
+    agent.tick()
+
+    assert active(folder) == core(C)
+    assert answer(folder) == ("r1", SwitchOutcome.SWITCHED)
+    assert not (folder / "switch.json").exists(), "a request is done once"
+    calls = network.since(mark)
+    # The candidate is probed first; the rule and conntrack go as on a failure, once.
+    assert calls[0] == ("probe", C)
+    assert calls.count(("forget", PORT)) == 1
+    assert f"dnat to {C}" in network.rules and f"dnat to {A}" not in network.rules
+    group = state(folder).group(PORT)
+    assert group is not None and group.switched_at is not None
+
+
+def test_an_unreachable_candidate_is_refused(network: FakeNetwork, folder: Path) -> None:
+    agent = agent_for(network, folder)
+    agent.tick()
+    network.alive.discard(C)
+    ask(folder, C)
+    mark = len(network.calls)
+
+    agent.tick()
+
+    assert active(folder) == core(A)
+    assert answer(folder) == ("r1", SwitchOutcome.UNREACHABLE)
+    assert ("forward", None) not in network.since(mark)
+
+
+@pytest.mark.parametrize(
+    ("backend", "port", "outcome"),
+    [
+        (A, PORT, SwitchOutcome.ALREADY_ACTIVE),
+        (Backend("203.0.113.99", PORT), PORT, SwitchOutcome.UNKNOWN_BACKEND),
+        (B, 51820, SwitchOutcome.UNKNOWN_GROUP),
+    ],
+)
+def test_a_switch_that_cannot_be_done_changes_nothing(
+    network: FakeNetwork, folder: Path, backend: Backend, port: int, outcome: SwitchOutcome
+) -> None:
+    agent = agent_for(network, folder)
+    agent.tick()
+    ask(folder, backend, port=port)
+    mark = len(network.calls)
+
+    agent.tick()
+
+    assert active(folder) == core(A)
+    assert answer(folder) == ("r1", outcome)
+    assert ("forward", None) not in network.since(mark)
+
+
+def test_the_answer_stays_until_the_next_request(network: FakeNetwork, folder: Path) -> None:
+    agent = agent_for(network, folder)
+    agent.tick()
+    ask(folder, B)
+    agent.tick()
+    agent.tick()
+    assert answer(folder) == ("r1", SwitchOutcome.SWITCHED)
+
+    ask(folder, C, request="r2")
+    agent.tick()
+
+    assert answer(folder) == ("r2", SwitchOutcome.SWITCHED)
+    assert active(folder) == core(C)
+
+
+def test_a_bad_request_is_dropped(network: FakeNetwork, folder: Path) -> None:
+    agent = agent_for(network, folder)
+    agent.tick()
+    (folder / "switch.json").write_text(json.dumps({"version": 99, "id": "x"}))
+
+    agent.tick()
+
+    assert active(folder) == core(A)
+    assert answer(folder) is None
+    assert not (folder / "switch.json").exists()
+
+
+def test_after_a_planned_switch_the_agent_still_fails_over_on_its_own(
+    network: FakeNetwork, folder: Path
+) -> None:
+    agent = agent_for(network, folder)
+    agent.tick()
+    ask(folder, C)
+    agent.tick()
+    network.alive.discard(C)
+
+    for _ in range(3):
+        agent.tick()
+
+    assert active(folder) == core(A)
 
 
 def test_ruleset_replaces_the_table_in_one_transaction() -> None:

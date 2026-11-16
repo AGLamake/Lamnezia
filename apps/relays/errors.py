@@ -1,4 +1,4 @@
-"""Errors of installing, updating and removing a relay, with a message and a hint."""
+"""Errors of installing, updating, removing and switching a relay, with a message and a hint."""
 
 from enum import StrEnum
 
@@ -16,6 +16,11 @@ class RelayErrorCode(StrEnum):
     NOT_REMOVED = "not_removed"
     NO_MEMBER = "no_member"
     HOST_NOT_RESOLVED = "host_not_resolved"
+    SWITCH_NOT_BACKEND = "switch_not_backend"
+    SWITCH_RUNNING = "switch_running"
+    SWITCH_UNREACHABLE = "switch_unreachable"
+    SWITCH_OUTDATED = "switch_outdated"
+    SWITCH_NO_ANSWER = "switch_no_answer"
 
 
 RELAY_ERRORS: dict[RelayErrorCode, ErrorDescription] = {
@@ -62,10 +67,36 @@ RELAY_ERRORS: dict[RelayErrorCode, ErrorDescription] = {
         _("The address of a member server could not be found."),
         _("The relay forwards to an IPv4 address: check the DNS name of the server."),
     ),
+    RelayErrorCode.SWITCH_NOT_BACKEND: ErrorDescription(
+        _("The relay does not send clients to this server."),
+        _(
+            "Only an up-to-date member of the group can take its clients. Wait until the server "
+            "catches up with the group."
+        ),
+    ),
+    RelayErrorCode.SWITCH_RUNNING: ErrorDescription(
+        _("A switch of this group is already running."),
+        _("Wait for it to finish, see the operations page."),
+    ),
+    RelayErrorCode.SWITCH_UNREACHABLE: ErrorDescription(
+        _("The relay cannot reach the server: the clients stay where they are."),
+        _("Check that AmneziaWG of the server is running, then switch again."),
+    ),
+    RelayErrorCode.SWITCH_OUTDATED: ErrorDescription(
+        _("The relay does not know this member of the group yet."),
+        _("Update the relay on the server card, then switch again."),
+    ),
+    RelayErrorCode.SWITCH_NO_ANSWER: ErrorDescription(
+        _("The relay did not answer the switch request."),
+        _(
+            "The agent may be of an older release or stopped: update the relay on the server "
+            "card, then switch again. The clients stay where they are."
+        ),
+    ),
 }
 
 
 class RelayError(CatalogError[RelayErrorCode]):
-    """A relay cannot be installed, updated or removed."""
+    """A relay cannot be installed, updated, removed or switched."""
 
     catalog = RELAY_ERRORS

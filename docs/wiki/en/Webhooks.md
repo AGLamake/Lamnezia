@@ -46,7 +46,7 @@ zone), `data` depends on the event.
 | `incident_closed` | The incident is closed. | `server` |
 | `suggestion_created` | A user suggested a link or a text for the guides. | `user`, `kind` (`Link to an article`, `My own text`), `title` |
 | `payment_received` | A user paid for a plan ([Billing plugins](Billing-plugins.md)). | `user`, `plan`, `amount`, `currency`, `provider` — payment method key |
-| `relay_switched` | The relay of a group sends its clients to another member: the previous one stopped answering. | `group`, `relay` — relay server name, `from`, `to` — names of the previous and the new member |
+| `relay_switched` | The relay of a group sends its clients to another member: the previous one stopped answering, or an administrator switched it for maintenance. | `group`, `relay` — relay server name, `from`, `to` — names of the previous and the new member |
 | `member_unreachable` | The relay stopped reaching a member of a group. Once until the member answers again. | `group`, `relay`, `server` — member name |
 | `group_unreachable` | The relay reaches no member of a group: its clients have no connection. | `group`, `relay` |
 | `relay_down` | The panel has not read the relay state for two monitoring intervals: the relay or its agent does not answer. Once until a reading succeeds. | `relay`, `host`, `last_seen` — time of the last reading or an empty string |

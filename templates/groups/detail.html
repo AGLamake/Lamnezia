@@ -40,6 +40,12 @@
             <td data-label="{% translate 'From the relay' %}">{% if reachable is None %}<span class="text-muted">—</span>{% elif reachable %}<span class="badge badge-success">{% translate "reachable" %}</span>{% else %}<span class="badge badge-danger">{% translate "unreachable" %}</span>{% endif %}{% if active %} <span class="badge badge-info" title="{% translate "The relay sends the clients of the group to this server now." %}">{% translate "active" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the panel' %}">{% with online=member.instance.server.online %}{% if online is None %}<span class="text-muted">—</span>{% elif online %}<span class="badge badge-success">{% translate "online" %}</span>{% else %}<span class="badge badge-danger">{% translate "offline" %}</span>{% endif %}{% endwith %}</td>
             <td><div class="flex flex-wrap gap-2">
+              {% if relay.installed_at and not active and member.state == "member" and not member.lagging %}
+              <form method="post" action="{% url 'groups:switch' member.pk %}" data-confirm="{% translate "The relay sends the clients of the group to this server, if it reaches it. Every client of the group loses its connection for about 20 seconds. Continue?" %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% translate "Switch to this server" %}</button>
+              </form>
+              {% endif %}
               {% if not member.leading and member.joined and not member.lagging %}
               <form method="post" action="{% url 'groups:lead' member.pk %}" data-confirm="{% translate "The server becomes the leading one: keys of the group are issued on it, and the current leading server may then leave. The panel first checks that the server is a clone of the group. Continue?" %}">
                 {% csrf_token %}

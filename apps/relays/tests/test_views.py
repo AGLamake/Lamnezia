@@ -13,6 +13,7 @@ from apps.groups.models import GroupMember, ServerGroup
 from apps.operations.models import Operation
 from apps.relays.models import Relay
 from apps.relays.services.deployment import INSTALL_KIND
+from apps.relays.services.switch import SWITCH_KIND
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
 
@@ -124,3 +125,33 @@ def test_the_relay_card_tells_when_the_state_is_not_read(browser: Client, watche
     page = browser.get(reverse("servers:detail", args=[watched.server.pk])).content.decode()
 
     assert "cannot read the relay state" in page
+
+
+def test_switch_is_offered_for_a_member_that_is_not_active(browser: Client, watched: Relay) -> None:
+    group = watched.server.relayed_groups.get()
+    leader, joiner = GroupMember.objects.get(leading=True), GroupMember.objects.get(leading=False)
+
+    page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert reverse("groups:switch", args=[leader.pk]) in page
+    assert reverse("groups:switch", args=[joiner.pk]) not in page, "the active one is not offered"
+    assert "about 20 seconds" in page
+
+
+def test_switch_starts_an_operation(browser: Client, watched: Relay) -> None:
+    leader = GroupMember.objects.get(leading=True)
+
+    response = browser.post(reverse("groups:switch", args=[leader.pk]))
+
+    assert response.url == reverse("groups:detail", args=[leader.group_id])  # type: ignore[attr-defined]
+    assert Operation.objects.get(kind=SWITCH_KIND).params["member_id"] == leader.pk
+
+
+def test_switch_without_an_installed_relay_says_why(browser: Client, watched: Relay) -> None:
+    Relay.objects.update(installed_at=None)
+    leader = GroupMember.objects.get(leading=True)
+
+    response = browser.post(reverse("groups:switch", args=[leader.pk]), follow=True)
+
+    assert not Operation.objects.filter(kind=SWITCH_KIND).exists()
+    assert "relay container is not on the server" in response.content.decode()

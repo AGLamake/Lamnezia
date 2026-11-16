@@ -1,5 +1,5 @@
 """Pages of the server groups: the list, a new group, its members, editing and settings, joining,
-leaving, the lead."""
+leaving, the lead, a planned switch of the relay."""
 
 from typing import Any
 
@@ -38,8 +38,10 @@ from apps.groups.services.membership import (
 from apps.groups.services.settings import changing_settings
 from apps.keys.services.counts import InstanceKeyCount
 from apps.protocols.models import ProtocolInstance
+from apps.relays.errors import RelayError
 from apps.relays.models import Relay
 from apps.relays.services.health import GroupHealth
+from apps.relays.services.switch import start_switch
 from apps.servers.models import Server
 
 
@@ -200,6 +202,18 @@ class GroupHandoverView(AdminRequiredMixin, View):
         try:
             start_handover(member, user=self.member, ip=self.client_ip)
         except GroupError as error:
+            messages.error(request, f"{error.message} {error.hint}")
+        return redirect("groups:detail", pk=member.group_id)
+
+
+class GroupSwitchView(AdminRequiredMixin, View):
+    """The relay sends the clients of the group to the member, for maintenance of the active one."""
+
+    def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
+        member = get_object_or_404(GroupMember, pk=member_pk)
+        try:
+            start_switch(member, user=self.member, ip=self.client_ip)
+        except RelayError as error:
             messages.error(request, f"{error.message} {error.hint}")
         return redirect("groups:detail", pk=member.group_id)
 

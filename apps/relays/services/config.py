@@ -57,7 +57,9 @@ class RelayPlan:
             if not members or peer is None:
                 continue
             groups.append(
-                RelayGroup(group.port, tuple(map(_backend, members)), _core_peer(peer, members[0]))
+                RelayGroup(
+                    group.port, tuple(map(member_backend, members)), _core_peer(peer, members[0])
+                )
             )
         return RelayConfig(tuple(groups))
 
@@ -77,7 +79,8 @@ def _service_key(group: ServerGroup) -> str:
     return peer.public_key if peer else ""
 
 
-def _backend(member: GroupMember) -> Backend:
+def member_backend(member: GroupMember) -> Backend:
+    """The address the relay forwards to: the first IPv4 address of the server; OSError if none."""
     instance = member.instance
     found = ipv4_addresses(instance.server.host)
     if not found:

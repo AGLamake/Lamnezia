@@ -104,6 +104,9 @@ class FakeRelayServer(FakeDebianServer):
         if "target=" in script:
             self.files[_target(script)] = stdin
             return result()
+        if script.startswith("rm -f -- "):
+            self.files.pop(script.removeprefix("rm -f -- "), None)
+            return result()
         if "cat -- " in script:
             content = self.files.get(script.rsplit("cat -- ", 1)[1])
             missing = _MISSING_EXIT.search(script)

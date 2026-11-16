@@ -2,8 +2,10 @@
 
 docs/FALLBACK.md section 5. It runs in the relay container on its own and needs only the Python
 standard library: the panel writes `config.json` next to it, the agent re-reads it when it
-changes and writes `state.json`, which the panel reads over SSH. The file formats are those of
-`amnezia_core.relay`.
+changes and writes `state.json`, which the panel reads over SSH. For planned maintenance the
+panel may put `switch.json` next to them: the agent takes it once, moves the group to the asked
+member only if it answers a probe and writes the answer into the state. The file formats are
+those of `amnezia_core.relay`.
 
 Each group has one service interface `lr<port>`; a probe re-adds the server peer with the
 member's address and waits for a new handshake. Forwarding is nftables DNAT plus masquerade,
@@ -28,6 +30,13 @@ TABLE = "lamnezia_relay"
 # A live member answers in 0.1-0.3 s, a blocked one not in 3 s (docs/research/relay-fallback.md).
 PROBE_TIMEOUT = 1.0
 _PROBE_POLL = 0.1
+
+# Answers to a switch request of the panel (`amnezia_core.relay.SwitchOutcome`).
+SWITCHED = "switched"
+ALREADY_ACTIVE = "already_active"
+UNREACHABLE = "unreachable"
+UNKNOWN_GROUP = "unknown_group"
+UNKNOWN_BACKEND = "unknown_backend"
 
 
 @dataclass(frozen=True)
@@ -134,6 +143,19 @@ class Watch:
                 self.active, self.switched_at = candidate, now
                 return True
         return False
+
+    def switch_to(self, backend: Backend, probe: Callable[[Backend], bool], now: int) -> str:
+        """A switch the panel asked for: taken only if the member answers a probe right now."""
+        if backend not in self.health:
+            return UNKNOWN_BACKEND
+        if backend == self.active:
+            return ALREADY_ACTIVE
+        alive = probe(backend)
+        self.health[backend].record(alive, now)
+        if not alive:
+            return UNREACHABLE
+        self.active, self.switched_at = backend, now
+        return SWITCHED
 
     def state(self, traffic: tuple[int, int]) -> dict[str, Any]:
         return {
@@ -249,6 +271,7 @@ class Agent:
         self._network = network
         self._config = folder / "config.json"
         self._state = folder / "state.json"
+        self._request = folder / "switch.json"
         self._clock = clock
         self._log = log
         self._loaded: float | None = None
@@ -257,16 +280,21 @@ class Agent:
         self._traffic = Traffic()
         self._dirty = True
         self._remembered = self._previous_choice()
+        self._answer: dict[str, str] | None = None
 
     def tick(self) -> None:
         self._reload()
         now = int(self._clock())
         moved: list[int] = []
+        requested = self._take_request()
+        if requested is not None:
+            moved += self._switch(*requested, now)
         for port, watch in self._watches.items():
             before = watch.active
             if watch.check(functools.partial(self._network.probe, watch.group), now):
                 self._log(f"group {port}: {before or 'none'} -> {watch.active}")
-                moved.append(port)
+                if port not in moved:
+                    moved.append(port)
         if moved or self._dirty:
             self._traffic.keep(self._network.counters())
             self._network.forward(ruleset({p: w.active for p, w in self._watches.items()}))
@@ -316,6 +344,39 @@ class Agent:
         self.settings = settings
         self._dirty = True
 
+    def _take_request(self) -> tuple[str, int, Backend] | None:
+        """The switch request of the panel, removed so it is done once; a bad one is dropped."""
+        try:
+            text = self._request.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return None
+        self._request.unlink(missing_ok=True)
+        try:
+            data = json.loads(text)
+            if data.get("version") != FORMAT_VERSION:
+                raise ValueError(f"unknown request version {data.get('version')!r}")
+            return str(data["id"]), int(data["port"]), Backend.from_dict(data["backend"])
+        except (ValueError, KeyError, TypeError, AttributeError) as error:
+            self._log(f"switch request ignored: {error!r}")
+            return None
+
+    def _switch(self, request: str, port: int, backend: Backend, now: int) -> list[int]:
+        """Do the switch the panel asked for; the moved port, if any."""
+        watch = self._watches.get(port)
+        before = watch.active if watch else None
+        if watch is None:
+            outcome = UNKNOWN_GROUP
+        else:
+            outcome = watch.switch_to(
+                backend, functools.partial(self._network.probe, watch.group), now
+            )
+        self._log(f"group {port}: switch to {backend} asked: {outcome}")
+        self._answer = {"id": request, "outcome": outcome}
+        if outcome != SWITCHED:
+            return []
+        self._log(f"group {port}: {before or 'none'} -> {backend}")
+        return [port]
+
     def _previous_choice(self) -> dict[int, Backend]:
         """The active members of the last run: a restarted agent stays on them while they live."""
         try:
@@ -334,7 +395,10 @@ class Agent:
             watch.state(self._traffic.total(port, current))
             for port, watch in sorted(self._watches.items())
         ]
-        text = json.dumps({"version": FORMAT_VERSION, "updated_at": now, "groups": groups})
+        data = {"version": FORMAT_VERSION, "updated_at": now, "groups": groups}
+        if self._answer is not None:
+            data["switch"] = self._answer
+        text = json.dumps(data)
         temporary = self._state.with_suffix(".tmp")
         temporary.write_text(text + "\n", encoding="utf-8")
         temporary.replace(self._state)

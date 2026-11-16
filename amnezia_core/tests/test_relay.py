@@ -7,7 +7,16 @@ import pytest
 
 from amnezia_core.errors import RelayFormatError
 from amnezia_core.keys import KeyPair
-from amnezia_core.relay import Backend, RelayConfig, RelayGroup, RelayState, ServicePeer
+from amnezia_core.relay import (
+    Backend,
+    RelayConfig,
+    RelayGroup,
+    RelayState,
+    ServicePeer,
+    SwitchOutcome,
+    SwitchRequest,
+    SwitchResult,
+)
 
 SERVICE_KEY = KeyPair.generate()
 SERVER_KEY = KeyPair.generate().public_key
@@ -171,6 +180,9 @@ class TestRelayState:
             lambda data: data["groups"][0].update(active="198.51.100.20:55424"),
             lambda data: data["groups"][0].update(bytes_to_clients=-1),
             lambda data: data.update(groups={}),
+            lambda data: data.update(switch="r1"),
+            lambda data: data.update(switch={"id": "r1", "outcome": "maybe"}),
+            lambda data: data.update(switch={"outcome": "switched"}),
         ],
     )
     def test_rejects_a_spoiled_file(self, spoil: Any) -> None:
@@ -179,3 +191,29 @@ class TestRelayState:
 
         with pytest.raises(RelayFormatError):
             RelayState.parse(json.dumps(data))
+
+    def test_an_older_agent_gives_no_switch_answer(self) -> None:
+        assert RelayState.parse(json.dumps(STATE)).switch is None
+
+    def test_reads_the_switch_answer(self) -> None:
+        data = {**STATE, "switch": {"id": "r1", "outcome": "unreachable"}}
+
+        state = RelayState.parse(json.dumps(data))
+
+        assert state.switch == SwitchResult("r1", SwitchOutcome.UNREACHABLE)
+
+
+class TestSwitchRequest:
+    def test_file_layout(self) -> None:
+        text = SwitchRequest("r1", 55424, B).to_json()
+
+        assert json.loads(text) == {
+            "version": 1,
+            "id": "r1",
+            "port": 55424,
+            "backend": {"host": "198.51.100.20", "port": 55424},
+        }
+
+    def test_port_range(self) -> None:
+        with pytest.raises(RelayFormatError):
+            SwitchRequest("r1", 0, B)

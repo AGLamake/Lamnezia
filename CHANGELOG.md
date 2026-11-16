@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Planned relay switch**: **Switch to this server** on the group page sends the clients of a
+  group behind a relay to the chosen member, for maintenance of the active one. The relay agent
+  switches only if that member answers its probe right then, otherwise it keeps the active one;
+  clients reconnect in about 20 seconds and `relay_switched` is sent. The agent goes on failing
+  over by itself; an agent of an older release needs an update of the relay first.
 - **Protocol snapshots**: the list shows the port and the number of clients of each snapshot, and
   an administrator can delete a snapshot. Restoring a snapshot taken before leaving a group warns
   first, does not add again peers whose keys live on another server, turns off returned keys over

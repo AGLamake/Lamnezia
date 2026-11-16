@@ -3,14 +3,16 @@
 The panel writes the config, the agent on the relay reads it and works on its own: it probes the
 members of each group with a new handshake of the service peer and moves the group port to the
 next backend by priority after `failures` failed probes in a row. The agent writes what it sees
-into the state file, which the panel reads over SSH. Both files are JSON with a `version`, so an
-agent and a panel of different releases notice a format they do not know.
+into the state file, which the panel reads over SSH. For planned maintenance the panel may
+also write a switch request; the agent answers it in the state file. The files are JSON with a
+`version`, so an agent and a panel of different releases notice a format they do not know.
 """
 
 import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from enum import StrEnum
 from ipaddress import IPv4Address, IPv4Interface
 from typing import Any
 
@@ -216,19 +218,74 @@ class GroupState:
 
 
 @dataclass(frozen=True)
+class SwitchRequest:
+    """The panel asks the agent to move a group to one of its members, for server maintenance.
+
+    The agent takes the file once and moves the group only if the member answers a probe;
+    its answer comes back in the state file under the same `id`.
+    """
+
+    id: str
+    port: int
+    backend: Backend
+
+    def __post_init__(self) -> None:
+        _check_port(self.port)
+
+    def to_json(self) -> str:
+        data = {
+            "version": FORMAT_VERSION,
+            "id": self.id,
+            "port": self.port,
+            "backend": self.backend.to_dict(),
+        }
+        return json.dumps(data) + "\n"
+
+
+class SwitchOutcome(StrEnum):
+    SWITCHED = "switched"
+    ALREADY_ACTIVE = "already_active"
+    UNREACHABLE = "unreachable"
+    UNKNOWN_GROUP = "unknown_group"
+    UNKNOWN_BACKEND = "unknown_backend"
+
+
+@dataclass(frozen=True)
+class SwitchResult:
+    """The agent's answer to the last switch request it took."""
+
+    id: str
+    outcome: SwitchOutcome
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "SwitchResult":
+        try:
+            outcome = SwitchOutcome(_string(data, "outcome"))
+        except ValueError as error:
+            raise RelayFormatError(f"Unknown switch outcome: {error}") from error
+        return cls(_string(data, "id"), outcome)
+
+
+@dataclass(frozen=True)
 class RelayState:
-    """The agent's state file: when it was written and the state of every group."""
+    """The agent's state file: when it was written, the state of every group and the answer
+    to the last switch request; an agent of an older release writes no answer."""
 
     updated_at: datetime
     groups: tuple[GroupState, ...]
+    switch: SwitchResult | None = None
 
     @classmethod
     def parse(cls, text: str) -> "RelayState":
         data = _document(text, "relay state")
+        switch = data.get("switch")
+        if switch is not None and not isinstance(switch, dict):
+            raise RelayFormatError("'switch' must be an object or null.")
         return _parsed(
             lambda: cls(
                 updated_at=_required_moment(data, "updated_at"),
                 groups=tuple(GroupState.from_dict(item) for item in _objects(data, "groups")),
+                switch=SwitchResult.from_dict(switch) if switch is not None else None,
             )
         )
 

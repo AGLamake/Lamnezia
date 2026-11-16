@@ -254,6 +254,9 @@ msgstr "Маленький STUN-ответчик на UDP-порту. Брауз
 msgid "A standalone AmneziaWG 3.1 server. Its keys, settings and clients become the group's."
 msgstr "Одиночный сервер AmneziaWG 3.1. Его ключи, настройки и клиенты становятся ключами, настройками и клиентами группы."
 
+msgid "A switch of this group is already running."
+msgstr "Переключение этой группы уже идёт."
+
 msgid "A user cannot be their own moderator."
 msgstr "Пользователь не может быть своим же модератором."
 
@@ -475,6 +478,9 @@ msgstr "Спросите что угодно: ответ появится зде
 msgid "Ask the administrator to give you one."
 msgstr "Попросите администратора назначить его."
 
+msgid "Ask the relay to switch"
+msgstr "Попросить ретранслятор переключиться"
+
 msgid "Assignee"
 msgstr "Исполнитель"
 
@@ -645,6 +651,9 @@ msgstr "Проверить снова"
 
 msgid "Check now"
 msgstr "Проверить сейчас"
+
+msgid "Check that AmneziaWG of the server is running, then switch again."
+msgstr "Проверьте, что AmneziaWG на сервере работает, и переключите ещё раз."
 
 msgid "Check that the members are online; the relay is updated again on the next sync."
 msgstr "Проверьте, что участники на связи; ретранслятор обновится снова при следующей синхронизации."
@@ -1072,11 +1081,17 @@ msgstr "Фильтры"
 msgid "Filters and details that do not need a page of their own."
 msgstr "Фильтры и подробности, которым не нужна отдельная страница."
 
+msgid "Find the address of the server"
+msgstr "Найти адрес сервера"
+
 msgid "Find the group"
 msgstr "Поиск группы"
 
 msgid "Find the relay"
 msgstr "Найти ретранслятор"
+
+msgid "Find the relay and the member"
+msgstr "Найти ретранслятор и участника"
 
 msgid "Find the server in the group"
 msgstr "Найти сервер в группе"
@@ -1916,6 +1931,9 @@ msgstr "В группе могут быть только серверы AmneziaW
 msgid "Only a joined server that has every key change of the group can lead it."
 msgstr "Ведущим может стать только вступивший сервер, у которого есть все изменения ключей группы."
 
+msgid "Only an up-to-date member of the group can take its clients. Wait until the server catches up with the group."
+msgstr "Принять клиентов группы может только участник со всеми её изменениями. Дождитесь, пока сервер догонит группу."
+
 msgid "Only the DNS changes: the servers are not touched."
 msgstr "Меняется только DNS: серверы не затрагиваются."
 
@@ -2182,6 +2200,9 @@ msgstr "Проверка доступности"
 
 msgid "Read the files of the group"
 msgstr "Прочитать файлы группы"
+
+msgid "Read the relay state"
+msgstr "Прочитать состояние ретранслятора"
 
 msgid "Read the server files"
 msgstr "Прочитать файлы сервера"
@@ -2690,8 +2711,14 @@ msgstr "Поддержка"
 msgid "Support:"
 msgstr "Поддержка:"
 
+msgid "Switch the relay to a member"
+msgstr "Переключить ретранслятор на участника"
+
 msgid "Switch the theme and narrow the window: every block must stay readable from 360 px."
 msgstr "Переключите тему и сузьте окно: каждый блок должен читаться от 360 px."
+
+msgid "Switch to this server"
+msgstr "Переключить на этот сервер"
 
 msgid "System"
 msgstr "Система"
@@ -2761,6 +2788,9 @@ msgstr "Агент актуален."
 
 msgid "The agent is updated."
 msgstr "Агент обновлён."
+
+msgid "The agent may be of an older release or stopped: update the relay on the server card, then switch again. The clients stay where they are."
+msgstr "Возможно, агент старой версии или остановлен: обновите ретранслятор в карточке сервера и переключите ещё раз. Клиенты остаются там, где были."
 
 msgid "The author asks not to be named."
 msgstr "Автор просит не указывать его имя."
@@ -3008,6 +3038,12 @@ msgstr "Предпросмотр не удался. Сохраните стат�
 msgid "The protocol container is removed from the server."
 msgstr "Контейнер протокола удалён с сервера."
 
+msgid "The relay already sends the clients to this server."
+msgstr "Ретранслятор уже отправляет клиентов на этот сервер."
+
+msgid "The relay cannot reach the server: the clients stay where they are."
+msgstr "Ретранслятор не достучался до сервера: клиенты остаются там, где были."
+
 msgid "The relay container is not on the server."
 msgstr "Контейнера ретранслятора нет на сервере."
 
@@ -3017,14 +3053,29 @@ msgstr "Контейнер ретранслятора запущен."
 msgid "The relay container is still on the server."
 msgstr "Контейнер ретранслятора всё ещё на сервере."
 
+msgid "The relay did not answer the switch request."
+msgstr "Ретранслятор не ответил на запрос переключения."
+
+msgid "The relay does not know this member of the group yet."
+msgstr "Ретранслятор ещё не знает этого участника группы."
+
+msgid "The relay does not send clients to this server."
+msgstr "Ретранслятор не отправляет клиентов на этот сервер."
+
 msgid "The relay forwards to an IPv4 address: check the DNS name of the server."
 msgstr "Ретранслятор пересылает на IPv4-адрес: проверьте DNS-имя сервера."
+
+msgid "The relay or the member is gone: nothing to do."
+msgstr "Ретранслятора или участника больше нет: делать нечего."
 
 msgid "The relay publishes the port of the group, which every member listens on, so they cannot share a machine. Pick a relay on another server for the group, or let the member on this server leave the group."
 msgstr "Ретранслятор публикует порт группы, а его же слушает каждый участник, поэтому на одной машине они не уживутся. Выберите для группы ретранслятор на другом сервере или выведите участника на этом сервере из группы."
 
 msgid "The relay sends the clients of the group to this server now."
 msgstr "Сейчас ретранслятор отправляет клиентов группы на этот сервер."
+
+msgid "The relay sends the clients of the group to this server, if it reaches it. Every client of the group loses its connection for about 20 seconds. Continue?"
+msgstr "Ретранслятор отправит клиентов группы на этот сервер, если достучится до него. Все клиенты группы потеряют соединение примерно на 20 секунд. Продолжить?"
 
 msgid "The relay takes clients of the groups that name this server and forwards them to a live member. Its agent probes the members and switches by itself, even when the panel is down."
 msgstr "Ретранслятор принимает клиентов групп, назначивших этот сервер, и пересылает их живому участнику. Его агент сам проверяет участников и переключается, даже когда панель недоступна."
@@ -3359,6 +3410,9 @@ msgstr "Обновить ретранслятор"
 msgid "Update the relay agent"
 msgstr "Обновить агент ретранслятора"
 
+msgid "Update the relay on the server card, then switch again."
+msgstr "Обновите ретранслятор в карточке сервера и переключите ещё раз."
+
 msgid "Upload speed through the VPN (TSO/GSO)"
 msgstr "Скорость отдачи через VPN (TSO/GSO)"
 
@@ -3425,8 +3479,14 @@ msgstr "Действует до"
 msgid "Version %(version)s from %(date)s."
 msgstr "Версия %(version)s от %(date)s."
 
+msgid "Wait for it to finish, see the operations page."
+msgstr "Дождитесь его окончания, см. страницу операций."
+
 msgid "Wait for other operations on the server"
 msgstr "Дождаться других операций на сервере"
+
+msgid "Wait for the answer of the relay"
+msgstr "Дождаться ответа ретранслятора"
 
 msgid "Wait for the catch-up or let the server leave and join again, then try again."
 msgstr "Дождитесь догона или выведите сервер из группы и введите снова, затем повторите."

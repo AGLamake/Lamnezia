@@ -266,6 +266,14 @@ the `lamnezia-relay-data` volume, so neither a restart nor a new container after
 moves clients off the active member. The address of the service peer is never given to a key,
 even on a member that does not have the peer yet.
 
+To service the active server, press **Switch to this server** next to another member on the
+group page. The panel asks the agent to send the clients there; the agent probes that member once
+more and switches the same way as on a failure, or refuses and keeps the active one when the
+member does not answer. Every client of the group loses its connection for about 20 seconds. The
+switch is a background operation; it ends with the notification of a switch. A relay agent of an
+older release does not answer the request: update the relay on the server card first. The agent
+then goes on switching by itself as before: a planned switch does not pin the group to the member.
+
 When the members, their order, the lagging ones or the port of a group change, the panel updates
 the relay by itself every `LAMNEZIA_RELAY_SYNC_INTERVAL` seconds. **Update** on the card does it at
 once. **Remove** drops the container, the image and the volume, then takes the service peers off
