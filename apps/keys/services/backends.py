@@ -32,6 +32,7 @@ from apps.keys.services.profile import (
     OpenVpnKeyProfile,
     ServerProfile,
 )
+from apps.keys.services.service_peers import service_peers
 from apps.keys.services.swaps import Swap, SwapResult
 from apps.keys.services.xray_clients import XrayClientManager
 from apps.keys.services.xray_profiles import XrayProfiles
@@ -179,14 +180,16 @@ class WgKeys:
 
     @staticmethod
     def _reserved(source: str, exclude: Sequence[int] = ()) -> list[IPv4Address]:
-        """Disabled keys keep their addresses to come back with them."""
+        """Disabled keys keep their addresses to come back with them; service peers keep theirs
+        on a member that does not have them yet.
+        """
         addresses = (
             AccessKey.objects.filter(source=source, status__in=DISABLED_STATUSES)
             .exclude(client_ip=None)
             .exclude(pk__in=exclude)
             .values_list("client_ip", flat=True)
         )
-        return [IPv4Address(ip) for ip in addresses]
+        return [IPv4Address(ip) for ip in addresses] + service_peers.addresses(source)
 
     def _fill(
         self, key: AccessKey, peer: Peer, server: AwgServerSettings, server_public_key: str

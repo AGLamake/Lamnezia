@@ -1,8 +1,8 @@
 """Installing, updating and removing the relay of a server, and the periodic sync of relays.
 
 An update gives every group of the relay its service peer on the members first, then writes
-the members in order to the agent. The relay server is locked only for its own container: a
-member on the same server takes the same lock for its peers.
+the members in order to the agent; a removal takes the peers off again. The relay server is
+locked only for its own container: a member on the same server takes the same lock for its peers.
 """
 
 from collections.abc import Iterator
@@ -79,10 +79,13 @@ class RelayDeployment:
         self._synced(plan)
 
     def remove(self) -> None:
+        """Drop the container, then the service peers of its groups from their members."""
         with ExitStack() as stack:
             host = self._connect(stack)
             with self._lock(host):
                 RelayContainer(host, self._ctx).remove()
+        for group, _members in RelayPlan.of(self._relay.server).groups:
+            ServicePeerPlacement(group, self._ctx).withdraw()
         self._relay.delete()
 
     def _connect(self, stack: ExitStack) -> RemoteHost:

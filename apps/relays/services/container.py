@@ -22,6 +22,9 @@ from apps.ssh.services import RemoteHost
 
 NAME = "lamnezia-relay"
 FOLDER = "/opt/amnezia/relay"
+# The folder of the agent lives in a volume: a container started again on other ports keeps
+# the agent state, so it stays on the member it chose.
+VOLUME = f"{NAME}-data"
 # The panel's web server: HTTP, HTTPS and HTTP/3 (UDP 443) on the panel machine.
 RESERVED_PORTS = frozenset({80, 443})
 
@@ -101,10 +104,11 @@ class RelayContainer:
             self._put_agent()
 
     def remove(self) -> None:
-        """Drop the container and its image; the agent and its state go with them."""
+        """Drop the container, its image and the volume with the agent and its state."""
         with self._ctx.step(_("Remove the relay container")):
             self._docker.remove()
             self._host.sh(shlex.join(["docker", "rmi", "-f", NAME]))
+            self._host.sh(shlex.join(["docker", "volume", "rm", "-f", VOLUME]))
             if self.exists:
                 raise RelayError(RelayErrorCode.NOT_REMOVED, NAME)
 
@@ -121,7 +125,7 @@ class RelayContainer:
         return [
             "docker", "run", "-d", "--name", NAME, "--restart", "always",
             "--cap-add=NET_ADMIN", "--device", "/dev/net/tun",
-            "--sysctl", "net.ipv4.ip_forward=1",
+            "--sysctl", "net.ipv4.ip_forward=1", "-v", f"{VOLUME}:{FOLDER}",
             *log_arguments(logs=True), *published, NAME,
         ]  # fmt: skip
 

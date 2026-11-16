@@ -6,17 +6,21 @@ import shlex
 from dataclasses import dataclass, field
 
 from apps.protocols.tests.fakes import FakeDebianServer
-from apps.relays.services.container import NAME
+from apps.relays.services.container import FOLDER, NAME, VOLUME
 from apps.ssh.services import CommandResult
 from apps.ssh.tests.fakes import result
 
 _MISSING_EXIT = re.compile(r"\|\| exit (\d+);")
-_VERBS = {"ps", "build", "run", "rm", "rmi", "restart", "inspect", "exec"}
+_VERBS = {"ps", "build", "run", "rm", "rmi", "restart", "inspect", "exec", "volume"}
 
 
 @dataclass
 class FakeRelayServer(FakeDebianServer):
-    """`others` are lines of `docker ps` for containers that are not the relay."""
+    """`others` are lines of `docker ps` for containers that are not the relay.
+
+    `files` of a container started with the relay volume are the files of `volume`: they stay
+    when the container goes; `volume` is None while docker has no such volume.
+    """
 
     commands: set[str] = field(default_factory=lambda: {"docker", "fuser", "lsof"})
     networks: set[str] = field(default_factory=lambda: {"bridge", "amnezia-dns-net"})
@@ -26,6 +30,7 @@ class FakeRelayServer(FakeDebianServer):
     ports: set[int] = field(default_factory=set)
     run_arguments: list[str] = field(default_factory=list)
     files: dict[str, bytes] = field(default_factory=dict)
+    volume: dict[str, bytes] | None = None
     host_files: dict[str, bytes] = field(default_factory=dict)
     has_image: bool = False
     docker_calls: list[str] = field(default_factory=list)
@@ -59,20 +64,9 @@ class FakeRelayServer(FakeDebianServer):
             self.has_image = True
             return result()
         if verb == "run":
-            assert not self.state and self.has_image
-            self.state, self.files, self.run_arguments = "running", {}, words
-            self.ports = {
-                int(words[index + 1].split(":")[0])
-                for index, word in enumerate(words)
-                if word == "-p"
-            }
-            return result(stdout=b"0123456789ab\n")
-        if verb == "rm":
-            self.state, self.ports, self.files = "", set(), {}
-            return result()
-        if verb == "rmi":
-            self.has_image = False
-            return result()
+            return self._run(words)
+        if verb in {"rm", "rmi", "volume"}:
+            return self._remove(words)
         if verb == "restart":
             assert self.state
             return result()
@@ -82,6 +76,28 @@ class FakeRelayServer(FakeDebianServer):
         if words[:4] == ["docker", "exec", "-i", NAME]:
             return self._in_container(words[6], stdin)
         raise AssertionError(f"unexpected docker command: {words}")
+
+    def _run(self, words: list[str]) -> CommandResult:
+        assert not self.state and self.has_image
+        self.state, self.files, self.run_arguments = "running", {}, words
+        if f"{VOLUME}:{FOLDER}" in words:
+            self.volume = {} if self.volume is None else self.volume
+            self.files = self.volume
+        self.ports = {
+            int(words[index + 1].split(":")[0]) for index, word in enumerate(words) if word == "-p"
+        }
+        return result(stdout=b"0123456789ab\n")
+
+    def _remove(self, words: list[str]) -> CommandResult:
+        """`docker rm` of the container, `rmi` of the image or `volume rm`."""
+        if words[1] == "rm":
+            self.state, self.ports, self.files = "", set(), {}
+        elif words[1] == "rmi":
+            self.has_image = False
+        else:
+            assert words[2] == "rm", words
+            self.volume = None
+        return result()
 
     def _in_container(self, script: str, stdin: bytes) -> CommandResult:
         assert self.state == "running"

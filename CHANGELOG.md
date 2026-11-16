@@ -54,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a clear error: the relay server cannot lead, join or get AmneziaWG of the group, and a relay
   whose server runs a member of its group is not installed, updated or retried by the sync. A
   group port taken by AmneziaWG on the relay server gets a hint on what to do.
+- **Relay service peers and state**: a key issued while the relay is being installed never gets
+  the address of the service peer. The agent keeps its choice in the `lamnezia-relay-data` volume,
+  so a new container after a port change stays on the active member. Removing the relay takes the
+  service peers off the members; one that does not answer loses it on its catch-up.
 - **Server group members** get the clientsTable record of a new key byte for byte as the leading
   server writes it. Catch-up of a member that already has every key of the group rewrites only
   clientsTable and does not restart AmneziaWG. A batch reissue changes each member under one lock

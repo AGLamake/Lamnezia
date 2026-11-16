@@ -251,12 +251,17 @@ periodic sync does not retry such a relay. The container runs in its own network
 The agent inside the container probes the members in order every few seconds with a new handshake
 through the service peer and sends clients to the first live one. Before a switch the candidate is
 probed again, the `nftables` rules change in one transaction, and old connections are dropped. The
-agent does not need the panel: switching works even while the panel is down.
+agent does not need the panel: switching works even while the panel is down. Its choice lives in
+the `lamnezia-relay-data` volume, so neither a restart nor a new container after a port change
+moves clients off the active member. The address of the service peer is never given to a key,
+even on a member that does not have the peer yet.
 
 When the members, their order, the lagging ones or the port of a group change, the panel updates
 the relay by itself every `LAMNEZIA_RELAY_SYNC_INTERVAL` seconds. **Update** on the card does it at
-once. **Remove** drops the container and the image; the service peers stay on the members, and
-clients of the groups lose the connection until another relay is installed.
+once. **Remove** drops the container, the image and the volume, then takes the service peers off
+the members. A member that does not answer is marked lagging and loses the peer on its catch-up;
+when no member of a group answers, the panel keeps the peer. Clients of the groups lose the
+connection until another relay is installed.
 
 Every `LAMNEZIA_RELAY_MONITOR_INTERVAL` seconds the panel reads the state the agent writes. The
 group page shows for each member whether the relay reaches it, which one is **active** now and

@@ -1779,6 +1779,9 @@ msgstr "Пока вам не доступен ни один сервер. Обр
 msgid "No server of the group answers."
 msgstr "Ни один сервер группы не отвечает."
 
+msgid "No server of the group answers: the service peer stays."
+msgstr "Ни один сервер группы не отвечает: служебный пир остаётся."
+
 msgid "No server of the group could be read."
 msgstr "Не удалось прочитать ни один сервер группы."
 
@@ -2227,6 +2230,9 @@ msgstr "Удалить контейнер ретранслятора"
 
 msgid "Remove the relay? Clients of its groups lose the connection until another relay is installed."
 msgstr "Удалить ретранслятор? Клиенты его групп потеряют связь, пока не будет установлен другой ретранслятор."
+
+msgid "Remove the service peer from %(server)s"
+msgstr "Удалить служебный пир с %(server)s"
 
 msgid "Remove the service? What it keeps on the server is deleted with the container."
 msgstr "Удалить сервис? Всё, что он хранит на сервере, удалится вместе с контейнером."

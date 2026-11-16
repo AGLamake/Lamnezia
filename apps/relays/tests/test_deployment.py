@@ -6,10 +6,14 @@ from typing import Any
 import pytest
 
 from amnezia_core.awg import AWG_CONFIG_PATH, AwgServerConfig
+from amnezia_core.keys import KeyPair
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
-from apps.groups.models import ServerGroup
+from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.services.replication import catch_up_lagging
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT, Fakes, succeeded
+from apps.keys.models import AccessKey
+from apps.keys.services.actions import KeyActions
 from apps.keys.services.drift import compare
 from apps.keys.services.peers import read_registry
 from apps.keys.services.service_peers import service_peers
@@ -218,6 +222,83 @@ def test_remove_drops_the_container_and_the_role(
     succeeded(run(REMOVE_KIND, relay_server, admin, start))
 
     assert not relay_fake.state and not Relay.objects.exists()
+
+
+@pytest.mark.usefixtures("relayed")
+def test_remove_takes_the_service_peer_off_the_members(
+    relay_server: Server, servers: Fakes, admin: User, start: Start
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    public_key = ServicePeer.objects.get().public_key
+
+    succeeded(run(REMOVE_KIND, relay_server, admin, start))
+
+    assert public_key not in peers_of(servers[LEADER_HOST])
+    assert public_key not in peers_of(servers[JOINER_HOST])
+    assert not ServicePeer.objects.exists()
+
+
+@pytest.mark.usefixtures("relayed")
+def test_a_member_down_at_removal_loses_the_service_peer_on_its_catch_up(  # noqa: PLR0913, PLR0917
+    relay_server: Server,
+    joined: GroupMember,
+    servers: Fakes,
+    down: set[str],
+    admin: User,
+    start: Start,
+    django_capture_on_commit_callbacks: OnCommit,
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    public_key = ServicePeer.objects.get().public_key
+    down.add(JOINER_HOST)
+
+    succeeded(run(REMOVE_KIND, relay_server, admin, start))
+    joined.refresh_from_db()
+    assert joined.lagging and public_key in peers_of(servers[JOINER_HOST])
+
+    down.clear()
+    with django_capture_on_commit_callbacks(execute=True):
+        catch_up_lagging()
+
+    joined.refresh_from_db()
+    assert not joined.lagging and public_key not in peers_of(servers[JOINER_HOST])
+
+
+@pytest.mark.usefixtures("relayed")
+def test_the_service_peer_stays_when_no_member_answers_at_removal(
+    relay_server: Server, down: set[str], admin: User, start: Start
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    down.update({LEADER_HOST, JOINER_HOST})
+
+    succeeded(run(REMOVE_KIND, relay_server, admin, start))
+
+    assert ServicePeer.objects.exists() and not Relay.objects.exists()
+
+
+def test_a_key_never_takes_the_address_of_the_service_peer(
+    relayed: ServerGroup, leader: ProtocolInstance, admin: User, start: Start
+) -> None:
+    """The service peer is saved before every member has it: a key issued meanwhile on such a
+    member must not take its address."""
+
+    def issue(name: str) -> AccessKey:
+        operation = start(lambda: KeyActions(admin).issue(leader.source, name, None))
+        succeeded(operation)
+        return AccessKey.objects.get(pk=operation.params["key_id"])
+
+    probe = issue("probe")
+    assert probe.client_ip
+    succeeded(start(lambda: KeyActions(admin).revoke(probe)))
+    pair = KeyPair.generate()
+    ServicePeer.objects.create(
+        group=relayed,
+        private_key=pair.private_key,
+        public_key=pair.public_key,
+        address=probe.client_ip,
+    )
+
+    assert issue("phone").client_ip != probe.client_ip
 
 
 def test_an_update_needs_an_installed_relay(relay_server: Server, admin: User) -> None:

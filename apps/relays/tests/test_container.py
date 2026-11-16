@@ -102,6 +102,17 @@ def test_a_new_port_starts_the_container_again(server: FakeRelayServer) -> None:
     assert server.files[f"{FOLDER}/agent.py"] == agent_source()
 
 
+def test_a_new_port_keeps_the_agent_state(server: FakeRelayServer) -> None:
+    container = installed(server, PORT)
+    state = b'{"version": 1, "groups": [{"port": 55424, "active": {"host": "b"}}]}'
+    server.files[f"{FOLDER}/state.json"] = state
+
+    container.apply({PORT, 51820}, CONFIG)
+
+    assert server.ports == {PORT, 51820}
+    assert server.files[f"{FOLDER}/state.json"] == state
+
+
 def test_a_changed_agent_is_restarted(server: FakeRelayServer) -> None:
     container = installed(server, PORT)
     server.files[f"{FOLDER}/agent.py"] = b"old agent"
@@ -123,5 +134,5 @@ def test_remove_drops_the_container_and_the_image(server: FakeRelayServer) -> No
 
     container.remove()
 
-    assert not server.state and not server.has_image
+    assert not server.state and not server.has_image and server.volume is None
     assert NAME not in "".join(server.others)
