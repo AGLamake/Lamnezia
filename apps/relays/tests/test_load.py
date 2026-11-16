@@ -6,6 +6,7 @@ import pytest
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import date_format
 
 from apps.accounts.models import User
 from apps.core.models import Cleanup
@@ -13,6 +14,7 @@ from apps.groups.models import ServerGroup
 from apps.relays.models import Relay, RelaySample
 from apps.relays.services.load import DAY, LoadHistory, prune_load
 from apps.relays.tasks import thin_history
+from apps.relays.templatetags.relays import load_chart
 
 pytestmark = pytest.mark.django_db
 
@@ -88,3 +90,16 @@ def test_the_relay_card_shows_the_load_chart(client: Client, admin: User, relay:
     assert "From clients, week" in page
     assert "4.0\xa0KB/s" in page  # the peak to the clients
     assert page.count('class="sparkline"') == 4
+    assert page.count('class="bar-chart"') == 2  # the day and the week behind the switch
+    assert 'value="week" x-model="period"' in page
+    assert "<td>2.0\xa0KB/s</td>" in page  # from the clients in the chart table
+
+
+def test_the_load_chart_has_a_bar_per_bucket_from_its_start(relay: Relay) -> None:
+    readings(relay, NOW - timedelta(minutes=30), 1, rate=100.4)
+
+    chart = load_chart(LoadHistory(relay, NOW).series(DAY, 24), DAY, "H:i")
+
+    assert len(chart["labels"]) == 24
+    assert chart["labels"][-1] == date_format(timezone.localtime(NOW - timedelta(hours=1)), "H:i")
+    assert chart["series"] == [[0] * 23 + [100], [0] * 23 + [201]]

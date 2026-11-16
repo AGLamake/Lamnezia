@@ -51,6 +51,18 @@ def test_bar_chart_tag_draws_bars_and_a_table_for_screen_readers() -> None:
     assert "3.0\xa0KB" in html  # the total of Mon in its tooltip
 
 
+def test_bar_chart_tag_reads_rates_per_second() -> None:
+    html = render(
+        '{% bar_chart labels series names "Load" rate=True %}',
+        labels=["10:00"],
+        series=[[1024], [2048]],
+        names=["From clients", "To clients"],
+    )
+
+    assert "<td>1.0\xa0KB/s</td>" in html
+    assert "3.0\xa0KB/s" in html  # the total in the tooltip
+
+
 class _Filters(forms.Form):
     status = forms.CharField(required=False)
     search = forms.CharField(required=False)

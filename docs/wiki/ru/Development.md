@@ -86,7 +86,8 @@ uv run python manage.py compilemessages --ignore=.venv   # или: make compilem
   `skeleton`, `stat`, `tabs`, `choice` (радиокнопка-карточка), `card-link`, `progress`, `qr`,
   `link-danger` (опасное действие в виде текста), `palette` и шаблоны `templates/components/`.
   Теги `{% icon "key" %}`, `{% sparkline values %}` и `{% bar_chart labels series names label %}`
-  (столбцы байтов в SVG, стопкой, с цифрами таблицей для экранных читалок) — в
+  (столбцы байтов в SVG, стопкой, или байтов в секунду с `rate=True`, с цифрами таблицей для
+  экранных читалок) — в
   `apps/core/templatetags/ui.py`; графики рисует сервер, библиотеки графиков нет. Все компоненты
   собраны на витрине `/dev/ui/` (только при `DEBUG`): проверяйте там обе темы и ширину 360 px.
 - **Страница** начинается с `page-header`: `page-title`, одна фраза `page-lead` о назначении

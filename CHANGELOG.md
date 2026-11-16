@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Full-size load chart of a relay**: the relay card stacks the load from the clients and to them
+  in bytes per second, with a **24 hours** / **7 days** switch. `bar_chart` takes `rate=True` for
+  values in bytes per second.
 - **Hints on the group page**: the member list says why a member lags (unreachable during a change,
   missed a change, files differ from the leading server, stayed after a failed leave). Joins and
   installs under way and the key operations that hold a handover are listed with links to their

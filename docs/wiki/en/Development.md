@@ -86,8 +86,8 @@ state, and Tailwind 4 builds the CSS from `assets/css/app.css` (`make css`).
   `skeleton`, `stat`, `tabs`, `choice` (a radio as a card), `card-link`, `progress`, `qr`,
   `link-danger` (a dangerous action shown as text) and `palette` classes plus
   `templates/components/`. The `{% icon "key" %}`, `{% sparkline values %}` and
-  `{% bar_chart labels series names label %}` (stacked SVG bars of byte counts, with the numbers
-  as a table for screen readers) tags live in `apps/core/templatetags/ui.py`; the charts are drawn
+  `{% bar_chart labels series names label %}` (stacked SVG bars of byte counts, or of bytes per
+  second with `rate=True`, with the numbers as a table for screen readers) tags live in `apps/core/templatetags/ui.py`; the charts are drawn
   on the server, there is no chart library. Every component is on the `/dev/ui/` showcase (only
   with `DEBUG`): check both themes and a 360 px width there.
 - **A page** starts with a `page-header`: the `page-title`, one `page-lead` sentence on what the

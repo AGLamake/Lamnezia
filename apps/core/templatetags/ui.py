@@ -4,8 +4,10 @@ from collections.abc import Iterable
 from typing import Any
 
 from django import forms, template
+from django.template.defaultfilters import filesizeformat
 from django.utils.html import format_html
 from django.utils.safestring import SafeString, mark_safe
+from django.utils.translation import gettext as _
 
 from apps.core.services.bar_chart import StackedBars
 from apps.core.services.sparkline import Sparkline
@@ -171,6 +173,13 @@ def active_filters(form: forms.Form) -> int:
     return sum(1 for field in form.visible_fields() if form.data.get(field.html_name))
 
 
+@register.filter
+def chart_amount(value: float, rate: bool) -> str:
+    """A value of `bar_chart`: bytes as "1.2 MB", or bytes per second as "1.2 MB/s"."""
+    size = filesizeformat(value)
+    return _("%(size)s/s") % {"size": size} if rate else size
+
+
 @register.inclusion_tag("components/sparkline.html")
 def sparkline(
     values: Iterable[float | None], label: str, floor: Any = None, ceiling: Any = None
@@ -186,16 +195,22 @@ def sparkline(
 
 @register.inclusion_tag("components/bar_chart.html")
 def bar_chart(
-    labels: Iterable[str], series: Iterable[Iterable[int]], names: Iterable[str], label: str
+    labels: Iterable[str],
+    series: Iterable[Iterable[int]],
+    names: Iterable[str],
+    label: str,
+    rate: bool = False,
 ) -> dict[str, Any]:
     """Stacked bars of byte counts, one series per name and one bar per label.
 
     `label` describes the chart to screen readers, which also get the numbers as a table.
+    With `rate` the values are bytes per second and read as "1.2 MB/s".
     """
     titles = list(names)
     chart = StackedBars(labels=list(labels), series=[list(values) for values in series])
     return {
         "label": label,
+        "rate": rate,
         "legend": [(index + 1, title) for index, title in enumerate(titles)],
         "titles": titles,
         "several": len(titles) > 1,

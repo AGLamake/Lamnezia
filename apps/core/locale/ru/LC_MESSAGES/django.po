@@ -6,6 +6,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
+#, python-format
+msgid "%(size)s/s"
+msgstr "%(size)s/с"
+
 msgid "A bot username: 5 to 32 Latin letters, digits and _."
 msgstr "Имя бота: от 5 до 32 латинских букв, цифр и _."
 

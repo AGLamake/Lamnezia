@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n ui %}
 {% comment %} Stacked bar chart (templatetag `bar_chart` in apps/core/templatetags/ui.py). The bars are an SVG
    stretched to the width; the axis text and the tooltips are HTML, so they keep their size. A tooltip opens
    on hover or tap (the `barChart` Alpine component); a hidden table reads the numbers aloud.
@@ -14,7 +14,7 @@
   </figcaption>
   <div class="bar-chart-body" aria-hidden="true">
     <div class="bar-chart-ticks">
-      {% for tick in ticks %}<span style="bottom: {{ tick.bottom|stringformat:'.2f' }}%">{{ tick.value|filesizeformat }}</span>{% endfor %}
+      {% for tick in ticks %}<span style="bottom: {{ tick.bottom|stringformat:'.2f' }}%">{{ tick.value|chart_amount:rate }}</span>{% endfor %}
     </div>
     <div class="bar-chart-plot" x-data="barChart" @click.outside="clear">
       {% for tick in ticks %}<span class="bar-chart-grid" style="bottom: {{ tick.bottom|stringformat:'.2f' }}%"></span>{% endfor %}
@@ -31,9 +31,9 @@
           <div class="bar-chart-tip bar-chart-tip-{{ column.tip_side }}">
             <p class="font-semibold">{{ column.label }}</p>
             {% for title, value in values %}
-              <p class="flex items-center gap-2"><span class="bar-chart-swatch bar-chart-{{ forloop.counter }}"></span><span class="flex-1">{{ title }}</span><span class="tabular-nums">{{ value|filesizeformat }}</span></p>
+              <p class="flex items-center gap-2"><span class="bar-chart-swatch bar-chart-{{ forloop.counter }}"></span><span class="flex-1">{{ title }}</span><span class="tabular-nums">{{ value|chart_amount:rate }}</span></p>
             {% endfor %}
-            {% if several %}<p class="flex gap-2 border-t border-border pt-1 text-muted"><span class="flex-1">{% translate "Total" %}</span><span class="tabular-nums">{{ column.total|filesizeformat }}</span></p>{% endif %}
+            {% if several %}<p class="flex gap-2 border-t border-border pt-1 text-muted"><span class="flex-1">{% translate "Total" %}</span><span class="tabular-nums">{{ column.total|chart_amount:rate }}</span></p>{% endif %}
           </div>
         </div>
       {% endfor %}
@@ -51,7 +51,7 @@
     <thead><tr><th scope="col">{% translate "Period" %}</th>{% for title in titles %}<th scope="col">{{ title }}</th>{% endfor %}</tr></thead>
     <tbody>
       {% for column, values in columns %}
-        <tr><th scope="row">{{ column.label }}</th>{% for title, value in values %}<td>{{ value|filesizeformat }}</td>{% endfor %}</tr>
+        <tr><th scope="row">{{ column.label }}</th>{% for title, value in values %}<td>{{ value|chart_amount:rate }}</td>{% endfor %}</tr>
       {% endfor %}
     </tbody>
   </table></div>

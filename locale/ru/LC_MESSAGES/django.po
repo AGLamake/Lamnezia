@@ -214,12 +214,19 @@ msgstr "1. Установите приложение"
 msgid "2. Get a key"
 msgstr "2. Получите ключ"
 
+msgid "24 hours"
+msgstr "Сутки"
+
 msgid "3. Add the key to Amnezia"
 msgstr "3. Добавьте ключ в Amnezia"
 
 #, python-format
 msgid "3proxy.log of the app: %(size)s"
 msgstr "3proxy.log приложения: %(size)s"
+
+#
+msgid "7 days"
+msgstr "Неделя"
 
 msgid "A link"
 msgstr "Ссылка"
@@ -1149,6 +1156,10 @@ msgstr "Освободите UDP-порт группы на сервере, за
 msgid "Frequently asked questions"
 msgstr "Частые вопросы"
 
+#
+msgid "From clients"
+msgstr "От клиентов"
+
 msgid "From clients, day"
 msgstr "От клиентов, сутки"
 
@@ -1586,11 +1597,22 @@ msgstr "Привязано."
 msgid "Load"
 msgstr "Нагрузка"
 
+msgid "Load chart period"
+msgstr "Период графика нагрузки"
+
 msgid "Load from the clients by hour for the last day"
 msgstr "Нагрузка от клиентов по часам за последние сутки"
 
 msgid "Load from the clients by six hours for the last week"
 msgstr "Нагрузка от клиентов по шесть часов за последнюю неделю"
+
+#
+msgid "Load of the channel by hour for the last day"
+msgstr "Нагрузка канала по часам за последние сутки"
+
+#
+msgid "Load of the channel by six hours for the last week"
+msgstr "Нагрузка канала по шесть часов за последнюю неделю"
 
 msgid "Load to the clients by hour for the last day"
 msgstr "Нагрузка к клиентам по часам за последние сутки"
@@ -3293,6 +3315,10 @@ msgstr "Отметить все"
 
 msgid "Title"
 msgstr "Название"
+
+#
+msgid "To clients"
+msgstr "К клиентам"
 
 msgid "To clients, day"
 msgstr "К клиентам, сутки"
