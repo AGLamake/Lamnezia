@@ -20,6 +20,7 @@ the server files in the format of the Amnezia app, so the app keeps working with
 ## Features
 
 - [Servers and import](Servers-and-import.md): adding a server, import from the Amnezia app, monitoring.
+- [Server groups and relay](Server-groups.md): servers sharing one key, the relay and its switching times.
 - [Protocols](Protocols.md): AmneziaWG 2.0, its parameters and the container.
 - [Keys](Keys.md): issuing, showing, disabling, differences with servers.
 - [Users, plans and limits](Users-plans-limits.md): plans, personal limits, bulk actions.

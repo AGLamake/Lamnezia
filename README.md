@@ -183,6 +183,7 @@ The [wiki](docs/wiki/en/Home.md) (also published to the GitHub Wiki):
   [Backup](docs/wiki/en/Backup.md), [Security](docs/wiki/en/Security.md),
   [Troubleshooting](docs/wiki/en/Troubleshooting.md);
 - features: [Servers and import](docs/wiki/en/Servers-and-import.md),
+  [Server groups and relay](docs/wiki/en/Server-groups.md),
   [Protocols](docs/wiki/en/Protocols.md), [Keys](docs/wiki/en/Keys.md),
   [Users, plans and limits](docs/wiki/en/Users-plans-limits.md),
   [Registration](docs/wiki/en/Registration-modes.md),

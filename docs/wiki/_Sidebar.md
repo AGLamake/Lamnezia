@@ -12,6 +12,7 @@
 | [Troubleshooting](en/Troubleshooting.md) | [Решение проблем](ru/Troubleshooting.md) |
 | **Features** | **Возможности** |
 | [Servers and import](en/Servers-and-import.md) | [Серверы и импорт](ru/Servers-and-import.md) |
+| [Server groups and relay](en/Server-groups.md) | [Группы серверов и ретранслятор](ru/Server-groups.md) |
 | [Protocols](en/Protocols.md) | [Протоколы](ru/Protocols.md) |
 | [Ports](en/Ports.md) | [Порты](ru/Ports.md) |
 | [Keys](en/Keys.md) | [Ключи](ru/Keys.md) |

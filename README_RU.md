@@ -185,6 +185,7 @@ LAMNEZIA_DEFAULT_FROM_EMAIL=Lamnezia <noreply@panel.example.com>
   [Бэкапы](docs/wiki/ru/Backup.md), [Безопасность](docs/wiki/ru/Security.md),
   [Решение проблем](docs/wiki/ru/Troubleshooting.md);
 - возможности: [Серверы и импорт](docs/wiki/ru/Servers-and-import.md),
+  [Группы серверов и ретранслятор](docs/wiki/ru/Server-groups.md),
   [Протоколы](docs/wiki/ru/Protocols.md), [Ключи](docs/wiki/ru/Keys.md),
   [Пользователи, тарифы и лимиты](docs/wiki/ru/Users-plans-limits.md),
   [Регистрация](docs/wiki/ru/Registration-modes.md),

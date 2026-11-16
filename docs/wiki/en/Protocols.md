@@ -353,7 +353,7 @@ AmneziaWG 3.1 (`HeaderProtectionKey`, timers, `RandomTrailers`, `DisableCookies`
 group. On a 2.0 server the group reminds you to move the server to 3.1 first: its image may not know
 these parameters.
 
-A server in a [group](Servers-and-import.md#server-groups) shows its settings read only: they
+A server in a [group](Server-groups.md) shows its settings read only: they
 change for the whole group on the group page. The settings operation refuses a group member too,
 even when started past its card. A joining server takes the DNS of the group.
 
