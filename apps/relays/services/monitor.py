@@ -4,6 +4,7 @@ docs/FALLBACK.md section 7. A reading matches the members the agent names by add
 group members and notifies of a switch, a member the relay cannot reach and a group with no
 member left. A relay whose state the panel cannot read for two intervals is reported once per
 outage, as a server that is down. Members that lag behind their group too long are reported too.
+Every reading with a known load is kept for the load chart (services/load.py).
 """
 
 import logging
@@ -20,7 +21,7 @@ from apps.groups.models import GroupMember, ServerGroup
 from apps.notifications.events import Event
 from apps.notifications.services.delivery import emit
 from apps.protocols.services.installer import ipv4_addresses
-from apps.relays.models import Relay
+from apps.relays.models import Relay, RelaySample
 from apps.relays.services.container import FOLDER, NAME
 from apps.relays.services.health import AllDown, Change, Member, MemberDown, RelayHealth, Switched
 from apps.servers.models import Server
@@ -90,6 +91,10 @@ class RelayMonitor:
         relay.read_at, relay.read_error = self._clock(), ""
         relay.rate_from_clients, relay.rate_to_clients = rates or (None, None)
         relay.save(update_fields=[*_READING_FIELDS])
+        if rates is not None:
+            RelaySample.objects.create(
+                relay=relay, at=relay.read_at, rate_from_clients=rates[0], rate_to_clients=rates[1]
+            )
         groups = {group.port: group for group in ServerGroup.objects.filter(relay=relay.server)}
         for change in health.changes(previous):
             group = groups.get(change.port)

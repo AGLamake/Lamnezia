@@ -76,3 +76,21 @@ class ServicePeer(models.Model):
 
     def __str__(self) -> str:
         return f"{self.group} · {self.address}"
+
+
+class RelaySample(models.Model):
+    """The channel load of one reading of the relay, kept for the load chart of its card."""
+
+    relay = models.ForeignKey(Relay, on_delete=models.CASCADE, related_name="samples")
+    at = models.DateTimeField(_("read at"), db_index=True)
+    rate_from_clients = models.FloatField(_("bytes per second from clients"))
+    rate_to_clients = models.FloatField(_("bytes per second to clients"))
+
+    class Meta:
+        verbose_name = _("relay reading")
+        verbose_name_plural = _("relay readings")
+        ordering = ("-at",)
+        indexes = (models.Index(fields=["relay", "at"]),)
+
+    def __str__(self) -> str:
+        return f"{self.relay_id} @ {self.at:%Y-%m-%d %H:%M}"

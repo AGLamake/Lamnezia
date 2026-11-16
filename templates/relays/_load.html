@@ -1,0 +1,29 @@
+{% load i18n ui relays %}{# Channel load (templatetag relay_load): the peak and a sparkline of each direction for the day by hour and the week by six hours. #}
+{% if not week.empty %}
+<div class="kpis">
+  <div class="stat">
+    <span class="stat-label">{% translate "From clients, day" %}</span>
+    <span class="stat-value">{{ day.peak_from_clients|per_second }}</span>
+    <span class="stat-note">{% translate "peak of hourly averages" %}</span>
+    {% translate "Load from the clients by hour for the last day" as label %}{% sparkline day.from_clients label floor=0 %}
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% translate "To clients, day" %}</span>
+    <span class="stat-value">{{ day.peak_to_clients|per_second }}</span>
+    <span class="stat-note">{% translate "peak of hourly averages" %}</span>
+    {% translate "Load to the clients by hour for the last day" as label %}{% sparkline day.to_clients label floor=0 %}
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% translate "From clients, week" %}</span>
+    <span class="stat-value">{{ week.peak_from_clients|per_second }}</span>
+    <span class="stat-note">{% translate "peak of six-hour averages" %}</span>
+    {% translate "Load from the clients by six hours for the last week" as label %}{% sparkline week.from_clients label floor=0 %}
+  </div>
+  <div class="stat">
+    <span class="stat-label">{% translate "To clients, week" %}</span>
+    <span class="stat-value">{{ week.peak_to_clients|per_second }}</span>
+    <span class="stat-note">{% translate "peak of six-hour averages" %}</span>
+    {% translate "Load to the clients by six hours for the last week" as label %}{% sparkline week.to_clients label floor=0 %}
+  </div>
+</div>
+{% endif %}

@@ -39,7 +39,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_MONITOR_INTERVAL` | `60` | Seconds between server health readings. A server that does not answer for two intervals is shown offline. |
 | `LAMNEZIA_METRICS_TOKEN` | empty | Token for the Prometheus endpoint `/metrics`. Empty keeps it off. |
 | `LAMNEZIA_OPERATION_TIMEOUT` | `3600` | Seconds after which a waiting or running operation counts as interrupted. |
-| `LAMNEZIA_MONITOR_HISTORY_DAYS` | `7` | Days of server health readings kept. |
+| `LAMNEZIA_MONITOR_HISTORY_DAYS` | `7` | Days of server health readings and relay load readings kept. |
 | `LAMNEZIA_MONITOR_DETAIL_DAYS` | `1` | Days of readings kept in full; older whole days keep one reading per quarter of an hour. |
 | `LAMNEZIA_OPERATION_RETENTION_DAYS` | `90` | Days a finished operation stays in the journal. |
 | `LAMNEZIA_NOTIFICATION_RETENTION_DAYS` | `90` | Days a sent or failed notification delivery stays in the log. |

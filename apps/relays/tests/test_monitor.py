@@ -195,6 +195,10 @@ def test_the_load_comes_from_two_readings(
     relay.refresh_from_db()
     assert relay.rate_from_clients == 200.0
     assert relay.rate_to_clients == 400.0
+    # The first reading has no load yet, so only the second one is kept for the chart.
+    assert list(relay.samples.values_list("at", "rate_from_clients", "rate_to_clients")) == [
+        (NOW + timedelta(seconds=10), 200.0, 400.0)
+    ]
 
 
 @pytest.mark.parametrize(

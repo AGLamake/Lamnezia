@@ -1118,6 +1118,12 @@ msgstr "Освободите UDP-порт группы на сервере, за
 msgid "Frequently asked questions"
 msgstr "Частые вопросы"
 
+msgid "From clients, day"
+msgstr "От клиентов, сутки"
+
+msgid "From clients, week"
+msgstr "От клиентов, неделя"
+
 msgid "From the panel"
 msgstr "Из панели"
 
@@ -1537,6 +1543,18 @@ msgstr "Привязано."
 
 msgid "Load"
 msgstr "Нагрузка"
+
+msgid "Load from the clients by hour for the last day"
+msgstr "Нагрузка от клиентов по часам за последние сутки"
+
+msgid "Load from the clients by six hours for the last week"
+msgstr "Нагрузка от клиентов по шесть часов за последнюю неделю"
+
+msgid "Load to the clients by hour for the last day"
+msgstr "Нагрузка к клиентам по часам за последние сутки"
+
+msgid "Load to the clients by six hours for the last week"
+msgstr "Нагрузка к клиентам по шесть часов за последнюю неделю"
 
 msgid "Loading…"
 msgstr "Загрузка…"
@@ -2231,6 +2249,7 @@ msgstr "Удалить контейнер ретранслятора"
 msgid "Remove the relay? Clients of its groups lose the connection until another relay is installed."
 msgstr "Удалить ретранслятор? Клиенты его групп потеряют связь, пока не будет установлен другой ретранслятор."
 
+#, python-format
 msgid "Remove the service peer from %(server)s"
 msgstr "Удалить служебный пир с %(server)s"
 
@@ -3158,6 +3177,12 @@ msgstr "Отметить все"
 msgid "Title"
 msgstr "Название"
 
+msgid "To clients, day"
+msgstr "К клиентам, сутки"
+
+msgid "To clients, week"
+msgstr "К клиентам, неделя"
+
 msgid "To confirm it, open this link while signed in to the account:"
 msgstr "Чтобы подтвердить её, откройте ссылку, войдя в аккаунт:"
 
@@ -3865,6 +3890,12 @@ msgstr[2] "просрочено на %(days)s дней"
 msgid "part of an incident"
 msgstr "входит в инцидент"
 
+msgid "peak of hourly averages"
+msgstr "пик средних за час"
+
+msgid "peak of six-hour averages"
+msgstr "пик средних за шесть часов"
+
 msgid "plain"
 msgstr "простой"
 
@@ -3909,6 +3940,9 @@ msgstr "доступен"
 msgid "reached"
 msgstr "исчерпан"
 
+msgid "read at"
+msgstr "прочитано"
+
 msgid "reading error"
 msgstr "ошибка чтения"
 
@@ -3931,6 +3965,12 @@ msgstr "ретранслятор"
 #, python-format
 msgid "relay %(relay)s"
 msgstr "ретранслятор %(relay)s"
+
+msgid "relay reading"
+msgstr "чтение ретранслятора"
+
+msgid "relay readings"
+msgstr "чтения ретранслятора"
 
 msgid "relays"
 msgstr "ретрансляторы"

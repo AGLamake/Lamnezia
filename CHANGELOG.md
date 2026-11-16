@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Relay load chart**: the relay card shows the load from the clients and to them for the last
+  day by hour and the last week by six hours. The monitor keeps every reading, thinned and deleted
+  like the server readings; the history is listed in the Storage section of the statistics.
 - **A failed leave of a server group** can be retried or undone on the group page: the retry
   brings the server to a clean standalone AmneziaWG, and "Keep in the group" takes it back as a
   lagging member that the catch-up brings to the files of the group.

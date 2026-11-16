@@ -1,10 +1,12 @@
 """Thinning of old monitor readings: one reading per quarter of an hour after the detail term."""
 
 from datetime import datetime, time, timedelta
+from typing import Any
 
+from django.db.models import QuerySet
 from django.utils import timezone
 
-from apps.servers.models import Server, ServerSample
+from apps.servers.models import Server
 
 SLOT = timedelta(minutes=15)
 
@@ -25,7 +27,11 @@ class HistoryThinner:
         return sum(self.thin(server) for server in Server.objects.all())
 
     def thin(self, server: Server) -> int:
-        readings = server.samples.filter(at__lt=self._before).order_by("at").values_list("pk", "at")
+        return self.thin_series(server.samples.all())
+
+    def thin_series(self, series: "QuerySet[Any]") -> int:
+        """Thin the readings of one series: a queryset of a model with the reading time `at`."""
+        readings = series.filter(at__lt=self._before).order_by("at").values_list("pk", "at")
         kept_slots: set[int] = set()
         extra = []
         for pk, at in readings:
@@ -33,5 +39,5 @@ class HistoryThinner:
             if slot in kept_slots:
                 extra.append(pk)
             kept_slots.add(slot)
-        deleted, _ = ServerSample.objects.filter(pk__in=extra).delete()
+        deleted: int = series.model._default_manager.filter(pk__in=extra).delete()[0]
         return deleted

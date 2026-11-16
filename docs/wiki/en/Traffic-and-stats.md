@@ -22,7 +22,7 @@ hours are folded into one row per key and day in the panel time zone; a day in w
 starts is split there. Totals, statistics by day and limits stay exactly the same.
 
 The **Storage** section at the bottom of **Statistics** shows, for the operation log, notification
-deliveries, hourly traffic and server monitoring history, the number of rows, the size of the
+deliveries, hourly traffic, server monitoring history and relay load history, the number of rows, the size of the
 tables with their indexes (PostgreSQL only) and when the cleanup task last ran with how many rows
 it removed. The terms are in [Configuration](Configuration.md).
 

@@ -264,7 +264,8 @@ GROUP_LAG_ALERT = env.int("GROUP_LAG_ALERT", default=3600)
 PROTOCOL_BACKUP_INTERVAL = env.int("PROTOCOL_BACKUP_INTERVAL", default=3600)
 # Seconds between server health readings; a server is offline after two intervals without an answer.
 MONITOR_INTERVAL = env.int("MONITOR_INTERVAL", default=60)
-# Days of server readings; readings older than MONITOR_DETAIL_DAYS keep one per quarter of an hour.
+# Days of server readings and relay load readings; readings older than MONITOR_DETAIL_DAYS keep
+# one per quarter of an hour.
 MONITOR_HISTORY_DAYS = env.int("MONITOR_HISTORY_DAYS", default=7)
 MONITOR_DETAIL_DAYS = env.int("MONITOR_DETAIL_DAYS", default=1)
 # Retention: finished operations and sent or failed notification deliveries are deleted after
@@ -304,6 +305,7 @@ CELERY_BEAT_SCHEDULE = {
     "notifications-warn-expiring": {"task": "notifications.warn_expiring", "schedule": 60 * 60},
     "notifications-recover-stuck": {"task": "notifications.recover_stuck", "schedule": 10 * 60},
     "servers-thin-history": {"task": "servers.thin_history", "schedule": 60 * 60},
+    "relays-thin-history": {"task": "relays.thin_history", "schedule": 60 * 60},
     "operations-prune": {"task": "operations.prune", "schedule": 24 * 60 * 60},
     "notifications-prune": {"task": "notifications.prune", "schedule": 24 * 60 * 60},
     "traffic-roll-up": {"task": "traffic.roll_up", "schedule": 24 * 60 * 60},

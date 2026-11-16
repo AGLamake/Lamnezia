@@ -192,6 +192,9 @@ msgstr "Тариф"
 msgid "Reissue keys"
 msgstr "Перевыпустить ключи"
 
+msgid "Relay load history"
+msgstr "История нагрузки ретрансляторов"
+
 msgid "Search"
 msgstr "Поиск"
 

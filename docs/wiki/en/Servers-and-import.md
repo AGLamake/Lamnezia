@@ -266,7 +266,10 @@ connection until another relay is installed.
 Every `LAMNEZIA_RELAY_MONITOR_INTERVAL` seconds the panel reads the state the agent writes. The
 group page shows for each member whether the relay reaches it, which one is **active** now and
 whether the panel itself reaches it over SSH, with the time of the last switch. The relay card
-shows the channel load and where the traffic of each group goes. A switch, a member the relay
+shows the channel load and where the traffic of each group goes, with charts of the load from the
+clients and to them below: the last day by hour and the last week by six hours, with the peak
+average rate. The load readings are kept and thinned like the server readings
+(`LAMNEZIA_MONITOR_HISTORY_DAYS` and `LAMNEZIA_MONITOR_DETAIL_DAYS`). A switch, a member the relay
 cannot reach, a group with no member left, a relay whose state is not read for two intervals and
 a member lagging longer than `LAMNEZIA_GROUP_LAG_ALERT` come as notifications
 ([Notifications](Notifications.md)). Clients of a group are seen by the members at the relay's
