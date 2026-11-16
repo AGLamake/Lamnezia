@@ -14,6 +14,7 @@ from apps.dashboard.services.forecast import Exhaustion, LimitForecast
 from apps.dashboard.services.stats import KeyTraffic, Period, Point, Scope, TrafficStats, Window
 from apps.keys.models import GONE_STATUSES, AccessKey
 from apps.traffic.services.online import OnlineRule
+from apps.traffic.services.unknown import users_with_unknown_traffic
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,11 @@ class MyTraffic:
     def busiest(self) -> int:
         """Traffic of the busiest key, the full width of the bars."""
         return max((row.total for row in self.keys), default=0)
+
+    @cached_property
+    def incomplete(self) -> bool:
+        """Traffic of some live keys of the user is unknown: the numbers may be below the real."""
+        return self.user.pk in users_with_unknown_traffic([self.user.pk])
 
     def forecast(self) -> Exhaustion | None:
         """When the traffic of the period runs out at this pace, if before the period ends."""

@@ -22,6 +22,11 @@
   </p>
 {% endif %}
 
+{% if traffic.incomplete %}
+  {% translate "Some of your keys are on servers whose traffic the panel cannot read right now: it is not counted yet, so the numbers here and the forecast may be below the real ones." as text %}
+  {% include "components/alert.html" with level="warning" text=text %}
+{% endif %}
+
 <div class="kpis">
   <div class="stat">
     <span class="stat-label">{% icon "arrow-down" "icon-sm" %}{% translate "Downloaded" %}</span>
@@ -81,6 +86,8 @@
       {% elif forecast %}
         {% blocktranslate with when=forecast.at|date:"SHORT_DATETIME_FORMAT" asvar text %}At this pace the limit runs out on {{ when }}, before the period resets.{% endblocktranslate %}
         {% include "components/alert.html" with level="warning" text=text %}
+      {% elif traffic.incomplete %}
+        <p class="help-text">{% translate "The traffic of some keys is unknown, so the panel cannot tell whether it lasts until the period resets." %}</p>
       {% else %}
         <p class="flex items-center gap-2 text-sm">{% icon "check" "icon-sm text-success" %}{% translate "At this pace the traffic lasts until the period resets." %}</p>
       {% endif %}

@@ -11,18 +11,24 @@ from apps.accounts.models import User
 from apps.plans.models import UserLimits
 from apps.plans.services.limits import PLAN_SERVERS, EffectiveLimits
 from apps.traffic.services.limits import LimitEnforcer
+from apps.traffic.services.unknown import users_with_unknown_traffic
 
 _SIZE = 20
 
 
 @dataclass(frozen=True)
 class Exhaustion:
-    """`at` is when the limit runs out; for a limit already reached it is `now`."""
+    """`at` is when the limit runs out; for a limit already reached it is `now`.
+
+    `incomplete`: traffic of some keys of the user is unknown, so `used` may be below the real
+    traffic and the limit may run out sooner.
+    """
 
     user: User
     used: int
     limit: int
     at: datetime
+    incomplete: bool = False
 
     @property
     def reached(self) -> bool:
@@ -50,10 +56,17 @@ class LimitForecast:
         if not subscriptions:
             return []
         used = self._used(subscriptions)
+        incomplete = users_with_unknown_traffic(item.user.pk for item in subscriptions)
         forecasts = [
             forecast
             for subscription in subscriptions
-            if (forecast := self._forecast(subscription, used.get(subscription.user.pk, 0)))
+            if (
+                forecast := self._forecast(
+                    subscription,
+                    used.get(subscription.user.pk, 0),
+                    incomplete=subscription.user.pk in incomplete,
+                )
+            )
         ]
         return sorted(forecasts, key=lambda forecast: forecast.at)[: self._size]
 
@@ -81,9 +94,11 @@ class LimitForecast:
         usages = LimitEnforcer(self._now).usages(limits)
         return {user_id: period for user_id, (period, _total) in usages.items()}
 
-    def _forecast(self, subscription: _Subscription, used: int) -> Exhaustion | None:
+    def _forecast(
+        self, subscription: _Subscription, used: int, *, incomplete: bool
+    ) -> Exhaustion | None:
         if used >= subscription.limit:
-            return Exhaustion(subscription.user, used, subscription.limit, self._now)
+            return Exhaustion(subscription.user, used, subscription.limit, self._now, incomplete)
         elapsed = (self._now - subscription.period_start).total_seconds()
         if used == 0 or elapsed <= 0:
             return None
@@ -92,4 +107,4 @@ class LimitForecast:
         if left >= (subscription.period_end - self._now).total_seconds():
             return None
         at = self._now + timedelta(seconds=left)
-        return Exhaustion(subscription.user, used, subscription.limit, at)
+        return Exhaustion(subscription.user, used, subscription.limit, at, incomplete)

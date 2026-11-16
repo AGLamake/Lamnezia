@@ -72,7 +72,8 @@ to that user or key; **Show everyone** removes the narrowing.
   the exact numbers are also in a table under the chart for screen readers;
 - **Top consumers** — ten users who used the most in the period;
 - **Limit runs out** — users who, at the pace of their current period, use up their traffic limit
-  before the period ends, the soonest first; a limit already used up is marked *reached*;
+  before the period ends, the soonest first; a limit already used up is marked *reached*, and a
+  user with keys whose traffic is unknown is marked *incomplete data* (the limit may run out sooner);
 - **Online now** — keys online now;
 - **Inactive keys** — active keys without traffic in the period, the oldest first: candidates to
   revoke. Keys on a server whose statistics are unavailable and of protocols without traffic

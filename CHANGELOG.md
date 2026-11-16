@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Incomplete traffic in usage and the forecast**: when the traffic of some keys of a user is
+  unknown, the portal **Usage** page warns that its numbers and forecast may be below the real ones,
+  and the **Limit runs out** list of the statistics marks the user *incomplete data*.
 - **Domain check under way**: until the background DNS check of a group domain has answered, the
   group page says the domain is being checked.
 - **Snapshot before undoing a failed join**: **Take out of the group** first keeps the group files

@@ -39,7 +39,9 @@ shows a chart of traffic uploaded and downloaded for a day, a week or a month an
 table. A key link narrows the page to that key. A deleted key shows while it has traffic in the
 period. With a traffic limit the page says, at the pace since the period began, whether the traffic
 lasts until the period resets or when it runs out; with the limit reached, that the keys are off
-until the reset.
+until the reset. When the panel cannot read the traffic of some of the user's keys (their server
+or a server of their group does not answer), the page warns that the numbers and the forecast may
+be below the real ones and does not promise the traffic lasts.
 
 ## Getting a key
 

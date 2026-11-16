@@ -107,7 +107,7 @@
           <li><a href="{% url 'dashboard:user' row.user.pk %}" class="row">
             <span class="row-main">
               <span class="row-title">{{ row.user.username }}</span>
-              <span class="row-sub">{{ row.used|filesizeformat }} / {{ row.limit|filesizeformat }}</span>
+              <span class="row-sub">{{ row.used|filesizeformat }} / {{ row.limit|filesizeformat }}{% if row.incomplete %} · <span title="{% translate 'The traffic of some keys of the user is unknown: the limit may run out sooner.' %}">{% translate "incomplete data" %}</span>{% endif %}</span>
             </span>
             {% if row.reached %}<span class="badge badge-danger">{% translate "reached" %}</span>{% else %}<span class="row-value">{{ row.at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}
           </a></li>

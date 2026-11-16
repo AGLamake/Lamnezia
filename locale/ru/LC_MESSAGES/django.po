@@ -2692,6 +2692,9 @@ msgstr "Маленькая"
 msgid "Snapshots taken before the server identity changed. A restore puts their files back on the server; the current files are saved as a snapshot first."
 msgstr "Снимки, сделанные перед сменой ключа сервера. Восстановление возвращает их файлы на сервер; текущие файлы сначала сохраняются снимком."
 
+msgid "Some of your keys are on servers whose traffic the panel cannot read right now: it is not counted yet, so the numbers here and the forecast may be below the real ones."
+msgstr "Часть ваших ключей на серверах, трафик которых панель сейчас не может прочитать: он пока не учтён, поэтому цифры здесь и прогноз могут быть ниже настоящих."
+
 msgid "Some providers block or throttle UDP on ports above 9999, so the panel suggests a port up to 10000."
 msgstr "Часть провайдеров блокирует или режет UDP на портах выше 9999, поэтому панель предлагает порт до 10000."
 
@@ -3307,6 +3310,12 @@ msgstr "Ссылка для входа неверна, уже использов
 msgid "The subscription link is deleted."
 msgstr "Ссылка-подписка удалена."
 
+msgid "The traffic of some keys is unknown, so the panel cannot tell whether it lasts until the period resets."
+msgstr "Трафик части ключей неизвестен, поэтому панель не может сказать, хватит ли его до сброса периода."
+
+msgid "The traffic of some keys of the user is unknown: the limit may run out sooner."
+msgstr "Трафик части ключей пользователя неизвестен: лимит может кончиться раньше."
+
 msgid "The user has no subscription link yet."
 msgstr "У пользователя пока нет ссылки-подписки."
 
@@ -3895,6 +3904,9 @@ msgstr "выполняется"
 
 msgid "in the panel"
 msgstr "в панели"
+
+msgid "incomplete data"
+msgstr "данные неполные"
 
 msgid "installed"
 msgstr "установлен"

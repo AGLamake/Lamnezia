@@ -8,7 +8,7 @@ from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
 from apps.keys.models import AccessKey, KeyStatus
 from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
-from apps.traffic.models import TrafficHourly
+from apps.traffic.models import TrafficHourly, TrafficSource
 
 pytestmark = pytest.mark.django_db
 
@@ -129,3 +129,17 @@ def test_the_home_page_links_to_the_usage(user_client: Client) -> None:
     page = user_client.get("/portal/").content.decode()
 
     assert f'href="{URL}"' in page
+
+
+def test_unknown_traffic_of_a_key_marks_the_numbers_incomplete(client: Client) -> None:
+    user = subscriber(traffic_limit=10**12, period_days=30)
+    key_with_traffic(user, "iPhone", rx=200, tx=300)
+    TrafficSource.objects.create(source="instance:1", available=False, checked_at=timezone.now())
+    client.force_login(user)
+
+    response = client.get(URL)
+
+    assert response.context["traffic"].incomplete
+    page = response.content.decode()
+    assert "may be below the real ones" in page
+    assert "the traffic lasts until the period resets" not in page

@@ -240,6 +240,18 @@ class TestForecast:
 
         assert self.soonest() == []
 
+    def test_unknown_traffic_of_a_key_marks_the_forecast_incomplete(self) -> None:
+        partial = self.subscribe(limit=10 * GB, assigned_days_ago=5)
+        traffic(key_of(partial), NOW - timedelta(days=2), rx=5 * GB)
+        key_of(partial, source="instance:2")
+        full = self.subscribe(limit=1 * GB, assigned_days_ago=5)
+        traffic(key_of(full), NOW - timedelta(days=1), rx=2 * GB)
+        TrafficSource.objects.create(source="instance:2", available=False, checked_at=NOW)
+
+        forecast = LimitForecast(NOW).soonest(User.objects.all())
+
+        assert [(row.user, row.incomplete) for row in forecast] == [(full, False), (partial, True)]
+
 
 def test_keys_of_a_source_without_readings_are_unknown_not_inactive() -> None:
     user = UserFactory()
