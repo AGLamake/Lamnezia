@@ -5,7 +5,7 @@ the members in order to the agent; a removal takes the peers off again. The rela
 locked only for its own container: a member on the same server takes the same lock for its peers.
 """
 
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import ExitStack, contextmanager
 
 from django.db import transaction
@@ -172,13 +172,17 @@ def start(kind: str, server: Server, *, user: User, ip: str | None = None) -> Op
     return operation
 
 
-def sync_relays() -> None:
+def sync_relays(servers: Iterable[int] | None = None) -> None:
     """Start an update of every installed relay whose groups changed since it was written.
 
+    `servers` limits the sync to the relays on them; without it every relay is compared.
     A relay an update cannot help is skipped and the reason is kept for its card: an update
     started by hand would fail the same way, and a sync must not fail every minute.
     """
-    for relay in Relay.objects.filter(installed_at__isnull=False).select_related("server"):
+    relays = Relay.objects.filter(installed_at__isnull=False).select_related("server")
+    if servers is not None:
+        relays = relays.filter(server_id__in=servers)
+    for relay in relays:
         if not _busy(relay):
             _sync(relay)
 

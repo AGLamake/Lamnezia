@@ -299,7 +299,8 @@ status with a link to the operation and, if it failed, the reason.
 
 When the members, their order, the lagging ones, the port of a group, the address of a member
 server or the keys and parameters of a member change, the panel updates the relay by itself right
-after the change. Every `LAMNEZIA_RELAY_SYNC_INTERVAL` seconds it also checks what no change in the
+after the change: only the relay of that group (and the old one when a group moves to another
+relay), once for all the changes saved together. Every `LAMNEZIA_RELAY_SYNC_INTERVAL` seconds it also checks what no change in the
 panel shows: a member name in DNS that now points to another IP address updates the relay too.
 **Update** on the card does it at once. A relay the update could not help is left as it is, and
 the card says why: a member of a group runs on the relay server itself, or the name of a member

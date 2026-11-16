@@ -104,6 +104,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A relay sync after a change touches only the relays of the changed groups** (and the old relay
+  of a group that moved), with one `relays.sync` task per transaction however many records it
+  saves. `relays.sync` takes the relay servers to compare; the sync by the minute still compares
+  every relay.
 - **Group keys in metrics and statistics**: `lamnezia_peers` and `lamnezia_peers_online` count a key
   of a server group once, under the leading server, instead of once per member. A member the panel
   cannot read marks the traffic of the group keys as unknown and is listed in **Traffic is not

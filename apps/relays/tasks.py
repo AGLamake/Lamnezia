@@ -13,8 +13,9 @@ from apps.servers.services.thinning import HistoryThinner
 
 
 @shared_task(name="relays.sync")
-def sync() -> None:
-    sync_relays()
+def sync(servers: list[int] | None = None) -> None:
+    """The relays on these servers after a change of their groups; every relay by the minute."""
+    sync_relays(servers)
 
 
 @shared_task(name="relays.monitor")
