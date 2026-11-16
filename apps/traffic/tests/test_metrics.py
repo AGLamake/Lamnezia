@@ -69,6 +69,19 @@ def test_peers_count_only_present_ones_and_xray_is_online_by_traffic() -> None:
     assert metrics["lamnezia_peers_online"] == {"xray:1": 1}
 
 
+def test_group_peers_count_once_per_key_under_the_leading_server() -> None:
+    counter("awg:1", "alice", NOW - timedelta(minutes=1))
+    counter("awg:1", "bob", None)
+    counter("awg:2", "alice", None, key_source="awg:1")
+    counter("awg:2", "bob", NOW - timedelta(minutes=1), key_source="awg:1")
+
+    metrics = collected()
+
+    assert metrics["lamnezia_peers"] == {"awg:1": 2}
+    assert metrics["lamnezia_peers_online"] == {"awg:1": 2}
+    assert metrics["lamnezia_traffic_collected_timestamp_seconds"].keys() == {"awg:1", "awg:2"}
+
+
 def test_render_writes_the_prometheus_text_format() -> None:
     metric = Metric("lamnezia_peers", "gauge", "Peers.", {'b"\\': 2, "a": 1})
 

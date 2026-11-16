@@ -24,6 +24,7 @@ from apps.protocols.models import ProtocolInstance
 from apps.servers.models import Server
 from apps.traffic.models import TrafficCounter, TrafficHourly, TrafficSource
 from apps.traffic.services.online import OnlineRule
+from apps.traffic.services.unknown import unknown_sources
 
 _TOP_SIZE = 10
 _LIST_SIZE = 50
@@ -122,7 +123,8 @@ class Point:
 @dataclass(frozen=True)
 class KeyTraffic:
     """Traffic of a key; `known` is False when its source gives no counters (OpenVPN, IPsec)
-    or its last reading failed: the zeros then mean "no data", not "no traffic".
+    or its last reading failed, on any server of its group: the zeros then mean "no data", not
+    "no traffic".
     """
 
     key: AccessKey
@@ -178,7 +180,9 @@ class TrafficStats:
             .annotate(rx=Sum("rx_bytes"), tx=Sum("tx_bytes"))
             .values_list("source", "public_key", "rx", "tx")
         }
-        known = set(TrafficSource.objects.filter(available=True).values_list("source", flat=True))
+        known = set(
+            TrafficSource.objects.filter(available=True).values_list("source", flat=True)
+        ) - set(unknown_sources())
         rows = [
             KeyTraffic(key, *totals.get((key.source, key.public_key), (0, 0)), key.source in known)
             for key in self._scope.keys().select_related("user")
@@ -196,15 +200,18 @@ class TrafficStats:
         return list(keys.select_related("user").order_by("name"))
 
     def unavailable_sources(self) -> list["UncountedInstance"]:
-        """Instances of the scope whose last reading failed: their traffic is unknown, not zero.
+        """Instances holding keys of the scope whose last reading failed, group members too:
+        the traffic of those keys is unknown, not zero.
 
         A container removed from its server is left out: its keys have nothing left to count.
         """
-        keys = self._scope.keys().exclude(status=KeyStatus.REVOKED).values("source")
+        keys = set(
+            self._scope.keys().exclude(status=KeyStatus.REVOKED).values_list("source", flat=True)
+        )
+        unknown = unknown_sources()
+        holding = set().union(*(unknown[source] for source in keys & unknown.keys()))
         failed = dict(
-            TrafficSource.objects.filter(available=False, source__in=keys).values_list(
-                "source", "checked_at"
-            )
+            TrafficSource.objects.filter(source__in=holding).values_list("source", "checked_at")
         )
         pks = [pk for pk in map(ProtocolInstance.pk_of, failed) if pk is not None]
         found = ProtocolInstance.objects.filter(pk__in=pks, container_removed_at__isnull=True)

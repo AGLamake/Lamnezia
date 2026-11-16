@@ -250,3 +250,30 @@ def test_keys_of_a_source_without_readings_are_unknown_not_inactive() -> None:
 
     assert inactive(stats().by_key()) == [awg]
     assert xray not in inactive(stats().by_key())
+
+
+def test_keys_of_a_group_with_a_member_down_are_unknown() -> None:
+    leader, member = (
+        ProtocolInstance.objects.create(
+            server=ServerFactory(),
+            container="amnezia-awg2",
+            port=443,
+            subnet="10.8.1.0/24",
+            public_key="pub",
+            private_key="priv",
+            origin=InstanceOrigin.IMPORTED,
+        )
+        for _ in range(2)
+    )
+    key = key_of(UserFactory(), leader.source)
+    TrafficSource.objects.create(source=leader.source, available=True, checked_at=NOW)
+    TrafficSource.objects.create(source=member.source, available=False, checked_at=NOW)
+    TrafficCounter.objects.create(
+        source=member.source, key_source=leader.source, public_key=key.public_key, collected_at=NOW
+    )
+
+    [row] = stats().by_key()
+
+    assert not row.has_data
+    assert inactive([row]) == []
+    assert [entry.instance for entry in stats().unavailable_sources()] == [member]

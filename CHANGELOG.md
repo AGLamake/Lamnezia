@@ -102,6 +102,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Group keys in metrics and statistics**: `lamnezia_peers` and `lamnezia_peers_online` count a key
+  of a server group once, under the leading server, instead of once per member. A member the panel
+  cannot read marks the traffic of the group keys as unknown and is listed in **Traffic is not
+  counted on some servers**.
 - **Group guards and a faster group page**: the protocol settings operation refuses a group member
   even when started past its card. A joining server takes the DNS of the group. The DNS check of
   the group domain runs in the background and is cached for 10 minutes, so the group page no longer

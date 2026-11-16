@@ -60,29 +60,32 @@ class TrafficMetrics:
         ]
 
     def _peers(self) -> list[Metric]:
-        peers = TrafficCounter.objects.values("source").annotate(
-            total=Count("id", filter=Q(present=True)),
-            online=Count("id", filter=self._online.filter(self._now)),
-            collected=Max("collected_at"),
+        # Every member of a server group has the peers of the leading server: a key counts once,
+        # under the source of its keys, whichever members see it.
+        peers = TrafficCounter.objects.values("key_source").annotate(
+            total=Count("public_key", filter=Q(present=True), distinct=True),
+            online=Count("public_key", filter=self._online.filter(self._now), distinct=True),
         )
+        # The reading time stays per server: a member the panel cannot read falls behind.
+        collected = TrafficCounter.objects.values("source").annotate(at=Max("collected_at"))
         return [
             Metric(
                 "lamnezia_peers",
                 "gauge",
                 "Peers seen in the latest reading.",
-                {row["source"]: row["total"] for row in peers},
+                {row["key_source"]: row["total"] for row in peers},
             ),
             Metric(
                 "lamnezia_peers_online",
                 "gauge",
                 "Peers with a recent handshake or, without one (XRay), recent traffic.",
-                {row["source"]: row["online"] for row in peers},
+                {row["key_source"]: row["online"] for row in peers},
             ),
             Metric(
                 "lamnezia_traffic_collected_timestamp_seconds",
                 "gauge",
                 "Unix time of the latest successful reading.",
-                {row["source"]: row["collected"].timestamp() for row in peers},
+                {row["source"]: row["at"].timestamp() for row in collected},
             ),
         ]
 

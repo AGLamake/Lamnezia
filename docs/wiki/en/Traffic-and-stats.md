@@ -46,7 +46,8 @@ down — the **Statistics** page warns **Traffic is not counted on some servers*
 protocol, when the panel last checked them, the cause and what to do (save the XRay protocol
 settings or start the container), with a link to the server. The traffic of those keys is unknown
 meanwhile, not zero: it is not counted against the limits and the keys are left out of **Inactive
-keys**. Counting resumes from zero once the cause is fixed.
+keys**. Counting resumes from zero once the cause is fixed. In a server group a member that does not
+answer makes the traffic of every key of the group unknown: the member is listed in the warning.
 
 ## Statistics page
 
@@ -107,5 +108,8 @@ Metrics are per protocol instance (`source` label), never per key:
 | `lamnezia_peers` | gauge | Peers in the latest reading (disabled keys are not counted) |
 | `lamnezia_peers_online` | gauge | Of them online: a handshake in 3 minutes or, for XRay, traffic growth |
 | `lamnezia_traffic_collected_timestamp_seconds` | gauge | Time of the latest reading; falls behind when the server cannot be read |
+
+In a server group traffic and peers go under the `source` of the leading server: a group key counts
+once, however many members have it. The reading time stays per member.
 
 Alert example: `time() - lamnezia_traffic_collected_timestamp_seconds > 900`.
