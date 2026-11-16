@@ -110,9 +110,11 @@ class Health:
 class Watch:
     """The sticky choice of one group: stay on the active member while it lives.
 
-    After `limit` failed probes in a row the group moves to the first live member by priority,
-    which is probed once more right before the switch. A member of higher priority that comes
-    back does not take the group over: every switch drops the sessions of all clients.
+    After `limit` failed probes in a row the group moves to the first member by priority that
+    answered the probe of this same round. It is not probed once more: a member drops a second
+    handshake that comes within milliseconds of the first, and on a short link the switch would
+    then never happen. A member of higher priority that comes back does not take the group over:
+    every switch drops the sessions of all clients.
     """
 
     def __init__(self, group: Group, limit: int, active: Backend | None = None) -> None:
@@ -135,11 +137,7 @@ class Watch:
         if self.active in self.health and self.health[self.active].failures < self.limit:
             return False
         for candidate in self.group.backends:
-            if candidate == self.active or not self.health[candidate].alive:
-                continue
-            alive = probe(candidate)
-            self.health[candidate].record(alive, now)
-            if alive:
+            if candidate != self.active and self.health[candidate].alive:
                 self.active, self.switched_at = candidate, now
                 return True
         return False

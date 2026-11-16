@@ -1546,6 +1546,10 @@ msgstr "Покинуть"
 msgid "Leave %(server)s to catch up"
 msgstr "Оставить %(server)s для догона"
 
+#, python-format
+msgid "Leave %(server)s to catch up later"
+msgstr "%(server)s догонит группу позже"
+
 msgid "Leave a server group"
 msgstr "Выход из группы серверов"
 

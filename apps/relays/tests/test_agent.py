@@ -144,10 +144,9 @@ def test_switches_after_failures_in_a_row_without_the_panel(
 
     assert active(folder) == core(B)
     calls = network.since(mark)
-    # The candidate is probed again right before the switch, then the rule and conntrack go.
-    probes_of_b = [index for index, call in enumerate(calls) if call == ("probe", B)]
-    assert len(probes_of_b) == 2
-    assert calls[probes_of_b[1] + 1 :] == [("forward", None), ("forget", PORT)]
+    # The probe of the round decides, then the rule and conntrack go.
+    assert calls.count(("probe", B)) == 1
+    assert calls[-2:] == [("forward", None), ("forget", PORT)]
     assert f"dnat to {B}" in network.rules and f"dnat to {A}" not in network.rules
     assert f"ip daddr {B.host} udp dport {B.port} masquerade" in network.rules
 
@@ -163,25 +162,26 @@ def test_skips_a_dead_candidate(network: FakeNetwork, folder: Path) -> None:
     assert active(folder) == core(C)
 
 
-def test_a_candidate_failing_the_second_probe_is_not_taken(folder: Path) -> None:
-    class Flaky(FakeNetwork):
-        """B answers the regular probe, made after A, but not the one before the switch."""
+def test_a_member_dropping_a_handshake_right_after_another_still_takes_the_group(
+    folder: Path,
+) -> None:
+    class Strict(FakeNetwork):
+        """Like WireGuard, B drops a handshake that comes right after one it has answered."""
 
         def probe(self, group: Group, backend: Backend) -> bool:
-            confirming = backend == B and self.calls[-1] != ("probe", A)
-            return super().probe(group, backend) and not confirming
+            repeated = self.calls[-1:] == [("probe", backend)]
+            return super().probe(group, backend) and not repeated
 
-    network = Flaky(alive={A, B})
+    (folder / "config.json").write_text(config((PORT, (A, B))))
+    network = Strict(alive={A, B})
     agent = agent_for(network, folder)
     agent.tick()
     network.alive = {B}
-    mark = len(network.calls)
 
     for _ in range(3):
         agent.tick()
 
-    assert active(folder) == core(A)
-    assert ("forget", PORT) not in network.since(mark)
+    assert active(folder) == core(B)
 
 
 def test_does_not_go_back_to_a_member_of_higher_priority(

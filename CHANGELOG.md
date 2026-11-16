@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Wiki page about server groups and the relay**, moved out of *Servers and import*, with the
+  measured switching times: 12-14 s to switch and 17-22 s without connection when the active
+  member fails, 11-14 s for a planned switch, with the default timers.
 - **Incomplete traffic in usage and the forecast**: when the traffic of some keys of a user is
   unknown, the portal **Usage** page warns that its numbers and forecast may be below the real ones,
   and the **Limit runs out** list of the statistics marks the user *incomplete data*.
@@ -147,6 +150,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The relay did not switch right after a member came back**: before a switch the agent probed
+  the candidate a second time within milliseconds, and the member dropped that handshake, so on a
+  short link the clients stayed without connection as long as the active member was down. The
+  switch now takes the member that answered in the same round of probes. An installed relay gets
+  the fixed agent after **Update** on its server card.
+- **Relay install or update broke on a busy member** ("log() is only allowed inside a step") when
+  another operation held the lock of a member while the service peer was being placed. The member
+  is now left lagging for its catch-up with the reason in a step of its own.
 - **Outage of a deleted server or relay stayed remembered**: deleting a server or a relay now
   forgets its open `server_down` / `relay_down` trouble.
 - **Relay update failed with "Unexpected error" after every step succeeded** when the

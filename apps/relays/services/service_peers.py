@@ -114,8 +114,7 @@ class ServicePeerPlacement:
             with self._ctx.step(_("Add the service peer on %(server)s") % {"server": server.name}):
                 PeerManager(host, self._ctx).enable(wanted, PEER_NAME)
         except CatalogError as error:
-            self._ctx.log(f"{server.name}: {error.message}")
-            self._replicas.fall_behind(server)
+            self._fall_behind(server, error.message)
 
     def _drop(self, reached: tuple[GroupServer, RemoteHost], peer: ServicePeer) -> None:
         """Revoke the peer on a member; a member that fails lags and loses it on its catch-up."""
@@ -126,8 +125,13 @@ class ServicePeerPlacement:
             ):
                 PeerManager(host, self._ctx).revoke(peer.public_key)
         except CatalogError as error:
-            self._ctx.log(f"{server.name}: {error.message}")
-            self._replicas.fall_behind(server)
+            self._fall_behind(server, error.message)
+
+    def _fall_behind(self, server: GroupServer, reason: str) -> None:
+        """The failed step is closed already, so the reason goes into a step of its own."""
+        with self._ctx.step(_("Leave %(server)s to catch up later") % {"server": server.name}):
+            self._ctx.log(reason)
+        self._replicas.fall_behind(server)
 
 
 def _reserved(source: str) -> list[IPv4Address]:

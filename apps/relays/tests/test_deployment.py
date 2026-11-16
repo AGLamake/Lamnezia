@@ -17,7 +17,7 @@ from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT, Fakes, su
 from apps.keys.models import AccessKey
 from apps.keys.services.actions import KeyActions
 from apps.keys.services.drift import compare
-from apps.keys.services.peers import read_registry
+from apps.keys.services.peers import PeerManager, read_registry
 from apps.keys.services.service_peers import service_peers
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
@@ -33,6 +33,7 @@ from apps.relays.services.deployment import INSTALL_KIND, REMOVE_KIND, UPDATE_KI
 from apps.relays.tests.conftest import RELAY_HOST
 from apps.relays.tests.fake_relay import FakeRelayServer
 from apps.servers.models import Server
+from apps.ssh.errors import ErrorCode, ServerLockError
 
 pytestmark = pytest.mark.django_db
 
@@ -444,6 +445,24 @@ def test_sync_names_a_member_on_the_relay_server(
     relay = Relay.objects.get(server=relay_server)
     assert relay.sync_skipped == SyncSkip.MEMBER_ON_RELAY
     assert relayed.name in relay.sync_skipped_detail
+
+
+@pytest.mark.usefixtures("relayed")
+def test_a_busy_member_falls_behind_without_breaking_the_install(
+    relay_server: Server, joined: GroupMember, admin: User, start: Start, monkeypatch: MonkeyPatch
+) -> None:
+    def busy(*_args: object) -> None:
+        raise ServerLockError(ErrorCode.SERVER_BUSY, "exit 75")
+
+    monkeypatch.setattr(PeerManager, "enable", busy)
+
+    operation = run(INSTALL_KIND, relay_server, admin, start)
+
+    succeeded(operation)
+    joined.refresh_from_db()
+    assert joined.lagging
+    logs = "".join(step.log for step in operation.steps.all())
+    assert ServerLockError(ErrorCode.SERVER_BUSY).message in logs
 
 
 @pytest.mark.usefixtures("relayed")
