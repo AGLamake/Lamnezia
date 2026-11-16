@@ -123,6 +123,9 @@
   {% if relay %}
     <p class="help-text">{% if relay.read_error %}{% translate "The panel cannot read the relay state now; the columns show the last reading." %} {% endif %}{% if relay.read_at %}{% blocktranslate with when=relay.read_at|date:"SHORT_DATETIME_FORMAT" %}Relay state read {{ when }}.{% endblocktranslate %}{% endif %}{% if health.switched_at %} {% blocktranslate with when=health.switched_at|unix_time|date:"SHORT_DATETIME_FORMAT" %}Last switch {{ when }}.{% endblocktranslate %}{% endif %}</p>
   {% endif %}
+  {% if last_switch %}
+    <p id="last-switch" class="help-text">{% blocktranslate with when=last_switch.created_at|date:"SHORT_DATETIME_FORMAT" %}Last planned switch, started {{ when }}:{% endblocktranslate %} <a href="{% url 'operations:detail' last_switch.pk %}" class="font-medium hover:underline">{{ last_switch.subject|default:last_switch.get_status_display }}</a> ({{ last_switch.get_status_display }}){% if last_switch.status == "failed" and last_switch.error_message %}: {{ last_switch.error_message }}{% endif %}</p>
+  {% endif %}
 </section>
 
 <section class="card space-y-3">

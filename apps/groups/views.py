@@ -48,7 +48,7 @@ from apps.protocols.models import ProtocolInstance
 from apps.relays.errors import RelayError
 from apps.relays.models import Relay
 from apps.relays.services.health import GroupHealth
-from apps.relays.services.switch import start_switch
+from apps.relays.services.switch import last_switch, start_switch
 from apps.servers.models import Server
 
 
@@ -108,7 +108,8 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
     """The members of a group, the standalone servers that may join it and those without AWG.
 
     The operations under way that a change of the group waits for are listed with links: joins
-    and installs, and the key operations that hold the lead. `?leader_leaves=1` (after a leading
+    and installs, and the key operations that hold the lead; the last planned switch of the relay
+    is shown with its result. `?leader_leaves=1` (after a leading
     server was asked to leave) offers to hand the lead to another member first.
     """
 
@@ -139,6 +140,7 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
             key_operations=list(key_operations(leader.instance.source)) if leader else [],
             relay=relay,
             health=health,
+            last_switch=last_switch(group),
             client_host=client_host(group),
             domain_warnings=_domain_warnings(group),
             candidates=candidates,

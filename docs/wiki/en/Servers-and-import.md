@@ -294,6 +294,8 @@ member does not answer. Every client of the group loses its connection for about
 switch is a background operation; it ends with the notification of a switch. A relay agent of an
 older release does not answer the request: update the relay on the server card first. The agent
 then goes on switching by itself as before: a planned switch does not pin the group to the member.
+Under the member list the group page shows the last planned switch: when it was started, its
+status with a link to the operation and, if it failed, the reason.
 
 When the members, their order, the lagging ones, the port of a group, the address of a member
 server or the keys and parameters of a member change, the panel updates the relay by itself right

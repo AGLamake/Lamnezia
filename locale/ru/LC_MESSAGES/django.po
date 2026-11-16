@@ -1505,6 +1505,10 @@ msgid "Last message"
 msgstr "Последнее сообщение"
 
 #, python-format
+msgid "Last planned switch, started %(when)s:"
+msgstr "Последнее плановое переключение, запущено %(when)s:"
+
+#, python-format
 msgid "Last reading %(when)s."
 msgstr "Последнее чтение %(when)s."
 

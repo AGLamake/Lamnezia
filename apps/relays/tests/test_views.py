@@ -11,7 +11,7 @@ from amnezia_core.relay import DEFAULT_FAILURES
 from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.groups.models import GroupMember, ServerGroup
-from apps.operations.models import Operation
+from apps.operations.models import Operation, OperationStatus
 from apps.relays.models import Relay, SyncSkip
 from apps.relays.services.deployment import INSTALL_KIND, UPDATE_KIND
 from apps.relays.services.switch import SWITCH_KIND
@@ -188,3 +188,35 @@ def test_switch_without_an_installed_relay_says_why(browser: Client, watched: Re
 
     assert not Operation.objects.filter(kind=SWITCH_KIND).exists()
     assert "relay container is not on the server" in response.content.decode()
+
+
+def test_the_group_page_shows_the_result_of_the_last_planned_switch(
+    browser: Client, watched: Relay
+) -> None:
+    group = watched.server.relayed_groups.get()
+    params = {"group_id": group.pk}
+    Operation.objects.create(kind=SWITCH_KIND, params=params, status=OperationStatus.SUCCEEDED)
+    failed = Operation.objects.create(
+        kind=SWITCH_KIND,
+        params=params,
+        subject="Europe: AmneziaWG",
+        status=OperationStatus.FAILED,
+        error_message="The relay cannot reach the server.",
+    )
+    Operation.objects.create(kind=SWITCH_KIND, params={"group_id": group.pk + 1})
+
+    page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert "Last planned switch" in page
+    assert reverse("operations:detail", args=[failed.pk]) in page
+    assert "The relay cannot reach the server." in page
+
+
+def test_a_group_never_switched_by_hand_shows_no_planned_switch(
+    browser: Client, watched: Relay
+) -> None:
+    group = watched.server.relayed_groups.get()
+
+    page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert "Last planned switch" not in page

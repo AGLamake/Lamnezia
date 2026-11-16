@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Last planned switch on the group page**: when it was started, its status with a link to the
+  operation and the reason of a failure.
 - **A failed group join can be retried or undone**: a member stuck joining is marked "join failed"
   and gets **Retry joining** and **Take out of the group**. Taking it out puts back the snapshot
   taken before the join, or a clean AmneziaWG if the server had no clients; a server that still

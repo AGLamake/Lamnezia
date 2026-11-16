@@ -21,7 +21,7 @@ from amnezia_core.errors import AmneziaFormatError
 from amnezia_core.relay import RelayState, SwitchOutcome, SwitchRequest, SwitchResult
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
-from apps.groups.models import GroupMember
+from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.replication import backends
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
@@ -70,6 +70,12 @@ def start_switch(member: GroupMember, *, user: User, ip: str | None = None) -> O
         data = {"operation": operation.pk, "instance": member.instance_id}
         audit.log(SWITCH_KIND, actor=user, target=group, data=data, ip=ip)
     return operation
+
+
+def last_switch(group: ServerGroup) -> Operation | None:
+    """The newest planned switch of the group, finished or still under way."""
+    switches = Operation.objects.filter(kind=SWITCH_KIND, params__group_id=group.pk)
+    return switches.order_by("-created_at", "-pk").first()
 
 
 class RelaySwitch:
