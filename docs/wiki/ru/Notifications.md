@@ -53,6 +53,13 @@
 | Ни один сервер группы не доступен | `group_unreachable` | `group`, `relay` |
 | Ретранслятор не отвечает | `relay_down` | `relay`, `host`, `last_seen` |
 | Сервер группы отстаёт | `member_lagging` | `group`, `server`, `since` |
+| Сервер группы снова доступен с ретранслятора | `member_reachable` | `group`, `relay`, `server` |
+| Сервер группы снова доступен | `group_reachable` | `group`, `relay` |
+| Ретранслятор снова отвечает | `relay_up` | `relay`, `host`, `last_seen` |
+| Сервер группы догнал группу | `member_caught_up` | `group`, `server`, `since` |
+
+Последние четыре приходят только после уведомления о соответствующем сбое (`member_unreachable`,
+`group_unreachable`, `relay_down`, `member_lagging`), один раз, когда сбой закончился.
 
 Уведомления о пользователе уходят туда, что он выбрал на странице **Мессенджеры**: по умолчанию
 на email или в привязанный Telegram или Discord ([Telegram и Discord](Messengers.md)).

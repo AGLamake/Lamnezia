@@ -4,6 +4,7 @@ docs/FALLBACK.md section 7. A reading matches the members the agent names by add
 group members and notifies of a switch, a member the relay cannot reach and a group with no
 member left. A relay whose state the panel cannot read for two intervals is reported once per
 outage, as a server that is down. Members that lag behind their group too long are reported too.
+Each of these but a switch has a pair told once when it is over, and only after it was told.
 Every reading with a known load is kept for the load chart (services/load.py).
 """
 
@@ -13,17 +14,29 @@ from contextlib import AbstractContextManager
 from datetime import datetime, timedelta
 from ipaddress import IPv4Address
 
+from django.db.models import Exists, OuterRef, Value
+from django.db.models.functions import Concat, Substr
 from django.utils import timezone
 
 from amnezia_core.errors import AmneziaFormatError
 from amnezia_core.relay import Backend, RelayState
-from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.notifications.events import Event
+from apps.notifications.models import Notification
 from apps.notifications.services.delivery import emit
 from apps.protocols.services.installer import ipv4_addresses
 from apps.relays.models import Relay, RelaySample
 from apps.relays.services.container import FOLDER, NAME
-from apps.relays.services.health import AllDown, Change, Member, MemberDown, RelayHealth, Switched
+from apps.relays.services.health import (
+    AllDown,
+    Change,
+    GroupUp,
+    Member,
+    MemberDown,
+    MemberUp,
+    RelayHealth,
+    Switched,
+)
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.ssh.errors import SshError
@@ -85,6 +98,7 @@ class RelayMonitor:
 
     def _record(self, relay: Relay, state: RelayState) -> None:
         previous = RelayHealth.load(relay.health)
+        _report_up(relay)
         health = RelayHealth.of(state, _members(relay.server))
         rates = health.rates(previous)
         relay.health = health.to_dict()
@@ -151,16 +165,44 @@ def _notify(change: Change, group: ServerGroup, relay: Relay, at: int) -> None:
                 {"group": group.name, "relay": relay_name},
                 key=f"group_unreachable:{group.pk}:{at}",
             )
+        case MemberUp(member=member):
+            emit(
+                Event.MEMBER_REACHABLE,
+                {"group": group.name, "relay": relay_name, "server": member.name},
+                key=f"member_reachable:{member.id}:{at}",
+            )
+        case GroupUp():
+            emit(
+                Event.GROUP_REACHABLE,
+                {"group": group.name, "relay": relay_name},
+                key=f"group_reachable:{group.pk}:{at}",
+            )
 
 
 def _report_down(relay: Relay) -> None:
     """Once per outage: the key holds the last reading, which changes only after a new one."""
-    last_seen = relay.read_at.isoformat() if relay.read_at else ""
+    last_seen = _last_seen(relay)
     emit(
         Event.RELAY_DOWN,
         {"relay": relay.server.name, "host": relay.server.host, "last_seen": last_seen},
         key=f"relay_down:{relay.pk}:{last_seen or 'never'}",
     )
+
+
+def _report_up(relay: Relay) -> None:
+    """Before a reading is kept: the outage ends if it was told, with the same last reading."""
+    last_seen = _last_seen(relay)
+    occurrence = f"{relay.pk}:{last_seen or 'never'}"
+    if Notification.objects.filter(key=f"relay_down:{occurrence}").exists():
+        emit(
+            Event.RELAY_UP,
+            {"relay": relay.server.name, "host": relay.server.host, "last_seen": last_seen},
+            key=f"relay_up:{occurrence}",
+        )
+
+
+def _last_seen(relay: Relay) -> str:
+    return relay.read_at.isoformat() if relay.read_at else ""
 
 
 def report_lagging(threshold: timedelta, now: datetime | None = None) -> None:
@@ -177,3 +219,37 @@ def report_lagging(threshold: timedelta, now: datetime | None = None) -> None:
             {"group": member.group.name, "server": member.instance.server.name, "since": moment},
             key=f"member_lagging:{member.pk}:{moment}",
         )
+
+
+def report_caught_up() -> None:
+    """Members told lagging that no longer lag since that moment, once per lag.
+
+    The key of a lag names the member and the moment it started: `member_lagging:<id>:<moment>`.
+    """
+    lagging, caught_up = f"{Event.MEMBER_LAGGING}:", f"{Event.MEMBER_CAUGHT_UP}:"
+    pair = Concat(Value(caught_up), Substr("key", len(lagging) + 1))
+    open_lags = (
+        Notification.objects.filter(event=Event.MEMBER_LAGGING, key__startswith=lagging)
+        .annotate(pair=pair)
+        .exclude(Exists(Notification.objects.filter(key=OuterRef("pair"))))
+        .values_list("key", flat=True)
+    )
+    for key in open_lags:
+        assert key is not None
+        member_id, moment = key.removeprefix(lagging).split(":", 1)
+        member = (
+            GroupMember.objects.filter(pk=member_id, state=MemberState.MEMBER)
+            .select_related("group", "instance__server")
+            .first()
+        )
+        if member is None or _lags_since(member, moment):
+            continue
+        emit(
+            Event.MEMBER_CAUGHT_UP,
+            {"group": member.group.name, "server": member.instance.server.name, "since": moment},
+            key=f"{caught_up}{member_id}:{moment}",
+        )
+
+
+def _lags_since(member: GroupMember, moment: str) -> bool:
+    return member.lagging_since is not None and member.lagging_since.isoformat() == moment

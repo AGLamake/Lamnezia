@@ -8,8 +8,10 @@ from amnezia_core.relay import Backend, RelayState
 from apps.relays.services.health import (
     AllDown,
     GroupHealth,
+    GroupUp,
     Member,
     MemberDown,
+    MemberUp,
     RelayHealth,
     Switched,
 )
@@ -122,6 +124,28 @@ def test_all_members_down_is_told_once() -> None:
     ]
     assert first.groups[PORT].all_down
     assert list(reading(at=AT + 60, active=None, backends=down).changes(first)) == []
+
+
+def test_a_member_that_answers_again_is_told_once() -> None:
+    down = reading(backends=[backend(FIRST), backend(SECOND, alive=False, failures=3)])
+    up = reading(at=AT + 60)
+
+    assert list(up.changes(down)) == [MemberUp(PORT, JOINER)]
+    assert list(reading(at=AT + 120).changes(up)) == []
+
+
+def test_a_member_that_was_never_down_is_not_told_up() -> None:
+    assert list(reading().changes(None)) == []
+    assert list(reading(at=AT + 60).changes(reading())) == []
+
+
+def test_a_group_that_has_a_member_again_is_told_once() -> None:
+    down = [backend(FIRST, alive=False, failures=3), backend(SECOND, alive=False, failures=5)]
+    gone = reading(active=None, backends=down)
+    back = reading(at=AT + 60, backends=[backend(FIRST), down[1]])
+
+    assert list(back.changes(gone)) == [MemberUp(PORT, LEADER), GroupUp(PORT)]
+    assert list(reading(at=AT + 120, backends=[backend(FIRST), down[1]]).changes(back)) == []
 
 
 def test_rates_come_from_the_counters_of_two_readings() -> None:

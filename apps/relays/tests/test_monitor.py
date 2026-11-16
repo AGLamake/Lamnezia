@@ -19,6 +19,7 @@ from apps.relays.services.monitor import (
     STALE,
     STATE_PATH,
     RelayMonitor,
+    report_caught_up,
     report_lagging,
 )
 from apps.relays.tests.fake_relay import FakeRelayServer
@@ -37,6 +38,10 @@ EVENTS = [
     Event.GROUP_UNREACHABLE,
     Event.RELAY_DOWN,
     Event.MEMBER_LAGGING,
+    Event.MEMBER_REACHABLE,
+    Event.GROUP_REACHABLE,
+    Event.RELAY_UP,
+    Event.MEMBER_CAUGHT_UP,
 ]
 
 
@@ -268,3 +273,99 @@ def test_a_member_lagging_too_long_is_told_once(relayed: ServerGroup) -> None:
             "since": joiner.lagging_since.isoformat(),
         }
     ]
+
+
+def test_a_member_and_a_group_reachable_again_are_told_once(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    watch = monitor(relay_fake, clock)
+    down = [
+        backend(LEADER_HOST, alive=False, failures=3),
+        backend(JOINER_HOST, alive=False, failures=4),
+    ]
+    write_state(relay_fake, active=None, backends=down)
+    watch.poll(relay)
+
+    write_state(relay_fake, at=AT + 60, backends=[backend(LEADER_HOST), down[1]])
+    clock.now = NOW + timedelta(seconds=60)
+    watch.poll(relay)
+    write_state(relay_fake, at=AT + 120, backends=[backend(LEADER_HOST), down[1]])
+    clock.now = NOW + timedelta(seconds=120)
+    watch.poll(relay)
+
+    leader = GroupMember.objects.get(leading=True).instance.server.name
+    group = relay.server.relayed_groups.get().name
+    assert told(Event.MEMBER_REACHABLE) == [
+        {"group": group, "relay": relay.server.name, "server": leader}
+    ]
+    assert told(Event.GROUP_REACHABLE) == [{"group": group, "relay": relay.server.name}]
+
+
+def test_a_relay_answering_again_is_told_once_after_its_outage(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    watch = monitor(relay_fake, clock)
+    write_state(relay_fake)
+    watch.poll(relay)
+    clock.now = NOW + 3 * INTERVAL
+    RelayMonitor(INTERVAL, connect=silent, clock=clock).poll(relay)
+
+    write_state(relay_fake, at=AT + 4 * 60)
+    clock.now = NOW + 4 * INTERVAL
+    watch.poll(relay)
+    write_state(relay_fake, at=AT + 5 * 60)
+    clock.now = NOW + 5 * INTERVAL
+    watch.poll(relay)
+
+    assert told(Event.RELAY_UP) == [
+        {"relay": relay.server.name, "host": relay.server.host, "last_seen": NOW.isoformat()}
+    ]
+
+
+def test_a_relay_not_told_down_is_not_told_up(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    watch = monitor(relay_fake, clock)
+    write_state(relay_fake)
+    watch.poll(relay)
+    clock.now = NOW + INTERVAL
+    RelayMonitor(INTERVAL, connect=silent, clock=clock).poll(relay)
+
+    write_state(relay_fake, at=AT + 2 * 60)
+    clock.now = NOW + 2 * INTERVAL
+    watch.poll(relay)
+
+    assert not told(Event.RELAY_DOWN)
+    assert not told(Event.RELAY_UP)
+
+
+def test_a_member_caught_up_is_told_once_after_its_lag(relayed: ServerGroup) -> None:
+    joiner = GroupMember.objects.get(leading=False)
+    since = NOW - timedelta(hours=2)
+    joiner.lagging_since = since
+    joiner.save(update_fields=["lagging_since"])
+    report_lagging(timedelta(hours=1), now=NOW)
+    report_caught_up()
+    assert not told(Event.MEMBER_CAUGHT_UP)
+
+    joiner.lagging_since = None
+    joiner.save(update_fields=["lagging_since"])
+    report_caught_up()
+    report_caught_up()
+
+    assert told(Event.MEMBER_CAUGHT_UP) == [
+        {"group": relayed.name, "server": joiner.instance.server.name, "since": since.isoformat()}
+    ]
+
+
+def test_a_member_never_told_lagging_is_not_told_caught_up(relayed: ServerGroup) -> None:
+    leader = GroupMember.objects.get(leading=True)
+    leader.lagging_since = NOW - timedelta(minutes=10)
+    leader.save(update_fields=["lagging_since"])
+    report_lagging(timedelta(hours=1), now=NOW)
+
+    leader.lagging_since = None
+    leader.save(update_fields=["lagging_since"])
+    report_caught_up()
+
+    assert not told(Event.MEMBER_CAUGHT_UP)

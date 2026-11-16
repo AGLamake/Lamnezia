@@ -78,8 +78,17 @@ msgstr "События"
 msgid "Failed"
 msgstr "Ошибка"
 
+msgid "Group server caught up"
+msgstr "Сервер группы догнал группу"
+
 msgid "Group server lags behind"
 msgstr "Сервер группы отстаёт"
+
+msgid "Group server reachable again"
+msgstr "Сервер группы снова доступен"
+
+msgid "Group server reachable from the relay again"
+msgstr "Сервер группы снова доступен с ретранслятора"
 
 msgid "Group server unreachable from the relay"
 msgstr "Сервер группы недоступен с ретранслятора"
@@ -175,11 +184,17 @@ msgstr "Оплата получена"
 msgid "Payment received: {user}"
 msgstr "Оплата получена: {user}"
 
+msgid "Relay answers again"
+msgstr "Ретранслятор снова отвечает"
+
 msgid "Relay does not answer"
 msgstr "Ретранслятор не отвечает"
 
 msgid "Relay switched"
 msgstr "Ретранслятор переключился"
+
+msgid "Relay {relay} answers again"
+msgstr "Ретранслятор {relay} снова отвечает"
 
 #, python-brace-format
 msgid "Relay {relay} does not answer"
@@ -264,6 +279,9 @@ msgstr "Ключи пользователя {user} отключены: {reason}.
 msgid "The panel cannot read the state of the relay {relay} ({host}). Last reading: {last_seen}. The relay may still forward the clients on its own."
 msgstr "Панель не может прочитать состояние ретранслятора {relay} ({host}). Последнее чтение: {last_seen}. Сам ретранслятор при этом может продолжать пересылать клиентов."
 
+msgid "The panel reads the state of the relay {relay} ({host}) again. Reading before the outage: {last_seen}."
+msgstr "Панель снова читает состояние ретранслятора {relay} ({host}). Последнее чтение до сбоя: {last_seen}."
+
 #, python-brace-format
 msgid "The problem with {server} you reported is fixed. Thank you for telling us."
 msgstr "Проблема с {server}, о которой вы сообщили, устранена. Спасибо, что рассказали."
@@ -276,9 +294,15 @@ msgstr "Ретранслятор {relay} не достучался до серв
 msgid "The relay {relay} cannot reach the server {server} of the group {group}. The relay sends no clients to it until it answers again."
 msgstr "Ретранслятор {relay} не достучался до сервера {server} группы {group}. Ретранслятор не отправляет на него клиентов, пока он снова не ответит."
 
+msgid "The relay {relay} reaches a server of the group {group} again. The clients of the group have a connection."
+msgstr "Ретранслятор {relay} снова получает ответ от сервера группы {group}. У клиентов группы есть связь."
+
 #, python-brace-format
 msgid "The relay {relay} reaches no server of the group {group}. The clients of the group have no connection."
 msgstr "Ретранслятор {relay} не достучался ни до одного сервера группы {group}. У клиентов группы нет соединения."
+
+msgid "The relay {relay} reaches the server {server} of the group {group} again and may send clients to it."
+msgstr "Ретранслятор {relay} снова получает ответ от сервера {server} группы {group} и может отправлять на него клиентов."
 
 #, python-brace-format
 msgid "The request is now {status}."
@@ -291,6 +315,9 @@ msgstr "Сервер {server} ({host}) не отвечает. Последний
 #, python-brace-format
 msgid "The server {server} has missed key changes of the group {group} since {since}. The relay skips it until the panel copies the group files onto it."
 msgstr "Сервер {server} пропускает изменения ключей группы {group} с {since}. Ретранслятор обходит его, пока панель не скопирует на него файлы группы."
+
+msgid "The server {server} has the files of the group {group} again after lagging behind since {since}. The relay sends clients to it again."
+msgstr "Сервер {server} снова получил файлы группы {group} после отставания с {since}. Ретранслятор снова отправляет на него клиентов."
 
 #, python-brace-format
 msgid "The settings of {server} have changed. Open your keys in the personal account and import them into the Amnezia app again: the old ones no longer connect."
@@ -417,6 +444,9 @@ msgstr "пользователю"
 msgid "user"
 msgstr "пользователь"
 
+msgid "{group}: a server is reachable again"
+msgstr "{group}: сервер снова доступен"
+
 #, python-brace-format
 msgid "{group}: no server is reachable"
 msgstr "{group}: ни один сервер не доступен"
@@ -424,6 +454,12 @@ msgstr "{group}: ни один сервер не доступен"
 #, python-brace-format
 msgid "{group}: traffic moved to {to}"
 msgstr "{group}: трафик переведён на {to}"
+
+msgid "{server} caught up with the group {group}"
+msgstr "{server} догнал группу {group}"
+
+msgid "{server} is reachable from the relay again"
+msgstr "{server} снова доступен с ретранслятора"
 
 #, python-brace-format
 msgid "{server} is unreachable from the relay"

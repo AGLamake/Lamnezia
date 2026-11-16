@@ -8,7 +8,7 @@ from apps.core.models import Cleanup
 from apps.relays.models import Relay
 from apps.relays.services.deployment import sync_relays
 from apps.relays.services.load import prune_load
-from apps.relays.services.monitor import RelayMonitor, report_lagging
+from apps.relays.services.monitor import RelayMonitor, report_caught_up, report_lagging
 from apps.servers.services.thinning import HistoryThinner
 
 
@@ -24,6 +24,7 @@ def monitor() -> None:
     for relay_id in installed:
         monitor_relay.apply_async((relay_id,), expires=settings.RELAY_MONITOR_INTERVAL)
     report_lagging(timedelta(seconds=settings.GROUP_LAG_ALERT))
+    report_caught_up()
     prune_load(timezone.now() - timedelta(days=settings.MONITOR_HISTORY_DAYS))
 
 

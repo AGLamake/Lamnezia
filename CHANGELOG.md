@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Recovery notifications** paired with the relay events: `member_reachable`,
+  `group_reachable`, `relay_up` and `member_caught_up` come once when the trouble is over, only
+  after `member_unreachable`, `group_unreachable`, `relay_down` or `member_lagging` was told.
 - **Relay load chart**: the relay card shows the load from the clients and to them for the last
   day by hour and the last week by six hours. The monitor keeps every reading, thinned and deleted
   like the server readings; the history is listed in the Storage section of the statistics.

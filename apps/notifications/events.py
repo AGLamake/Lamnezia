@@ -47,6 +47,10 @@ class Event(StrEnum):
     GROUP_UNREACHABLE = "group_unreachable"
     RELAY_DOWN = "relay_down"
     MEMBER_LAGGING = "member_lagging"
+    MEMBER_REACHABLE = "member_reachable"
+    GROUP_REACHABLE = "group_reachable"
+    RELAY_UP = "relay_up"
+    MEMBER_CAUGHT_UP = "member_caught_up"
     TEST = "test"
 
 
@@ -304,6 +308,38 @@ EVENTS: dict[Event, EventType] = {
         _(
             "The server {server} has missed key changes of the group {group} since {since}. "
             "The relay skips it until the panel copies the group files onto it."
+        ),
+    ),
+    Event.MEMBER_REACHABLE: EventType(
+        _("Group server reachable from the relay again"),
+        _("{server} is reachable from the relay again"),
+        _(
+            "The relay {relay} reaches the server {server} of the group {group} again "
+            "and may send clients to it."
+        ),
+    ),
+    Event.GROUP_REACHABLE: EventType(
+        _("Group server reachable again"),
+        _("{group}: a server is reachable again"),
+        _(
+            "The relay {relay} reaches a server of the group {group} again. "
+            "The clients of the group have a connection."
+        ),
+    ),
+    Event.RELAY_UP: EventType(
+        _("Relay answers again"),
+        _("Relay {relay} answers again"),
+        _(
+            "The panel reads the state of the relay {relay} ({host}) again. "
+            "Reading before the outage: {last_seen}."
+        ),
+    ),
+    Event.MEMBER_CAUGHT_UP: EventType(
+        _("Group server caught up"),
+        _("{server} caught up with the group {group}"),
+        _(
+            "The server {server} has the files of the group {group} again after lagging behind "
+            "since {since}. The relay sends clients to it again."
         ),
     ),
     Event.TEST: EventType(

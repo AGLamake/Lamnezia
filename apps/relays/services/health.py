@@ -2,7 +2,8 @@
 
 The agent names members by address; the monitor matches them to group members, so the panel
 keeps member ids and names. Comparing a reading with the previous one gives the events of
-docs/FALLBACK.md section 7: a switch, a member the relay cannot reach, a group with none left.
+docs/FALLBACK.md section 7: a switch, a member the relay cannot reach, a group with none left,
+and the pairs of the last two: the member and the group reachable again.
 """
 
 from collections.abc import Iterator, Mapping
@@ -106,7 +107,22 @@ class AllDown:
     port: int
 
 
-type Change = Switched | MemberDown | AllDown
+@dataclass(frozen=True)
+class MemberUp:
+    """A member that was down answers again."""
+
+    port: int
+    member: Member
+
+
+@dataclass(frozen=True)
+class GroupUp:
+    """A group that had no member left has one that answers again."""
+
+    port: int
+
+
+type Change = Switched | MemberDown | AllDown | MemberUp | GroupUp
 
 
 @dataclass(frozen=True)
@@ -144,7 +160,8 @@ class RelayHealth:
     def changes(self, previous: "RelayHealth | None") -> Iterator[Change]:
         """What happened since `previous`; with none, only the members that are down now.
 
-        The first active member after an installation is no switch.
+        The first active member after an installation is no switch. A member or a group comes up
+        only after it was down in `previous`, so each up follows the down told before.
         """
         for port, group in self.groups.items():
             before = previous.groups.get(port) if previous else None
@@ -162,6 +179,11 @@ class RelayHealth:
                     yield MemberDown(port, member)
             if group.all_down and not (before and before.all_down):
                 yield AllDown(port)
+            for member in group.alive:
+                if member.id in was_down:
+                    yield MemberUp(port, member)
+            if before is not None and before.all_down and group.alive:
+                yield GroupUp(port)
 
     def rates(self, previous: "RelayHealth | None") -> tuple[float, float] | None:
         """Bytes per second from and to the clients since `previous`; None when unknown.

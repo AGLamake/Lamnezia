@@ -52,6 +52,13 @@ channels hear each event.
 | No group server reachable | `group_unreachable` | `group`, `relay` |
 | Relay does not answer | `relay_down` | `relay`, `host`, `last_seen` |
 | Group server lags behind | `member_lagging` | `group`, `server`, `since` |
+| Group server reachable from the relay again | `member_reachable` | `group`, `relay`, `server` |
+| Group server reachable again | `group_reachable` | `group`, `relay` |
+| Relay answers again | `relay_up` | `relay`, `host`, `last_seen` |
+| Group server caught up | `member_caught_up` | `group`, `server`, `since` |
+
+The last four come only after the matching notification of the trouble (`member_unreachable`,
+`group_unreachable`, `relay_down`, `member_lagging`), once when it is over.
 
 Notifications about the user go where they chose on their **Messengers** page: email by default,
 or their linked Telegram or Discord ([Telegram and Discord](Messengers.md)).

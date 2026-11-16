@@ -50,6 +50,10 @@
 | `group_unreachable` | Ретранслятор не получает ответа ни от одного участника группы: у её клиентов нет связи. | `group`, `relay` |
 | `relay_down` | Панель не читает состояние ретранслятора два интервала мониторинга: не отвечает ретранслятор или его агент. Один раз, пока чтение снова не удастся. | `relay`, `host`, `last_seen` — время последнего чтения или пустая строка |
 | `member_lagging` | Участник группы пропускает изменения ключей дольше `LAMNEZIA_GROUP_LAG_ALERT`. Один раз за отставание. | `group`, `server`, `since` — с какого момента отстаёт |
+| `member_reachable` | Ретранслятор снова получает ответ от участника группы, о недоступности которого сообщил (`member_unreachable`). Один раз за сбой. | `group`, `relay`, `server` — имя участника |
+| `group_reachable` | У группы, где ни один участник не отвечал (`group_unreachable`), снова есть доступный участник: у её клиентов есть связь. Один раз за сбой. | `group`, `relay` |
+| `relay_up` | Панель снова читает состояние ретранслятора, о котором сообщила, что он не отвечает (`relay_down`). Один раз за сбой. | `relay`, `host`, `last_seen` — время последнего чтения до сбоя или пустая строка |
+| `member_caught_up` | Участник, об отставании которого сообщалось (`member_lagging`), снова получил файлы группы. Один раз за отставание. | `group`, `server`, `since` — с какого момента отставал |
 | `test` | **Отправить тест** на странице канала. | `channel` — название канала |
 
 Сообщения в чате начнут приходить, когда появится чат поддержки. Могут добавиться новые
@@ -108,6 +112,14 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/relay_down"}}}},
     {"if": {"properties": {"event": {"const": "member_lagging"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/member_lagging"}}}},
+    {"if": {"properties": {"event": {"const": "member_reachable"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/member_reachable"}}}},
+    {"if": {"properties": {"event": {"const": "group_reachable"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/group_reachable"}}}},
+    {"if": {"properties": {"event": {"const": "relay_up"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/relay_up"}}}},
+    {"if": {"properties": {"event": {"const": "member_caught_up"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/member_caught_up"}}}},
     {"if": {"properties": {"event": {"const": "test"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/test"}}}}
   ],
@@ -230,6 +242,26 @@
       "properties": {"relay": {"type": "string"}, "host": {"type": "string"}, "last_seen": {"anyOf": [{"type": "string", "format": "date-time"}, {"const": ""}]}}
     },
     "member_lagging": {
+      "type": "object",
+      "required": ["group", "server", "since"],
+      "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
+    },
+    "member_reachable": {
+      "type": "object",
+      "required": ["group", "relay", "server"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}, "server": {"type": "string"}}
+    },
+    "group_reachable": {
+      "type": "object",
+      "required": ["group", "relay"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}}
+    },
+    "relay_up": {
+      "type": "object",
+      "required": ["relay", "host", "last_seen"],
+      "properties": {"relay": {"type": "string"}, "host": {"type": "string"}, "last_seen": {"anyOf": [{"type": "string", "format": "date-time"}, {"const": ""}]}}
+    },
+    "member_caught_up": {
       "type": "object",
       "required": ["group", "server", "since"],
       "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}

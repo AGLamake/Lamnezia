@@ -50,6 +50,10 @@ zone), `data` depends on the event.
 | `group_unreachable` | The relay reaches no member of a group: its clients have no connection. | `group`, `relay` |
 | `relay_down` | The panel has not read the relay state for two monitoring intervals: the relay or its agent does not answer. Once until a reading succeeds. | `relay`, `host`, `last_seen` — time of the last reading or an empty string |
 | `member_lagging` | A group member has missed key changes longer than `LAMNEZIA_GROUP_LAG_ALERT`. Once per lag. | `group`, `server`, `since` — when it started to lag |
+| `member_reachable` | The relay reaches again a member of a group it was told unreachable (`member_unreachable`). Once per outage. | `group`, `relay`, `server` — member name |
+| `group_reachable` | The relay reaches again a member of a group that had none (`group_unreachable`): its clients have a connection. Once per outage. | `group`, `relay` |
+| `relay_up` | The panel reads the state of a relay told down (`relay_down`) again. Once per outage. | `relay`, `host`, `last_seen` — time of the last reading before the outage or an empty string |
+| `member_caught_up` | A member told lagging (`member_lagging`) has the files of its group again. Once per lag. | `group`, `server`, `since` — when it started to lag |
 | `test` | **Send test** on the channel page. | `channel` — channel name |
 
 Chat messages are sent once the support chat is available. New events and new `data` fields
@@ -108,6 +112,14 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/relay_down"}}}},
     {"if": {"properties": {"event": {"const": "member_lagging"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/member_lagging"}}}},
+    {"if": {"properties": {"event": {"const": "member_reachable"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/member_reachable"}}}},
+    {"if": {"properties": {"event": {"const": "group_reachable"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/group_reachable"}}}},
+    {"if": {"properties": {"event": {"const": "relay_up"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/relay_up"}}}},
+    {"if": {"properties": {"event": {"const": "member_caught_up"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/member_caught_up"}}}},
     {"if": {"properties": {"event": {"const": "test"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/test"}}}}
   ],
@@ -230,6 +242,26 @@ may be added: ignore what you do not know.
       "properties": {"relay": {"type": "string"}, "host": {"type": "string"}, "last_seen": {"anyOf": [{"type": "string", "format": "date-time"}, {"const": ""}]}}
     },
     "member_lagging": {
+      "type": "object",
+      "required": ["group", "server", "since"],
+      "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
+    },
+    "member_reachable": {
+      "type": "object",
+      "required": ["group", "relay", "server"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}, "server": {"type": "string"}}
+    },
+    "group_reachable": {
+      "type": "object",
+      "required": ["group", "relay"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}}
+    },
+    "relay_up": {
+      "type": "object",
+      "required": ["relay", "host", "last_seen"],
+      "properties": {"relay": {"type": "string"}, "host": {"type": "string"}, "last_seen": {"anyOf": [{"type": "string", "format": "date-time"}, {"const": ""}]}}
+    },
+    "member_caught_up": {
       "type": "object",
       "required": ["group", "server", "since"],
       "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
