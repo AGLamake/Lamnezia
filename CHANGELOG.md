@@ -72,6 +72,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   clientsTable and does not restart AmneziaWG. A batch reissue changes each member under one lock
   with one `syncconf` instead of one per key.
 
+### Fixed
+
+- **Relay install or update with no member of a group answering** no longer fails with an
+  internal error: the service peer of that group is left for the next sync, and the operation log
+  says why.
+
 ## [1.0.0] - 2026-11-13
 
 The first release: a self-hosted web panel for Amnezia VPN servers, compatible with the Amnezia

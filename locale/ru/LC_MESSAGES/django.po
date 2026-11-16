@@ -1492,6 +1492,10 @@ msgstr "Выход из группы серверов"
 msgid "Leave the group"
 msgstr "Выйти из группы"
 
+#, python-format
+msgid "Leave the service peer of %(group)s for later"
+msgstr "Отложить служебный пир группы %(group)s"
+
 msgid "Let them leave first: then the leading server stays as a standalone one."
 msgstr "Сначала выведите их: тогда ведущий сервер останется одиночным."
 

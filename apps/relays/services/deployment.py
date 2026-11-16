@@ -105,7 +105,9 @@ class RelayDeployment:
             try:
                 ServicePeerPlacement(group, self._ctx).place()
             except CatalogError as error:
-                self._ctx.log(f"{group.name}: {error.message}")
+                title = _("Leave the service peer of %(group)s for later") % {"group": group.name}
+                with self._ctx.step(title):
+                    self._ctx.log(error.message)
 
     def _config(self, plan: RelayPlan) -> bytes:
         with self._ctx.step(_("Prepare the list of members")):

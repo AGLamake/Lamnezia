@@ -341,3 +341,20 @@ def test_sync_waits_for_a_running_operation(
     sync_relays()
 
     assert not Operation.objects.filter(kind=UPDATE_KIND).exists()
+
+
+@pytest.mark.usefixtures("relayed")
+@pytest.mark.parametrize("kind", [INSTALL_KIND, UPDATE_KIND])
+def test_no_member_answering_leaves_the_service_peer_for_later(
+    kind: str, relay_server: Server, down: set[str], admin: User, start: Start
+) -> None:
+    if kind == UPDATE_KIND:
+        succeeded(run(INSTALL_KIND, relay_server, admin, start))
+        ServicePeer.objects.all().delete()
+    down.update({LEADER_HOST, JOINER_HOST})
+
+    operation = run(kind, relay_server, admin, start)
+
+    succeeded(operation)
+    logs = "".join(step.log for step in operation.steps.all())
+    assert RelayError(RelayErrorCode.NO_MEMBER, "Europe").message in logs
