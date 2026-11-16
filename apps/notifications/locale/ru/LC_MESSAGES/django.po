@@ -193,6 +193,7 @@ msgstr "Ретранслятор не отвечает"
 msgid "Relay switched"
 msgstr "Ретранслятор переключился"
 
+#, python-brace-format
 msgid "Relay {relay} answers again"
 msgstr "Ретранслятор {relay} снова отвечает"
 
@@ -279,6 +280,7 @@ msgstr "Ключи пользователя {user} отключены: {reason}.
 msgid "The panel cannot read the state of the relay {relay} ({host}). Last reading: {last_seen}. The relay may still forward the clients on its own."
 msgstr "Панель не может прочитать состояние ретранслятора {relay} ({host}). Последнее чтение: {last_seen}. Сам ретранслятор при этом может продолжать пересылать клиентов."
 
+#, python-brace-format
 msgid "The panel reads the state of the relay {relay} ({host}) again. Reading before the outage: {last_seen}."
 msgstr "Панель снова читает состояние ретранслятора {relay} ({host}). Последнее чтение до сбоя: {last_seen}."
 
@@ -294,6 +296,7 @@ msgstr "Ретранслятор {relay} не достучался до серв
 msgid "The relay {relay} cannot reach the server {server} of the group {group}. The relay sends no clients to it until it answers again."
 msgstr "Ретранслятор {relay} не достучался до сервера {server} группы {group}. Ретранслятор не отправляет на него клиентов, пока он снова не ответит."
 
+#, python-brace-format
 msgid "The relay {relay} reaches a server of the group {group} again. The clients of the group have a connection."
 msgstr "Ретранслятор {relay} снова получает ответ от сервера группы {group}. У клиентов группы есть связь."
 
@@ -301,6 +304,7 @@ msgstr "Ретранслятор {relay} снова получает ответ 
 msgid "The relay {relay} reaches no server of the group {group}. The clients of the group have no connection."
 msgstr "Ретранслятор {relay} не достучался ни до одного сервера группы {group}. У клиентов группы нет соединения."
 
+#, python-brace-format
 msgid "The relay {relay} reaches the server {server} of the group {group} again and may send clients to it."
 msgstr "Ретранслятор {relay} снова получает ответ от сервера {server} группы {group} и может отправлять на него клиентов."
 
@@ -316,6 +320,7 @@ msgstr "Сервер {server} ({host}) не отвечает. Последний
 msgid "The server {server} has missed key changes of the group {group} since {since}. The relay skips it until the panel copies the group files onto it."
 msgstr "Сервер {server} пропускает изменения ключей группы {group} с {since}. Ретранслятор обходит его, пока панель не скопирует на него файлы группы."
 
+#, python-brace-format
 msgid "The server {server} has the files of the group {group} again after lagging behind since {since}. The relay sends clients to it again."
 msgstr "Сервер {server} снова получил файлы группы {group} после отставания с {since}. Ретранслятор снова отправляет на него клиентов."
 
@@ -444,6 +449,7 @@ msgstr "пользователю"
 msgid "user"
 msgstr "пользователь"
 
+#, python-brace-format
 msgid "{group}: a server is reachable again"
 msgstr "{group}: сервер снова доступен"
 
@@ -455,9 +461,11 @@ msgstr "{group}: ни один сервер не доступен"
 msgid "{group}: traffic moved to {to}"
 msgstr "{group}: трафик переведён на {to}"
 
+#, python-brace-format
 msgid "{server} caught up with the group {group}"
 msgstr "{server} догнал группу {group}"
 
+#, python-brace-format
 msgid "{server} is reachable from the relay again"
 msgstr "{server} снова доступен с ретранслятора"
 
