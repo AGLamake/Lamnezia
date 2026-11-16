@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A failed group join can be retried or undone**: a member stuck joining is marked "join failed"
+  and gets **Retry joining** and **Take out of the group**. Taking it out puts back the snapshot
+  taken before the join, or a clean AmneziaWG if the server had no clients; a server that still
+  runs its own key keeps its files. **Keep in the group** after a failed leave starts the catch-up
+  at once. The menu counter of groups to look at counts failed joins.
 - **Full-size load chart of a relay**: the relay card stacks the load from the clients and to them
   in bytes per second, with a **24 hours** / **7 days** switch. `bar_chart` takes `rate=True` for
   values in bytes per second.

@@ -19,6 +19,7 @@ from apps.audit.services import journal as audit
 from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
 from apps.groups.services.addressing import GroupKeyAddress
+from apps.groups.services.replication import start_catch_up
 from apps.keys.models import GONE_STATUSES, AccessKey, KeyStatus
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
@@ -31,6 +32,7 @@ DELETE_KIND = "groups.delete"
 UPDATE_KIND = "groups.update"
 JOIN_KIND = "groups.join"
 INSTALL_KIND = "groups.install"
+CANCEL_JOIN_KIND = "groups.cancel_join"
 LEAVE_KIND = "groups.leave"
 STAY_KIND = "groups.stay"
 # Started from apps/groups/services/settings.py; a handover waits for it to finish.
@@ -160,11 +162,49 @@ def start_join(
         if leader is not None and instance.subnet != leader.instance.subnet:
             raise GroupError(GroupErrorCode.OTHER_SUBNET, instance.source)
         member = _add_member(group, instance)
-        params = {"member_id": member.pk, "server_id": instance.server_id}
-        operation = launch(JOIN_KIND, params, user=user, subject=str(member))
-        data = {"operation": operation.pk, "instance": instance.pk}
-        audit.log(JOIN_KIND, actor=user, target=group, data=data, ip=ip)
+        operation = _launch_member(JOIN_KIND, member, user=user, ip=ip)
     return operation
+
+
+def join_failed(member: GroupMember) -> bool:
+    """Whether the member is stuck joining: its join failed and nothing runs for it now."""
+    return member.state == MemberState.JOINING and not _join_running(member)
+
+
+def retry_join(member: GroupMember, *, user: User, ip: str | None = None) -> Operation:
+    """Start the join of a member stuck joining again; it ends as a clone of the group."""
+    with transaction.atomic():
+        member = _stuck_joining(member)
+        operation = _launch_member(JOIN_KIND, member, user=user, ip=ip, retry=True)
+    return operation
+
+
+def cancel_join(member: GroupMember, *, user: User, ip: str | None = None) -> Operation:
+    """Start taking a member stuck joining out of the group: its server gets back the files it
+    had before the join, or a clean AmneziaWG when nothing was kept.
+    """
+    with transaction.atomic():
+        member = _stuck_joining(member)
+        operation = _launch_member(CANCEL_JOIN_KIND, member, user=user, ip=ip)
+    return operation
+
+
+def _stuck_joining(member: GroupMember) -> GroupMember:
+    """The member locked; GroupError unless its join failed."""
+    member = _locked(member)
+    if member.state != MemberState.JOINING:
+        raise GroupError(GroupErrorCode.NOT_JOINING, str(member.pk))
+    if _join_running(member):
+        raise GroupError(GroupErrorCode.JOIN_RUNNING, str(member.pk))
+    return member
+
+
+def _join_running(member: GroupMember) -> bool:
+    return Operation.objects.filter(
+        kind__in=(JOIN_KIND, CANCEL_JOIN_KIND),
+        status__in=(OperationStatus.PENDING, OperationStatus.RUNNING),
+        params__member_id=member.pk,
+    ).exists()
 
 
 def start_install(
@@ -213,7 +253,7 @@ def start_leave(member: GroupMember, *, user: User, ip: str | None = None) -> Op
             raise GroupError(GroupErrorCode.LEADER_LEAVES, str(member.pk))
         member.state = MemberState.LEAVING
         member.save(update_fields=["state"])
-        operation = _launch_leave(member, user=user, ip=ip)
+        operation = _launch_member(LEAVE_KIND, member, user=user, ip=ip)
     return operation
 
 
@@ -226,7 +266,7 @@ def retry_leave(member: GroupMember, *, user: User, ip: str | None = None) -> Op
     """Start the leave of a member stuck leaving again; it ends on a clean standalone server."""
     with transaction.atomic():
         member = _stuck_leaving(member)
-        operation = _launch_leave(member, user=user, ip=ip, retry=True)
+        operation = _launch_member(LEAVE_KIND, member, user=user, ip=ip, retry=True)
     return operation
 
 
@@ -235,14 +275,15 @@ def stay_in_group(member: GroupMember, *, user: User, ip: str | None = None) -> 
     """Take a member stuck leaving back into the group.
 
     The failed leave may have changed its server files, so it comes back lagging: the relay
-    skips it until the catch-up copies the files of the group onto it.
+    skips it while its catch-up, started at once, copies the files of the group onto it.
     """
     member = _stuck_leaving(member)
     member.state = MemberState.MEMBER
     member.lagging_since = timezone.now()
     member.lagging_reason = LagReason.STAYED
     member.save(update_fields=["state", "lagging_since", "lagging_reason"])
-    data = {"instance": member.instance_id}
+    operation = start_catch_up(member, user=user)
+    data = {"instance": member.instance_id, "operation": operation.pk if operation else None}
     audit.log(STAY_KIND, actor=user, target=member.group, data=data, ip=ip)
 
 
@@ -268,13 +309,14 @@ def _leave_running(member: GroupMember) -> bool:
     ).exists()
 
 
-def _launch_leave(
-    member: GroupMember, *, user: User, ip: str | None, retry: bool = False
+def _launch_member(
+    kind: str, member: GroupMember, *, user: User, ip: str | None, retry: bool = False
 ) -> Operation:
+    """Start an operation of `kind` on the member's server and journal it."""
     params = {"member_id": member.pk, "server_id": member.instance.server_id}
-    operation = launch(LEAVE_KIND, params, user=user, subject=str(member))
+    operation = launch(kind, params, user=user, subject=str(member))
     data = {"operation": operation.pk, "instance": member.instance_id, "retry": retry}
-    audit.log(LEAVE_KIND, actor=user, target=member.group, data=data, ip=ip)
+    audit.log(kind, actor=user, target=member.group, data=data, ip=ip)
     return operation
 
 

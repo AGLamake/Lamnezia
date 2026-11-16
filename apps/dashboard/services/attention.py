@@ -19,7 +19,7 @@ from apps.accounts.models import User
 from apps.accounts.services.applications import Applications
 from apps.accounts.services.zone import Zone
 from apps.groups.models import GroupMember, MemberState, ServerGroup
-from apps.groups.services.membership import leave_failed
+from apps.groups.services.membership import join_failed, leave_failed
 from apps.guides.models import Suggestion, UsefulMaterial
 from apps.operations.models import Operation, OperationStatus
 from apps.relays.models import Relay
@@ -111,7 +111,8 @@ class Attention:
 
     @cached_property
     def group_problems(self) -> int:
-        """Groups to look at: no member answers the relay, or a member lags or is stuck leaving."""
+        """Groups to look at: no member answers the relay, or a member lags or is stuck joining
+        or leaving."""
         if not self._member.is_admin:
             return 0
         troubled = {group.pk for group in self.groups_down()}
@@ -122,6 +123,8 @@ class Attention:
         )
         leaving = GroupMember.objects.filter(state=MemberState.LEAVING)
         troubled.update(member.group_id for member in leaving if leave_failed(member))
+        joining = GroupMember.objects.filter(state=MemberState.JOINING)
+        troubled.update(member.group_id for member in joining if join_failed(member))
         return len(troubled)
 
     def offline(self) -> list[Server]:

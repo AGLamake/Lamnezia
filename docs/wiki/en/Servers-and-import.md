@@ -193,7 +193,14 @@ each of them. A server is either standalone or a member of one group.
   If the leave operation fails (the server does not answer, a write fails), the member is marked
   "leave failed" and gets two buttons: **Retry leaving** runs the leave again and brings the
   server to a clean standalone AmneziaWG; **Keep in the group** takes it back as a lagging member —
-  the relay skips it until the catch-up copies the files of the group onto it.
+  the relay skips it until the catch-up copies the files of the group onto it. The catch-up starts
+  at once, without waiting for the periodic check.
+- **A failed join**: if the join operation fails, the member stays "joining" and is marked
+  "join failed". **Retry joining** runs the join again and makes the server a clone of the group.
+  **Take out of the group** removes the member: a server that still runs its own key keeps its
+  files untouched; one the join already gave the files of the group gets back the snapshot taken
+  before the join, or a clean AmneziaWG with a new key if it had no clients. A server that runs a
+  key of neither is refused untouched.
 - **Make leading**: another member takes the lead. A background operation first compares its files
   with those of the group and refuses if the server differs from the group. Keys of the group,
   with their traffic history, pass to the new leading server, and new keys are issued on it; if

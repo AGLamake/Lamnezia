@@ -5,9 +5,21 @@ from django.utils.translation import gettext_lazy
 
 from apps.accounts.models import User
 from apps.groups.models import GroupMember, MemberState, ServerGroup
-from apps.groups.services.cloning import GroupInstall, GroupJoin, GroupLeave, MemberCatchUp
+from apps.groups.services.cloning import (
+    GroupInstall,
+    GroupJoin,
+    GroupLeave,
+    JoinRollback,
+    MemberCatchUp,
+)
 from apps.groups.services.handover import HANDOVER_KIND, LeaderHandover
-from apps.groups.services.membership import INSTALL_KIND, JOIN_KIND, LEAVE_KIND, SETTINGS_KIND
+from apps.groups.services.membership import (
+    CANCEL_JOIN_KIND,
+    INSTALL_KIND,
+    JOIN_KIND,
+    LEAVE_KIND,
+    SETTINGS_KIND,
+)
 from apps.groups.services.replication import CATCH_UP_KIND
 from apps.groups.services.settings import GroupSettingsChange
 from apps.operations.services.context import OperationContext
@@ -21,6 +33,13 @@ def join_group(ctx: OperationContext) -> None:
     member = _member(ctx, MemberState.JOINING)
     if member is not None:
         GroupJoin(member, ctx).run()
+
+
+@operations.register(CANCEL_JOIN_KIND, gettext_lazy("Take a joining server out of its group"))
+def cancel_join(ctx: OperationContext) -> None:
+    member = _member(ctx, MemberState.JOINING)
+    if member is not None:
+        JoinRollback(member, ctx).run()
 
 
 @operations.register(INSTALL_KIND, gettext_lazy("Install AmneziaWG of a server group"))

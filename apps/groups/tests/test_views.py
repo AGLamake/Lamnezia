@@ -6,7 +6,8 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
 from apps.groups.services.handover import HANDOVER_KIND
-from apps.groups.services.membership import JOIN_KIND, LEAVE_KIND
+from apps.groups.services.membership import CANCEL_JOIN_KIND, JOIN_KIND, LEAVE_KIND
+from apps.groups.services.replication import CATCH_UP_KIND
 from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import issued_key
@@ -194,6 +195,45 @@ def test_stay_takes_the_member_back_lagging(
     stuck.refresh_from_db()
     assert stuck.state == MemberState.MEMBER
     assert stuck.lagging
+    assert Operation.objects.get(kind=CATCH_UP_KIND).params["member_id"] == stuck.pk
+
+
+@pytest.fixture
+def stuck_joining(group: ServerGroup, joiner: ProtocolInstance) -> GroupMember:
+    """A member whose join operation failed."""
+    member = GroupMember.objects.create(
+        group=group, instance=joiner, priority=1, state=MemberState.JOINING
+    )
+    Operation.objects.create(
+        kind=JOIN_KIND, params={"member_id": member.pk}, status=OperationStatus.FAILED
+    )
+    return member
+
+
+def test_failed_join_offers_retry_and_taking_out(
+    browser: Client, group: ServerGroup, stuck_joining: GroupMember
+) -> None:
+    detail = reverse("groups:detail", args=[group.pk])
+    retry = reverse("groups:join_retry", args=[stuck_joining.pk])
+    cancel = reverse("groups:join_cancel", args=[stuck_joining.pk])
+    page = browser.get(detail).content.decode()
+    assert retry in page and cancel in page
+    assert reverse("groups:leave", args=[stuck_joining.pk]) not in page
+
+    browser.post(retry)
+
+    assert Operation.objects.filter(kind=JOIN_KIND, status=OperationStatus.PENDING).exists()
+    page = browser.get(detail).content.decode()
+    assert retry not in page and cancel not in page
+
+
+def test_taking_out_a_failed_join_starts_an_operation(
+    browser: Client, stuck_joining: GroupMember
+) -> None:
+    browser.post(reverse("groups:join_cancel", args=[stuck_joining.pk]))
+
+    operation = Operation.objects.get(kind=CANCEL_JOIN_KIND)
+    assert operation.params["member_id"] == stuck_joining.pk
 
 
 def test_edit_saves_the_group_and_says_how_many_keys_moved(

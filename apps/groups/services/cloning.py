@@ -21,7 +21,7 @@ from amnezia_core.awg_group import AwgGroupIdentity, Divergence, has_clients, st
 from amnezia_core.awg_install import AwgInstallSettings
 from amnezia_core.containers import AWG2
 from amnezia_core.errors import AmneziaFormatError
-from apps.backups.models import SnapshotReason
+from apps.backups.models import ProtocolSnapshot, SnapshotReason
 from apps.backups.services.guard import IdentityGuard
 from apps.backups.services.snapshot import read_awg_files, save_backup, take_snapshot
 from apps.groups.errors import GroupError, GroupErrorCode
@@ -333,6 +333,72 @@ class GroupInstall:
 
 def _private_key(config: str) -> str:
     return AwgServerConfig.parse(config).private_key or ""
+
+
+class JoinRollback:
+    """Takes a server whose join failed out of the group, back to what it was.
+
+    The panel saved nothing of the group for it yet. A server that still runs its own key only
+    loses the member row; one the join already gave the group files gets back the snapshot taken
+    before the join, or a clean AmneziaWG, as a leave gives, when it had no clients to keep.
+    A server with a key of neither is refused untouched.
+    """
+
+    def __init__(self, member: GroupMember, ctx: OperationContext) -> None:
+        self._member = member
+        self._instance = member.instance
+        self._ctx = ctx
+
+    def run(self) -> None:
+        with ExitStack() as stack:
+            with self._ctx.step(_("Connect to the server")):
+                host = stack.enter_context(connect(self._instance.server))
+            with self._ctx.step(_("Wait for other operations on the server")):
+                stack.enter_context(host.lock())
+            with self._ctx.step(_("Read the server files")):
+                current = read_awg_files(host)
+                own = _private_key(current.config) == self._instance.private_key
+                if own:
+                    self._ctx.log(_("The server still runs its own files: nothing to put back."))
+            files = current if own else self._put_back(host, current)
+            with self._ctx.step(_("Save the result in the panel")):
+                with transaction.atomic():
+                    take_identity(self._instance, files)
+                    GroupMember.objects.filter(
+                        pk=self._member.pk, state=MemberState.JOINING
+                    ).delete()
+                save_backup(self._instance, host)
+
+    def _put_back(self, host: RemoteHost, current: AwgServerFiles) -> AwgServerFiles:
+        """Write the files the server had before the join; the files it runs with now."""
+        if _private_key(current.config) not in self._group_keys():
+            raise GroupError(GroupErrorCode.OTHER_SERVER_KEY, self._instance.source)
+        snapshot = self._snapshot()
+        if snapshot is not None:
+            step = _("Write the files of the snapshot")
+            files = AwgServerFiles(snapshot.config, snapshot.clients_table, snapshot.preshared_key)
+        else:
+            step = _("Write a clean AmneziaWG")
+            config = AwgServerConfig.parse(current.config)
+            files = standalone_files(config.address, config.listen_port or self._instance.port)
+        with self._ctx.step(step):
+            MemberFiles(host, self._ctx).replace(files.by_path())
+        return files
+
+    def _group_keys(self) -> set[str]:
+        others = GroupMember.objects.filter(group_id=self._member.group_id).exclude(
+            pk=self._member.pk
+        )
+        return set(others.values_list("instance__private_key", flat=True))
+
+    def _snapshot(self) -> ProtocolSnapshot | None:
+        """The newest snapshot a join took of the server with its own key."""
+        snapshots = ProtocolSnapshot.objects.filter(
+            instance=self._instance, reason=SnapshotReason.GROUP_JOIN
+        )
+        return next(
+            (s for s in snapshots if _private_key(s.config) == self._instance.private_key), None
+        )
 
 
 class GroupLeave:

@@ -60,10 +60,10 @@
         <tr><th>{% translate "Server" %}</th><th>{% translate "State" %}</th><th>{% translate "From the relay" %}</th><th>{% translate "From the panel" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr>
       </thead>
       <tbody>
-        {% for member, reachable, active, leave_failed in members %}
+        {% for member, reachable, active, leave_failed, join_failed in members %}
           <tr>
             <td><a href="{% url 'servers:detail' member.instance.server_id %}" class="font-medium hover:underline">{{ member.instance.server.name }}</a>{% if member.leading %} <span class="badge badge-muted">{% translate "leading" %}</span>{% endif %}</td>
-            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The relay skips the server until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% if member.lagging_reason %}<span class="help-text block">{{ member.get_lagging_reason_display }}</span>{% endif %}{% endif %}{% if leave_failed %} <span class="badge badge-danger" title="{% translate "The leave operation failed. Run it again, or keep the server in the group." %}">{% translate "leave failed" %}</span>{% endif %}</td>
+            <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The relay skips the server until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% if member.lagging_reason %}<span class="help-text block">{{ member.get_lagging_reason_display }}</span>{% endif %}{% endif %}{% if leave_failed %} <span class="badge badge-danger" title="{% translate "The leave operation failed. Run it again, or keep the server in the group." %}">{% translate "leave failed" %}</span>{% endif %}{% if join_failed %} <span class="badge badge-danger" title="{% translate "The join operation failed. Run it again, or take the server out of the group." %}">{% translate "join failed" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the relay' %}">{% if reachable is None %}<span class="text-muted">—</span>{% elif reachable %}<span class="badge badge-success">{% translate "reachable" %}</span>{% else %}<span class="badge badge-danger">{% translate "unreachable" %}</span>{% endif %}{% if active %} <span class="badge badge-info" title="{% translate "The relay sends the clients of the group to this server now." %}">{% translate "active" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the panel' %}">{% with online=member.instance.server.online %}{% if online is None %}<span class="text-muted">—</span>{% elif online %}<span class="badge badge-success">{% translate "online" %}</span>{% else %}<span class="badge badge-danger">{% translate "offline" %}</span>{% endif %}{% endwith %}</td>
             <td><div class="flex flex-wrap gap-2">
@@ -85,10 +85,20 @@
                 <button type="submit" class="btn btn-secondary">{% translate "Leave the group" %}</button>
               </form>
               {% endif %}
-              {% if not member.leading and member.state != "leaving" %}
+              {% if not member.leading and member.state != "leaving" and not join_failed %}
               <form method="post" action="{% url 'groups:leave' member.pk %}" data-confirm="{% translate "The server gets a clean AmneziaWG with a new key and no clients. Keys of the group stop working on it. A snapshot of its files is kept first. Continue?" %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-secondary">{% translate "Leave the group" %}</button>
+              </form>
+              {% endif %}
+              {% if join_failed %}
+              <form method="post" action="{% url 'groups:join_retry' member.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% translate "Retry joining" %}</button>
+              </form>
+              <form method="post" action="{% url 'groups:join_cancel' member.pk %}" data-confirm="{% translate "The server leaves the group. If the join has already written the files of the group, the server gets back its files from the snapshot taken before the join, or a clean AmneziaWG with a new key if it had no clients. Continue?" %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% translate "Take out of the group" %}</button>
               </form>
               {% endif %}
               {% if leave_failed %}

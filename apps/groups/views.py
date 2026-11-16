@@ -22,12 +22,15 @@ from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.addressing import DomainCheck, client_host
 from apps.groups.services.handover import key_operations, start_handover
 from apps.groups.services.membership import (
+    cancel_join,
     create_group,
     delete_group,
+    join_failed,
     joining_operations,
     leave_failed,
     live_keys,
     port_taken,
+    retry_join,
     retry_leave,
     servers_without_awg,
     standalone_instances,
@@ -125,7 +128,7 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
         leader = next((member for member in members if member.leading), None)
         return super().get_context_data(
             members=[
-                (member, *_seen_by_relay(member, health), leave_failed(member))
+                (member, *_seen_by_relay(member, health), leave_failed(member), join_failed(member))
                 for member in members
             ],
             successors=[member for member in members if _may_lead(member)],
@@ -179,6 +182,26 @@ class GroupInstallView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=group.pk)
 
 
+class GroupJoinRetryView(AdminRequiredMixin, View):
+    def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
+        member = get_object_or_404(GroupMember, pk=member_pk)
+        try:
+            retry_join(member, user=self.member, ip=self.client_ip)
+        except GroupError as error:
+            messages.error(request, f"{error.message} {error.hint}")
+        return redirect("groups:detail", pk=member.group_id)
+
+
+class GroupJoinCancelView(AdminRequiredMixin, View):
+    def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
+        member = get_object_or_404(GroupMember, pk=member_pk)
+        try:
+            cancel_join(member, user=self.member, ip=self.client_ip)
+        except GroupError as error:
+            messages.error(request, f"{error.message} {error.hint}")
+        return redirect("groups:detail", pk=member.group_id)
+
+
 class GroupLeaveView(AdminRequiredMixin, View):
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
@@ -213,7 +236,7 @@ class GroupStayView(AdminRequiredMixin, View):
         else:
             messages.success(
                 request,
-                _("The server stays in the group; the panel copies the group files onto it."),
+                _("The server stays in the group; the panel is copying the group files onto it."),
             )
         return redirect("groups:detail", pk=member.group_id)
 

@@ -15,6 +15,7 @@ from operator import attrgetter
 from amnezia_core.awg_backup import AwgServerFiles
 from amnezia_core.awg_group import AwgGroupIdentity, Divergence, Mismatch
 from amnezia_core.errors import AmneziaFormatError
+from apps.accounts.models import User
 from apps.backups.services.snapshot import read_awg_files
 from apps.groups.models import GroupMember, LagReason, MemberQuerySet, MemberState, ServerGroup
 from apps.keys.services.replicas import GroupServer, key_groups
@@ -160,8 +161,15 @@ def catch_up_lagging() -> None:
         except SshError as error:
             logger.info("lagging member %s is still unreachable: %s", member.pk, error.code)
             continue
-        params = {"member_id": member.pk, "server_id": server.pk}
-        launch(CATCH_UP_KIND, params, subject=str(member))
+        start_catch_up(member)
+
+
+def start_catch_up(member: GroupMember, *, user: User | None = None) -> Operation | None:
+    """Start the catch-up of a lagging member, unless one is queued or running already."""
+    if _catching_up(member):
+        return None
+    params = {"member_id": member.pk, "server_id": member.instance.server_id}
+    return launch(CATCH_UP_KIND, params, user=user, subject=str(member))
 
 
 def _catching_up(member: GroupMember) -> bool:

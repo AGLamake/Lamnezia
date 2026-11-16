@@ -12,7 +12,7 @@ from apps.accounts.models import Role
 from apps.accounts.tests.factories import UserFactory
 from apps.dashboard.services.attention import Attention
 from apps.groups.models import GroupMember, MemberState, ServerGroup
-from apps.groups.services.membership import LEAVE_KIND
+from apps.groups.services.membership import JOIN_KIND, LEAVE_KIND
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.tests.factories import FailedOperationFactory
 from apps.protocols.models import ProtocolInstance
@@ -148,8 +148,13 @@ def test_groups_with_trouble_are_counted_once_each() -> None:
     leaving = ServerGroup.objects.create(name="Africa", port=51823)
     under_way = member_of(leaving, state=MemberState.LEAVING)
     Operation.objects.create(kind=LEAVE_KIND, params={"member_id": under_way.pk})
+    joining = ServerGroup.objects.create(name="Oceania", port=51824)
+    member = member_of(joining, state=MemberState.JOINING)
+    Operation.objects.create(
+        kind=JOIN_KIND, params={"member_id": member.pk}, status=OperationStatus.FAILED
+    )
 
-    assert Attention(admin).group_problems == 3
+    assert Attention(admin).group_problems == 4
     assert Attention(UserFactory(role=Role.MODERATOR)).group_problems == 0
 
 

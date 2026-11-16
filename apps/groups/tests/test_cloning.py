@@ -1,13 +1,22 @@
 import pytest
 
 from amnezia_core.awg import AWG_CLIENTS_TABLE_PATH, AwgServerConfig
-from amnezia_core.awg_group import AwgGroupIdentity
+from amnezia_core.awg_group import AwgGroupIdentity, standalone_files
 from amnezia_core.clients_table import ClientsTable
 from apps.accounts.models import User
 from apps.backups.models import ProtocolBackup, ProtocolSnapshot, SnapshotReason
 from apps.groups.errors import GroupError, GroupErrorCode
-from apps.groups.models import GroupMember, LagReason, MemberState
-from apps.groups.services.membership import leave_failed, retry_leave, start_leave, stay_in_group
+from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
+from apps.groups.services.membership import (
+    cancel_join,
+    join_failed,
+    leave_failed,
+    retry_join,
+    retry_leave,
+    start_join,
+    start_leave,
+    stay_in_group,
+)
 from apps.groups.services.replication import CATCH_UP_KIND, backends
 from apps.groups.tests.conftest import (
     JOINER_HOST,
@@ -18,10 +27,10 @@ from apps.groups.tests.conftest import (
     succeeded,
 )
 from apps.keys.models import KeyStatus
-from apps.operations.models import OperationStatus
+from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
 from apps.protocols.models import ProtocolInstance
-from apps.protocols.tests.awg_case import Start, issued_key
+from apps.protocols.tests.awg_case import APP_CONFIG, OnCommit, Start, issued_key
 
 pytestmark = pytest.mark.django_db
 
@@ -183,6 +192,176 @@ def test_server_kept_in_the_group_catches_up_with_its_keys(  # noqa: PLR0913, PL
     assert not member.lagging
     joiner.refresh_from_db()
     assert joiner.private_key == leader.private_key
+
+
+def test_kept_server_starts_catching_up_at_once(  # noqa: PLR0913, PLR0917
+    servers: Fakes,
+    joiner: ProtocolInstance,
+    admin: User,
+    join: Run,
+    leave: Run,
+    django_capture_on_commit_callbacks: OnCommit,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    succeeded(join())
+    with monkeypatch.context() as patch:
+        patch.setattr("apps.groups.services.cloning.take_identity", _unsaved)
+        assert leave().status == OperationStatus.FAILED
+    member = GroupMember.objects.get(instance=joiner)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        stay_in_group(member, user=admin)
+
+    succeeded(Operation.objects.get(kind=CATCH_UP_KIND))
+    assert is_clone(servers)
+    member.refresh_from_db()
+    assert not member.lagging
+
+
+def _unsaved(*args: object) -> None:
+    raise RuntimeError("the panel database is gone")
+
+
+def _failed_after_writing(join: Run, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The join writes the group files, but the panel fails to save them."""
+    with monkeypatch.context() as patch:
+        patch.setattr("apps.groups.services.cloning.take_identity", _unsaved)
+        assert join().status == OperationStatus.FAILED
+
+
+def test_failed_join_is_retried_to_a_clone(  # noqa: PLR0913, PLR0917
+    servers: Fakes,
+    leader: ProtocolInstance,
+    joiner: ProtocolInstance,
+    admin: User,
+    down: set[str],
+    start: Start,
+    join: Run,
+) -> None:
+    down.add(JOINER_HOST)
+    assert join().status == OperationStatus.FAILED
+    member = GroupMember.objects.get(instance=joiner)
+    assert join_failed(member)
+
+    down.clear()
+    succeeded(start(lambda: retry_join(member, user=admin)))
+
+    assert is_clone(servers)
+    member.refresh_from_db()
+    assert member.state == MemberState.MEMBER
+    joiner.refresh_from_db()
+    assert joiner.private_key == leader.private_key
+
+
+def test_join_failed_before_writing_is_undone_without_touching_the_server(  # noqa: PLR0913, PLR0917
+    servers: Fakes, joiner: ProtocolInstance, admin: User, down: set[str], start: Start, join: Run
+) -> None:
+    before = server_files(servers[JOINER_HOST])
+    down.add(JOINER_HOST)
+    assert join().status == OperationStatus.FAILED
+    member = GroupMember.objects.get(instance=joiner)
+
+    down.clear()
+    succeeded(start(lambda: cancel_join(member, user=admin)))
+
+    assert not GroupMember.objects.filter(instance=joiner).exists()
+    assert server_files(servers[JOINER_HOST]) == before
+    private_key = joiner.private_key
+    joiner.refresh_from_db()
+    assert joiner.private_key == private_key
+
+
+def test_join_failed_after_writing_gets_back_the_snapshot(  # noqa: PLR0913, PLR0917
+    servers: Fakes,
+    joiner: ProtocolInstance,
+    admin: User,
+    start: Start,
+    join: Run,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    before = server_files(servers[JOINER_HOST])
+    _failed_after_writing(join, monkeypatch)
+    assert is_clone(servers)
+    member = GroupMember.objects.get(instance=joiner)
+
+    succeeded(start(lambda: cancel_join(member, user=admin)))
+
+    assert not GroupMember.objects.filter(instance=joiner).exists()
+    assert server_files(servers[JOINER_HOST]) == before
+    assert servers[JOINER_HOST].awg_up
+
+
+def test_clean_server_whose_join_failed_gets_a_clean_amneziawg(  # noqa: PLR0913, PLR0917
+    servers: Fakes,
+    leader: ProtocolInstance,
+    joiner: ProtocolInstance,
+    admin: User,
+    start: Start,
+    join: Run,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    clean = ClientsTable([]).serialize().encode()
+    servers[JOINER_HOST].container_files[AWG_CLIENTS_TABLE_PATH] = clean
+    _failed_after_writing(join, monkeypatch)
+    member = GroupMember.objects.get(instance=joiner)
+
+    succeeded(start(lambda: cancel_join(member, user=admin)))
+
+    assert not GroupMember.objects.filter(instance=joiner).exists()
+    config = AwgServerConfig.parse(server_files(servers[JOINER_HOST]).config)
+    assert config.private_key != leader.private_key
+    assert config.peers == []
+    joiner.refresh_from_db()
+    assert joiner.private_key == config.private_key
+
+
+def test_join_is_not_undone_on_a_server_with_a_foreign_key(  # noqa: PLR0913, PLR0917
+    servers: Fakes,
+    joiner: ProtocolInstance,
+    admin: User,
+    down: set[str],
+    start: Start,
+    join: Run,
+) -> None:
+    down.add(JOINER_HOST)
+    assert join().status == OperationStatus.FAILED
+    member = GroupMember.objects.get(instance=joiner)
+    foreign = standalone_files(APP_CONFIG.address, joiner.port)
+    servers[JOINER_HOST].container_files.update(foreign.by_path())
+    before = server_files(servers[JOINER_HOST])
+    down.clear()
+
+    operation = start(lambda: cancel_join(member, user=admin))
+
+    assert operation.status == OperationStatus.FAILED
+    assert operation.error_code == "other_server_key"
+    assert server_files(servers[JOINER_HOST]) == before
+    assert GroupMember.objects.get(instance=joiner).state == MemberState.JOINING
+
+
+def test_running_join_is_neither_retried_nor_undone(
+    servers: Fakes, group: ServerGroup, joiner: ProtocolInstance, admin: User
+) -> None:
+    start_join(group, joiner, user=admin)
+    member = GroupMember.objects.get(instance=joiner)
+
+    assert not join_failed(member)
+    for action in (retry_join, cancel_join):
+        with pytest.raises(GroupError) as running:
+            action(member, user=admin)
+        assert running.value.code == GroupErrorCode.JOIN_RUNNING
+
+
+def test_member_not_joining_cannot_be_taken_out(
+    servers: Fakes, joiner: ProtocolInstance, admin: User, join: Run
+) -> None:
+    succeeded(join())
+    member = GroupMember.objects.get(instance=joiner)
+
+    assert not join_failed(member)
+    with pytest.raises(GroupError) as error:
+        cancel_join(member, user=admin)
+    assert error.value.code == GroupErrorCode.NOT_JOINING
 
 
 def test_running_leave_is_neither_retried_nor_undone(

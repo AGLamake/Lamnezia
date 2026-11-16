@@ -32,6 +32,7 @@ class GroupErrorCode(StrEnum):
     NO_LEADER = "no_leader"
     NOT_LEAVING = "not_leaving"
     LEAVE_RUNNING = "leave_running"
+    NOT_JOINING = "not_joining"
 
 
 GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
@@ -133,6 +134,10 @@ GROUP_ERRORS: dict[GroupErrorCode, ErrorDescription] = {
     GroupErrorCode.LEAVE_RUNNING: ErrorDescription(
         _("The server is leaving the group now."),
         _("Wait until that operation finishes."),
+    ),
+    GroupErrorCode.NOT_JOINING: ErrorDescription(
+        _("The server is not joining the group."),
+        _("Reload the page: another action has already changed it."),
     ),
 }
 

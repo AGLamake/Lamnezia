@@ -2392,6 +2392,10 @@ msgstr "Вернуть выбранные записи"
 msgid "Retry"
 msgstr "Повторить"
 
+#
+msgid "Retry joining"
+msgstr "Повторить вступление"
+
 msgid "Retry leaving"
 msgstr "Повторить выход"
 
@@ -2784,6 +2788,14 @@ msgstr "Система"
 msgid "Table"
 msgstr "Таблица"
 
+#
+msgid "Take a joining server out of its group"
+msgstr "Убрать вступающий сервер из группы"
+
+#
+msgid "Take out of the group"
+msgstr "Убрать из группы"
+
 msgid "Telegram and Discord: the bots and your notifications."
 msgstr "Telegram и Discord: боты и ваши уведомления."
 
@@ -2941,6 +2953,10 @@ msgstr "В группе ещё есть другие серверы."
 
 msgid "The invite is deleted."
 msgstr "Инвайт удалён."
+
+#
+msgid "The join operation failed. Run it again, or take the server out of the group."
+msgstr "Операция вступления не удалась. Повторите её или уберите сервер из группы."
 
 msgid "The key cannot be prepared right now. Open this page again later or ask the administrator."
 msgstr "Сейчас не удаётся подготовить ключ. Откройте страницу позже или обратитесь к администратору."
@@ -3232,11 +3248,18 @@ msgstr "Сервера больше нет в группе: делать неч�
 msgid "The server is no longer joining or leaving the group: nothing to do."
 msgstr "Сервер уже не вступает в группу и не выходит из неё: делать нечего."
 
+#
+msgid "The server is not joining the group."
+msgstr "Сервер не вступает в группу."
+
 msgid "The server is not leaving the group."
 msgstr "Сервер не выходит из группы."
 
 msgid "The server is the relay of the group: it cannot be a member of it too."
 msgstr "Сервер — ретранслятор группы и не может быть ещё и её участником."
+
+msgid "The server leaves the group. If the join has already written the files of the group, the server gets back its files from the snapshot taken before the join, or a clean AmneziaWG with a new key if it had no clients. Continue?"
+msgstr "Сервер покинет группу. Если вступление уже записало файлы группы, серверу вернутся его файлы из снимка, сделанного перед вступлением, или чистый AmneziaWG с новым ключом, если клиентов у него не было. Продолжить?"
 
 msgid "The server listens on another port than the group."
 msgstr "Сервер слушает другой порт, чем группа."
@@ -3253,8 +3276,13 @@ msgstr "На сервере работает ретранслятор."
 msgid "The server stays in the group. The relay skips it until the panel copies the files of the group onto it again. Continue?"
 msgstr "Сервер останется в группе. Ретранслятор будет пропускать его, пока панель снова не скопирует на него файлы группы. Продолжить?"
 
-msgid "The server stays in the group; the panel copies the group files onto it."
-msgstr "Сервер остаётся в группе; панель скопирует на него файлы группы."
+#
+msgid "The server stays in the group; the panel is copying the group files onto it."
+msgstr "Сервер остаётся в группе; панель копирует на него файлы группы."
+
+#
+msgid "The server still runs its own files: nothing to put back."
+msgstr "На сервере по-прежнему его собственные файлы: возвращать нечего."
 
 msgid "The servers of a group are clones: the settings apply on every one that answers. A server that does not answer lags and gets them when the panel catches it up. The port is the port of the group; the container log is set on each server."
 msgstr "Серверы группы — клоны: настройки применяются на каждом, который отвечает. Сервер, который не ответил, отстаёт и получает их, когда панель его догоняет. Порт — порт группы, журнал контейнера настраивается на каждом сервере."
@@ -3646,6 +3674,10 @@ msgstr "Записать список клиентов группы"
 msgid "Write the files of the group"
 msgstr "Записать файлы группы"
 
+#
+msgid "Write the files of the snapshot"
+msgstr "Записать файлы снимка"
+
 msgid "Write the relay configuration"
 msgstr "Записать настройки ретранслятора"
 
@@ -3870,6 +3902,10 @@ msgstr "инвайты"
 
 msgid "its files differ from the leading server"
 msgstr "его файлы расходятся с ведущим сервером"
+
+#
+msgid "join failed"
+msgstr "вступление не удалось"
 
 msgid "joined at"
 msgstr "вступил"
