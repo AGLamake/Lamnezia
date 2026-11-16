@@ -44,9 +44,10 @@ def enable_by_limit(user: User) -> list[Operation]:
 def disable_over_plan(keys: list[AccessKey]) -> list[Operation]:
     """Start turning off active keys the plan of their owner has no place for, as by hand: the
     limits never turn them back on."""
+    # Only the key rows are locked: PostgreSQL refuses FOR UPDATE on the outer join to the owner.
     with transaction.atomic():
         locked = list(
-            AccessKey.objects.select_for_update()
+            AccessKey.objects.select_for_update(of=("self",))
             .select_related("user")
             .filter(pk__in=[key.pk for key in keys], status=KeyStatus.ACTIVE)
         )
@@ -66,7 +67,7 @@ def _switch(user: User, status: KeyStatus, kind: str, **params: str) -> list[Ope
     """
     with transaction.atomic():
         keys = list(
-            AccessKey.objects.select_for_update()
+            AccessKey.objects.select_for_update(of=("self",))
             .select_related("user")
             .filter(user=user, status=status)
         )
