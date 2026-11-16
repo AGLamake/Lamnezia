@@ -227,6 +227,9 @@ msgstr "Ссылка"
 msgid "A member of a group runs on the relay server."
 msgstr "Участник группы работает на сервере ретранслятора."
 
+msgid "A new domain moves the keys of the group to it at once, and without a relay the keys go back to the leading server; their owners are told to import them again. With another relay the keys move once it runs the group."
+msgstr "Новый домен сразу переносит на себя ключи группы, а без ретранслятора ключи возвращаются на ведущий сервер; владельцам приходит просьба импортировать их заново. С другим ретранслятором ключи переедут, когда он начнёт обслуживать группу."
+
 msgid "A new subscription link is ready."
 msgstr "Новая ссылка-подписка готова."
 
@@ -1630,6 +1633,9 @@ msgstr "Сначала переведите сервер AmneziaWG 2.0 на 3.1 
 msgid "Move the clients to AmneziaWG 3.1"
 msgstr "Перевести клиентов на AmneziaWG 3.1"
 
+msgid "Move the keys of the groups back to their leading servers"
+msgstr "Вернуть ключи групп на их ведущие серверы"
+
 msgid "Move the keys of the groups to the relay address"
 msgstr "Перенести ключи групп на адрес ретранслятора"
 
@@ -2822,6 +2828,16 @@ msgstr "Группа сейчас меняет настройки или вед�
 
 msgid "The group is deleted; its leading server stays as it is."
 msgstr "Группа удалена; ведущий сервер остался как есть."
+
+msgid "The group is saved."
+msgstr "Группа сохранена."
+
+#, python-format
+msgid "The group is saved; %(count)d key moved to the new address."
+msgid_plural "The group is saved; %(count)d keys moved to the new address."
+msgstr[0] "Группа сохранена; %(count)d ключ перенесён на новый адрес."
+msgstr[1] "Группа сохранена; %(count)d ключа перенесены на новый адрес."
+msgstr[2] "Группа сохранена; %(count)d ключей перенесено на новый адрес."
 
 msgid "The group no longer exists: nothing to do."
 msgstr "Группы больше нет: делать нечего."

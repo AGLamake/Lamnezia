@@ -1,5 +1,5 @@
-"""Pages of the server groups: the list, a new group, its members and settings, joining, leaving,
-the lead."""
+"""Pages of the server groups: the list, a new group, its members, editing and settings, joining,
+leaving, the lead."""
 
 from typing import Any
 
@@ -10,12 +10,13 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from django.views import View
-from django.views.generic import CreateView, DetailView, FormView, ListView
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
 
 from apps.accounts.permissions import AdminRequiredMixin
 from apps.groups.errors import GroupError
-from apps.groups.forms import GroupForm, GroupSettingsForm
+from apps.groups.forms import GroupEditForm, GroupForm, GroupSettingsForm
 from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.addressing import DomainCheck, client_host
 from apps.groups.services.handover import start_handover
@@ -32,6 +33,7 @@ from apps.groups.services.membership import (
     start_join,
     start_leave,
     stay_in_group,
+    update_group,
 )
 from apps.groups.services.settings import changing_settings
 from apps.keys.services.counts import InstanceKeyCount
@@ -65,6 +67,32 @@ class GroupCreateView(AdminRequiredMixin, CreateView):  # type: ignore[type-arg]
             form.add_error(None, error.message)
             return self.form_invalid(form)
         return redirect("groups:detail", pk=group.pk)
+
+
+class GroupEditView(AdminRequiredMixin, UpdateView):  # type: ignore[type-arg]
+    """The name, domain and relay of a group; its keys follow a new address."""
+
+    model = ServerGroup
+    form_class = GroupEditForm
+    template_name = "groups/edit.html"
+    context_object_name = "group"
+
+    def form_valid(self, form: "ModelForm[ServerGroup]") -> HttpResponse:
+        try:
+            moved = update_group(form.save(commit=False), actor=self.member, ip=self.client_ip)
+        except GroupError as error:
+            form.add_error(None, f"{error.message} {error.hint}")
+            return self.form_invalid(form)
+        if moved:
+            text = ngettext(
+                "The group is saved; %(count)d key moved to the new address.",
+                "The group is saved; %(count)d keys moved to the new address.",
+                moved,
+            )
+            messages.success(self.request, text % {"count": moved})
+        else:
+            messages.success(self.request, _("The group is saved."))
+        return redirect("groups:detail", pk=self.object.pk)
 
 
 class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]

@@ -79,14 +79,18 @@ class RelayDeployment:
         self._synced(plan)
 
     def remove(self) -> None:
-        """Drop the container, then the service peers of its groups from their members."""
+        """Drop the container and the service peers of its groups from their members; the keys
+        of the groups go back to their leading servers."""
         with ExitStack() as stack:
             host = self._connect(stack)
             with self._lock(host):
                 RelayContainer(host, self._ctx).remove()
-        for group, _members in RelayPlan.of(self._relay.server).groups:
+        groups = [group for group, _members in RelayPlan.of(self._relay.server).groups]
+        for group in groups:
             ServicePeerPlacement(group, self._ctx).withdraw()
         self._relay.delete()
+        title = _("Move the keys of the groups back to their leading servers")
+        self._move_keys([GroupKeyAddress(group) for group in groups], title)
 
     def _connect(self, stack: ExitStack) -> RemoteHost:
         with self._ctx.step(_("Connect to the server")):
@@ -126,9 +130,12 @@ class RelayDeployment:
         self._relay.synced_at = timezone.now()
         self._relay.save(update_fields=["installed_at", "synced", "synced_at"])
         moves = [GroupKeyAddress(group) for group, _members in plan.groups]
+        self._move_keys(moves, _("Move the keys of the groups to the relay address"))
+
+    def _move_keys(self, moves: list[GroupKeyAddress], title: str) -> None:
         if not any(move.outdated for move in moves):
             return
-        with self._ctx.step(_("Move the keys of the groups to the relay address")):
+        with self._ctx.step(title):
             for move in moves:
                 self._ctx.log(
                     _("%(group)s: keys moved: %(count)d.")

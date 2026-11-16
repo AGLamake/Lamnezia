@@ -33,6 +33,9 @@ msgstr "Изменение канала уведомлений"
 msgid "Change plan of users"
 msgstr "Смена тарифа пользователям"
 
+msgid "Change server group"
+msgstr "Изменение группы серверов"
+
 msgid "Change site settings"
 msgstr "Изменение настроек сайта"
 

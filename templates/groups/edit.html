@@ -1,0 +1,21 @@
+{% extends "servers/base.html" %}
+{% load i18n %}
+{% block title %}{{ group.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'groups:list' %}">{% translate "Server groups" %}</a></li><li><a href="{% url 'groups:detail' group.pk %}">{{ group.name }}</a></li><li aria-current="page">{% translate "Edit" %}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{{ group.name }}</h1>
+  <p class="help-text">{% translate "A new domain moves the keys of the group to it at once, and without a relay the keys go back to the leading server; their owners are told to import them again. With another relay the keys move once it runs the group." %}</p>
+</div>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {{ form.name.as_field_group }}
+  {{ form.domain.as_field_group }}
+  {{ form.relay.as_field_group }}
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+</form>
+{% endblock %}

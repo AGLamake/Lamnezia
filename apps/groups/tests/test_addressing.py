@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
+from apps.groups.errors import GroupError
 from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.addressing import (
     DomainCheck,
@@ -15,9 +16,10 @@ from apps.groups.services.addressing import (
     client_hosts,
     key_sources,
 )
-from apps.groups.services.membership import create_group
+from apps.groups.services.membership import create_group, update_group
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT, Run, succeeded
 from apps.keys.models import AccessKey
+from apps.keys.services.issued import IssuedKeys
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
 from apps.protocols.models import ProtocolInstance
@@ -106,6 +108,77 @@ def test_new_group_behind_a_running_relay_moves_the_keys_of_its_leader(
     install(relay_server)
 
     create_group(ServerGroup(name="Europe", relay=relay_server), leader, actor=admin)
+
+    assert endpoint(key) == (RELAY_HOST, PORT)
+
+
+def test_a_new_domain_takes_the_keys_at_once(
+    group: ServerGroup, leader: ProtocolInstance, relay_server: Server, admin: User
+) -> None:
+    install(relay_server)
+    behind(group, relay_server)
+    owner = UserFactory()
+    key = issued_key(leader, owner)
+    GroupKeyAddress(group).apply()
+    Notification.objects.all().delete()
+
+    group.domain = DOMAIN
+    assert update_group(group, actor=admin) == 1
+
+    assert endpoint(key) == (DOMAIN, PORT)
+    assert Notification.objects.get(event=Event.KEYS_UPDATED).user == owner
+
+
+def test_keys_go_back_to_the_leading_server_without_the_relay(
+    group: ServerGroup, leader: ProtocolInstance, relay_server: Server, admin: User
+) -> None:
+    install(relay_server)
+    behind(group, relay_server, DOMAIN)
+    key = issued_key(leader, UserFactory())
+    GroupKeyAddress(group).apply()
+
+    group.relay = None
+    update_group(group, actor=admin)
+
+    assert endpoint(key) == (LEADER_HOST, PORT)
+
+
+def test_keys_wait_for_another_relay_to_run_the_group(
+    group: ServerGroup, leader: ProtocolInstance, relay_server: Server, admin: User
+) -> None:
+    install(relay_server)
+    behind(group, relay_server)
+    key = issued_key(leader, UserFactory())
+    GroupKeyAddress(group).apply()
+    other = ServerFactory(host="203.0.113.40")
+    install(other)
+
+    group.relay = other
+    assert update_group(group, actor=admin) == 0
+
+    assert endpoint(key) == (RELAY_HOST, PORT)
+
+
+def test_a_member_server_cannot_be_the_relay(
+    group: ServerGroup, leader: ProtocolInstance, admin: User
+) -> None:
+    group.relay = leader.server
+
+    with pytest.raises(GroupError):
+        update_group(group, actor=admin)
+
+    group.refresh_from_db()
+    assert group.relay is None
+
+
+def test_a_key_issued_while_the_relay_starts_takes_its_address(
+    group: ServerGroup, leader: ProtocolInstance, relay_server: Server
+) -> None:
+    key = issued_key(leader, UserFactory())
+    install(relay_server)
+    behind(group, relay_server)
+
+    IssuedKeys([key]).save()
 
     assert endpoint(key) == (RELAY_HOST, PORT)
 

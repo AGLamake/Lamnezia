@@ -131,3 +131,28 @@ def test_stay_takes_the_member_back_lagging(
     stuck.refresh_from_db()
     assert stuck.state == MemberState.MEMBER
     assert stuck.lagging
+
+
+def test_edit_saves_the_group_and_says_how_many_keys_moved(
+    browser: Client, group: ServerGroup, leader: ProtocolInstance
+) -> None:
+    url = reverse("groups:edit", args=[group.pk])
+    assert browser.get(url).status_code == 200
+
+    response = browser.post(url, {"name": "Asia", "domain": "vpn.example.com"}, follow=True)
+
+    group.refresh_from_db()
+    assert (group.name, group.domain) == ("Asia", "vpn.example.com")
+    assert response.redirect_chain[-1][0] == reverse("groups:detail", args=[group.pk])
+
+
+def test_edit_refuses_a_member_server_as_the_relay(
+    browser: Client, group: ServerGroup, leader: ProtocolInstance
+) -> None:
+    url = reverse("groups:edit", args=[group.pk])
+
+    response = browser.post(url, {"name": "Europe", "relay": leader.server_id})
+
+    assert response.status_code == 200
+    group.refresh_from_db()
+    assert group.relay is None

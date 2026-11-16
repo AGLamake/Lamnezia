@@ -224,6 +224,26 @@ def test_remove_drops_the_container_and_the_role(
     assert not relay_fake.state and not Relay.objects.exists()
 
 
+def test_remove_moves_the_keys_back_to_the_leading_server(
+    relayed: ServerGroup,
+    leader: ProtocolInstance,
+    relay_server: Server,
+    admin: User,
+    start: Start,
+) -> None:
+    owner = UserFactory()
+    key = issued_key(leader, owner)
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    Notification.objects.all().delete()
+
+    succeeded(run(REMOVE_KIND, relay_server, admin, start))
+
+    key.refresh_from_db()
+    profile = json.loads(key.profile)
+    assert (profile["host"], profile["port"]) == (LEADER_HOST, PORT)
+    assert Notification.objects.get(event=Event.KEYS_UPDATED).user == owner
+
+
 @pytest.mark.usefixtures("relayed")
 def test_remove_takes_the_service_peer_off_the_members(
     relay_server: Server, servers: Fakes, admin: User, start: Start

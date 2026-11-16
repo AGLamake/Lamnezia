@@ -28,6 +28,7 @@ from apps.servers.models import Server
 
 CREATE_KIND = "groups.create"
 DELETE_KIND = "groups.delete"
+UPDATE_KIND = "groups.update"
 JOIN_KIND = "groups.join"
 INSTALL_KIND = "groups.install"
 LEAVE_KIND = "groups.leave"
@@ -116,6 +117,25 @@ def create_group(
     GroupKeyAddress(group).apply()
     audit.log(CREATE_KIND, actor=actor, target=group, data={"leader": leader.pk}, ip=ip)
     return group
+
+
+@transaction.atomic
+def update_group(group: ServerGroup, *, actor: User, ip: str | None = None) -> int:
+    """Save the name, domain and relay of `group`; the number of keys moved to a new address.
+
+    A new domain moves the keys of the group to it at once, and a relay taken off moves them back
+    to the leading server; their owners are told to import them again. Keys move to another relay
+    once it runs the group: its update does that.
+    """
+    for member in group.members.select_related("instance__server"):
+        check_not_relay(group, member.instance.server)
+    before = ServerGroup.objects.select_for_update().get(pk=group.pk)
+    group.save(update_fields=["name", "domain", "relay"])
+    moving = group.relay_id is None or group.relay_id == before.relay_id
+    moved = GroupKeyAddress(group).apply() if moving else 0
+    data = {"name": group.name, "domain": group.domain, "relay": group.relay_id, "moved": moved}
+    audit.log(UPDATE_KIND, actor=actor, target=group, data=data, ip=ip)
+    return moved
 
 
 @transaction.atomic

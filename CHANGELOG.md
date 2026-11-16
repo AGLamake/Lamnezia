@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Editing a server group**: the name, the domain and the relay of a group change on its page.
+  A new domain moves the keys of the group at once, and a relay taken off or removed sends them
+  back to the leading server; owners are told to import their keys again.
 - **Server groups in plans**: a plan gives whole server groups, and its users get the key of the
   group, named by the group, on each member whoever leads it. Servers of a group are no longer
   offered one by one; plans that named such a server get its group, and a deleted group leaves its
@@ -78,6 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A key of a server group issued while its relay was being installed kept the address of the
+  leading server; it now takes the address the group has when the key is saved.
 - **Relay install or update with no member of a group answering** no longer fails with an
   internal error: the service peer of that group is left for the next sync, and the operation log
   says why.

@@ -3,7 +3,8 @@
 docs/FALLBACK.md section 6. Once the relay of a group is installed, its keys carry the domain of
 the group, or the relay address, and the port of the group: the Amnezia app resolves the name
 on every connection. Keys the leading server had before keep its own address in their profiles;
-they are moved to the relay and their owners are told to import them again, once.
+they are moved to the relay and their owners are told to import them again, once. Without the
+relay the keys move back to the leading server the same way.
 """
 
 import json
@@ -76,17 +77,19 @@ def tell_owners(keys: Iterable[AccessKey], server: str) -> int:
 
 
 class GroupKeyAddress:
-    """Keys of the leading server whose profiles do not send clients to the relay yet.
+    """Keys of the leading server whose profiles do not send clients where the group does now.
 
-    The old address goes on working while the leading server is up, so nothing changes on the
-    server: the profile gets the new address, and the owner imports the key again. `host`
-    replaces the address of the relay: a group without one sends clients to its leading server.
+    That is the address of the group behind its running relay, and the leading server without
+    one; `host` replaces it. The old address goes on working while it is up, so nothing changes
+    on the server: the profile gets the new address, and the owner imports the key again.
     """
 
     def __init__(self, group: ServerGroup, host: str | None = None) -> None:
         self.group = group
         self._leader = group.leader
         self._host = host or client_host(group)
+        if self._host is None and self._leader is not None:
+            self._host = self._leader.instance.server.host
         self.outdated: list[AccessKey] = []
         if self._leader is not None and self._host is not None:
             keys = (

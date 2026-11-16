@@ -34,6 +34,7 @@ _LABELS: dict[str, Promise] = {
     "groups.create": _("Create server group"),
     "groups.delete": _("Delete server group"),
     "groups.stay": _("Keep server in group after failed leave"),
+    "groups.update": _("Change server group"),
     "guides.suggestion_accept": _("Publish article suggestion"),
     "guides.suggestion_reject": _("Decline article suggestion"),
     "keys.view": _("Show key"),

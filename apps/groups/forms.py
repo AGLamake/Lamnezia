@@ -1,4 +1,4 @@
-"""Forms of the server groups: a new group and the protocol settings of a group."""
+"""Forms of the server groups: a new group, its name, domain and relay, its protocol settings."""
 
 from ipaddress import IPv4Network
 from typing import Any
@@ -21,7 +21,15 @@ class InstanceChoiceField(forms.ModelChoiceField):  # type: ignore[type-arg]
         return f"{obj.server.name} · {obj.title}"
 
 
-class GroupForm(forms.ModelForm):  # type: ignore[type-arg]
+class GroupEditForm(forms.ModelForm):  # type: ignore[type-arg]
+    """The name, domain and relay of a group."""
+
+    class Meta:
+        model = ServerGroup
+        fields = ("name", "domain", "relay")
+
+
+class GroupForm(GroupEditForm):
     leader = InstanceChoiceField(
         label=_("Leading server"),
         queryset=ProtocolInstance.objects.none(),
@@ -29,10 +37,6 @@ class GroupForm(forms.ModelForm):  # type: ignore[type-arg]
             "A standalone AmneziaWG 3.1 server. Its keys, settings and clients become the group's."
         ),
     )
-
-    class Meta:
-        model = ServerGroup
-        fields = ("name", "domain", "relay")
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

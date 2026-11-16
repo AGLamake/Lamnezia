@@ -203,6 +203,8 @@ each of them. A server is either standalone or a member of one group.
   to finish.
 - The leading server cannot leave — make another server the leading one first; a group with only
   its leader left can be deleted, and the leader stays as it is.
+- **Edit** changes the name, the domain and the relay of the group. A server of the group cannot be
+  its relay.
 
 Keys of a group are issued on its leading server. Issuing, disabling, enabling and revoking a key
 run on every member that answers, without waiting for the others. A member the panel cannot reach
@@ -268,8 +270,8 @@ When the members, their order, the lagging ones or the port of a group change, t
 the relay by itself every `LAMNEZIA_RELAY_SYNC_INTERVAL` seconds. **Update** on the card does it at
 once. **Remove** drops the container, the image and the volume, then takes the service peers off
 the members. A member that does not answer is marked lagging and loses the peer on its catch-up;
-when no member of a group answers, the panel keeps the peer. Clients of the groups lose the
-connection until another relay is installed.
+when no member of a group answers, the panel keeps the peer. Keys of the groups go back to the
+address of their leading servers, and their owners are told to import them again.
 
 Every `LAMNEZIA_RELAY_MONITOR_INTERVAL` seconds the panel reads the state the agent writes. The
 group page shows for each member whether the relay reaches it, which one is **active** now and
@@ -290,7 +292,13 @@ Once the relay of a group is installed, the `vpn://` links and `.conf` files of 
 Keys the leading server had before move to that address in the same operation, and their owners,
 like the owners of keys revoked when their server joined, get the notification **Keys updated for
 a server group** in the personal account channel: they import the key into the Amnezia app again,
-once. A key that keeps the old address goes on working while the leading server is up.
+once. A key that keeps the old address goes on working while the leading server is up. A key
+issued while the relay is being installed takes the address it has when the key is saved.
+
+A new **Domain** on the edit page moves the keys to it at once, with the same notification. When
+the relay is taken off the group, or removed from its server, the keys go back to the address of
+the leading server. With another relay the keys move once that relay runs the group, on its next
+update.
 
 The domain needs only an A record with the relay address. The group page warns when the domain
 does not resolve, points elsewhere, or has an AAAA record: the Amnezia app on a computer may take
