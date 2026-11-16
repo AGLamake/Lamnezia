@@ -207,8 +207,8 @@ leave this way is still never overwritten.
 
 ## AmneziaWG snapshots around a group
 
-Before a server joins a group (if it has clients) and before it leaves one, the panel keeps a
-snapshot of its AmneziaWG files: the server key, the preshared key and the clients. Snapshots are
+Before a server joins a group (if it has clients), before it leaves one and before a failed join
+is undone, the panel keeps a snapshot of its AmneziaWG files: the server key, the preshared key and the clients. Snapshots are
 never overwritten and are listed with their date, reason, port and number of clients under
 **Backup** on the server card. **Delete** removes a snapshot you no longer need: only the record
 in the panel goes, the server is not touched, and the audit journal keeps the deletion.
@@ -220,7 +220,8 @@ old files come back. The panel then reads the server key and the clients again: 
 snapshot are active and connect again, keys issued after the snapshot are revoked, and clients
 the panel did not know appear as imported keys.
 
-A snapshot taken "before leaving a server group" holds the files of the group: after the restore
+A snapshot taken "before leaving a server group" or "before taking a joining server out of its
+group" holds the files of the group: after the restore
 the server runs with the group key again, and the panel warns about it before starting. A peer
 whose key lives on another server (usually a key of the group's leading server) is not added a
 second time; the operation log shows how many such peers were left out. A key that comes back to

@@ -307,7 +307,8 @@ class JoinRollback:
 
     The panel saved nothing of the group for it yet. A server that still runs its own key only
     loses the member row; one the join already gave the group files gets back the snapshot taken
-    before the join, or a clean AmneziaWG, as a leave gives, when it had no clients to keep.
+    before the join, or a clean AmneziaWG, as a leave gives, when it had no clients to keep;
+    the group files it ran are kept in a snapshot first, so the rollback can be undone.
     A server with a key of neither is refused untouched.
     """
 
@@ -340,6 +341,8 @@ class JoinRollback:
         """Write the files the server had before the join; the files it runs with now."""
         if _private_key(current.config) not in self._group_keys():
             raise GroupError(GroupErrorCode.OTHER_SERVER_KEY, self._instance.source)
+        with self._ctx.step(_("Save a snapshot of the server files")):
+            take_snapshot(self._instance, current, SnapshotReason.JOIN_CANCEL)
         snapshot = self._snapshot()
         if snapshot is not None:
             step = _("Write the files of the snapshot")

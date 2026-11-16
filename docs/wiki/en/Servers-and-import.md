@@ -199,8 +199,9 @@ each of them. A server is either standalone or a member of one group.
   "join failed". **Retry joining** runs the join again and makes the server a clone of the group.
   **Take out of the group** removes the member: a server that still runs its own key keeps its
   files untouched; one the join already gave the files of the group gets back the snapshot taken
-  before the join, or a clean AmneziaWG with a new key if it had no clients. A server that runs a
-  key of neither is refused untouched.
+  before the join, or a clean AmneziaWG with a new key if it had no clients. Before that the panel
+  keeps the group files it ran as a snapshot "before taking a joining server out of its group"
+  ([Backup](Backup.md#amneziawg-snapshots-around-a-group)). A server that runs a key of neither is refused untouched.
 - **Make leading**: another member takes the lead. A background operation first compares its files
   with those of the group and refuses if the server differs from the group. Keys of the group,
   with their traffic history, pass to the new leading server, and new keys are issued on it; if

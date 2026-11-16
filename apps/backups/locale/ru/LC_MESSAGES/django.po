@@ -176,6 +176,9 @@ msgstr "перед выходом из группы серверов"
 msgid "before restoring a snapshot"
 msgstr "перед восстановлением снимка"
 
+msgid "before taking a joining server out of its group"
+msgstr "перед откатом вступления в группу"
+
 msgid "client list"
 msgstr "список клиентов"
 

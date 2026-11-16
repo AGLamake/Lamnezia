@@ -41,7 +41,7 @@
               {% endwith %}
               <div class="flex flex-wrap gap-2">
                 {% if not instance|in_group %}
-                <form method="post" action="{% url 'backups:restore-snapshot' snapshot.pk %}" data-confirm="{% if snapshot.reason == "group_leave" %}{% translate "Put the group files back on this server? The server runs with the group key again; keys of the group stay with the group, the other peers come back as keys of this server. Keys issued since then stop working." %}{% else %}{% translate "Put the files of this snapshot back on the server? Keys issued since then stop working." %}{% endif %}">
+                <form method="post" action="{% url 'backups:restore-snapshot' snapshot.pk %}" data-confirm="{% if snapshot.holds_group_files %}{% translate "Put the group files back on this server? The server runs with the group key again; keys of the group stay with the group, the other peers come back as keys of this server. Keys issued since then stop working." %}{% else %}{% translate "Put the files of this snapshot back on the server? Keys issued since then stop working." %}{% endif %}">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-secondary">{% translate "Restore" %}</button>
                 </form>

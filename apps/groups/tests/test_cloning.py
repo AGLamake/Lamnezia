@@ -280,6 +280,7 @@ def test_join_failed_before_writing_is_undone_without_touching_the_server(  # no
 
     assert not GroupMember.objects.filter(instance=joiner).exists()
     assert server_files(servers[JOINER_HOST]) == before
+    assert not ProtocolSnapshot.objects.filter(reason=SnapshotReason.JOIN_CANCEL).exists()
     private_key = joiner.private_key
     joiner.refresh_from_db()
     assert joiner.private_key == private_key
@@ -296,6 +297,7 @@ def test_join_failed_after_writing_gets_back_the_snapshot(  # noqa: PLR0913, PLR
     before = server_files(servers[JOINER_HOST])
     _failed_after_writing(join, monkeypatch)
     assert is_clone(servers)
+    group_files = server_files(servers[JOINER_HOST])
     member = GroupMember.objects.get(instance=joiner)
 
     succeeded(start(lambda: cancel_join(member, user=admin)))
@@ -303,6 +305,8 @@ def test_join_failed_after_writing_gets_back_the_snapshot(  # noqa: PLR0913, PLR
     assert not GroupMember.objects.filter(instance=joiner).exists()
     assert server_files(servers[JOINER_HOST]) == before
     assert servers[JOINER_HOST].awg_up
+    kept = ProtocolSnapshot.objects.get(instance=joiner, reason=SnapshotReason.JOIN_CANCEL)
+    assert kept.config == group_files.config
 
 
 def test_clean_server_whose_join_failed_gets_a_clean_amneziawg(  # noqa: PLR0913, PLR0917

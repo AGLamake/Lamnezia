@@ -232,3 +232,15 @@ def test_key_within_the_owner_plan_stays_on(
     succeeded(restore())
 
     assert not Operation.objects.filter(kind=actions.DISABLE).exists()
+
+
+def test_server_card_warns_that_group_files_bring_the_group_key_back(
+    servers: Fakes, joiner: ProtocolInstance, left: ProtocolSnapshot, admin: User
+) -> None:
+    ProtocolSnapshot.objects.filter(pk=left.pk).update(reason=SnapshotReason.JOIN_CANCEL)
+    client = Client()
+    client.force_login(admin)
+
+    page = client.get(reverse("servers:detail", args=[joiner.server_id])).content.decode()
+
+    assert "runs with the group key again" in page
