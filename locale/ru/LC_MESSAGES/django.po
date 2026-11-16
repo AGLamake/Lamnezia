@@ -2832,9 +2832,6 @@ msgstr "Сертификат сервера IPsec выпущен для %(ip)s. 
 msgid "The IPsec server certificate is issued for %(ip)s. On a VPS with another IP, reissue it on this card after the restore, or IPsec clients are refused."
 msgstr "Сертификат сервера IPsec выпущен для %(ip)s. На VPS с другим IP перевыпустите его на этой карточке после восстановления, иначе клиенты IPsec не подключатся."
 
-msgid "The VPN interface runs with the old files again."
-msgstr "VPN-интерфейс снова работает со старыми файлами."
-
 msgid "The VPN service is stopped."
 msgstr "VPN-сервис остановлен."
 

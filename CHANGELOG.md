@@ -102,6 +102,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Group guards and a faster group page**: the protocol settings operation refuses a group member
+  even when started past its card. A joining server takes the DNS of the group. The DNS check of
+  the group domain runs in the background and is cached for 10 minutes, so the group page no longer
+  waits for DNS. The shared handling of AmneziaWG files moved to `apps/protocols`, and backups no
+  longer depend on the groups.
 - **Translations for developers**: `makemessages` and `compilemessages` run without `.env` and the
   keys, and a bare `manage.py makemessages` has the project flags built in, so it writes the same
   catalogs as `make messages`. A fresh clone needs one `compilemessages` before the tests.

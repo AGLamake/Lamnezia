@@ -21,9 +21,6 @@ from apps.backups.errors import RestoreError, RestoreErrorCode
 from apps.backups.models import ProtocolSnapshot, SnapshotReason
 from apps.backups.services.returned_keys import ReturnedKeys
 from apps.backups.services.snapshot import read_awg_files, save_backup, take_snapshot
-from apps.groups.models import GroupMember
-from apps.groups.services.cloning import MemberFiles
-from apps.groups.services.membership import take_identity
 from apps.keys.models import GONE_STATUSES, AccessKey, KeyStatus
 from apps.keys.services.adoption import adopt_peer
 from apps.keys.services.service_peers import service_peers
@@ -31,6 +28,7 @@ from apps.operations.models import Operation
 from apps.operations.services.context import OperationContext
 from apps.operations.services.launcher import launch
 from apps.protocols.models import ProtocolInstance
+from apps.protocols.services.awg_identity import AwgFiles, take_identity
 from apps.servers.services.connection import connect
 from apps.ssh.services import RemoteHost
 
@@ -44,7 +42,7 @@ def snapshot_files(snapshot: ProtocolSnapshot) -> AwgServerFiles:
 
 def check_standalone(instance: ProtocolInstance) -> None:
     """Raise RestoreError while the server is in a group: it must leave the group first."""
-    if GroupMember.objects.filter(instance=instance).exists():
+    if ProtocolInstance.objects.filter(pk=instance.pk, group_member__isnull=False).exists():
         raise RestoreError(RestoreErrorCode.IN_GROUP, instance.source)
 
 
@@ -105,7 +103,7 @@ class SnapshotRestorer:
         with self._ctx.step(_("Save a snapshot of the server files")):
             take_snapshot(self._instance, current, SnapshotReason.SNAPSHOT_RESTORE)
         with self._ctx.step(_("Write the files of the snapshot")):
-            MemberFiles(host, self._ctx).replace(self._files.by_path())
+            AwgFiles(host, self._ctx).replace(self._files.by_path())
             if read_awg_files(host) != self._files:
                 raise RestoreError(RestoreErrorCode.NOT_RESTORED, self._instance.source)
 

@@ -19,6 +19,8 @@ POLL_TASKS = frozenset(
         "traffic.collect_server",
         "relays.monitor",
         "relays.monitor_relay",
+        # A DNS check is short and a group page waits for its answer.
+        "groups.check_domain",
     }
 )
 

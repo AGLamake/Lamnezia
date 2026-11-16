@@ -4,6 +4,7 @@ leaving, the lead, a planned switch of the relay."""
 from typing import Any
 
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import QuerySet
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
@@ -41,6 +42,7 @@ from apps.groups.services.membership import (
     update_group,
 )
 from apps.groups.services.settings import changing_settings
+from apps.groups.tasks import check_group_domain
 from apps.keys.services.counts import InstanceKeyCount
 from apps.protocols.models import ProtocolInstance
 from apps.relays.errors import RelayError
@@ -138,13 +140,21 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
             relay=relay,
             health=health,
             client_host=client_host(group),
-            domain_warnings=DomainCheck(group).warnings(),
+            domain_warnings=_domain_warnings(group),
             candidates=candidates,
             bare_servers=[
                 (server, port_taken(server, group.port)) for server in servers_without_awg()
             ],
             **kwargs,
         )
+
+
+def _domain_warnings(group: ServerGroup) -> list[str]:
+    """Warnings about the domain from the last check; a missing check is queued, not awaited."""
+    check = DomainCheck(group)
+    if check.needed and check.answers() is None:
+        transaction.on_commit(lambda: check_group_domain.delay(group.pk))
+    return check.warnings()
 
 
 def _may_lead(member: GroupMember) -> bool:

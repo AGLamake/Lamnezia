@@ -25,8 +25,10 @@ from apps.keys.services.profile import ServerProfile
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
+from apps.protocols.errors import SetupErrorCode
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.services.awg_settings import AwgSettings
+from apps.protocols.services.settings_change import start_settings_change
 from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
 
 pytestmark = pytest.mark.django_db
@@ -208,6 +210,23 @@ def test_member_settings_are_read_only_on_its_card(
     assert f"/servers/groups/{group.pk}/settings/" in page.content.decode()
     assert posted.headers["Location"] == f"/servers/groups/{group.pk}/settings/"
     assert not Operation.objects.exclude(kind__startswith="groups.").exists()
+
+
+def test_settings_operation_refuses_a_member(
+    servers: Fakes, joined: GroupMember, admin: User, start: Start
+) -> None:
+    instance = joined.instance
+    before = server_files(servers[JOINER_HOST])
+    settings = AwgSettings.of(instance)
+    changed = AwgSettings(
+        settings.port, {**settings.params, "Jc": "7"}, settings.dns, settings.logs, settings.subnet
+    )
+
+    operation = start(lambda: start_settings_change(instance, changed, admin, reissue=False))
+
+    assert operation.status == OperationStatus.FAILED
+    assert operation.error_code == SetupErrorCode.GROUP_MEMBER
+    assert server_files(servers[JOINER_HOST]) == before
 
 
 def test_group_page_starts_the_change(

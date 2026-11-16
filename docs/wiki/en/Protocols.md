@@ -354,7 +354,8 @@ group. On a 2.0 server the group reminds you to move the server to 3.1 first: it
 these parameters.
 
 A server in a [group](Servers-and-import.md#server-groups) shows its settings read only: they
-change for the whole group on the group page.
+change for the whole group on the group page. The settings operation refuses a group member too,
+even when started past its card. A joining server takes the DNS of the group.
 
 A change of the port or the parameters breaks every client until it imports the key again, so the
 form asks for a confirmation. **Apply** starts an operation:

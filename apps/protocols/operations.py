@@ -15,6 +15,7 @@ from apps.keys.models import AccessKey
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
 from apps.operations.services.subjects import subjects
+from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.protocols.models import InstanceOrigin, ProtocolInstance, ServiceInstance
 from apps.protocols.services import offload, speed_test
 from apps.protocols.services.awg_migration import (
@@ -148,9 +149,12 @@ def stop_speed_test(ctx: OperationContext) -> None:
 @operations.register(SETTINGS_KIND, gettext_lazy("Change the protocol settings"))
 def change_settings(ctx: OperationContext) -> None:
     """A DNS change only updates the profiles; the server is touched for the port, the AWG and
-    the container log. Owners hear of it only when their profiles change.
+    the container log. Owners hear of it only when their profiles change. A member of a server
+    group is refused: its servers are clones, only the group changes their settings.
     """
     instance = _instance(ctx)
+    if hasattr(instance, "group_member"):
+        raise SetupError(SetupErrorCode.GROUP_MEMBER, instance.source)
     current = AwgSettings.of(instance)
     settings = AwgSettings.from_params(ctx.params).within(current)
     if settings.touches_server(current):

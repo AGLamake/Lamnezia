@@ -7,7 +7,7 @@ group or catching up with it copies the files of a member that stays locked mean
 without AmneziaWG gets it installed straight with those files.
 """
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager
 from ipaddress import IPv4Network
 
@@ -26,15 +26,13 @@ from apps.backups.services.guard import IdentityGuard
 from apps.backups.services.snapshot import read_awg_files, save_backup, take_snapshot
 from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
-from apps.groups.services.addressing import tell_owners
-from apps.groups.services.membership import add_installed, take_identity
+from apps.groups.services.membership import add_installed, take_group_dns
 from apps.keys.models import AccessKey
 from apps.keys.services.actions import KeyActions
 from apps.operations.services.context import OperationContext
-from apps.protocols.errors import SetupError, SetupErrorCode
-from apps.protocols.services.awg_container import AwgContainer
+from apps.protocols.services.awg_identity import AwgFiles, take_identity, tell_owners
 from apps.protocols.services.awg_installer import AwgInstaller
-from apps.protocols.services.awg_settings import AwgReconfiguration, AwgSettings, kept_files
+from apps.protocols.services.awg_settings import AwgReconfiguration, AwgSettings
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.ssh.errors import SshError
@@ -104,38 +102,6 @@ def _read_locked(
     return None
 
 
-class MemberFiles:
-    """The amnezia-awg2 container of one server whose files are replaced as a set."""
-
-    def __init__(self, host: RemoteHost, ctx: OperationContext) -> None:
-        self._ctx = ctx
-        self._docker = AwgContainer(host, ctx)
-
-    def replace(self, files: Mapping[str, bytes]) -> None:
-        """Write the files in order and restart the interface; if it does not come up, the old
-        files come back.
-        """
-        shell = self._docker.shell
-        previous = {
-            path: shell.read_file(path) for path in kept_files(AWG2) if self._docker.has_file(path)
-        }
-        if self._bring_up(files):
-            self._docker.check_header_protection()
-            return
-        if self._bring_up(previous):
-            self._ctx.log(_("The VPN interface runs with the old files again."))
-        raise SetupError(SetupErrorCode.AWG_NOT_RUNNING, AWG2.interface)
-
-    def write_clients_table(self, text: str) -> None:
-        """Only the client list differs: it is written alone, the interface keeps running."""
-        self._docker.shell.write_file_atomic(AWG2.clients_table_path, text.encode())
-
-    def _bring_up(self, files: Mapping[str, bytes]) -> bool:
-        for path, data in files.items():
-            self._docker.shell.write_file_atomic(path, data)
-        return self._docker.restart_awg()
-
-
 class _Cloning:
     """Makes the server of a member a clone of the group; subclasses save what that means.
 
@@ -178,7 +144,7 @@ class _Cloning:
         if config.address.network != identity.subnet.network:
             self._fit_subnet(host, identity)
         self._keep(current, config)
-        files = MemberFiles(host, self._ctx)
+        files = AwgFiles(host, self._ctx)
         if all(divergence.in_clients_table for divergence in divergences):
             with self._ctx.step(_("Write the client list of the group")):
                 files.write_clients_table(identity.files.clients_table)
@@ -218,6 +184,7 @@ class GroupJoin(_Cloning):
     def _save(self, host: RemoteHost, files: AwgServerFiles) -> None:
         with transaction.atomic():
             revoked = take_identity(self._instance, files)
+            take_group_dns(self._instance, self._member.group)
             GroupMember.objects.filter(pk=self._member.pk, state=MemberState.JOINING).update(
                 state=MemberState.MEMBER,
                 joined_at=timezone.now(),
@@ -302,7 +269,7 @@ class GroupInstall:
                 if identity.compare(read_awg_files(host)):
                     # A retry kept the files of an earlier attempt; the group has changed since.
                     self._ctx.log(_("The server has older files of the group: they are replaced."))
-                    MemberFiles(host, self._ctx).replace(identity.member_files())
+                    AwgFiles(host, self._ctx).replace(identity.member_files())
                 files = read_awg_files(host)
                 left = identity.compare(files)
                 if left:
@@ -382,7 +349,7 @@ class JoinRollback:
             config = AwgServerConfig.parse(current.config)
             files = standalone_files(config.address, config.listen_port or self._instance.port)
         with self._ctx.step(step):
-            MemberFiles(host, self._ctx).replace(files.by_path())
+            AwgFiles(host, self._ctx).replace(files.by_path())
         return files
 
     def _group_keys(self) -> set[str]:
@@ -421,7 +388,7 @@ class GroupLeave:
                 config = AwgServerConfig.parse(current.config)
                 fresh = standalone_files(config.address, config.listen_port or self._instance.port)
             with self._ctx.step(_("Write a clean AmneziaWG")):
-                MemberFiles(host, self._ctx).replace(fresh.by_path())
+                AwgFiles(host, self._ctx).replace(fresh.by_path())
             with self._ctx.step(_("Save the result in the panel")):
                 with transaction.atomic():
                     revoked = take_identity(self._instance, fresh)

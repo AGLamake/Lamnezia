@@ -20,7 +20,7 @@ from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
 from apps.groups.services.addressing import GroupKeyAddress
 from apps.groups.services.replication import start_catch_up
-from apps.keys.models import GONE_STATUSES, AccessKey, KeyStatus
+from apps.keys.models import GONE_STATUSES, AccessKey
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
 from apps.protocols.models import InstanceOrigin, ProtocolInstance
@@ -320,32 +320,13 @@ def _launch_member(
     return operation
 
 
-@transaction.atomic
-def take_identity(instance: ProtocolInstance, files: AwgServerFiles) -> list[AccessKey]:
-    """Save the server key and settings the server now runs with; the keys it revoked.
-
-    Keys issued for the old server key do not connect any more: they are revoked without a
-    notice, the group gives their owners its own keys.
-    """
-    config = AwgServerConfig.parse(files.config)
-    private_key = config.private_key or ""
-    revoked: list[AccessKey] = []
-    if private_key != instance.private_key:
-        keys = AccessKey.objects.filter(source=instance.source).exclude(status__in=GONE_STATUSES)
-        revoked = list(keys.select_related("user").select_for_update(of=("self",)))
-        keys.filter(pk__in=[key.pk for key in revoked]).update(
-            status=KeyStatus.REVOKED, revoked_at=timezone.now()
-        )
-    instance.private_key = private_key
-    instance.public_key = KeyPair.from_private_key(private_key).public_key
-    instance.preshared_key = files.preshared_key
-    instance.params = config.awg_params
-    instance.port = config.listen_port or instance.port
-    instance.subnet = str(config.address.network)
-    instance.save(
-        update_fields=["private_key", "public_key", "preshared_key", "params", "port", "subnet"]
-    )
-    return revoked
+def take_group_dns(instance: ProtocolInstance, group: ServerGroup) -> None:
+    """Give a joining server the DNS of the group: keys of the group carry the same DNS."""
+    leader = group.leader
+    if leader is None or leader.instance_id == instance.pk:
+        return
+    instance.primary_dns, instance.secondary_dns = leader.instance.dns
+    instance.save(update_fields=["primary_dns", "secondary_dns"])
 
 
 @transaction.atomic
@@ -377,6 +358,7 @@ def add_installed(group: ServerGroup, server: Server, files: AwgServerFiles) -> 
     )
     others = [c for c in server.containers if c.get("name") != AWG2.name]
     server.record_containers([*others, {"name": AWG2.name, "port": port, "transport": "udp"}])
+    take_group_dns(instance, group)
     return _add_member(group, instance, state=MemberState.MEMBER, joined_at=timezone.now())
 
 

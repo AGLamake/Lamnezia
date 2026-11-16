@@ -51,6 +51,7 @@ class SetupErrorCode(StrEnum):
     MIGRATION_TARGET_OUTDATED = "migration_target_outdated"
     MIGRATION_TARGET_MISSING = "migration_target_missing"
     MIGRATION_NOT_DONE = "migration_not_done"
+    GROUP_MEMBER = "group_member"
 
 
 SETUP_ERRORS: dict[SetupErrorCode, ErrorDescription] = {
@@ -257,6 +258,10 @@ SETUP_ERRORS: dict[SetupErrorCode, ErrorDescription] = {
     SetupErrorCode.MIGRATION_NOT_DONE: ErrorDescription(
         _("Not every client of the old AmneziaWG has a new key."),
         _("Move the clients first: the old container is removed only after that."),
+    ),
+    SetupErrorCode.GROUP_MEMBER: ErrorDescription(
+        _("The server is in a server group: its settings are those of the group."),
+        _("Change the protocol settings on the group page."),
     ),
 }
 

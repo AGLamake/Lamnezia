@@ -1,15 +1,21 @@
 """Keys of a group behind its relay: their address, the DNS check and whose traffic is whose."""
 
 import json
+import socket
+from typing import Any
 
 import pytest
+from django.test import Client
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
+from apps.groups import tasks
 from apps.groups.errors import GroupError
 from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.addressing import (
+    DomainAnswers,
     DomainCheck,
     GroupKeyAddress,
     client_host,
@@ -17,6 +23,7 @@ from apps.groups.services.addressing import (
     key_sources,
 )
 from apps.groups.services.membership import create_group, update_group
+from apps.groups.tasks import check_group_domain
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT, Run, succeeded
 from apps.keys.models import AccessKey
 from apps.keys.services.issued import IssuedKeys
@@ -40,6 +47,12 @@ DOMAIN = "vpn.example.com"
 @pytest.fixture
 def relay_server() -> Server:
     return ServerFactory(host=RELAY_HOST)
+
+
+@pytest.fixture
+def browser(client: Client, admin: User) -> Client:
+    client.force_login(admin)
+    return client
 
 
 def install(server: Server) -> None:
@@ -222,7 +235,71 @@ class TestDomainCheck:
                 raise OSError(name)
             return ipv4[name]
 
-        return DomainCheck(group, resolve, lambda _name: ipv6).warnings()
+        DomainCheck(group, resolve, lambda _name: ipv6).run()
+        return DomainCheck(group).warnings()
+
+    def test_nothing_shows_before_the_check(self, group: ServerGroup, relay_server: Server) -> None:
+        behind(group, relay_server, DOMAIN)
+
+        assert DomainCheck(group).answers() is None
+        assert DomainCheck(group).warnings() == []
+
+    def test_page_asks_no_dns_and_queues_the_check(
+        self,
+        group: ServerGroup,
+        relay_server: Server,
+        browser: Client,
+        monkeypatch: pytest.MonkeyPatch,
+        django_capture_on_commit_callbacks: Any,
+    ) -> None:
+        behind(group, relay_server, DOMAIN)
+        queued: list[int] = []
+
+        def getaddrinfo(*_args: Any) -> list[tuple[Any, ...]]:
+            raise AssertionError("the page asked DNS")
+
+        monkeypatch.setattr(socket, "getaddrinfo", getaddrinfo)
+        monkeypatch.setattr(tasks.check_group_domain, "delay", queued.append)
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = browser.get(reverse("groups:detail", args=[group.pk]))
+
+        assert response.status_code == 200
+        assert queued == [group.pk]
+
+    def test_page_shows_the_cached_warnings(
+        self, group: ServerGroup, relay_server: Server, browser: Client
+    ) -> None:
+        behind(group, relay_server, DOMAIN)
+        self.warnings(group, {RELAY_HOST: [RELAY_HOST]}, [])
+
+        page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+        assert "does not resolve" in page
+
+    def test_another_domain_is_checked_anew(self, group: ServerGroup, relay_server: Server) -> None:
+        behind(group, relay_server, DOMAIN)
+        self.warnings(group, {RELAY_HOST: [RELAY_HOST]}, [])
+
+        group.domain = "other.example.com"
+
+        assert DomainCheck(group).answers() is None
+
+    def test_the_task_caches_the_answers(
+        self, group: ServerGroup, relay_server: Server, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        behind(group, relay_server, DOMAIN)
+
+        def getaddrinfo(_name: str, _port: None, family: int) -> list[tuple[Any, ...]]:
+            if family == socket.AF_INET6:
+                raise socket.gaierror("no AAAA")
+            return [(family, 0, 0, "", (RELAY_HOST, 0))]
+
+        monkeypatch.setattr(socket, "getaddrinfo", getaddrinfo)
+
+        check_group_domain(group.pk)
+
+        assert DomainCheck(group).answers() == DomainAnswers([RELAY_HOST], [RELAY_HOST], [])
 
     def test_domain_with_the_relay_address_only_is_fine(
         self, group: ServerGroup, relay_server: Server

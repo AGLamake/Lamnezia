@@ -341,7 +341,9 @@ update.
 
 The domain needs only an A record with the relay address. The group page warns when the domain
 does not resolve, points elsewhere, or has an AAAA record: the Amnezia app on a computer may take
-the IPv6 address and miss the relay.
+the IPv6 address and miss the relay. DNS is checked in the background and the result is kept for
+10 minutes: the page does not wait for DNS, and shows a new domain or a fixed record on the next
+visit after the check.
 
 Traffic, online status and limits of a group key are summed over all members: whichever server the
 relay sends the client to, its traffic counts for the same key.

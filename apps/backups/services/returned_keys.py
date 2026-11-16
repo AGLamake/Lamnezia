@@ -4,11 +4,11 @@ place for goes off, and the owners hear that their keys of the server changed.""
 from collections import defaultdict
 
 from apps.accounts.models import User
-from apps.groups.services.addressing import tell_owners
 from apps.keys.models import GONE_STATUSES, AccessKey
 from apps.keys.services.limits import disable_over_plan
 from apps.plans.services.limits import EffectiveLimits, effective_limits
 from apps.protocols.models import ProtocolInstance
+from apps.protocols.services.awg_identity import tell_owners
 
 
 class ReturnedKeys:

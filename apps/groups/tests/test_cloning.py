@@ -68,6 +68,20 @@ def test_joined_server_is_a_clone_of_the_leader(
     assert ProtocolBackup.objects.filter(instance=joiner).exists()
 
 
+def test_joined_server_takes_the_dns_of_the_group(
+    leader: ProtocolInstance, joiner: ProtocolInstance, join: Run
+) -> None:
+    leader.primary_dns, leader.secondary_dns = "9.9.9.9", "149.112.112.112"
+    leader.save(update_fields=["primary_dns", "secondary_dns"])
+    joiner.primary_dns, joiner.secondary_dns = "1.1.1.1", "1.0.0.1"
+    joiner.save(update_fields=["primary_dns", "secondary_dns"])
+
+    succeeded(join())
+
+    joiner.refresh_from_db()
+    assert joiner.dns == ("9.9.9.9", "149.112.112.112")
+
+
 def test_server_with_clients_is_saved_before_it_joins(
     servers: Fakes, joiner: ProtocolInstance, join: Run
 ) -> None:

@@ -7,6 +7,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
 import pytest
+from django.core.cache import cache
 
 from amnezia_core.awg import (
     AWG_CLIENTS_TABLE_PATH,
@@ -78,6 +79,14 @@ def instance_of(host: str, files: AwgServerFiles) -> ProtocolInstance:
         preshared_key=files.preshared_key,
         origin=InstanceOrigin.IMPORTED,
     )
+
+
+@pytest.fixture(autouse=True)
+def _empty_cache() -> Iterator[None]:
+    """DNS checks of group domains live in the cache; no test may see another's."""
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture

@@ -159,6 +159,10 @@ msgstr "Смена параметров XRay"
 msgid "Change the protocol settings"
 msgstr "Изменение параметров протокола"
 
+#
+msgid "Change the protocol settings on the group page."
+msgstr "Измените параметры протокола на странице группы."
+
 msgid "Change the service settings"
 msgstr "Смена параметров сервиса"
 
@@ -883,6 +887,10 @@ msgstr "Прокси для Telegram скачивают файлы с core.teleg
 msgid "The VPN interface is already up."
 msgstr "VPN-интерфейс уже поднят."
 
+#
+msgid "The VPN interface runs with the old files again."
+msgstr "VPN-интерфейс снова работает со старыми файлами."
+
 msgid "The VPN interface runs with the old settings again."
 msgstr "VPN-интерфейс снова работает со старыми параметрами."
 
@@ -1005,6 +1013,9 @@ msgstr "Этого контейнера на сервере уже нет."
 
 msgid "The server has no systemd: the TSO/GSO workaround cannot be kept on."
 msgstr "На сервере нет systemd: обход TSO/GSO не удержится после перезапуска."
+
+msgid "The server is in a server group: its settings are those of the group."
+msgstr "Сервер входит в группу серверов: его параметры — это параметры группы."
 
 msgid "The server probably has an old amneziawg kernel module: it drops the new settings without an error. Update or unload the module and try again. The server stays on AmneziaWG 2.0."
 msgstr "Вероятно, на сервере старый модуль ядра amneziawg: он молча отбрасывает новые настройки. Обновите или выгрузите модуль и повторите. Сервер остаётся на AmneziaWG 2.0."
