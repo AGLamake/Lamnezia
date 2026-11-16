@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Domain check under way**: until the background DNS check of a group domain has answered, the
+  group page says the domain is being checked.
 - **Snapshot before undoing a failed join**: **Take out of the group** first keeps the group files
   of the server as a snapshot "before taking a joining server out of its group", so the rollback
   can be undone. Restoring such a snapshot warns that the server gets the group key back.
