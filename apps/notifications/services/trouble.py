@@ -25,6 +25,11 @@ def forget_trouble(key: str) -> None:
     Trouble.objects.filter(key=key).delete()
 
 
+def forget_troubles(prefix: str) -> None:
+    """Forget every trouble whose key starts with `prefix`: the subject of them is gone."""
+    Trouble.objects.filter(key__startswith=prefix).delete()
+
+
 def open_troubles(prefix: str) -> list[str]:
     """Keys of the troubles going on that start with `prefix`."""
     return list(Trouble.objects.filter(key__startswith=prefix).values_list("key", flat=True))

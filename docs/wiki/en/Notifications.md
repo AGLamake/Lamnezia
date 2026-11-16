@@ -61,7 +61,7 @@ channels hear each event.
 `server_up` and the last four come once when the matching trouble is over (`server_down`,
 `member_unreachable`, `group_unreachable`, `relay_down`, `member_lagging`). The panel remembers
 the trouble apart from notifications, so the pair comes even when no channel is subscribed to the
-trouble event.
+trouble event. Deleting a server or a relay forgets its outage without a recovery notification.
 
 Notifications about the user go where they chose on their **Messengers** page: email by default,
 or their linked Telegram or Discord ([Telegram and Discord](Messengers.md)).

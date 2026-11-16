@@ -142,6 +142,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Outage of a deleted server or relay stayed remembered**: deleting a server or a relay now
+  forgets its open `server_down` / `relay_down` trouble.
 - **Relay update failed with "Unexpected error" after every step succeeded** when the
   leading server of a group had imported keys: such keys have no profile and now keep their
   address. Saving the relay state is now a step of its own, so an error there is shown on it.

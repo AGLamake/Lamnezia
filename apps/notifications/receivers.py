@@ -2,10 +2,14 @@
 
 from typing import Any
 
+from django.db.models.signals import post_delete
+
 from apps.accounts.models import User
 from apps.notifications.events import Event
 from apps.notifications.services.delivery import emit
+from apps.notifications.services.trouble import forget_troubles
 from apps.protocols.signals import keys_changed, keys_moved, keys_revoked
+from apps.servers.models import Server
 from apps.traffic.signals import limit_reached
 
 
@@ -25,7 +29,14 @@ def on_keys_moved(sender: object, user: User, server: str, **kwargs: Any) -> Non
     emit(Event.KEYS_MOVED, {"user": user.username, "server": server}, user=user)
 
 
+def on_server_deleted(sender: object, instance: Server, **kwargs: Any) -> None:
+    """A deleted server or relay leaves no outage behind in the list of troubles."""
+    for event in (Event.SERVER_DOWN, Event.RELAY_DOWN):
+        forget_troubles(f"{event}:{instance.pk}:")
+
+
 def connect() -> None:
+    post_delete.connect(on_server_deleted, sender=Server, dispatch_uid="notifications.server")
     limit_reached.connect(on_limit_reached, dispatch_uid="notifications.limit_reached")
     keys_changed.connect(on_keys_changed, dispatch_uid="notifications.keys_changed")
     keys_revoked.connect(on_keys_revoked, dispatch_uid="notifications.keys_revoked")
