@@ -127,13 +127,14 @@ class RelayDeployment:
 
     def _synced(self, plan: RelayPlan, config: RelayConfig) -> None:
         """Save what the relay runs; the keys of its groups now send clients to it."""
-        self._relay.synced = plan.digest(config)
-        self._relay.synced_at = timezone.now()
-        self._relay.sync_skipped = SyncSkip.NONE
-        self._relay.sync_skipped_detail = ""
-        fields = ["installed_at", "synced", "synced_at", "sync_skipped", "sync_skipped_detail"]
-        self._relay.save(update_fields=fields)
-        moves = [GroupKeyAddress(group) for group, _members in plan.groups]
+        with self._ctx.step(_("Save the relay state")):
+            self._relay.synced = plan.digest(config)
+            self._relay.synced_at = timezone.now()
+            self._relay.sync_skipped = SyncSkip.NONE
+            self._relay.sync_skipped_detail = ""
+            fields = ["installed_at", "synced", "synced_at", "sync_skipped", "sync_skipped_detail"]
+            self._relay.save(update_fields=fields)
+            moves = [GroupKeyAddress(group) for group, _members in plan.groups]
         self._move_keys(moves, _("Move the keys of the groups to the relay address"))
 
     def _move_keys(self, moves: list[GroupKeyAddress], title: str) -> None:

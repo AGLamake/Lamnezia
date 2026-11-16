@@ -114,6 +114,23 @@ def test_earlier_keys_move_to_the_relay_and_owners_are_told_once(
     assert GroupKeyAddress(group).outdated == []
 
 
+def test_imported_keys_without_a_profile_stay_as_they_are(
+    group: ServerGroup, leader: ProtocolInstance, relay_server: Server
+) -> None:
+    key = issued_key(leader, UserFactory())
+    imported = AccessKey.objects.create(
+        user=UserFactory(), source=leader.source, public_key="imported", imported=True
+    )
+    install(relay_server)
+    behind(group, relay_server)
+
+    assert GroupKeyAddress(group).apply() == 1
+
+    assert endpoint(key) == (RELAY_HOST, PORT)
+    imported.refresh_from_db()
+    assert imported.profile == ""
+
+
 def test_new_group_behind_a_running_relay_moves_the_keys_of_its_leader(
     leader: ProtocolInstance, relay_server: Server, admin: User
 ) -> None:

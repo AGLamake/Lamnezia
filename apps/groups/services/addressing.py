@@ -87,10 +87,13 @@ class GroupKeyAddress:
             keys = (
                 AccessKey.objects.filter(source=self._leader.instance.source)
                 .exclude(status__in=GONE_STATUSES)
-                .exclude(profile="")
                 .select_related("user")
             )
-            self.outdated = [key for key in keys if _endpoint(key) != (self._host, group.port)]
+            # The profile is encrypted, so an empty one is only seen after it is read: an
+            # imported key has none and keeps working through the old address.
+            self.outdated = [
+                key for key in keys if key.profile and _endpoint(key) != (self._host, group.port)
+            ]
 
     @transaction.atomic
     def apply(self) -> int:

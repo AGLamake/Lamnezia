@@ -2458,6 +2458,9 @@ msgstr "Сохранить снимок файлов сервера"
 msgid "Save the password"
 msgstr "Сохранить пароль"
 
+msgid "Save the relay state"
+msgstr "Сохранить состояние ретранслятора"
+
 msgid "Save the result in the panel"
 msgstr "Сохранить результат в панели"
 

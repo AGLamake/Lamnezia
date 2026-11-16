@@ -136,6 +136,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Relay update failed with "Unexpected error" after every step succeeded** when the
+  leading server of a group had imported keys: such keys have no profile and now keep their
+  address. Saving the relay state is now a step of its own, so an error there is shown on it.
 - A key of a server group issued while its relay was being installed kept the address of the
   leading server; it now takes the address the group has when the key is saved.
 - **Relay install or update with no member of a group answering** no longer fails with an
