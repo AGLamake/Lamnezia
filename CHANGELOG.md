@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Relay settings and instant sync**: the relay card sets the probe interval and the number of
+  failed probes before a switch; saving writes them by a background update, without a reinstall.
+  A change of the members, the port of a group, a member address or member keys updates the relay
+  right away instead of at the next minute. A member name in DNS that moves to another IP updates
+  the relay at the next check, and the card says why a sync skips a relay. After the upgrade every
+  installed relay gets one update.
 - **Short timers of a group**: a checkbox in the protocol settings of a group sets
   `KeepaliveTimeout = 3-5` and `RekeyTimeout = 2-3` on every member and in the keys, so clients
   behind a relay reconnect in 7-9 seconds after a switch instead of 18-22. Off by default: on lossy

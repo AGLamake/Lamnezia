@@ -608,6 +608,10 @@ msgid "Changes apply within five minutes."
 msgstr "Изменения применятся в течение пяти минут."
 
 #, python-format
+msgid "Changes of the groups are not written to the relay: %(reason)s."
+msgstr "Изменения групп не записываются на ретранслятор: %(reason)s."
+
+#, python-format
 msgid "Changing the port or the protocol parameters restarts the protocol on the server and breaks the connection of %(keys)s key until its owner imports it into the Amnezia app again."
 msgid_plural "Changing the port or the protocol parameters restarts the protocol on the server and breaks the connection of %(keys)s keys until their owners import them into the Amnezia app again."
 msgstr[0] "Смена порта или параметров протокола перезапускает протокол на сервере и обрывает подключение %(keys)s ключа, пока владелец не импортирует его в приложение Amnezia заново."
@@ -1075,6 +1079,9 @@ msgstr "С ошибкой"
 msgid "Failed in the last day"
 msgstr "Ошибки за сутки"
 
+msgid "Failed probes in a row after which the relay moves the group to the next member."
+msgstr "Сколько проверок подряд должно не пройти, чтобы ретранслятор перевёл группу на следующего участника."
+
 msgid "Fill in the title and text in at least one language."
 msgstr "Заполните заголовок и текст хотя бы на одном языке."
 
@@ -1216,6 +1223,10 @@ msgstr "Имя хоста, A-запись которого указывает н
 
 msgid "How much traffic your keys used and how long your limit lasts."
 msgstr "Сколько трафика израсходовали ваши ключи и на сколько хватит лимита."
+
+#
+msgid "How often the relay probes each member of a group."
+msgstr "Как часто ретранслятор проверяет каждого участника группы."
 
 msgid "How the panel works for everyone: registration, mail and the messengers."
 msgstr "Как панель работает для всех: регистрация, почта и мессенджеры."
@@ -2408,6 +2419,10 @@ msgstr "Сохранить пароль"
 
 msgid "Save the result in the panel"
 msgstr "Сохранить результат в панели"
+
+#
+msgid "Save the settings"
+msgstr "Сохранить настройки"
 
 msgid "Saved."
 msgstr "Сохранено."
@@ -3663,6 +3678,10 @@ msgstr "Ваше имя будет показано при публикации.
 msgid "Your plan, keys and browser are attached to the request, so you need not describe them."
 msgstr "Тариф, ключи и браузер прикладываются к обращению сами — описывать их не нужно."
 
+#
+msgid "a member runs on the relay server"
+msgstr "участник группы работает на сервере ретранслятора"
+
 msgid "a useful material"
 msgstr "полезный материал"
 
@@ -3708,6 +3727,9 @@ msgstr "можно установить"
 msgid "check error"
 msgstr "ошибка проверки"
 
+msgid "check interval, seconds"
+msgstr "интервал проверки, секунды"
+
 #, python-format
 msgid "checked %(when)s ago"
 msgstr "проверено %(when)s назад"
@@ -3751,6 +3773,9 @@ msgstr "сегодня"
 
 msgid "expires soon"
 msgstr "скоро истекает"
+
+msgid "failures before a switch"
+msgstr "неудач до переключения"
 
 msgid "fetched at"
 msgstr "получено"
@@ -3925,6 +3950,10 @@ msgstr "не запущен"
 
 msgid "not running:"
 msgstr "не запущены:"
+
+#
+msgid "not skipped"
+msgstr "не пропущен"
 
 msgid "not yet"
 msgstr "ещё не было"
@@ -4161,6 +4190,10 @@ msgstr "предложение"
 msgid "suggestions"
 msgstr "предложения"
 
+#
+msgid "sync skipped"
+msgstr "синхронизация пропущена"
+
 msgid "synced at"
 msgstr "синхронизирован"
 
@@ -4175,6 +4208,9 @@ msgstr "текст (английский)"
 
 msgid "text (Russian)"
 msgstr "текст (русский)"
+
+msgid "the name of a member does not resolve"
+msgstr "имя сервера участника не резолвится"
 
 msgid "this one"
 msgstr "этот"
@@ -4244,6 +4280,9 @@ msgstr "Ссылка vless:// для других клиентов XRay"
 
 msgid "what"
 msgstr "что"
+
+msgid "why the sync skipped"
+msgstr "почему синхронизация пропущена"
 
 msgid "workaround off"
 msgstr "обход выключен"

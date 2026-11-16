@@ -15,6 +15,9 @@
     {% endif %}
     {% if relay.installed %}
       <p>{% blocktranslate with when=relay.synced_at|date:"SHORT_DATETIME_FORMAT" %}Members written {{ when }}.{% endblocktranslate %}</p>
+      {% if relay.sync_skipped %}
+        <p class="text-sm text-warning-soft-fg">{% blocktranslate with reason=relay.get_sync_skipped_display %}Changes of the groups are not written to the relay: {{ reason }}.{% endblocktranslate %}{% if relay.sync_skipped_detail %} <span class="font-mono">{{ relay.sync_skipped_detail }}</span>{% endif %}</p>
+      {% endif %}
       {% if relay.read_error %}
         <p class="text-sm text-danger-soft-fg">{% translate "The panel cannot read the relay state. The relay may still forward the clients on its own." %}{% if relay.read_at %} {% blocktranslate with when=relay.read_at|date:"SHORT_DATETIME_FORMAT" %}Last reading {{ when }}.{% endblocktranslate %}{% endif %}</p>
       {% endif %}
@@ -27,6 +30,17 @@
           {% endfor %}
         </ul>
       {% endif %}
+    {% endif %}
+    {% if relay.installed %}
+      {% relay_settings_form relay as settings_form %}
+      <form method="post" action="{% url 'relays:settings' server.pk %}" class="space-y-3">
+        {% csrf_token %}
+        <div class="grid gap-3 sm:grid-cols-2">
+          {{ settings_form.check_interval.as_field_group }}
+          {{ settings_form.failures.as_field_group }}
+        </div>
+        <button type="submit" class="btn btn-secondary">{% translate "Save the settings" %}</button>
+      </form>
     {% endif %}
     <div class="flex flex-wrap items-end gap-2">
       {% if relay.installed %}

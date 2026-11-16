@@ -1,4 +1,5 @@
-"""Template tags of the relay cards: a moment the agent wrote, the channel load and its chart."""
+"""Template tags of the relay cards: a moment the agent wrote, the channel load and its chart,
+the settings form."""
 
 from datetime import UTC, datetime
 from typing import Any
@@ -8,6 +9,7 @@ from django.template.defaultfilters import filesizeformat
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from apps.relays.forms import RelaySettingsForm
 from apps.relays.models import Relay
 from apps.relays.services.load import DAY, WEEK, LoadHistory
 
@@ -26,6 +28,12 @@ def per_second(rate: float | None) -> str:
     if rate is None:
         return "—"
     return _("%(size)s/s") % {"size": filesizeformat(rate)}
+
+
+@register.simple_tag
+def relay_settings_form(relay: Relay) -> RelaySettingsForm:
+    """The settings form of the card, filled with what the relay has."""
+    return RelaySettingsForm(instance=relay)
 
 
 @register.inclusion_tag("relays/_load.html")

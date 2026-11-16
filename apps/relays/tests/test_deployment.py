@@ -1,9 +1,11 @@
 """Installing, updating and removing a relay of a group of two fake members."""
 
 import json
+from collections.abc import Callable
 from typing import Any
 
 import pytest
+from pytest import MonkeyPatch
 
 from amnezia_core.awg import AWG_CONFIG_PATH, AwgServerConfig
 from amnezia_core.keys import KeyPair
@@ -24,8 +26,8 @@ from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
 from apps.protocols.tests.fake_awg import FakeAwgServer
 from apps.relays.errors import RelayError, RelayErrorCode
-from apps.relays.models import Relay, ServicePeer
-from apps.relays.services import deployment
+from apps.relays.models import Relay, ServicePeer, SyncSkip
+from apps.relays.services import config, deployment
 from apps.relays.services.container import FOLDER
 from apps.relays.services.deployment import INSTALL_KIND, REMOVE_KIND, UPDATE_KIND, sync_relays
 from apps.relays.tests.conftest import RELAY_HOST
@@ -361,6 +363,87 @@ def test_sync_waits_for_a_running_operation(
     sync_relays()
 
     assert not Operation.objects.filter(kind=UPDATE_KIND).exists()
+
+
+@pytest.mark.usefixtures("relayed")
+def test_an_update_writes_the_settings_of_the_relay(
+    relay_server: Server, relay_fake: FakeRelayServer, admin: User, start: Start
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    Relay.objects.filter(server=relay_server).update(check_interval=2, failures=4)
+
+    succeeded(run(UPDATE_KIND, relay_server, admin, start))
+
+    config = written(relay_fake)
+    assert (config["check_interval"], config["failures"]) == (2, 4)
+    assert relay_fake.docker_calls.count("build") == 1, "no reinstall"
+
+
+def test_a_joining_member_updates_the_relay_at_once(  # noqa: PLR0913, PLR0917
+    group: ServerGroup,
+    relay_server: Server,
+    relay_fake: FakeRelayServer,
+    join: Callable[[], Operation],
+    admin: User,
+    start: Start,
+) -> None:
+    group.relay = relay_server
+    group.save(update_fields=["relay"])
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+
+    succeeded(join())
+
+    succeeded(Operation.objects.filter(kind=UPDATE_KIND).latest("pk"))
+    (written_group,) = written(relay_fake)["groups"]
+    assert [backend["host"] for backend in written_group["backends"]] == [LEADER_HOST, JOINER_HOST]
+
+
+def test_a_member_name_on_a_new_address_updates_the_relay(
+    relayed: ServerGroup, relay_server: Server, admin: User, start: Start, monkeypatch: MonkeyPatch
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    moved = {LEADER_HOST: "198.51.100.10"}
+    monkeypatch.setattr(config, "ipv4_addresses", lambda name: [moved.get(name, name)])
+
+    sync_relays()
+
+    assert Operation.objects.filter(kind=UPDATE_KIND).exists()
+
+
+def test_sync_keeps_why_it_skips_a_relay(
+    relayed: ServerGroup, relay_server: Server, admin: User, start: Start, monkeypatch: MonkeyPatch
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+
+    def lost(name: str) -> list[str]:
+        raise OSError(f"{name} is not known")
+
+    monkeypatch.setattr(config, "ipv4_addresses", lost)
+    sync_relays()
+    relay = Relay.objects.get(server=relay_server)
+    assert relay.sync_skipped == SyncSkip.HOST_NOT_RESOLVED
+    assert LEADER_HOST in relay.sync_skipped_detail
+    assert not Operation.objects.filter(kind=UPDATE_KIND).exists()
+
+    monkeypatch.undo()
+    sync_relays()
+    relay.refresh_from_db()
+    assert relay.sync_skipped == SyncSkip.NONE
+
+
+def test_sync_names_a_member_on_the_relay_server(
+    relayed: ServerGroup, relay_server: Server, admin: User, start: Start
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    joiner = GroupMember.objects.get(leading=False).instance
+    joiner.server = relay_server
+    joiner.save(update_fields=["server"])
+
+    sync_relays()
+
+    relay = Relay.objects.get(server=relay_server)
+    assert relay.sync_skipped == SyncSkip.MEMBER_ON_RELAY
+    assert relayed.name in relay.sync_skipped_detail
 
 
 @pytest.mark.usefixtures("relayed")

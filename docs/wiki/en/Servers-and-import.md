@@ -282,9 +282,18 @@ switch is a background operation; it ends with the notification of a switch. A r
 older release does not answer the request: update the relay on the server card first. The agent
 then goes on switching by itself as before: a planned switch does not pin the group to the member.
 
-When the members, their order, the lagging ones or the port of a group change, the panel updates
-the relay by itself every `LAMNEZIA_RELAY_SYNC_INTERVAL` seconds. **Update** on the card does it at
-once. **Remove** drops the container, the image and the volume, then takes the service peers off
+When the members, their order, the lagging ones, the port of a group, the address of a member
+server or the keys and parameters of a member change, the panel updates the relay by itself right
+after the change. Every `LAMNEZIA_RELAY_SYNC_INTERVAL` seconds it also checks what no change in the
+panel shows: a member name in DNS that now points to another IP address updates the relay too.
+**Update** on the card does it at once. A relay the update could not help is left as it is, and
+the card says why: a member of a group runs on the relay server itself, or the name of a member
+server does not resolve.
+
+The card also sets how often the agent probes each member (5 seconds by default) and after how
+many failed probes in a row it moves a group to the next member (3 by default). **Save the
+settings** writes them to the relay by a background update, without a reinstall; a shorter
+interval or fewer failures switch sooner but react to short losses too. **Remove** drops the container, the image and the volume, then takes the service peers off
 the members. A member that does not answer is marked lagging and loses the peer on its catch-up;
 when no member of a group answers, the panel keeps the peer. Keys of the groups go back to the
 address of their leading servers, and their owners are told to import them again.

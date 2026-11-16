@@ -7,12 +7,13 @@ from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from amnezia_core.relay import DEFAULT_FAILURES
 from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.groups.models import GroupMember, ServerGroup
 from apps.operations.models import Operation
-from apps.relays.models import Relay
-from apps.relays.services.deployment import INSTALL_KIND
+from apps.relays.models import Relay, SyncSkip
+from apps.relays.services.deployment import INSTALL_KIND, UPDATE_KIND
 from apps.relays.services.switch import SWITCH_KIND
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
@@ -116,6 +117,38 @@ def test_the_relay_card_shows_the_load_and_the_active_member(
 
     assert "2.0\xa0KB/s" in page
     assert f"traffic goes to {joiner.instance.server.name}" in page
+
+
+def test_the_card_tells_why_the_sync_skips_the_relay(browser: Client, watched: Relay) -> None:
+    watched.sync_skipped = SyncSkip.MEMBER_ON_RELAY
+    watched.sync_skipped_detail = "Europe: AmneziaWG"
+    watched.save(update_fields=["sync_skipped", "sync_skipped_detail"])
+
+    page = browser.get(reverse("servers:detail", args=[watched.server.pk])).content.decode()
+
+    assert "a member runs on the relay server" in page
+    assert "Europe: AmneziaWG" in page
+
+
+def test_saved_settings_are_written_by_an_update(browser: Client, watched: Relay) -> None:
+    url = reverse("relays:settings", args=[watched.server.pk])
+
+    response = browser.post(url, {"check_interval": "2", "failures": "4"})
+
+    operation = Operation.objects.get(kind=UPDATE_KIND)
+    assert response.url == reverse("operations:detail", args=[operation.pk])  # type: ignore[attr-defined]
+    watched.refresh_from_db()
+    assert (watched.check_interval, watched.failures) == (2, 4)
+
+
+def test_wrong_settings_are_refused(browser: Client, watched: Relay) -> None:
+    url = reverse("relays:settings", args=[watched.server.pk])
+
+    browser.post(url, {"check_interval": "0", "failures": "4"})
+
+    watched.refresh_from_db()
+    assert watched.failures == DEFAULT_FAILURES
+    assert not Operation.objects.filter(kind=UPDATE_KIND).exists()
 
 
 def test_the_relay_card_tells_when_the_state_is_not_read(browser: Client, watched: Relay) -> None:

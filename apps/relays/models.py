@@ -4,11 +4,25 @@ A relay forwards the UDP port of every group that names its server to the live m
 group; its agent probes the members with the service peer of the group.
 """
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from amnezia_core.relay import DEFAULT_CHECK_INTERVAL, DEFAULT_FAILURES
 from apps.relays.services.health import GroupHealth, RelayHealth
 from apps.ssh.encryption import EncryptedTextField
+
+MAX_CHECK_INTERVAL = 60
+MAX_FAILURES = 10
+SKIP_DETAIL_LENGTH = 255
+
+
+class SyncSkip(models.TextChoices):
+    """Why a sync does not update a relay: an update would fail the same way."""
+
+    NONE = "", _("not skipped")
+    MEMBER_ON_RELAY = "member_on_relay", _("a member runs on the relay server")
+    HOST_NOT_RESOLVED = "host_not_resolved", _("the name of a member does not resolve")
 
 
 class Relay(models.Model):
@@ -32,6 +46,28 @@ class Relay(models.Model):
     # Bytes per second between the last two readings; empty when unknown.
     rate_from_clients = models.FloatField(_("bytes per second from clients"), null=True, blank=True)
     rate_to_clients = models.FloatField(_("bytes per second to clients"), null=True, blank=True)
+    # How the agent probes the members; an update writes them to the relay (amnezia_core/relay.py).
+    check_interval = models.PositiveSmallIntegerField(
+        _("check interval, seconds"),
+        default=DEFAULT_CHECK_INTERVAL,
+        validators=[MinValueValidator(1), MaxValueValidator(MAX_CHECK_INTERVAL)],
+        help_text=_("How often the relay probes each member of a group."),
+    )
+    failures = models.PositiveSmallIntegerField(
+        _("failures before a switch"),
+        default=DEFAULT_FAILURES,
+        validators=[MinValueValidator(1), MaxValueValidator(MAX_FAILURES)],
+        help_text=_(
+            "Failed probes in a row after which the relay moves the group to the next member."
+        ),
+    )
+    # Why the last sync left the relay as it is although the panel sees other groups.
+    sync_skipped = models.CharField(
+        _("sync skipped"), max_length=32, choices=SyncSkip, blank=True, default=SyncSkip.NONE
+    )
+    sync_skipped_detail = models.CharField(
+        _("why the sync skipped"), max_length=SKIP_DETAIL_LENGTH, blank=True
+    )
 
     class Meta:
         verbose_name = _("relay")

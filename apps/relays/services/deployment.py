@@ -12,6 +12,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from amnezia_core.relay import RelayConfig
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
 from apps.groups.services.addressing import GroupKeyAddress
@@ -20,7 +21,7 @@ from apps.operations.services.context import OperationContext
 from apps.operations.services.launcher import launch
 from apps.protocols.services.host_setup import HostSetup
 from apps.relays.errors import RelayError, RelayErrorCode
-from apps.relays.models import Relay
+from apps.relays.models import SKIP_DETAIL_LENGTH, Relay, SyncSkip
 from apps.relays.services.config import RelayPlan, members_on_relay
 from apps.relays.services.container import RESERVED_PORTS, RelayContainer
 from apps.relays.services.service_peers import ServicePeerPlacement
@@ -58,9 +59,9 @@ class RelayDeployment:
                 with self._ctx.step(_("Check the ports of the groups")):
                     container.check_ports(plan.ports)
                 container.install(plan.ports)
-                container.apply(plan.ports, config)
+                container.apply(plan.ports, config.to_json().encode())
         self._relay.installed_at = timezone.now()
-        self._synced(plan)
+        self._synced(plan, config)
 
     def update(self) -> None:
         """Write the groups and members of now; new ports are checked before they are published."""
@@ -75,8 +76,8 @@ class RelayDeployment:
                 container = RelayContainer(host, self._ctx)
                 with self._ctx.step(_("Check the ports of the groups")):
                     container.check_ports(plan.ports)
-                container.apply(plan.ports, config)
-        self._synced(plan)
+                container.apply(plan.ports, config.to_json().encode())
+        self._synced(plan, config)
 
     def remove(self) -> None:
         """Drop the container and the service peers of its groups from their members; the keys
@@ -113,7 +114,7 @@ class RelayDeployment:
                 with self._ctx.step(title):
                     self._ctx.log(error.message)
 
-    def _config(self, plan: RelayPlan) -> bytes:
+    def _config(self, plan: RelayPlan) -> RelayConfig:
         with self._ctx.step(_("Prepare the list of members")):
             try:
                 config = plan.config()
@@ -122,13 +123,16 @@ class RelayDeployment:
             for group in config.groups:
                 members = ", ".join(str(backend) for backend in group.backends)
                 self._ctx.log(f"{group.port}/udp → {members}")
-            return config.to_json().encode()
+            return config
 
-    def _synced(self, plan: RelayPlan) -> None:
+    def _synced(self, plan: RelayPlan, config: RelayConfig) -> None:
         """Save what the relay runs; the keys of its groups now send clients to it."""
-        self._relay.synced = plan.digest()
+        self._relay.synced = plan.digest(config)
         self._relay.synced_at = timezone.now()
-        self._relay.save(update_fields=["installed_at", "synced", "synced_at"])
+        self._relay.sync_skipped = SyncSkip.NONE
+        self._relay.sync_skipped_detail = ""
+        fields = ["installed_at", "synced", "synced_at", "sync_skipped", "sync_skipped_detail"]
+        self._relay.save(update_fields=fields)
         moves = [GroupKeyAddress(group) for group, _members in plan.groups]
         self._move_keys(moves, _("Move the keys of the groups to the relay address"))
 
@@ -169,13 +173,45 @@ def start(kind: str, server: Server, *, user: User, ip: str | None = None) -> Op
 
 
 def sync_relays() -> None:
-    """Start an update of every installed relay whose groups changed since it was written."""
+    """Start an update of every installed relay whose groups changed since it was written.
+
+    A relay an update cannot help is skipped and the reason is kept for its card: an update
+    started by hand would fail the same way, and a sync must not fail every minute.
+    """
     for relay in Relay.objects.filter(installed_at__isnull=False).select_related("server"):
-        if _busy(relay) or RelayPlan.of(relay.server).digest() == relay.synced:
-            continue
-        if members_on_relay(relay.server):
-            continue  # It would fail every minute; an update started by hand says why.
-        launch(UPDATE_KIND, {"server_id": relay.server_id}, subject=str(relay.server))
+        if not _busy(relay):
+            _sync(relay)
+
+
+def _sync(relay: Relay) -> None:
+    local = members_on_relay(relay.server)
+    if local:
+        member = local[0]
+        _skip(relay, SyncSkip.MEMBER_ON_RELAY, f"{member.group.name}: {member.instance}")
+        return
+    plan = RelayPlan.of(relay.server)
+    try:
+        digest = plan.digest(plan.config())
+    except OSError as error:
+        _skip(relay, SyncSkip.HOST_NOT_RESOLVED, str(error))
+        return
+    _skip(relay, SyncSkip.NONE, "")
+    if digest == relay.synced:
+        return
+    with transaction.atomic():
+        # A sync by the minute and one by a change must not start two updates.
+        Relay.objects.select_for_update().filter(pk=relay.pk).first()
+        if not _busy(relay):
+            launch(UPDATE_KIND, {"server_id": relay.server_id}, subject=str(relay.server))
+
+
+def _skip(relay: Relay, reason: SyncSkip, detail: str) -> None:
+    """Keep why the last sync skipped the relay; NONE clears it."""
+    detail = detail[:SKIP_DETAIL_LENGTH]
+    if (relay.sync_skipped, relay.sync_skipped_detail) == (reason, detail):
+        return
+    relay.sync_skipped, relay.sync_skipped_detail = reason, detail
+    relay.save(update_fields=["sync_skipped", "sync_skipped_detail"])
 
 
 def _busy(relay: Relay) -> bool:
