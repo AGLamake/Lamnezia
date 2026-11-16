@@ -29,7 +29,7 @@ from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.limits import disable_by_limit, enable_by_limit
 from apps.operations.models import Operation
 from apps.plans.models import UserLimits
-from apps.plans.services.limits import EffectiveLimits
+from apps.plans.services.limits import PLAN_SERVERS, EffectiveLimits
 from apps.traffic.models import TrafficHourly
 from apps.traffic.signals import LimitReason, access_restored, limit_reached
 
@@ -59,7 +59,7 @@ class _Subscriber:
             )
             .filter(Q(has_active=True) | Q(has_limited=True))
             .select_related("plan", "user")
-            .prefetch_related("plan__servers")
+            .prefetch_related(*PLAN_SERVERS)
         )
         return [
             cls(row.user, EffectiveLimits.of(row), row.has_active, row.has_limited) for row in rows

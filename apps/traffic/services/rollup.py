@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from apps.keys.models import AccessKey
 from apps.plans.models import UserLimits
-from apps.plans.services.limits import EffectiveLimits
+from apps.plans.services.limits import PLAN_SERVERS, EffectiveLimits
 from apps.traffic.models import TrafficHourly
 
 Peer = tuple[str, str]
@@ -62,7 +62,7 @@ class TrafficRollup:
         subscriptions = (
             UserLimits.objects.filter(plan__isnull=False)
             .select_related("plan")
-            .prefetch_related("plan__servers")
+            .prefetch_related(*PLAN_SERVERS)
         )
         self._limits = {limits.user_id: EffectiveLimits.of(limits) for limits in subscriptions}
 

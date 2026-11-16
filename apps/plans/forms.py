@@ -53,17 +53,29 @@ class PlanForm(forms.ModelForm):  # type: ignore[type-arg]
             "speed_limit",
             "access_days",
             "servers",
+            "groups",
             "protocols",
             "is_trial",
             "price",
             "currency",
         )
-        widgets: ClassVar = {"servers": forms.CheckboxSelectMultiple}
+        widgets: ClassVar = {
+            "servers": forms.CheckboxSelectMultiple,
+            "groups": forms.CheckboxSelectMultiple,
+        }
         help_texts: ClassVar = {
             "max_keys": _("Empty: no limit."),
             "speed_limit": _("Per key, each way. Empty: no limit."),
             "price": _("With a payment plugin, users can buy the plan at this price."),
         }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        # A server of a group is chosen with its group: its key is the key of the group.
+        servers = self.fields["servers"]
+        servers.queryset = servers.queryset.exclude(  # type: ignore[attr-defined]
+            instances__group_member__isnull=False
+        ).distinct()
 
     def clean_currency(self) -> str:
         currency: str = self.cleaned_data["currency"].strip().upper()

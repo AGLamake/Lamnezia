@@ -33,11 +33,14 @@ msgstr "В ГБ. Пусто — без ограничения."
 msgid "No user with this name."
 msgstr "Пользователя с таким именем нет."
 
+msgid "None selected, nor any group: all servers."
+msgstr "Не выбрано ни серверов, ни групп — все серверы."
+
 msgid "None selected: all protocols."
 msgstr "Ничего не выбрано — все протоколы."
 
-msgid "None selected: all servers."
-msgstr "Ничего не выбрано — все серверы."
+msgid "One key of a group works on each of its servers."
+msgstr "Один ключ группы работает на каждом её сервере."
 
 msgid "Per key, each way. Empty: as in the plan."
 msgstr "На ключ, в каждую сторону. Пусто — как в тарифе."
@@ -110,6 +113,9 @@ msgstr "цена"
 
 msgid "protocols"
 msgstr "протоколы"
+
+msgid "server groups"
+msgstr "группы серверов"
 
 msgid "servers"
 msgstr "серверы"

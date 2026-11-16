@@ -12,7 +12,7 @@ from apps.core.services.site_settings import cached_settings
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.instances import instances
 from apps.plans.models import Plan, UserLimits
-from apps.plans.services.limits import NO_PLAN, EffectiveLimits
+from apps.plans.services.limits import NO_PLAN, PLAN_SERVERS, EffectiveLimits
 from apps.protocols.models import ProtocolInstance
 from apps.servers.models import Server
 from apps.traffic.services.limits import LimitEnforcer
@@ -22,7 +22,7 @@ def users_for_list() -> QuerySet[User]:
     """Users with their plan and the number of their active keys, for `UserRow`."""
     return (
         User.objects.select_related("limits__plan")
-        .prefetch_related("limits__plan__servers", "linked_accounts")
+        .prefetch_related(*(f"limits__{path}" for path in PLAN_SERVERS), "linked_accounts")
         .annotate(active_keys=Count("access_keys", filter=Q(access_keys__status=KeyStatus.ACTIVE)))
         .order_by("username")
     )
@@ -105,7 +105,7 @@ class UserCard:
     def load(cls, user: User, now: datetime) -> "UserCard":
         limits = (
             UserLimits.objects.select_related("plan")
-            .prefetch_related("plan__servers")
+            .prefetch_related(*PLAN_SERVERS)
             .filter(user=user)
             .first()
         )

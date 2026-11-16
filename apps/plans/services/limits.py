@@ -14,7 +14,8 @@ from apps.plans.models import Plan, UserLimits
 class EffectiveLimits:
     """What a user may do now. `None` in a limit means unlimited.
 
-    `server_ids` and `protocols` are `None` when the plan allows all of them.
+    `server_ids` and `protocols` are `None` when the plan allows all of them. The servers of a
+    group in the plan are taken as they are now, so a new leading server needs no plan change.
     A user without a plan may do nothing: see `NO_PLAN`.
     """
 
@@ -35,7 +36,7 @@ class EffectiveLimits:
         plan = limits.plan
         if plan is None:
             return NO_PLAN
-        server_ids = frozenset(server.pk for server in plan.servers.all())
+        server_ids = _server_ids(plan)
         return cls(
             plan_id=plan.pk,
             traffic_limit=_override(limits.traffic_limit, plan.traffic_limit),
@@ -46,7 +47,7 @@ class EffectiveLimits:
             access_until=limits.access_until or _access_end(plan, limits.plan_assigned_at),
             period_start=limits.plan_assigned_at,
             is_trial=plan.is_trial,
-            server_ids=server_ids or None,
+            server_ids=server_ids,
             protocols=frozenset(plan.protocols) or None,
         )
 
@@ -74,6 +75,20 @@ class EffectiveLimits:
         return self.max_keys is None or keys_in_use < self.max_keys
 
 
+# What `EffectiveLimits.of` reads of a plan; prefetched, limits of many users take no more queries.
+PLAN_SERVERS = ("plan__servers", "plan__groups__members__instance")
+
+
+def _server_ids(plan: Plan) -> frozenset[int] | None:
+    """The servers chosen and those of the chosen groups; None when nothing is chosen."""
+    groups = plan.groups.all()
+    servers = {server.pk for server in plan.servers.all()}
+    if not groups and not servers:
+        return None
+    members = {member.instance.server_id for group in groups for member in group.members.all()}
+    return frozenset(servers | members)
+
+
 NO_PLAN = EffectiveLimits(
     plan_id=None,
     traffic_limit=0,
@@ -92,7 +107,7 @@ NO_PLAN = EffectiveLimits(
 def effective_limits(user: User) -> EffectiveLimits:
     limits = (
         UserLimits.objects.select_related("plan")
-        .prefetch_related("plan__servers")
+        .prefetch_related(*PLAN_SERVERS)
         .filter(user=user)
         .first()
     )

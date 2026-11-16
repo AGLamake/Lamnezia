@@ -24,7 +24,7 @@ from apps.keys.services.instances import Instance, instances
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
 from apps.plans.models import UserLimits
-from apps.plans.services.limits import EffectiveLimits
+from apps.plans.services.limits import PLAN_SERVERS, EffectiveLimits
 from apps.traffic.models import TrafficSource
 from apps.traffic.services.shaping import SpeedRule
 from apps.traffic.services.xray_shaping import XraySpeedRule
@@ -61,7 +61,7 @@ class SpeedLimiter:
         subscriptions = (
             UserLimits.objects.filter(plan__isnull=False)
             .select_related("plan")
-            .prefetch_related("plan__servers")
+            .prefetch_related(*PLAN_SERVERS)
         )
         speeds = {
             limits.user_id: speed

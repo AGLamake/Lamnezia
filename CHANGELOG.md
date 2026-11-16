@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Server groups in plans**: a plan gives whole server groups, and its users get the key of the
+  group, named by the group, on each member whoever leads it. Servers of a group are no longer
+  offered one by one; plans that named such a server get its group, and a deleted group leaves its
+  leading server in its plans.
 - **Relay trouble on the dashboard**: the "Needs attention" list of an administrator names the
   server groups where no member answers the relay at its last reading and the relays whose state
   cannot be read, with links to the group and server pages. It uses the stored reading, without SSH.

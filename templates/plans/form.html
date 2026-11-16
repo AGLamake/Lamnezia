@@ -22,6 +22,7 @@
     {{ form.access_days.as_field_group }}
   </div>
   {{ form.servers.as_field_group }}
+  {% if form.groups.field.queryset.exists %}{{ form.groups.as_field_group }}{% endif %}
   {{ form.protocols.as_field_group }}
   {{ form.is_trial.as_field_group }}
   <div class="grid gap-4 sm:grid-cols-2">

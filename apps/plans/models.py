@@ -24,7 +24,8 @@ class Protocol(models.TextChoices):
 class Plan(models.Model):
     """A tariff and a group at once: servers, protocols and limits (DESIGN.md 5.3, 6.4).
 
-    An empty limit means no limit; no servers or protocols selected means all of them.
+    An empty limit means no limit; no servers or protocols selected means all of them. A server
+    group stands for its servers, whoever leads it: its key works on each of them.
     Traffic limits are in bytes; the speed limit is per key, in Mbit/s each way.
     `price` and `currency` are informational only.
     """
@@ -53,7 +54,14 @@ class Plan(models.Model):
         verbose_name=_("servers"),
         blank=True,
         related_name="plans",
-        help_text=_("None selected: all servers."),
+        help_text=_("None selected, nor any group: all servers."),
+    )
+    groups = models.ManyToManyField(
+        "groups.ServerGroup",
+        verbose_name=_("server groups"),
+        blank=True,
+        related_name="plans",
+        help_text=_("One key of a group works on each of its servers."),
     )
     protocols = models.JSONField(
         _("protocols"), default=list, blank=True, help_text=_("None selected: all protocols.")

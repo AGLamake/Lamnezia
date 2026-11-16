@@ -14,7 +14,7 @@ what limits apply. Plans are managed in **Plans** in the admin interface (`/plan
 | Keys at most | How many keys a user may have. Empty: no limit. |
 | Speed, Mbit/s | Speed of every key of a user, download and upload each. Empty: no limit. See [speed limits](#speed-limits). |
 | Access, days | Term from the day the plan is assigned. Empty: no end date. |
-| Servers, protocols | Where users get keys. None selected: all. |
+| Servers, server groups, protocols | Where users get keys. A group gives the key of the group on each of its servers, see [server groups](Servers-and-import.md#server-groups). No servers or groups selected: all servers; no protocols: all. |
 | Trial | Marks a trial plan. |
 | Price, currency | With a [billing plugin](Billing-plugins.md), a plan with both and not a trial is sold in the portal. Without plugins, information only. |
 

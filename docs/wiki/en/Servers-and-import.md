@@ -228,6 +228,12 @@ the settings is marked lagging and catch-up gives it the new settings, moving it
 new subnet if needed. If no member answers, nothing changes. A DNS-only change does not touch the
 servers. A settings change and a handover of one group do not run at the same time.
 
+**Plans** give a group as a whole: the **Server groups** field of a [plan](Users-plans-limits.md#plan)
+lets its users get the key of the group, which works on each member whoever leads the group. The
+portal, the bots and the admin interface name such a key by the group. Servers of a group are not
+offered among the plan servers: a plan that named a server before it joined a group gets the group
+instead, and when a group is deleted its plans get its last leading server back.
+
 ### Relay
 
 Clients of a group connect to the relay, which forwards their traffic to a live member. Any added

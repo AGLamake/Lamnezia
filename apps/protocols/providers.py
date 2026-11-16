@@ -27,7 +27,8 @@ def _instances(containers: Iterable[str], *, clones: bool = True) -> list[Protoc
     )
     if not clones:
         instances = instances.exclude(group_member__leading=False)
-    return list(instances.select_related("server").defer(*_SECRETS).order_by("server_id", "pk"))
+    instances = instances.select_related("server", "group_member__group")
+    return list(instances.defer(*_SECRETS).order_by("server_id", "pk"))
 
 
 _SECRETS = (
@@ -56,7 +57,7 @@ def key_instances() -> Iterator[Instance]:
         server = instance.server
         yield Instance(
             instance.source,
-            f"{server.name} · {instance.title}",
+            f"{_place(instance)} · {instance.title}",
             relayed.get(instance.source, server.host),
             partial(connect, server),
             port=instance.port,
@@ -69,6 +70,12 @@ def key_instances() -> Iterator[Instance]:
             block_outside_dns=instance.params.get("block_outside_dns") == "true",
             maintenance=server.maintenance,
         )
+
+
+def _place(instance: ProtocolInstance) -> str:
+    """Users get a key of the group, whichever server leads it now."""
+    member = getattr(instance, "group_member", None)
+    return member.group.name if member is not None else instance.server.name
 
 
 # Containers that report traffic per client: XRay only with the statistics blocks the panel adds.

@@ -9,7 +9,7 @@ from django.db.models import QuerySet
 
 from apps.accounts.models import User
 from apps.plans.models import UserLimits
-from apps.plans.services.limits import EffectiveLimits
+from apps.plans.services.limits import PLAN_SERVERS, EffectiveLimits
 from apps.traffic.services.limits import LimitEnforcer
 
 _SIZE = 20
@@ -61,7 +61,7 @@ class LimitForecast:
         rows = (
             UserLimits.objects.filter(user__in=users, plan__isnull=False)
             .select_related("plan", "user")
-            .prefetch_related("plan__servers")
+            .prefetch_related(*PLAN_SERVERS)
         )
         subscriptions = []
         for limits in rows:
