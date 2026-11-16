@@ -283,6 +283,7 @@ class TestDomainCheck:
 
         assert response.status_code == 200
         assert queued == [group.pk]
+        assert f"{DOMAIN} is being checked" in response.content.decode()
 
     def test_page_shows_the_cached_warnings(
         self, group: ServerGroup, relay_server: Server, browser: Client
@@ -293,6 +294,7 @@ class TestDomainCheck:
         page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
 
         assert "does not resolve" in page
+        assert "is being checked" not in page
 
     def test_another_domain_is_checked_anew(self, group: ServerGroup, relay_server: Server) -> None:
         behind(group, relay_server, DOMAIN)

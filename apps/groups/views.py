@@ -132,6 +132,7 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
         members = list(group.members.select_related("instance__server"))
         leader = next((member for member in members if member.leading), None)
         catching_up = catch_ups(group)
+        domain_checking, domain_warnings = _domain_check(group)
         return super().get_context_data(
             members=[
                 (
@@ -151,7 +152,8 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
             health=health,
             last_switch=last_switch(group),
             client_host=client_host(group),
-            domain_warnings=_domain_warnings(group),
+            domain_checking=domain_checking,
+            domain_warnings=domain_warnings,
             candidates=candidates,
             bare_servers=[
                 (server, port_taken(server, group.port)) for server in servers_without_awg()
@@ -160,12 +162,16 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
         )
 
 
-def _domain_warnings(group: ServerGroup) -> list[str]:
-    """Warnings about the domain from the last check; a missing check is queued, not awaited."""
+def _domain_check(group: ServerGroup) -> tuple[bool, list[str]]:
+    """Whether the domain is still being checked, and the warnings of the last check.
+
+    A missing check is queued, not awaited.
+    """
     check = DomainCheck(group)
-    if check.needed and check.answers() is None:
+    checking = check.needed and check.answers() is None
+    if checking:
         transaction.on_commit(lambda: check_group_domain.delay(group.pk))
-    return check.warnings()
+    return checking, check.warnings()
 
 
 def _may_lead(member: GroupMember) -> bool:

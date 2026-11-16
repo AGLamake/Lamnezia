@@ -71,6 +71,10 @@ msgid "%(domain)s has an AAAA record. The Amnezia app on a computer may take the
 msgstr "У %(domain)s есть AAAA-запись. Приложение Amnezia на компьютере может взять IPv6-адрес и пройти мимо ретранслятора: оставьте только A-запись."
 
 #, python-format
+msgid "%(domain)s is being checked: refresh the page in a minute to see whether it leads to the relay."
+msgstr "Домен %(domain)s проверяется: обновите страницу через минуту, чтобы увидеть, ведёт ли он на ретранслятор."
+
+#, python-format
 msgid "%(domain)s points to %(found)s, not to the relay %(relay)s (%(expected)s)."
 msgstr "%(domain)s указывает на %(found)s, а не на ретранслятор %(relay)s (%(expected)s)."
 
