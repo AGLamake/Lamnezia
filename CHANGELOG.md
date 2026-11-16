@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Reason of a lag and the catch-up under way**: the `member_lagging` notification names why the
+  member lags, and webhooks get it as `reason` (`unreachable`, `missed`, `drift`, `stayed`). The
+  member list of a group links to a queued or running catch-up of a lagging member.
 - **Last planned switch on the group page**: when it was started, its status with a link to the
   operation and the reason of a failure.
 - **A failed group join can be retried or undone**: a member stuck joining is marked "join failed"

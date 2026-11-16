@@ -41,6 +41,7 @@ from apps.groups.services.membership import (
     stay_in_group,
     update_group,
 )
+from apps.groups.services.replication import catch_ups
 from apps.groups.services.settings import changing_settings
 from apps.groups.tasks import check_group_domain
 from apps.keys.services.counts import InstanceKeyCount
@@ -108,7 +109,8 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
     """The members of a group, the standalone servers that may join it and those without AWG.
 
     The operations under way that a change of the group waits for are listed with links: joins
-    and installs, and the key operations that hold the lead; the last planned switch of the relay
+    and installs, the catch-ups of lagging members, and the key operations that hold the lead;
+    the last planned switch of the relay
     is shown with its result. `?leader_leaves=1` (after a leading
     server was asked to leave) offers to hand the lead to another member first.
     """
@@ -129,9 +131,16 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
         health = relay.group_health(group.port) if relay else None
         members = list(group.members.select_related("instance__server"))
         leader = next((member for member in members if member.leading), None)
+        catching_up = catch_ups(group)
         return super().get_context_data(
             members=[
-                (member, *_seen_by_relay(member, health), leave_failed(member), join_failed(member))
+                (
+                    member,
+                    *_seen_by_relay(member, health),
+                    leave_failed(member),
+                    join_failed(member),
+                    catching_up.get(member.pk),
+                )
                 for member in members
             ],
             successors=[member for member in members if _may_lead(member)],

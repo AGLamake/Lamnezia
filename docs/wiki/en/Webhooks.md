@@ -50,7 +50,7 @@ zone), `data` depends on the event.
 | `member_unreachable` | The relay stopped reaching a member of a group. Once until the member answers again. | `group`, `relay`, `server` — member name |
 | `group_unreachable` | The relay reaches no member of a group: its clients have no connection. | `group`, `relay` |
 | `relay_down` | The panel has not read the relay state for two monitoring intervals: the relay or its agent does not answer. Once until a reading succeeds. | `relay`, `host`, `last_seen` — time of the last reading or an empty string |
-| `member_lagging` | A group member has missed key changes longer than `LAMNEZIA_GROUP_LAG_ALERT`. Once per lag. | `group`, `server`, `since` — when it started to lag |
+| `member_lagging` | A group member has missed key changes longer than `LAMNEZIA_GROUP_LAG_ALERT`. Once per lag. | `group`, `server`, `since` — when it started to lag, `reason` — why: `unreachable` (during a change), `missed` (a change of the keys or the settings), `drift` (files differ from the leading server), `stayed` (after a failed leave); missing for a member that lags since an older release |
 | `member_reachable` | The relay reaches again a member of a group it was told unreachable (`member_unreachable`). Once per outage. | `group`, `relay`, `server` — member name |
 | `group_reachable` | The relay reaches again a member of a group that had none (`group_unreachable`): its clients have a connection. Once per outage. | `group`, `relay` |
 | `relay_up` | The panel reads the state of a relay again after an outage (`relay_down`). Once per outage, even when no channel heard of `relay_down`. | `relay`, `host`, `last_seen` — time of the last reading before the outage or an empty string |
@@ -256,7 +256,7 @@ may be added: ignore what you do not know.
     "member_lagging": {
       "type": "object",
       "required": ["group", "server", "since"],
-      "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
+      "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}, "reason": {"enum": ["unreachable", "missed", "drift", "stayed"]}}
     },
     "member_reachable": {
       "type": "object",

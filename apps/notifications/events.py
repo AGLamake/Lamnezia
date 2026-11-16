@@ -16,6 +16,7 @@ from django.utils.functional import Promise
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
+from apps.groups.models import LagReason
 from apps.traffic.signals import LimitReason
 
 
@@ -312,9 +313,10 @@ EVENTS: dict[Event, EventType] = {
         _("Group server lags behind"),
         _("{server} lags behind the group {group}"),
         _(
-            "The server {server} has missed key changes of the group {group} since {since}. "
-            "The relay skips it until the panel copies the group files onto it."
+            "The server {server} has missed key changes of the group {group} since {since}: "
+            "{reason}. The relay skips it until the panel copies the group files onto it."
         ),
+        coded={"reason": LagReason},
     ),
     Event.MEMBER_REACHABLE: EventType(
         _("Group server reachable from the relay again"),

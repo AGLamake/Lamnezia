@@ -198,6 +198,22 @@ def test_stay_takes_the_member_back_lagging(
     assert Operation.objects.get(kind=CATCH_UP_KIND).params["member_id"] == stuck.pk
 
 
+def test_a_lagging_member_links_to_its_catch_up(
+    browser: Client, group: ServerGroup, stuck: GroupMember
+) -> None:
+    detail = reverse("groups:detail", args=[group.pk])
+    browser.post(reverse("groups:stay", args=[stuck.pk]))
+    catch_up = Operation.objects.get(kind=CATCH_UP_KIND)
+
+    page = browser.get(detail).content.decode()
+    assert "Catching up" in page
+    assert reverse("operations:detail", args=[catch_up.pk]) in page
+
+    catch_up.status = OperationStatus.FAILED
+    catch_up.save(update_fields=["status"])
+    assert "Catching up" not in browser.get(detail).content.decode()
+
+
 @pytest.fixture
 def stuck_joining(group: ServerGroup, joiner: ProtocolInstance) -> GroupMember:
     """A member whose join operation failed."""

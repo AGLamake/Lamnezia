@@ -52,7 +52,7 @@ channels hear each event.
 | Group server unreachable from the relay | `member_unreachable` | `group`, `relay`, `server` |
 | No group server reachable | `group_unreachable` | `group`, `relay` |
 | Relay does not answer | `relay_down` | `relay`, `host`, `last_seen` |
-| Group server lags behind | `member_lagging` | `group`, `server`, `since` |
+| Group server lags behind | `member_lagging` | `group`, `server`, `since`, `reason` |
 | Group server reachable from the relay again | `member_reachable` | `group`, `relay`, `server` |
 | Group server reachable again | `group_reachable` | `group`, `relay` |
 | Relay answers again | `relay_up` | `relay`, `host`, `last_seen` |

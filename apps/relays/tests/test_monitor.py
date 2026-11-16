@@ -8,8 +8,9 @@ from typing import Any
 
 import pytest
 
-from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.models import GroupMember, LagReason, ServerGroup
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT
+from apps.notifications.events import EVENTS as EVENT_TYPES
 from apps.notifications.events import Event
 from apps.notifications.models import Notification, Route
 from apps.notifications.tests.factories import ChannelFactory
@@ -258,7 +259,8 @@ def test_a_relay_silent_for_two_intervals_is_told_once(
 def test_a_member_lagging_too_long_is_told_once(relayed: ServerGroup) -> None:
     joiner = GroupMember.objects.get(leading=False)
     joiner.lagging_since = NOW - timedelta(hours=2)
-    joiner.save(update_fields=["lagging_since"])
+    joiner.lagging_reason = LagReason.UNREACHABLE
+    joiner.save(update_fields=["lagging_since", "lagging_reason"])
     leader = GroupMember.objects.get(leading=True)
     leader.lagging_since = NOW - timedelta(minutes=10)
     leader.save(update_fields=["lagging_since"])
@@ -271,8 +273,26 @@ def test_a_member_lagging_too_long_is_told_once(relayed: ServerGroup) -> None:
             "group": relayed.name,
             "server": joiner.instance.server.name,
             "since": joiner.lagging_since.isoformat(),
+            "reason": "unreachable",
         }
     ]
+    _, text = EVENT_TYPES[Event.MEMBER_LAGGING].render(told(Event.MEMBER_LAGGING)[0])
+    assert "was unreachable during a change" in text
+
+
+def test_a_member_lagging_since_an_older_release_is_told_without_a_reason(
+    relayed: ServerGroup,
+) -> None:
+    joiner = GroupMember.objects.get(leading=False)
+    joiner.lagging_since = NOW - timedelta(hours=2)
+    joiner.save(update_fields=["lagging_since"])
+
+    report_lagging(timedelta(hours=1), now=NOW)
+
+    (data,) = told(Event.MEMBER_LAGGING)
+    assert "reason" not in data
+    _, text = EVENT_TYPES[Event.MEMBER_LAGGING].render(data)
+    assert "not lagging" not in text
 
 
 def test_a_member_and_a_group_reachable_again_are_told_once(

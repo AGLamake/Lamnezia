@@ -53,7 +53,7 @@
 | Сервер группы недоступен с ретранслятора | `member_unreachable` | `group`, `relay`, `server` |
 | Ни один сервер группы не доступен | `group_unreachable` | `group`, `relay` |
 | Ретранслятор не отвечает | `relay_down` | `relay`, `host`, `last_seen` |
-| Сервер группы отстаёт | `member_lagging` | `group`, `server`, `since` |
+| Сервер группы отстаёт | `member_lagging` | `group`, `server`, `since`, `reason` |
 | Сервер группы снова доступен с ретранслятора | `member_reachable` | `group`, `relay`, `server` |
 | Сервер группы снова доступен | `group_reachable` | `group`, `relay` |
 | Ретранслятор снова отвечает | `relay_up` | `relay`, `host`, `last_seen` |

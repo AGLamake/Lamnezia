@@ -602,6 +602,9 @@ msgstr "Осторожно"
 msgid "Catch up with the server group"
 msgstr "Догон группы серверов"
 
+msgid "Catching up"
+msgstr "Идёт догон"
+
 msgid "Change"
 msgstr "Изменить"
 

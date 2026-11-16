@@ -328,8 +328,8 @@ msgid "The server {server} ({host}) does not answer. Last answer: {last_seen}."
 msgstr "Сервер {server} ({host}) не отвечает. Последний ответ: {last_seen}."
 
 #, python-brace-format
-msgid "The server {server} has missed key changes of the group {group} since {since}. The relay skips it until the panel copies the group files onto it."
-msgstr "Сервер {server} пропускает изменения ключей группы {group} с {since}. Ретранслятор обходит его, пока панель не скопирует на него файлы группы."
+msgid "The server {server} has missed key changes of the group {group} since {since}: {reason}. The relay skips it until the panel copies the group files onto it."
+msgstr "Сервер {server} пропускает изменения ключей группы {group} с {since}: {reason}. Ретранслятор обходит его, пока панель не скопирует на него файлы группы."
 
 #, python-brace-format
 msgid "The server {server} has the files of the group {group} again after lagging behind since {since}. The relay sends clients to it again."

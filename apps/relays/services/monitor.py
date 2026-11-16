@@ -219,11 +219,14 @@ def report_lagging(threshold: timedelta, now: datetime | None = None) -> None:
     for member in lagging:
         assert member.lagging_since is not None
         moment = member.lagging_since.isoformat()
-        report_trouble(
-            Event.MEMBER_LAGGING,
-            {"group": member.group.name, "server": member.instance.server.name, "since": moment},
-            key=f"member_lagging:{member.pk}:{moment}",
-        )
+        data = {
+            "group": member.group.name,
+            "server": member.instance.server.name,
+            "since": moment,
+        }
+        if member.lagging_reason:  # a member lagging since an older release has none
+            data["reason"] = member.lagging_reason
+        report_trouble(Event.MEMBER_LAGGING, data, key=f"member_lagging:{member.pk}:{moment}")
 
 
 def report_caught_up() -> None:

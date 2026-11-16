@@ -50,7 +50,7 @@
 | `member_unreachable` | Ретранслятор перестал получать ответ от участника группы. Один раз, пока участник снова не ответит. | `group`, `relay`, `server` — имя участника |
 | `group_unreachable` | Ретранслятор не получает ответа ни от одного участника группы: у её клиентов нет связи. | `group`, `relay` |
 | `relay_down` | Панель не читает состояние ретранслятора два интервала мониторинга: не отвечает ретранслятор или его агент. Один раз, пока чтение снова не удастся. | `relay`, `host`, `last_seen` — время последнего чтения или пустая строка |
-| `member_lagging` | Участник группы пропускает изменения ключей дольше `LAMNEZIA_GROUP_LAG_ALERT`. Один раз за отставание. | `group`, `server`, `since` — с какого момента отстаёт |
+| `member_lagging` | Участник группы пропускает изменения ключей дольше `LAMNEZIA_GROUP_LAG_ALERT`. Один раз за отставание. | `group`, `server`, `since` — с какого момента отстаёт, `reason` — почему: `unreachable` (был недоступен во время изменения), `missed` (пропустил изменение ключей или параметров), `drift` (файлы отличаются от ведущего), `stayed` (остался после неудачного выхода); нет у участника, отстающего с прежней версии |
 | `member_reachable` | Ретранслятор снова получает ответ от участника группы, о недоступности которого сообщил (`member_unreachable`). Один раз за сбой. | `group`, `relay`, `server` — имя участника |
 | `group_reachable` | У группы, где ни один участник не отвечал (`group_unreachable`), снова есть доступный участник: у её клиентов есть связь. Один раз за сбой. | `group`, `relay` |
 | `relay_up` | Панель снова читает состояние ретранслятора после сбоя (`relay_down`). Один раз за сбой, даже если `relay_down` не получил ни один канал. | `relay`, `host`, `last_seen` — время последнего чтения до сбоя или пустая строка |
@@ -256,7 +256,7 @@
     "member_lagging": {
       "type": "object",
       "required": ["group", "server", "since"],
-      "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
+      "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}, "reason": {"enum": ["unreachable", "missed", "drift", "stayed"]}}
     },
     "member_reachable": {
       "type": "object",

@@ -12,6 +12,8 @@ from functools import partial
 from itertools import groupby
 from operator import attrgetter
 
+from django.db.models import QuerySet
+
 from amnezia_core.awg_backup import AwgServerFiles
 from amnezia_core.awg_group import AwgGroupIdentity, Divergence, Mismatch
 from amnezia_core.errors import AmneziaFormatError
@@ -172,9 +174,18 @@ def start_catch_up(member: GroupMember, *, user: User | None = None) -> Operatio
     return launch(CATCH_UP_KIND, params, user=user, subject=str(member))
 
 
+def catch_ups(group: ServerGroup) -> dict[int, Operation]:
+    """The queued or running catch-ups of the group members, by member id."""
+    members = list(group.members.values_list("pk", flat=True))
+    found = _unfinished_catch_ups().filter(params__member_id__in=members).order_by("created_at")
+    return {operation.params["member_id"]: operation for operation in found}
+
+
 def _catching_up(member: GroupMember) -> bool:
+    return _unfinished_catch_ups().filter(params__member_id=member.pk).exists()
+
+
+def _unfinished_catch_ups() -> QuerySet[Operation]:
     return Operation.objects.filter(
-        kind=CATCH_UP_KIND,
-        status__in=(OperationStatus.PENDING, OperationStatus.RUNNING),
-        params__member_id=member.pk,
-    ).exists()
+        kind=CATCH_UP_KIND, status__in=(OperationStatus.PENDING, OperationStatus.RUNNING)
+    )
