@@ -57,6 +57,16 @@ _FIXED_PARAMS = {
         "00044d583737>"
     ),
 }
+# Timers of AmneziaWG 3.1 that make a client behind a relay reach a new server in 7-9 s instead
+# of 18-22 s (measured in P12-01): the outage is the upper bound of KeepaliveTimeout plus
+# RekeyTimeout. On lossy mobile networks they cost extra handshakes.
+SHORT_TIMERS = {"RekeyTimeout": "2-3", "KeepaliveTimeout": "3-5"}
+DEFAULT_TIMERS = {name: _FIXED_PARAMS[name] for name in SHORT_TIMERS}
+
+
+def has_short_timers(params: Mapping[str, str]) -> bool:
+    """The parameters carry SHORT_TIMERS."""
+    return all(params.get(name, "").strip() == value for name, value in SHORT_TIMERS.items())
 
 
 def generate_awg_params(rng: random.Random | None = None) -> dict[str, str]:

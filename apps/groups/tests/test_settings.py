@@ -4,7 +4,9 @@ import pytest
 from django.test import Client
 
 from amnezia_core.awg import AwgServerConfig
+from amnezia_core.awg_install import DEFAULT_TIMERS, SHORT_TIMERS
 from apps.accounts.models import User
+from apps.accounts.tests.factories import UserFactory
 from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.handover import start_handover
@@ -19,10 +21,13 @@ from apps.groups.tests.conftest import (
     server_files,
     succeeded,
 )
+from apps.keys.services.profile import ServerProfile
+from apps.notifications.events import Event
+from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.services.awg_settings import AwgSettings
-from apps.protocols.tests.awg_case import OnCommit, Start
+from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
 
 pytestmark = pytest.mark.django_db
 
@@ -225,3 +230,67 @@ def test_group_page_starts_the_change(
     assert accepted.headers["Location"] == f"/operations/{operation.pk}/"
     assert operation.params["params"]["Jc"] == "7"
     assert operation.params["port"] == leader.port
+
+
+def test_short_timers_reach_every_member_and_the_keys_of_the_group(
+    servers: Fakes, leader: ProtocolInstance, joined: GroupMember, change: Change
+) -> None:
+    owner = UserFactory()
+    key = issued_key(leader, owner)
+
+    succeeded(change(params=SHORT_TIMERS))
+
+    for host in (LEADER_HOST, JOINER_HOST):
+        assert config(servers, host).awg_params.items() >= SHORT_TIMERS.items()
+    key.refresh_from_db()
+    assert ServerProfile.from_json(key.profile).params.items() >= SHORT_TIMERS.items()
+    assert Notification.objects.get(event=Event.KEYS_CHANGED).user == owner
+    assert not lagging(joined)
+
+
+def settings_data(leader: ProtocolInstance, **changes: str) -> dict[str, str]:
+    return {
+        "subnet": leader.subnet,
+        "primary_dns": leader.primary_dns,
+        "secondary_dns": leader.secondary_dns,
+        **leader.params,
+        "confirm": "on",
+        **changes,
+    }
+
+
+def posted_params(admin_client: Client, group: ServerGroup, data: dict[str, str]) -> dict[str, str]:
+    admin_client.post(f"/servers/groups/{group.pk}/settings/", data)
+    params: dict[str, str] = Operation.objects.get(kind=SETTINGS_KIND).params["params"]
+    return params
+
+
+def test_turning_short_timers_on_sets_them(
+    admin_client: Client, group: ServerGroup, leader: ProtocolInstance
+) -> None:
+    params = posted_params(admin_client, group, settings_data(leader, short_timers="on"))
+
+    assert params.items() >= SHORT_TIMERS.items()
+
+
+def test_turning_short_timers_off_brings_the_timers_of_a_new_server_back(
+    admin_client: Client, group: ServerGroup, leader: ProtocolInstance
+) -> None:
+    leader.params = {**leader.params, **SHORT_TIMERS}
+    leader.save(update_fields=["params"])
+    page = admin_client.get(f"/servers/groups/{group.pk}/settings/")
+
+    params = posted_params(admin_client, group, settings_data(leader))
+
+    assert page.context["form"]["short_timers"].initial is True
+    assert params.items() >= DEFAULT_TIMERS.items()
+
+
+def test_timers_typed_by_hand_stay_while_the_switch_is_untouched(
+    admin_client: Client, group: ServerGroup, leader: ProtocolInstance
+) -> None:
+    data = settings_data(leader, KeepaliveTimeout="4-6", RekeyTimeout="2-4")
+
+    params = posted_params(admin_client, group, data)
+
+    assert (params["KeepaliveTimeout"], params["RekeyTimeout"]) == ("4-6", "2-4")

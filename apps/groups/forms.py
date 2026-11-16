@@ -6,6 +6,7 @@ from typing import Any
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from amnezia_core.awg_install import DEFAULT_TIMERS, SHORT_TIMERS, has_short_timers
 from apps.accounts.models import User
 from apps.groups.models import ServerGroup
 from apps.groups.services.membership import standalone_instances
@@ -50,13 +51,34 @@ class GroupSettingsForm(ProtocolSettingsForm):
 
     The port is the port of the group and the container log belongs to each server: neither is
     on the form. The subnet must stay apart from the other networks of every member server.
+    Turning `short_timers` on or off sets KeepaliveTimeout and RekeyTimeout; left as it is, the
+    two fields keep what the administrator typed.
     """
+
+    short_timers = forms.BooleanField(
+        label=_("Short timers"),
+        required=False,
+        help_text=_(
+            "After a switch of the relay, clients reconnect in 7-9 seconds instead of 18-22: "
+            "KeepaliveTimeout 3-5 and RekeyTimeout 2-3. On mobile networks with losses clients "
+            "make more handshakes. Turned off, the timers of a new server come back."
+        ),
+    )
 
     def __init__(self, *args: Any, group: ServerGroup, **kwargs: Any) -> None:
         self.group = group
         super().__init__(*args, instance=leading_instance(group), **kwargs)
         del self.fields["port"]
         del self.fields["container_logs"]
+
+    def initial_of(self, instance: ProtocolInstance) -> dict[str, Any]:
+        return {**super().initial_of(instance), "short_timers": has_short_timers(instance.params)}
+
+    def check(self, data: dict[str, Any]) -> None:
+        wanted = data.get("short_timers", False)
+        if wanted != self.initial["short_timers"]:
+            data.update(SHORT_TIMERS if wanted else DEFAULT_TIMERS)
+        super().check(data)
 
     def _other_subnets(self) -> list[IPv4Network]:
         members = ProtocolInstance.objects.filter(group_member__group=self.group)

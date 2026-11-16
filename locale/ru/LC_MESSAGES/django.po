@@ -350,6 +350,9 @@ msgstr "Администратор"
 msgid "Administrators sign in with a code from a phone app. Set it up to continue."
 msgstr "Администраторы входят с кодом из приложения на телефоне. Настройте его, чтобы продолжить."
 
+msgid "After a switch of the relay, clients reconnect in 7-9 seconds instead of 18-22: KeepaliveTimeout 3-5 and RekeyTimeout 2-3. On mobile networks with losses clients make more handshakes. Turned off, the timers of a new server come back."
+msgstr "После переключения ретранслятора клиенты переподключаются за 7–9 секунд вместо 18–22: KeepaliveTimeout 3-5 и RekeyTimeout 2-3. На мобильных сетях с потерями клиенты делают больше handshake. При выключении возвращаются таймеры нового сервера."
+
 msgid "After saving the panel connects to the server and checks it. Nothing is changed on the server."
 msgstr "После сохранения панель подключится к серверу и проверит его. На сервере ничего не меняется."
 
@@ -2528,6 +2531,9 @@ msgstr "Настройки группы"
 
 msgid "Share"
 msgstr "Поделиться"
+
+msgid "Short timers"
+msgstr "Короткие таймеры"
 
 msgid "Show"
 msgstr "Показать"

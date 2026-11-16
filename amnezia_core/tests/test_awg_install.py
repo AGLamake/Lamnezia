@@ -4,7 +4,14 @@ from ipaddress import IPv4Network
 import pytest
 
 from amnezia_core.awg_export import has_awg3_params
-from amnezia_core.awg_install import AwgInstallSettings, generate_awg_params, upgraded_awg_params
+from amnezia_core.awg_install import (
+    DEFAULT_TIMERS,
+    SHORT_TIMERS,
+    AwgInstallSettings,
+    generate_awg_params,
+    has_short_timers,
+    upgraded_awg_params,
+)
 from amnezia_core.awg_params import check_awg_params
 from amnezia_core.errors import AmneziaFormatError
 from amnezia_core.keys import KeyPair
@@ -117,3 +124,12 @@ def test_upgrade_keeps_awg3_values_already_set() -> None:
     params = upgraded_awg_params({**AWG2_PARAMS, "RekeyTimeout": "4-6"})
 
     assert params["RekeyTimeout"] == "4-6"
+
+
+def test_short_timers_are_valid_and_told_apart_from_the_defaults() -> None:
+    params = generate_awg_params()
+
+    assert DEFAULT_TIMERS.items() <= params.items()
+    assert not has_short_timers(params)
+    assert has_short_timers({**params, **SHORT_TIMERS})
+    assert check_awg_params({**params, **SHORT_TIMERS}) == []

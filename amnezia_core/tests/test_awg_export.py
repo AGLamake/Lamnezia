@@ -6,6 +6,7 @@ import pytest
 
 from amnezia_core.awg import AwgServerConfig
 from amnezia_core.awg_export import AwgClientProfile, AwgServerSettings, awg_version
+from amnezia_core.awg_install import SHORT_TIMERS
 from amnezia_core.containers import AWG2, AWG_LEGACY, WIREGUARD, WgContainer
 from amnezia_core.errors import ConfigFormatError
 from amnezia_core.keys import KeyPair
@@ -159,6 +160,24 @@ def test_awg3_server_uses_keepalive_range_and_toggles() -> None:
     assert "RandomTrailers" not in native
     assert server.to_json()["RandomTrailers"] == "off"
     assert "RandomTrailers" not in profile.client_json()
+
+
+def test_short_timers_reach_the_conf_and_vpn_link() -> None:
+    """Upstream reads them from [Interface] of a .conf and from last_config of vpn://."""
+    server = AwgServerSettings(
+        51820,
+        IPv4Interface("10.8.1.0/24"),
+        {"Jc": "4", "HeaderProtectionKey": PSK, **SHORT_TIMERS},
+    )
+    profile = AwgClientProfile(
+        "h", server, SERVER_PUBLIC, PSK, CLIENT_KEYS, IPv4Address("10.8.1.2")
+    )
+    awg = profile.vpn_config()["containers"][0]["awg"]
+
+    assert "RekeyTimeout = 2-3\n" in profile.native_config()
+    assert "KeepaliveTimeout = 3-5\n" in profile.native_config()
+    assert json.loads(awg["last_config"]).items() >= SHORT_TIMERS.items()
+    assert awg.items() >= SHORT_TIMERS.items()
 
 
 @pytest.mark.parametrize(

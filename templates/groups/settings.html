@@ -20,6 +20,7 @@
   {% csrf_token %}
   {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
   {% include form.fields_template %}
+  {{ form.short_timers.as_field_group }}
 
   <div class="space-y-3">
     {% if imported %}
