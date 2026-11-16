@@ -64,6 +64,15 @@ SHORT_TIMERS = {"RekeyTimeout": "2-3", "KeepaliveTimeout": "3-5"}
 DEFAULT_TIMERS = {name: _FIXED_PARAMS[name] for name in SHORT_TIMERS}
 
 
+def without_timers(params: Mapping[str, str]) -> dict[str, str]:
+    """`params` without the SHORT_TIMERS parameters.
+
+    Each side runs its own timers and the handshake does not compare them: a profile with the
+    old timers keeps connecting after the server changes only them, either way.
+    """
+    return {name: value for name, value in params.items() if name not in SHORT_TIMERS}
+
+
 def has_short_timers(params: Mapping[str, str]) -> bool:
     """The parameters carry SHORT_TIMERS."""
     return all(params.get(name, "").strip() == value for name, value in SHORT_TIMERS.items())

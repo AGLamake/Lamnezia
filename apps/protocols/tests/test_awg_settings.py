@@ -6,7 +6,7 @@ import pytest
 from django.test import Client
 
 from amnezia_core.awg import AWG_CLIENTS_TABLE_PATH, AWG_CONFIG_PATH, AWG_PSK_PATH, AwgServerConfig
-from amnezia_core.awg_install import upgraded_awg_params
+from amnezia_core.awg_install import SHORT_TIMERS, upgraded_awg_params
 from amnezia_core.containers import AWG2, AWG_LEGACY, WIREGUARD, WgContainer
 from amnezia_core.keys import KeyPair
 from apps.accounts.models import Role, User
@@ -334,6 +334,16 @@ def test_settings_of_awg3_have_no_reminder(
     assert "version 3.1" in html
     assert "outdated" not in html
     assert not any(group.note for group in response.context["form"].groups)
+
+
+def test_timers_alone_reach_the_server_and_keep_the_old_profiles(
+    instance: ProtocolInstance,
+) -> None:
+    current = AwgSettings.of(instance)
+    timers = settings_of(instance, params=SHORT_TIMERS)
+
+    assert timers.touches_server(current)
+    assert not timers.changes_profiles(current)
 
 
 def test_change_of_the_parameters_must_be_confirmed(

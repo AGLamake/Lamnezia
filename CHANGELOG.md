@@ -49,7 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Short timers of a group**: a checkbox in the protocol settings of a group sets
   `KeepaliveTimeout = 3-5` and `RekeyTimeout = 2-3` on every member and in the keys, so clients
   behind a relay reconnect in 7-9 seconds after a switch instead of 18-22. Off by default: on lossy
-  mobile networks clients make more handshakes.
+  mobile networks clients make more handshakes. Old keys keep connecting, so a change of the timers
+  alone, here or in the settings of a server, asks for no confirmation and tells no owner to import
+  the key again.
 - **Planned relay switch**: **Switch to this server** on the group page sends the clients of a
   group behind a relay to the chosen member, for maintenance of the active one. The relay agent
   switches only if that member answers its probe right then, otherwise it keeps the active one;

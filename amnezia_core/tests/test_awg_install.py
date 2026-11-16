@@ -11,6 +11,7 @@ from amnezia_core.awg_install import (
     generate_awg_params,
     has_short_timers,
     upgraded_awg_params,
+    without_timers,
 )
 from amnezia_core.awg_params import check_awg_params
 from amnezia_core.errors import AmneziaFormatError
@@ -133,3 +134,12 @@ def test_short_timers_are_valid_and_told_apart_from_the_defaults() -> None:
     assert not has_short_timers(params)
     assert has_short_timers({**params, **SHORT_TIMERS})
     assert check_awg_params({**params, **SHORT_TIMERS}) == []
+
+
+def test_without_timers_keeps_everything_else() -> None:
+    params = {**generate_awg_params(), **SHORT_TIMERS}
+
+    left = without_timers(params)
+
+    assert not left.keys() & SHORT_TIMERS.keys()
+    assert left == {name: params[name] for name in params.keys() - SHORT_TIMERS.keys()}

@@ -82,7 +82,8 @@ class ProtocolSettingsForm(SettingsForm):
     """Port, DNS and AWG parameters of a WireGuard-family instance.
 
     A change of the port or the parameters needs `confirm`: every client must import the key
-    again, and keys imported from the server stop working unless they are reissued.
+    again, and keys imported from the server stop working unless they are reissued. The timers
+    alone need no confirmation: old profiles keep connecting.
     """
 
     fields_template = "protocols/_settings_wg.html"

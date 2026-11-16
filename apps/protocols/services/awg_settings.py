@@ -22,7 +22,7 @@ from django.utils.translation import gettext as _
 
 from amnezia_core.awg import AwgServerConfig, Renumbering
 from amnezia_core.awg_export import has_awg3_params
-from amnezia_core.awg_install import upgraded_awg_params
+from amnezia_core.awg_install import upgraded_awg_params, without_timers
 from amnezia_core.containers import AWG2, WgContainer
 from apps.accounts.models import User
 from apps.keys.models import AccessKey, KeyStatus
@@ -115,15 +115,19 @@ class AwgSettings:
         return self if self.subnet else replace(self, subnet=current.subnet)
 
     def changes_server(self, other: "AwgSettings") -> bool:
-        """The port, the subnet or the obfuscation differ: the old profile does not connect."""
-        return (self.port, self.subnet, self.params) != (other.port, other.subnet, other.params)
+        """The port, the subnet or the obfuscation differ: the old profile does not connect.
+
+        The timers alone do not count: each side keeps its own.
+        """
+        mine = (self.port, self.subnet, without_timers(self.params))
+        return mine != (other.port, other.subnet, without_timers(other.params))
 
     def changes_profiles(self, other: "AwgSettings") -> bool:
         """Clients must import their keys again; the container log is no concern of theirs."""
         return self.changes_server(other) or self.dns != other.dns
 
     def touches_server(self, other: "AwgSettings") -> bool:
-        return self.changes_server(other) or self.logs != other.logs
+        return self.changes_server(other) or self.params != other.params or self.logs != other.logs
 
 
 class AwgReconfiguration:

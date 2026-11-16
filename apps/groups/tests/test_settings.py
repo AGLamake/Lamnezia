@@ -254,8 +254,7 @@ def test_group_page_starts_the_change(
 def test_short_timers_reach_every_member_and_the_keys_of_the_group(
     servers: Fakes, leader: ProtocolInstance, joined: GroupMember, change: Change
 ) -> None:
-    owner = UserFactory()
-    key = issued_key(leader, owner)
+    key = issued_key(leader, UserFactory())
 
     succeeded(change(params=SHORT_TIMERS))
 
@@ -263,7 +262,8 @@ def test_short_timers_reach_every_member_and_the_keys_of_the_group(
         assert config(servers, host).awg_params.items() >= SHORT_TIMERS.items()
     key.refresh_from_db()
     assert ServerProfile.from_json(key.profile).params.items() >= SHORT_TIMERS.items()
-    assert Notification.objects.get(event=Event.KEYS_CHANGED).user == owner
+    # The old profile keeps connecting: nobody is asked to import the key again.
+    assert not Notification.objects.filter(event=Event.KEYS_CHANGED).exists()
     assert not lagging(joined)
 
 
@@ -313,3 +313,14 @@ def test_timers_typed_by_hand_stay_while_the_switch_is_untouched(
     params = posted_params(admin_client, group, data)
 
     assert (params["KeepaliveTimeout"], params["RekeyTimeout"]) == ("4-6", "2-4")
+
+
+def test_timers_alone_need_no_confirmation(
+    admin_client: Client, group: ServerGroup, leader: ProtocolInstance
+) -> None:
+    data = settings_data(leader, short_timers="on")
+    del data["confirm"]
+
+    params = posted_params(admin_client, group, data)
+
+    assert params.items() >= SHORT_TIMERS.items()

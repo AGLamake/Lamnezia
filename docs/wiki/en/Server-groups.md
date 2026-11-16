@@ -76,9 +76,10 @@ servers. A settings change and a handover of one group do not run at the same ti
 **Short timers** on the same page set `KeepaliveTimeout = 3-5` and `RekeyTimeout = 2-3` for the
 group. A client notices the switch of the [relay](#relay) by these timers: with them it reconnects
 in 7-9 seconds instead of 18-22 with the timers of a new server. The cost is more handshakes on
-mobile networks with losses, so the setting is off by default. Like any parameter change it
-restarts the protocol on every member, and the owners of the keys are told to import them again.
-Turning the setting off brings back `5-15` and `3-7`; while the checkbox is left as it is, the two
+mobile networks with losses, so the setting is off by default. It restarts the protocol on every
+member, but clients keep their old keys: each side runs its own timers, so a profile with the old
+ones still connects, and the form asks for no confirmation. A key imported after the change gets the
+new timers. Turning the setting off brings back `5-15` and `3-7`; while the checkbox is left as it is, the two
 fields keep what was typed in them.
 
 **Plans** give a group as a whole: the **Server groups** field of a [plan](Users-plans-limits.md#plan)

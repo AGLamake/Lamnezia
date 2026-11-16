@@ -358,7 +358,9 @@ change for the whole group on the group page. The settings operation refuses a g
 even when started past its card. A joining server takes the DNS of the group.
 
 A change of the port or the parameters breaks every client until it imports the key again, so the
-form asks for a confirmation. **Apply** starts an operation:
+form asks for a confirmation. `KeepaliveTimeout` and `RekeyTimeout` are the exception: each side
+runs its own timers, old profiles keep connecting, and a change of them alone asks for nothing and
+tells no owner to import the key. **Apply** starts an operation:
 
 - **Parameters only.** The `[Interface]` of `awg0.conf` is rewritten and AmneziaWG is restarted in
   the same container (`awg-quick down`/`up`). Peers, the server key and `clientsTable` stay. If awg
