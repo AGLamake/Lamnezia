@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Relay trouble on the dashboard**: the "Needs attention" list of an administrator names the
+  server groups where no member answers the relay at its last reading and the relays whose state
+  cannot be read, with links to the group and server pages. It uses the stored reading, without SSH.
 - **Recovery notifications** paired with the relay events: `member_reachable`,
   `group_reachable`, `relay_up` and `member_caught_up` come once when the trouble is over, only
   after `member_unreachable`, `group_unreachable`, `relay_down` or `member_lagging` was told.

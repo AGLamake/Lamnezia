@@ -133,8 +133,10 @@ background job of its own, so a server that does not answer does not delay the o
 The servers are shown as cards on the **Overview** (moderators see the servers of their zone, without links to the
 server pages), the status is also in the server list. Above the cards the overview shows the key
 numbers (servers online, active keys, clients, online now), the traffic for 7 days and the
-**Needs attention** list: servers that do not answer, VPS payments due within 7 days or overdue
-(administrators only), operations failed in the last day, unread messages, applications and article
+**Needs attention** list: servers that do not answer, server groups where no member answers the
+relay at its last reading and relays whose state cannot be read (both with a link to the group or
+server page, administrators only), VPS payments due within 7 days or overdue (administrators only),
+operations failed in the last day, unread messages, applications and article
 suggestions waiting, hidden materials with a broken link. The same counters are next to the menu
 items. The crossed-out eye next to an item hides it until tomorrow (for this staff member, in their
 session); **Show hidden until tomorrow** under the list brings everything back. Instead of the

@@ -121,6 +121,10 @@ msgstr "Продлить доступ"
 msgid "Friends"
 msgstr "Друзья"
 
+#, python-format
+msgid "Group %(name)s: no member answers the relay"
+msgstr "Группа %(name)s: ни один участник не отвечает ретранслятору"
+
 msgid "Hourly traffic"
 msgstr "Почасовой трафик"
 
@@ -191,6 +195,10 @@ msgstr "Тариф"
 
 msgid "Reissue keys"
 msgstr "Перевыпустить ключи"
+
+#, python-format
+msgid "Relay %(name)s: its state cannot be read"
+msgstr "Ретранслятор %(name)s: его состояние не читается"
 
 msgid "Relay load history"
 msgstr "История нагрузки ретрансляторов"

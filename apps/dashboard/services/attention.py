@@ -1,7 +1,8 @@
 """What needs a staff member's attention now: the counters of the admin menu and the dashboard list.
 
 Everything is counted within the member's zone; the parts only an administrator handles
-(applications, VPS payments, broken links, failed operations of others) are an administrator's.
+(applications, VPS payments, broken links, failed operations of others, relays and groups) are
+an administrator's.
 """
 
 from dataclasses import dataclass
@@ -17,8 +18,10 @@ from django.utils.translation import ngettext
 from apps.accounts.models import User
 from apps.accounts.services.applications import Applications
 from apps.accounts.services.zone import Zone
+from apps.groups.models import ServerGroup
 from apps.guides.models import Suggestion, UsefulMaterial
 from apps.operations.models import Operation, OperationStatus
+from apps.relays.models import Relay
 from apps.servers.models import Server
 from apps.support.services.inbox import Inbox
 
@@ -80,6 +83,31 @@ class Attention:
         # Materials are edited in the admin site, which only administrators open.
         return UsefulMaterial.objects.broken().count() if self._member.is_admin else 0
 
+    @cached_property
+    def relays(self) -> list[Relay]:
+        """Installed relays; groups and relays are an administrator's."""
+        if not self._member.is_admin:
+            return []
+        relays = (
+            Relay.objects.filter(installed_at__isnull=False)
+            .select_related("server")
+            .prefetch_related("server__relayed_groups")
+        )
+        return list(relays.order_by("server__name"))
+
+    def unread_relays(self) -> list[Relay]:
+        return [relay for relay in self.relays if relay.read_error]
+
+    def groups_down(self) -> list[ServerGroup]:
+        """Groups whose relay saw no member answer; a failed reading is not trusted."""
+        return [
+            group
+            for relay in self.relays
+            if not relay.read_error
+            for group in relay.server.relayed_groups.all()
+            if (health := relay.group_health(group.port)) and health.all_down
+        ]
+
     def offline(self) -> list[Server]:
         return [server for server in self.servers if server.online is False]
 
@@ -103,6 +131,26 @@ class Attention:
                 f"offline:{server.pk}",
             )
             for server in self.offline()
+        ]
+        notices += [
+            Notice(
+                "danger",
+                "server",
+                _("Group %(name)s: no member answers the relay") % {"name": group.name},
+                reverse("groups:detail", args=[group.pk]),
+                f"group-down:{group.pk}",
+            )
+            for group in self.groups_down()
+        ]
+        notices += [
+            Notice(
+                "warning",
+                "server",
+                _("Relay %(name)s: its state cannot be read") % {"name": relay.server.name},
+                reverse("servers:detail", args=[relay.server_id]),
+                f"relay-unread:{relay.pk}",
+            )
+            for relay in self.unread_relays()
         ]
         notices += [self._payment(server) for server in self.payment_due()]
         if self.failed_operations:
