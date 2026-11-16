@@ -17,7 +17,7 @@ services:
 
 # Interface strings (GNU gettext required). `messages` refreshes the catalogs after code changes.
 messages:
-	uv run python manage.py makemessages -l ru -e html,py,txt --no-location --no-obsolete --ignore=staticfiles
+	uv run python manage.py makemessages
 
 compilemessages:
 	uv run python manage.py compilemessages --ignore=.venv

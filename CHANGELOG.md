@@ -72,6 +72,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Translations for developers**: `makemessages` and `compilemessages` run without `.env` and the
+  keys, and a bare `manage.py makemessages` has the project flags built in, so it writes the same
+  catalogs as `make messages`. A fresh clone needs one `compilemessages` before the tests.
+
 - **A relay and a member of its group on one machine** are refused before anything is installed,
   with a clear error: the relay server cannot lead, join or get AmneziaWG of the group, and a relay
   whose server runs a member of its group is not installed, updated or retried by the sync. A

@@ -61,6 +61,16 @@ uv run mypy .
 uv run pytest
 ```
 
+In a fresh clone or worktree compile the translations once before the tests, otherwise the
+translation tests fail:
+
+```bash
+uv run python manage.py compilemessages --ignore=.venv   # or: make compilemessages
+```
+
+It needs neither `.env` nor the keys: `makemessages` and `compilemessages` run with placeholder
+keys when `LAMNEZIA_SECRET_KEY` and `LAMNEZIA_ENCRYPTION_KEY` are not set.
+
 `make lint` runs the first three, `make test` the tests, `make coverage` the coverage of
 `amnezia_core`, `make format` fixes the formatting. SSH integration tests run in CI against a test
 sshd container.
@@ -142,8 +152,9 @@ make messages          # refresh locale/*/django.po
 make messages-check    # fails on untranslated or fuzzy strings
 ```
 
-`make messages` sorts the catalogs by string, does not wrap lines and leaves out the creation
-date, so a run without new strings changes nothing on any gettext version and the diff holds only
+`make messages` is a plain `manage.py makemessages`: the project command has the flags built in
+(Russian, no source locations, no obsolete strings). It sorts the catalogs by string, does not wrap
+lines and leaves out the creation date, so a run without new strings changes nothing on any gettext version and the diff holds only
 the new strings. Strings that the code translates at run time without wrapping them (Discord
 command descriptions) are marked with `gettext_noop`, otherwise the run drops them. CI fails when
 the committed catalogs differ from a fresh run.
