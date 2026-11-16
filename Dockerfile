@@ -18,10 +18,10 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-dev
 COPY . .
 # Tailwind standalone CLI (pinned, checksum-verified) builds static/css/app.css; no Node.js.
 RUN --mount=type=cache,target=/app/.cache/tailwind .venv/bin/python scripts/tailwind.py
-# Placeholders: settings require these keys, collectstatic and compilemessages never use them.
-RUN export LAMNEZIA_SECRET_KEY=build-only LAMNEZIA_ENCRYPTION_KEY=build-only \
-    && .venv/bin/python manage.py compilemessages --ignore=.venv \
-    && .venv/bin/python manage.py collectstatic --noinput
+RUN .venv/bin/python manage.py compilemessages --ignore=.venv
+# Placeholders: settings require these keys, collectstatic never uses them.
+RUN LAMNEZIA_SECRET_KEY=build-only LAMNEZIA_ENCRYPTION_KEY=build-only \
+    .venv/bin/python manage.py collectstatic --noinput
 
 # Runtime stage: the same Python, the built app, an unprivileged user.
 FROM python:3.12-slim
