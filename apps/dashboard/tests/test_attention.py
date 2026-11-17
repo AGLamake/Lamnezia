@@ -46,6 +46,21 @@ def test_the_admin_is_reminded_of_vps_payments_soon_and_overdue() -> None:
     assert {notice.level for notice in notices if "overdue" in notice.text} == {"danger"}
 
 
+def test_the_payment_reminder_links_to_the_hosting_page(client: Client) -> None:
+    admin = UserFactory(role=Role.ADMIN)
+    ServerFactory(
+        paid_until=timezone.localdate() + timedelta(days=2),
+        payment_url="https://billing.example.com/vps/7",
+    )
+    client.force_login(admin)
+
+    [notice] = Attention(admin).notices()
+    html = client.get(reverse("dashboard:index")).content.decode()
+
+    assert notice.external == "https://billing.example.com/vps/7"
+    assert 'href="https://billing.example.com/vps/7"' in html
+
+
 def test_a_moderator_is_not_told_about_payments() -> None:
     paid_in(1)
 

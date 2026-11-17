@@ -16,6 +16,10 @@ A server is a VPS that the panel manages over SSH. Servers are visible to admini
   one) or a password. A key is recommended.
 - **VPS paid until** — optional, a reminder about the hosting payment. The server card shows how
   many days are left, or how many days the payment is overdue.
+- **Hosting or payment page** — optional, an `http://` or `https://` link to the hosting provider's
+  site or its billing page. The server card shows it under the payment date (**Hosting and
+  payment**) and opens it in a new tab; the payment reminder on the dashboard gives the same link.
+  Only administrators see it.
 - **Under maintenance** — users see the server as under maintenance on their
   [status page](Portal.md#servers); new keys are not issued on it in the portal, the bots and the
   panel, while existing keys keep working and can be reissued. The server list marks it with a

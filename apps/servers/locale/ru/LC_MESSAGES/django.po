@@ -158,6 +158,9 @@ msgstr "VPS оплачен до"
 msgid "Wait for other operations on the server"
 msgstr "Дождаться других операций на сервере"
 
+msgid "Where to pay for the VPS: the hosting provider's site or its billing page."
+msgstr "Где платить за VPS: сайт хостера или его страница оплаты."
+
 msgid "added at"
 msgstr "добавлен"
 
@@ -184,6 +187,9 @@ msgstr "свободная память"
 
 msgid "host"
 msgstr "хост"
+
+msgid "hosting or payment page"
+msgstr "страница хостера или оплаты"
 
 msgid "key passphrase"
 msgstr "пароль ключа"

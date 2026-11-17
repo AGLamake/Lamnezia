@@ -7,6 +7,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps.guides.models import LinkField, http_url
 from apps.ssh.encryption import EncryptedTextField
 from apps.ssh.services import SshCredentials
 
@@ -71,6 +72,13 @@ class Server(models.Model):
         help_text=_("Country or any label that tells servers apart, e.g. «Germany, Hetzner»."),
     )
     paid_until = models.DateField(_("VPS paid until"), null=True, blank=True)
+    payment_url = LinkField(
+        _("hosting or payment page"),
+        max_length=500,
+        blank=True,
+        validators=[http_url],
+        help_text=_("Where to pay for the VPS: the hosting provider's site or its billing page."),
+    )
     maintenance = models.BooleanField(
         _("under maintenance"),
         default=False,

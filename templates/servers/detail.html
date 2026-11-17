@@ -66,7 +66,8 @@
       <div><dt>{% translate "Docker" %}</dt><dd>{{ server.docker_version|default:"—" }}</dd></div>
       <div><dt>{% translate "Free disk space" %}</dt><dd>{% if server.disk_free_bytes is None %}—{% else %}{{ server.disk_free_bytes|filesizeformat }}{% endif %}</dd></div>
       <div><dt>{% translate "Checked" %}</dt><dd>{{ server.checked_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }}</dd></div>
-      <div><dt>{% translate "VPS paid until" %}</dt><dd>{{ server.paid_until|date:"SHORT_DATE_FORMAT"|default:"—" }}{% include "servers/_paid_days.html" %}</dd></div>
+      <div><dt>{% translate "VPS paid until" %}</dt><dd>{{ server.paid_until|date:"SHORT_DATE_FORMAT"|default:"—" }}{% include "servers/_paid_days.html" %}{% if server.payment_url %}
+        <a href="{{ server.payment_url }}" class="link block break-all" target="_blank" rel="noopener noreferrer">{% translate "Hosting and payment" %}</a>{% endif %}</dd></div>
       <div><dt>{% translate "Added" %}</dt><dd>{{ server.created_at|date:"SHORT_DATE_FORMAT" }}</dd></div>
       <div class="block! space-y-1"><dt>{% translate "SSH fingerprint" %}</dt>
         <dd class="text-left!">{% if host_key %}<code class="block font-mono text-xs break-all">{{ host_key.key_type }} {{ host_key.fingerprint }}</code>

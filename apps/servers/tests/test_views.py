@@ -60,6 +60,8 @@ def test_adding_a_server_saves_it_and_starts_a_check(admin_client: Client) -> No
         ({"host": "root@203.0.113.10"}, "host"),
         ({"host": "ssh://vpn.example.com"}, "host"),
         ({"port": 70000}, "port"),
+        ({"payment_url": "javascript:alert(1)"}, "payment_url"),
+        ({"payment_url": "ftp://billing.example.com"}, "payment_url"),
     ],
 )
 def test_invalid_server_is_not_saved(
@@ -100,6 +102,23 @@ def test_editing_without_new_secrets_keeps_them_and_skips_the_check(admin_client
     assert server.name == "Paris"
     assert (server.private_key, server.passphrase) == (PRIVATE_KEY, "phrase")
     assert checks(server) == 0
+
+
+def test_the_payment_page_is_saved_and_opens_in_a_new_tab(admin_client: Client) -> None:
+    server = ServerFactory(host="203.0.113.10")
+
+    admin_client.post(
+        f"/servers/{server.pk}/edit/",
+        form_data(private_key="", payment_url="https://billing.example.com/vps/7"),
+    )
+    html = admin_client.get(f"/servers/{server.pk}/").content.decode()
+
+    server.refresh_from_db()
+    assert server.payment_url == "https://billing.example.com/vps/7"
+    assert (
+        '<a href="https://billing.example.com/vps/7" class="link block break-all" '
+        'target="_blank" rel="noopener noreferrer">'
+    ) in html
 
 
 def test_switching_to_a_password_drops_the_key_and_checks_again(admin_client: Client) -> None:

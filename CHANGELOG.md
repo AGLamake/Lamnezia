@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Hosting and payment link of a server**: the server form takes an optional link to the hosting
+  provider or its billing page (`http://` and `https://` only). The server card shows it under
+  *VPS paid until* and opens it in a new tab, and the VPS payment reminder on the dashboard has a
+  button with the same link.
 - **Messages show before the answer**: a message in the support chat, a request or the inbox
   appears in the thread at once, muted and marked *Sending…*, and the field is cleared for the next
   one; a screenshot shows after the upload. A message that could not be sent stays marked

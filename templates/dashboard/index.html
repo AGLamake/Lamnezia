@@ -75,6 +75,7 @@
               <span class="row-main row-title whitespace-normal">{{ notice.text }}</span>
               {% icon "chevron-right" "icon-sm text-muted" %}
             </a>
+            {% if notice.external %}<a href="{{ notice.external }}" class="btn btn-ghost btn-icon btn-sm" target="_blank" rel="noopener noreferrer" title="{% translate 'Hosting and payment' %}" aria-label="{% translate 'Hosting and payment' %}">{% icon "external" "icon-sm" %}</a>{% endif %}
             <form method="post" action="{% url 'dashboard:notice-hide' %}" class="pr-2 sm:pr-3">
               {% csrf_token %}
               <input type="hidden" name="key" value="{{ notice.key }}">

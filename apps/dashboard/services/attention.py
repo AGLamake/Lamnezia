@@ -36,7 +36,8 @@ _FAILED_WITHIN = timedelta(days=1)
 class Notice:
     """One line of the "needs attention" list: how bad it is, what happened and where to go.
 
-    `key` names the notice for hiding it until tomorrow (apps/dashboard/services/snooze.py).
+    `key` names the notice for hiding it until tomorrow (apps/dashboard/services/snooze.py);
+    `external` is an outside page that helps settle it, such as the hosting provider's billing.
     """
 
     level: str
@@ -44,6 +45,7 @@ class Notice:
     text: str
     url: str
     key: str
+    external: str = ""
 
 
 class Attention:
@@ -268,6 +270,7 @@ class Attention:
             text,
             self._server_url(server),
             f"payment:{server.pk}",
+            server.payment_url,
         )
 
     def _server_url(self, server: Server) -> str:

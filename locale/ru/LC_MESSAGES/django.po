@@ -1357,6 +1357,9 @@ msgstr "Скрыть до завтра: %(text)s"
 msgid "Host name whose A record points to the relay; keys of the group use it."
 msgstr "Имя хоста, A-запись которого указывает на ретранслятор; его используют ключи группы."
 
+msgid "Hosting and payment"
+msgstr "Хостер и оплата"
+
 msgid "How much traffic your keys used and how long your limit lasts."
 msgstr "Сколько трафика израсходовали ваши ключи и на сколько хватит лимита."
 

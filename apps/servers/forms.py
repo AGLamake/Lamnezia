@@ -53,6 +53,7 @@ class ServerForm(forms.ModelForm):  # type: ignore[type-arg]
             "username",
             "auth_method",
             "paid_until",
+            "payment_url",
             "maintenance",
         )
         widgets: ClassVar = {
