@@ -1,11 +1,18 @@
 """Keys within a staff member's zone: a moderator's users' keys on the moderator's servers."""
 
+from django.db import transaction
 from django.db.models import QuerySet
 
 from apps.accounts.models import Role, Status, User
 from apps.accounts.services.zone import Zone
 from apps.keys.models import GONE_STATUSES, AccessKey, Drift
+from apps.keys.services.actions import KeyActions
 from apps.keys.services.instances import instances
+from apps.operations.models import Operation
+
+
+class KeyQuotaReachedError(Exception):
+    """A moderator's users already hold as many keys as the moderator's quota allows."""
 
 
 class KeyZone:
@@ -58,6 +65,19 @@ class KeyZone:
     def quota_reached(self) -> bool:
         """A moderator's users hold as many keys as the moderator's quota allows."""
         return not self._zone.is_whole and KeyQuota(self._member).reached()
+
+    def issue(self, actions: KeyActions, source: str, name: str, owner: User) -> Operation:
+        """Start issuing a key to `owner`, within a moderator's quota.
+
+        The moderator's row stays locked until commit, so two issues at once, from here or from
+        the portal of their users, cannot both pass the quota.
+        """
+        with transaction.atomic():
+            if not self._zone.is_whole:
+                moderator = User.objects.select_for_update().get(pk=self._member.pk)
+                if KeyQuota(moderator).reached():
+                    raise KeyQuotaReachedError
+            return actions.issue(source, name, owner)
 
 
 class KeyQuota:

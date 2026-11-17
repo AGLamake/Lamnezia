@@ -1,6 +1,8 @@
-from contextlib import nullcontext
+from collections.abc import Iterator
+from contextlib import AbstractContextManager, nullcontext
 
 import pytest
+from django.http import HttpResponse
 from django.test import Client
 from django.utils import timezone
 
@@ -8,17 +10,20 @@ from amnezia_core.keys import KeyPair
 from amnezia_core.openvpn import ClientKey, OpenVpnSettings, new_client_id
 from amnezia_core.tests.pki import FakeCa
 from amnezia_core.xray import XRAY, client_fingerprint
-from apps.accounts.models import Role
+from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.audit.models import AuditEvent
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.instances import Instance, instances
 from apps.keys.services.profile import OpenVpnKeyProfile, ServerProfile, XrayKeyProfile
 from apps.keys.services.xray_profiles import BUILD_PROFILES
+from apps.keys.services.zone import KeyZone
 from apps.keys.tests.conftest import HOST, PSK, SOURCE
 from apps.keys.tests.fake_openvpn import TA_KEY
 from apps.keys.tests.fake_server import FakeAwgServer
 from apps.operations.models import Operation
+from apps.servers.tests.factories import ServerFactory
+from apps.ssh.services import RemoteHost
 
 pytestmark = pytest.mark.django_db
 
@@ -232,3 +237,53 @@ def test_list_names_the_server_not_the_instance_id(admin_client: Client) -> None
 
     assert "Frankfurt · XRay" in page
     assert ">xray:1<" not in page
+
+
+class TestModeratorKeyQuota:
+    """A moderator's quota of one key, on a server given to the moderator."""
+
+    SOURCE = "awg:7"
+
+    @pytest.fixture
+    def moderator(self) -> Iterator[User]:
+        moderator = UserFactory(role=Role.MODERATOR, key_quota=1)
+        server = ServerFactory()
+        moderator.moderated_servers.add(server)
+
+        def provider() -> list[Instance]:
+            return [Instance(self.SOURCE, "Amsterdam", HOST, _no_host, server_id=server.pk)]
+
+        instances.register(provider)
+        yield moderator
+        instances.unregister(provider)
+
+    def issue(self, client: Client, owner: User) -> HttpResponse:
+        data = {"user": owner.pk, "source": self.SOURCE, "name": "Pixel"}
+        return client.post("/keys/new/", data)  # type: ignore[return-value]
+
+    def test_a_key_within_the_quota_is_issued(self, client: Client, moderator: User) -> None:
+        client.force_login(moderator)
+
+        self.issue(client, UserFactory(manager=moderator))
+
+        assert AccessKey.objects.filter(status=KeyStatus.ISSUING).count() == 1
+
+    def test_a_key_issued_meanwhile_by_another_request_stops_this_one(
+        self, client: Client, moderator: User, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        owner = UserFactory(manager=moderator)
+        client.force_login(moderator)
+        # Both requests passed the form while the quota had room; the other one issued first.
+        monkeypatch.setattr(KeyZone, "quota_reached", lambda zone: False)
+        issued_key(user=owner, source=self.SOURCE)
+
+        response = self.issue(client, owner)
+
+        assert response.status_code == 200
+        assert "Your users hold as many keys as your quota allows." in response.content.decode()
+        assert AccessKey.objects.count() == 1
+        assert not Operation.objects.exists()
+
+
+def _no_host() -> AbstractContextManager[RemoteHost]:
+    raise AssertionError("issuing a key does not connect to the server")

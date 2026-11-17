@@ -8,6 +8,8 @@ from apps.accounts.models import User
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.zone import KeyZone
 
+QUOTA_REACHED = _("Your users hold as many keys as your quota allows.")
+
 
 class KeyFilterForm(forms.Form):
     status = forms.ChoiceField(
@@ -52,7 +54,7 @@ class KeyIssueForm(forms.Form):
 
     def clean(self) -> dict[str, Any]:
         if self._zone.quota_reached():
-            raise forms.ValidationError(_("Your users hold as many keys as your quota allows."))
+            raise forms.ValidationError(QUOTA_REACHED)
         super().clean()
         return self.cleaned_data
 

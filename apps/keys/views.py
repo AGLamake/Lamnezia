@@ -12,14 +12,20 @@ from django.views.generic import DetailView, FormView, ListView, TemplateView
 
 from apps.accounts.permissions import StaffRequiredMixin
 from apps.core.paging import PageSizeMixin
-from apps.keys.forms import KeyAssignForm, KeyBulkForm, KeyFilterForm, KeyIssueForm
+from apps.keys.forms import (
+    QUOTA_REACHED,
+    KeyAssignForm,
+    KeyBulkForm,
+    KeyFilterForm,
+    KeyIssueForm,
+)
 from apps.keys.models import AccessKey, DriftKind
 from apps.keys.services.actions import KeyActions
 from apps.keys.services.drift import ALLOWED_ACTIONS, DriftAction, DriftActions
 from apps.keys.services.instances import instances
 from apps.keys.services.profile import KeyExport
 from apps.keys.services.xray_profiles import request_profiles
-from apps.keys.services.zone import KeyZone
+from apps.keys.services.zone import KeyQuotaReachedError, KeyZone
 from apps.operations.models import Operation
 
 
@@ -82,7 +88,12 @@ class KeyIssueView(_KeysStaffView, FormView):  # type: ignore[type-arg]
 
     def form_valid(self, form: KeyIssueForm) -> HttpResponse:
         data = form.cleaned_data
-        return _to_operation(self.actions.issue(data["source"], data["name"], data["user"]))
+        try:
+            operation = self.zone.issue(self.actions, data["source"], data["name"], data["user"])
+        except KeyQuotaReachedError:
+            form.add_error(None, QUOTA_REACHED)
+            return self.form_invalid(form)
+        return _to_operation(operation)
 
 
 class KeyDetailView(_KeysStaffView, DetailView):  # type: ignore[type-arg]
