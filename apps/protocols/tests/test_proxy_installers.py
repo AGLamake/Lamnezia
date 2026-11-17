@@ -426,8 +426,12 @@ def test_card_shows_the_links_and_removal_takes_the_volume(
     socks5 = ServiceInstance.objects.get(container=SOCKS5_CONTAINER)
 
     card = admin_client.get(f"/servers/{server.pk}/").content.decode()
-    assert f"secret=dd{SECRET}" in card
-    assert f"{SERVER_IP}:38080" in card and socks5.secret in card
+    assert f"{SERVER_IP}:38080" in card
+    assert SECRET not in card and socks5.secret not in card
+    links = admin_client.post(f"/protocols/services/{mtproxy.pk}/links/").content.decode()
+    assert f"secret=dd{SECRET}" in links
+    password = admin_client.post(f"/protocols/services/{socks5.pk}/password/").content.decode()
+    assert socks5.secret in password
 
     with django_capture_on_commit_callbacks(execute=True):
         admin_client.post(f"/protocols/services/{mtproxy.pk}/remove/")
