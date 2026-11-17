@@ -4000,6 +4000,9 @@ msgstr "Ждёт подтверждения"
 msgid "Waiting for review"
 msgstr "Ждёт проверки"
 
+msgid "Waiting for the confirmation in the bot: press Start in Telegram."
+msgstr "Ждём подтверждения в боте: нажмите «Старт» в Telegram."
+
 msgid "Waiting for the payment service to confirm the payment. Refresh the page in a minute."
 msgstr "Ждём, пока платёжный сервис подтвердит оплату. Обновите страницу через минуту."
 

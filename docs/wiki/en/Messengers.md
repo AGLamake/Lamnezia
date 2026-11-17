@@ -26,7 +26,9 @@ The login buttons are in the colours of the messengers, with their logos.
 While a user has no linked messenger and at least one bot is set up, **My access** starts with a
 card that offers to link Telegram or Discord: sign in with one tap, get keys and notifications
 (access ending, the limit, answers of support) and manage keys right in the messenger. Its
-buttons start linking at once; the same card opens the support chat. **Not now** hides it for
+buttons start linking at once: **Link Telegram** opens the bot by a `t.me` link with a fresh code
+in a new tab, and the card says it waits for the confirmation in the bot and goes away once the
+account is linked; **Link Discord** goes to Discord. The same card opens the support chat. **Not now** hides it for
 30 days, the second time for good. The letter that confirms the email of a new account also
 says that the messengers can be linked in the profile, and so do the letters about the end of
 access and the limit, with a link to the messengers of the profile.

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponseBase
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -15,7 +15,7 @@ from django.views import View
 
 from apps.accounts.models import Messenger, User
 from apps.accounts.services.link_offer import LinkOffer
-from apps.accounts.services.linking import AccountLinks, LinkError
+from apps.accounts.services.linking import AccountLinks, LinkError, invitation
 from apps.accounts.services.messengers import (
     DiscordOAuth,
     MessengerAuthError,
@@ -72,6 +72,27 @@ class LinkOfferDismissView(LoginRequiredMixin, View):
         if request.headers.get("HX-Request"):
             return HttpResponse()
         return redirect("portal:index")
+
+
+class TelegramLinkStartView(LoginRequiredMixin, View):
+    """«Link Telegram» on the offer card: a new code, straight to the bot by its deep link.
+
+    The card opens it in a new tab and waits in the old one (`LinkOfferStateView`).
+    """
+
+    def post(self, request: HttpRequest) -> HttpResponseBase:
+        site = cached_settings.get()
+        if not site.telegram_linking:
+            raise Http404
+        code = AccountLinks().issue_code(cast(User, request.user), Messenger.TELEGRAM)
+        return redirect(invitation(site, Messenger.TELEGRAM, code))
+
+
+class LinkOfferStateView(LoginRequiredMixin, View):
+    """Whether the user has linked a messenger: the offer card asks while it waits for the bot."""
+
+    def get(self, request: HttpRequest) -> JsonResponse:
+        return JsonResponse({"linked": cast(User, request.user).linked_accounts.exists()})
 
 
 class DiscordLoginView(View):

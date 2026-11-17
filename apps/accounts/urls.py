@@ -62,6 +62,12 @@ urlpatterns = [
         name="link-offer-dismiss",
     ),
     path(
+        "messengers/offer/state/",
+        views_links.LinkOfferStateView.as_view(),
+        name="link-offer-state",
+    ),
+    path("telegram/start/", views_links.TelegramLinkStartView.as_view(), name="telegram-start"),
+    path(
         "telegram/code/",
         views_profile.LinkCodeView.as_view(messenger=Messenger.TELEGRAM),
         name="telegram-code",

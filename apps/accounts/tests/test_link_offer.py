@@ -5,7 +5,7 @@ from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.models import LinkedAccount, Messenger, User
+from apps.accounts.models import LinkedAccount, LinkToken, Messenger, User
 from apps.accounts.services.link_offer import LinkOffer
 from apps.accounts.tests.factories import UserFactory
 from apps.accounts.tests.registration import configure
@@ -62,7 +62,7 @@ class TestPages:
         page = client.get(reverse("portal:index")).content.decode()
 
         assert page.index("data-link-offer") < page.index('class="page-header"')
-        assert reverse("accounts:telegram-code") in page
+        assert reverse("accounts:telegram-start") in page
         assert reverse("accounts:discord-connect") not in page
 
     def test_no_offer_without_a_bot(self, client: Client) -> None:
@@ -90,4 +90,33 @@ class TestPages:
 
         user.refresh_from_db()
         assert user.link_offer_dismissals == 2
+        assert "data-link-offer" not in client.get(reverse("portal:index")).content.decode()
+
+    def test_link_telegram_goes_straight_to_the_bot(self, client: Client) -> None:
+        configure(**TELEGRAM_BOT)
+        user = UserFactory()
+        client.force_login(user)
+
+        response = client.post(reverse("accounts:telegram-start"))
+
+        assert response.status_code == 302
+        assert response["Location"].startswith("https://t.me/panel_bot?start=")
+        assert LinkToken.objects.get().user == user
+
+    def test_link_telegram_without_the_bot_is_not_found(self, client: Client) -> None:
+        client.force_login(UserFactory())
+
+        assert client.post(reverse("accounts:telegram-start")).status_code == 404
+
+    def test_the_card_learns_of_the_link_and_is_gone(self, client: Client) -> None:
+        configure(**TELEGRAM_BOT)
+        user = UserFactory()
+        client.force_login(user)
+        state = reverse("accounts:link-offer-state")
+
+        assert client.get(state).json() == {"linked": False}
+
+        LinkedAccount.objects.create(user=user, messenger=Messenger.TELEGRAM, external_id="7")
+
+        assert client.get(state).json() == {"linked": True}
         assert "data-link-offer" not in client.get(reverse("portal:index")).content.decode()

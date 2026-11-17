@@ -122,6 +122,36 @@
     },
   });
 
+  // The offer to link a messenger (accounts/_link_offer.html): after «Link Telegram» opened the
+  // bot in a new tab, asks data-state-url now and then and removes the card once the link is made.
+  const LINK_POLL_MS = 4000;
+  const LINK_WAIT_MS = 15 * 60 * 1000;
+  const linkOffer = () => ({
+    waiting: false,
+    timer: null,
+    wait() {
+      this.waiting = true;
+      clearInterval(this.timer);
+      const until = Date.now() + LINK_WAIT_MS;
+      this.timer = setInterval(() => this.check(until), LINK_POLL_MS);
+    },
+    async check(until) {
+      if (Date.now() > until) {
+        clearInterval(this.timer);
+        return;
+      }
+      try {
+        const response = await fetch(this.$el.dataset.stateUrl, { credentials: "same-origin" });
+        if (response.ok && (await response.json()).linked) {
+          clearInterval(this.timer);
+          this.$el.remove();
+        }
+      } catch (error) {
+        // Offline for a moment: the next tick asks again.
+      }
+    },
+  });
+
   // Bar chart tooltips (components/bar_chart.html): hover shows one through CSS, a tap pins it
   // until another tap or a tap outside the chart.
   const barChart = () => ({
@@ -167,6 +197,7 @@
     Alpine.data("copy", copy);
     Alpine.data("toast", toast);
     Alpine.data("barChart", barChart);
+    Alpine.data("linkOffer", linkOffer);
   });
 
   // ---- Toasts from scripts and HTMX (`HX-Trigger: {"toast": {"level": …, "text": …}}`) -------
