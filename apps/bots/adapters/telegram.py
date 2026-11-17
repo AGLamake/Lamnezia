@@ -9,13 +9,15 @@ user sends, or an image sent as a file, goes to the core with its caption as the
 import asyncio
 import hashlib
 import hmac
+from collections.abc import Iterable
 from contextlib import suppress
 
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.enums import ChatType
-from aiogram.exceptions import TelegramBadRequest
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.types import (
     BotCommand,
+    BotCommandScopeChat,
     BufferedInputFile,
     CallbackQuery,
     Document,
@@ -28,12 +30,13 @@ from aiogram.types import User as TelegramUser
 from aiogram.utils.formatting import Bold, Code, Text
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.utils import translation
 
 from apps.accounts.models import Messenger
 from apps.bots.adapters.base import BotAdapter, adapters
-from apps.bots.services.menu import MENU
+from apps.bots.services.menu import MENU, STAFF_MENU, MenuCommand, staff_chats
 from apps.bots.services.replies import (
     Attachment,
     Button,
@@ -263,15 +266,28 @@ def keyboard_of(buttons: tuple[Button, ...]) -> InlineKeyboardMarkup | None:
 
 
 async def set_menu(bot: Bot) -> None:
-    """The command menu in every panel language; users of other languages get the default one."""
+    """The command menu in every panel language; users of other languages get the default one.
+
+    A staff member's chat gets the staff commands too, in their language; a chat Telegram refuses
+    (the bot is blocked) is passed over.
+    """
     languages = [
         ("", settings.LANGUAGE_CODE),
         *((code, code) for code, _name in settings.LANGUAGES),
     ]
     for language_code, language in languages:
-        with translation.override(language):
-            commands = [BotCommand(command=c.name, description=str(c.description)) for c in MENU]
-        await bot.set_my_commands(commands, language_code=language_code)
+        await bot.set_my_commands(_commands(MENU, language), language_code=language_code)
+    for chat in await sync_to_async(staff_chats)(Messenger.TELEGRAM):
+        with suppress(TelegramBadRequest, TelegramForbiddenError):
+            await bot.set_my_commands(
+                _commands((*MENU, *STAFF_MENU), chat.language),
+                scope=BotCommandScopeChat(chat_id=chat.external_id),
+            )
+
+
+def _commands(menu: Iterable[MenuCommand], language: str) -> list[BotCommand]:
+    with translation.override(language):
+        return [BotCommand(command=c.name, description=str(c.description)) for c in menu]
 
 
 class TelegramWebhook:

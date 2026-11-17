@@ -19,12 +19,24 @@ from aiogram.methods import (
     SetMyCommands,
     TelegramMethod,
 )
-from aiogram.types import CallbackQuery, Chat, Document, File, Message, PhotoSize, Update, User
+from aiogram.types import (
+    BotCommandScopeChat,
+    CallbackQuery,
+    Chat,
+    Document,
+    File,
+    Message,
+    PhotoSize,
+    Update,
+    User,
+)
 from aiohttp.test_utils import TestClient, TestServer
+from asgiref.sync import sync_to_async
 from django.utils import translation
 from django.utils.translation import gettext
 
-from apps.accounts.models import Messenger
+from apps.accounts.models import Messenger, Role
+from apps.accounts.tests.factories import UserFactory
 from apps.bots.adapters.telegram import TEXT_LIMIT, TelegramAdapter, TelegramWebhook, set_menu
 from apps.bots.services.core import BotCore
 from apps.bots.services.replies import Attachment, Button, Incoming, Placement, Reply
@@ -256,14 +268,38 @@ async def test_group_chats_are_ignored(bot: Bot, session: RecordingSession) -> N
 
 
 @pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
 async def test_the_menu_is_set_in_every_language(bot: Bot, session: RecordingSession) -> None:
     await set_menu(bot)
 
     menus = {call.language_code: call.commands for call in session.sent(SetMyCommands)}
     assert set(menus) == {"", "en", "ru"}
     assert [c.command for c in menus["en"]][:3] == ["menu", "status", "keys"]
+    assert "admin" not in [c.command for c in menus[""]]
     with translation.override("ru"):
         assert menus["ru"][2].description == gettext("My keys")
+
+
+def _linked(role: str, external_id: str, language: str = "") -> None:
+    link(UserFactory(role=role, language=language), external_id)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_only_the_staff_chats_get_the_staff_commands(
+    bot: Bot, session: RecordingSession
+) -> None:
+    await sync_to_async(_linked)(Role.MODERATOR, "501", language="ru")
+    await sync_to_async(_linked)(Role.USER, "502")
+
+    await set_menu(bot)
+
+    (staff,) = [call for call in session.sent(SetMyCommands) if call.scope is not None]
+    assert staff.scope == BotCommandScopeChat(chat_id="501")
+    commands = [c.command for c in staff.commands]
+    assert commands[0] == "menu" and "admin" in commands and "incidents" in commands
+    with translation.override("ru"):
+        assert staff.commands[commands.index("admin")].description == gettext("Administration")
 
 
 def test_the_webhook_lives_on_the_panel_address(settings: Any) -> None:
