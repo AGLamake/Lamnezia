@@ -1434,11 +1434,11 @@ msgstr "В <a href=\"%(profile)s\">профиле</a> можно привяза�
 msgid "In the app press «Add» («Let's get started» on the first launch), paste the vpn:// link or scan the QR code, and connect."
 msgstr "В приложении нажмите «Добавить» («Приступим» при первом запуске), вставьте ссылку vpn:// или отсканируйте QR-код и подключитесь."
 
-msgid "In the browser the ports are opened for UDP, for iperf3 for TCP and UDP. Open them in the firewall of the hosting provider if it has one."
-msgstr "В браузере порты открываются для UDP, для iperf3 — для TCP и UDP. Если у хостинга есть свой файрвол, откройте их и в нём."
-
 msgid "In the browser"
 msgstr "В браузере"
+
+msgid "In the browser the ports are opened for UDP, for iperf3 for TCP and UDP. Open them in the firewall of the hosting provider if it has one."
+msgstr "В браузере порты открываются для UDP, для iperf3 — для TCP и UDP. Если у хостинга есть свой файрвол, откройте их и в нём."
 
 msgid "In the plan"
 msgstr "В тарифе"
@@ -3744,11 +3744,11 @@ msgstr "Тема"
 msgid "This account is already linked to another user of the panel."
 msgstr "Этот аккаунт уже привязан к другому пользователю панели."
 
-msgid "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox, or start the test again with iperf3."
-msgstr "В этом браузере нет WebTransport. Откройте страницу в Chrome, Edge или Firefox либо запустите замер заново через iperf3."
-
 msgid "This browser cannot show notifications from the panel."
 msgstr "Этот браузер не умеет показывать уведомления панели."
+
+msgid "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox, or start the test again with iperf3."
+msgstr "В этом браузере нет WebTransport. Откройте страницу в Chrome, Edge или Firefox либо запустите замер заново через iperf3."
 
 #, python-format
 msgid "This copy asked its host to stop at %(at)s. The host stops it within a minute; if it keeps running, stop it with docker compose down."
