@@ -14,6 +14,7 @@ from apps.keys.tests.fake_server import FakeAwgServer
 from apps.keys.tests.test_views import issued_key
 from apps.operations.models import Operation
 from apps.portal.services.keys import MyKeys
+from apps.portal.tests.test_app_versions import AWG2_PARAMS, AWG3_PARAMS, key_on
 from apps.portal.tests.test_portal import OnCommit, reveal_policy
 
 pytestmark = pytest.mark.django_db
@@ -48,6 +49,13 @@ def test_a_card_offers_the_actions(bot: FakeAdapter, user: User) -> None:
     actions = [button.action for button in bot.press(f"card {key.pk}").buttons]
 
     assert actions == [f"show {key.pk}", f"reissue {key.pk}", f"delete {key.pk}", "keys", "menu"]
+
+
+def test_a_card_of_an_awg_3_1_key_tells_to_update_the_app(bot: FakeAdapter, user: User) -> None:
+    awg3, awg2 = key_on(user, AWG3_PARAMS), key_on(user, AWG2_PARAMS)
+
+    assert "AmneziaWG (iOS): 3.1.4" in bot.press(f"card {awg3.pk}").text
+    assert "Update the app" not in bot.press(f"card {awg2.pk}").text
 
 
 @pytest.mark.parametrize("action", ["card", "show", "reissue", "delete"])

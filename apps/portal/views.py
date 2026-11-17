@@ -25,6 +25,7 @@ from apps.keys.services.instances import instances
 from apps.keys.services.subscription import MySubscription
 from apps.keys.services.xray_profiles import request_profiles
 from apps.portal.forms import GetKeyForm, RenameKeyForm
+from apps.portal.services.app_versions import AWG3_APPS, needs_awg3_app
 from apps.portal.services.keys import (
     InstanceNotAllowedError,
     KeyLimitReachedError,
@@ -220,6 +221,7 @@ class KeyView(_KeyView, _ProbingView, TemplateView):
             server_id=instance.server_id if instance else None,
             rename_form=RenameKeyForm(initial={"name": self.key.name}),
             probes=Probes.of(self.my_keys.keyed_instances(self.key)),
+            awg3_apps=AWG3_APPS if needs_awg3_app(self.key) else (),
             **self.state_context(),
             **kwargs,
         )

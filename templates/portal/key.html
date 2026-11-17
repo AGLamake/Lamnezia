@@ -17,6 +17,7 @@
 
 {% include "portal/_reachability.html" %}
 {% include "portal/_key_state.html" %}
+{% if awg3_apps %}{% include "portal/_awg3_apps.html" %}{% endif %}
 
 <section class="card space-y-3" aria-labelledby="rename-title">
   <h2 id="rename-title" class="text-lg font-semibold">{% translate "Key name" %}</h2>

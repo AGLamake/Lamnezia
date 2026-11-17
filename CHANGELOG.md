@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **App versions for AmneziaWG 3.1 keys**: the portal key page and the bot key card (and the key
+  itself in the bot) list the minimum Amnezia VPN and AmneziaWG versions per platform for a key of
+  an AmneziaWG 3.1 server; other keys show no hint.
 - **Panel archive and restore**: **System → Panel archive** (or `manage.py panel_archive create`)
   makes one file encrypted with a password holding the database, `.env` with the secrets key and
   the uploaded files; `install.sh --restore FILE` installs a new server from it with the same

@@ -3028,6 +3028,12 @@ msgstr "Ключ готовится на сервере, это займёт н�
 msgid "The key is deleted and stops working in a moment."
 msgstr "Ключ удалён и через мгновение перестанет работать."
 
+msgid "The key is for AmneziaWG 3.1. Older apps do not import it or do not connect. These versions or newer are needed:"
+msgstr "Ключ для AmneziaWG 3.1. Старые приложения его не импортируют или не подключаются. Нужны эти версии или новее:"
+
+msgid "The key is for AmneziaWG 3.1. Update the app to at least:"
+msgstr "Ключ для AmneziaWG 3.1. Обновите приложение не ниже чем до:"
+
 msgid "The key is off. It comes back on when your access or traffic is renewed."
 msgstr "Ключ выключен. Он снова заработает, когда продлят доступ или обновится трафик."
 
@@ -3557,6 +3563,9 @@ msgstr "Отвязано."
 msgid "Update"
 msgstr "Обновить"
 
+msgid "Update the app first"
+msgstr "Сначала обновите приложение"
+
 msgid "Update the keys"
 msgstr "Обновить ключи"
 
@@ -3708,6 +3717,9 @@ msgstr "Кто предложил; показывается под тексто�
 
 msgid "Wide"
 msgstr "Широкая"
+
+msgid "Windows, macOS, Linux, Android"
+msgstr "Windows, macOS, Linux, Android"
 
 msgid "With an icon"
 msgstr "С иконкой"

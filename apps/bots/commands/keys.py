@@ -18,6 +18,7 @@ from apps.keys.models import AccessKey
 from apps.keys.services.actions import KeyRevokingError, OwnerCannotHaveKeysError
 from apps.keys.services.instances import instances
 from apps.keys.services.subscription import MySubscription
+from apps.portal.services.app_versions import needs_awg3_app, update_hint
 from apps.portal.services.keys import (
     InstanceNotAllowedError,
     KeyLimitReachedError,
@@ -61,7 +62,7 @@ class KeyCommands(CommandSet):
             return _no_key()
         server = instances.titles().get(key.source, "—")
         return Reply(
-            f"{server} · {key.get_status_display()}",
+            _with_update_hint(key, f"{server} · {key.get_status_display()}"),
             (
                 Button(_("Show the key"), f"show {key.pk}"),
                 Button(_("Re-issue"), f"reissue {key.pk}"),
@@ -76,7 +77,12 @@ class KeyCommands(CommandSet):
         if key is None:
             return _no_key()
         reply = KeyDelivery(self.my_keys, self.chat.links).reply(key, _device(command.arg(1)))
-        return replace(reply, buttons=(*reply.buttons, *nav(f"card {key.pk}")), title=key.name)
+        return replace(
+            reply,
+            text=_with_update_hint(key, reply.text),
+            buttons=(*reply.buttons, *nav(f"card {key.pk}")),
+            title=key.name,
+        )
 
     def new_key(self, command: Command) -> Reply:
         """Server, then device, then the key: each step's button carries the earlier choices."""
@@ -202,6 +208,11 @@ class KeyCommands(CommandSet):
 
 def _device(value: str) -> Device | None:
     return Device(value) if value in Device.values else None
+
+
+def _with_update_hint(key: AccessKey, text: str) -> str:
+    """The text, and for a key of an AmneziaWG 3.1 server the app versions it needs."""
+    return f"{text}\n\n{update_hint()}" if needs_awg3_app(key) else text
 
 
 def _confirm(key: AccessKey, question: str, yes: Button) -> Reply:

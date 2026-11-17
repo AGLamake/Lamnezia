@@ -1,0 +1,10 @@
+{% load i18n ui %}
+<section class="card space-y-3" aria-labelledby="awg3-apps-title">
+  <h2 id="awg3-apps-title" class="flex items-center gap-2 text-lg font-semibold">{% icon "info" %}{% translate "Update the app first" %}</h2>
+  <p class="help-text">{% translate "The key is for AmneziaWG 3.1. Older apps do not import it or do not connect. These versions or newer are needed:" %}</p>
+  <ul class="space-y-1">
+    {% for app in awg3_apps %}
+      <li><span class="font-medium">{{ app.app }}</span> · {{ app.platforms }} — <span class="font-mono">{{ app.version }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
