@@ -18,6 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to its page as an **Open in the panel** button; the plain text stays as it was. The offer to link
   Telegram or Discord in the letters about the end of access and the limit is a block of its own
   with a **Link** button to the profile.
+- **Panel update from the interface**: twice a day the panel asks GitHub for the latest release
+  (only its tag, nothing is sent) and shows administrators the running and the new version with a
+  link to the CHANGELOG; `LAMNEZIA_UPDATE_CHECK=False` turns the check off. On **System → Panel
+  update** an administrator updates the panel: it makes a panel archive and leaves a request that the
+  new `lamnezia-update` unit on the host picks up. The host takes only a newer release tag of the
+  installation's branch, checks it against the manifest published with the release, waits for
+  `/healthz` and goes back to the previous version when the panel does not come up. The panel gets
+  no Docker or SSH access to the host. Existing installations get the unit by running `install.sh`
+  of this version once; until then the page only tells about the new release.
 - **Messages show before the answer**: a message in the support chat, a request or the inbox
   appears in the thread at once, muted and marked *Sending…*, and the field is cleared for the next
   one; a screenshot shows after the upload. A message that could not be sent stays marked

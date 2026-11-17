@@ -1,0 +1,58 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Panel update" %} · {{ site_name }}{% endblock %}
+
+{% block nav %}{% include "components/admin_nav.html" with active="panel-update" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Panel update" %}</h1>
+    <p class="page-lead">{% translate "The panel checks GitHub for a new release. The update runs on the host: the panel makes an archive, the host moves to the release, checks that the panel answers and goes back to the previous version if it does not." %}</p>
+  </div>
+</div>
+
+<div class="min-w-0 space-y-6">
+  <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "tag" "icon-sm text-muted" %}{% translate "Versions" %}</h2>
+    <div class="form-section-body">
+      <p>{% translate "Running" %}: <strong>{{ offer.current|default:_("a build between releases") }}</strong>{% if channel %} <span class="help-text">· {% blocktranslate %}branch {{ channel }}{% endblocktranslate %}</span>{% endif %}</p>
+      {% if not check_enabled %}
+      <p class="help-text">{% translate "The check for new releases is turned off (LAMNEZIA_UPDATE_CHECK=False)." %}</p>
+      {% elif offer.release %}
+      <p>{% translate "New release" %}: <strong>{{ offer.release.version }}</strong> · <a href="{{ offer.release.changelog_url }}" class="underline" target="_blank" rel="noopener noreferrer">{% translate "What is new" %}</a> · <a href="{{ offer.release.url }}" class="underline" target="_blank" rel="noopener noreferrer">{% translate "Release on GitHub" %}</a></p>
+      {% else %}
+      <p class="help-text">{% translate "No newer release is known. The panel checks GitHub twice a day." %}</p>
+      {% endif %}
+      {% if check_enabled %}
+      <form method="post" action="{% url 'updates:check' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">{% icon "refresh" %}{% translate "Check now" %}</button>
+      </form>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if offer.release %}
+  {% if host_available %}
+  <form method="post" class="form-section">
+    {% csrf_token %}
+    <h2 class="section-title flex items-center gap-2">{% icon "arrow-up" "icon-sm text-muted" %}{% blocktranslate with version=offer.release.version %}Update to {{ version }}{% endblocktranslate %}</h2>
+    <div class="form-section-body">
+      {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+      {{ form.version }}
+      <p class="help-text">{% translate "Before the update the panel makes an archive (System → Panel archive) with this password. The database is not taken back when the update fails: if the previous version does not work with it, restore the archive." %}</p>
+      {{ form.password.as_field_group }}
+      {{ form.confirmation.as_field_group }}
+      <div><button type="submit" class="btn btn-primary"{% if busy %} disabled{% endif %} data-confirm="{% translate "Update the panel now? It does not answer for a minute or two." %}">{% icon "arrow-up" %}{% translate "Update" %}</button></div>
+    </div>
+  </form>
+  {% else %}
+  {% translate "The host does not take update requests from the panel: run install.sh of the current version on the host once, or update by hand as the Upgrade page of the wiki says." as no_host_text %}
+  {% include "components/alert.html" with level="info" text=no_host_text %}
+  {% endif %}
+  {% endif %}
+
+  {% if host_available %}{% include "updates/_status.html" %}{% endif %}
+</div>
+{% endblock %}

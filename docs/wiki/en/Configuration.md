@@ -36,6 +36,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_BACKUP_INTERVAL` | `86400` | Seconds between backups of the database and uploaded files. |
 | `LAMNEZIA_BACKUP_KEEP` | `14` | Backups of each kind to keep. |
 | `LAMNEZIA_PANEL_ARCHIVE_KEEP` | `3` | Newest panel archives kept in the `archives` volume ([Panel archive](Backup.md#panel-archive)). |
+| `LAMNEZIA_UPDATE_CHECK` | `True` | Ask GitHub twice a day for a new release of the panel and offer the update ([Update from the panel](Upgrade.md#update-from-the-panel)). Only the release tag is fetched; nothing is sent. |
 | `LAMNEZIA_BACKUP_DIR` | `./backups` | Host directory for the backups. |
 | `LAMNEZIA_MONITOR_INTERVAL` | `60` | Seconds between server health readings. A server that does not answer for two intervals is shown offline. |
 | `LAMNEZIA_METRICS_TOKEN` | empty | Token for the Prometheus endpoint `/metrics`. Empty keeps it off. |

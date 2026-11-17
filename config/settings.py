@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "apps.groups",
     "apps.relays",
     "apps.relocation",
+    "apps.updates",
     # Django apps that extend the panel, such as payment providers (docs/wiki Billing-plugins).
     *env.list("PLUGINS", default=[]),
 ]
@@ -269,6 +270,18 @@ PROTOCOL_BACKUP_INTERVAL = env.int("PROTOCOL_BACKUP_INTERVAL", default=3600)
 # Encrypted panel archives (database, .env, uploaded files); the newest PANEL_ARCHIVE_KEEP stay.
 PANEL_ARCHIVE_DIR = BASE_DIR / "archives"
 PANEL_ARCHIVE_KEEP = env.int("PANEL_ARCHIVE_KEEP", default=3)
+# Panel update (System -> Panel update). Beat reads the latest release of UPDATE_REPOSITORY from
+# GitHub (updates-check-release); nothing about the installation is sent. UPDATE_CHECK=False
+# turns the check off, and with it the update from the panel.
+UPDATE_CHECK = env.bool("UPDATE_CHECK", default=True)
+UPDATE_REPOSITORY = "AGLamake/Lamnezia"
+UPDATE_CHECK_INTERVAL = 12 * 60 * 60
+# The panel leaves the update request in UPDATE_DIR/request; the host (lamnezia-update.path of
+# install.sh) runs the update and writes UPDATE_DIR/status.
+UPDATE_DIR = BASE_DIR / "update"
+# Seconds after which a request the host did not take, or an update the host did not finish,
+# counts as stuck, and a new update can be asked for.
+UPDATE_TIMEOUT = 60 * 60
 # Moving the panel to another machine (System -> Panel move): the installer may build the image.
 RELOCATION_INSTALL_TIMEOUT = 45 * 60
 # Free disk the new machine needs: images, the database and the uploaded files.
@@ -330,6 +343,7 @@ CELERY_BEAT_SCHEDULE = {
     "traffic-roll-up": {"task": "traffic.roll_up", "schedule": 24 * 60 * 60},
     "guides-refresh-release": {"task": "guides.refresh_release", "schedule": 6 * 60 * 60},
     "guides-check-materials": {"task": "guides.check_materials", "schedule": 7 * 24 * 60 * 60},
+    "updates-check-release": {"task": "updates.check_release", "schedule": UPDATE_CHECK_INTERVAL},
     "billing-expire-orders": {"task": "billing.expire_orders", "schedule": 60 * 60},
 }
 # An order not paid this long after checkout is marked expired; a payment that still arrives

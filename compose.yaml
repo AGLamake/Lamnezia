@@ -50,9 +50,13 @@ services:
       --workers $${LAMNEZIA_WEB_WORKERS:-2}"
     ports:
       - "${LAMNEZIA_HTTP_BIND:-127.0.0.1:8000}:8000"
+    # update/: the release update request the panel leaves for the host, and the status the host
+    # writes back, read-only here (install.sh, deploy/update/lamnezia-deploy.sh).
     volumes:
       - media:/app/media
       - archives:/app/archives
+      - ./update/request:/app/update/request
+      - ./update/status:/app/update/status:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]
       interval: 10s
@@ -64,10 +68,13 @@ services:
     <<: *app
     # Reads the poll queue too, so monitoring and traffic go on if the poller is down.
     command: celery -A config worker -Q celery,poll --loglevel=info
-    # The worker writes panel archives (System → Panel archive), the web container serves them.
+    # The worker writes panel archives (System → Panel archive), the web container serves them;
+    # before a release update it makes one and leaves the request in update/request.
     volumes:
       - media:/app/media
       - archives:/app/archives
+      - ./update/request:/app/update/request
+      - ./update/status:/app/update/status:ro
     healthcheck:
       test: ["CMD-SHELL", "celery -A config inspect ping -d celery@$$HOSTNAME"]
       interval: 30s

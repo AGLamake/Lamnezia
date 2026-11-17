@@ -145,6 +145,10 @@ msgstr "Ключей к перевыпуску: %(count)d."
 msgid "Keys to turn off: %(count)d."
 msgstr "Ключей к отключению: %(count)d."
 
+#, python-format
+msgid "Lamnezia %(version)s is released"
+msgstr "Вышла Lamnezia %(version)s"
+
 msgid "Linked."
 msgstr "Привязано."
 

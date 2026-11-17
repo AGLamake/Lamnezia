@@ -1,0 +1,27 @@
+{% load i18n ui %}{# The last update on the host; polls itself while one is asked for or running. #}
+<section id="update-status" class="form-section" aria-live="polite"
+         {% if busy %}hx-get="{% url 'updates:status' %}" hx-trigger="every {{ poll_seconds }}s" hx-swap="outerHTML"{% endif %}>
+  <h2 class="section-title flex items-center gap-2">{% icon "history" "icon-sm text-muted" %}{% translate "Last update" %}</h2>
+  <div class="form-section-body">
+    {% if active %}
+    <p>{% translate "The panel archive is being made before the update." %} <a href="{% url 'operations:detail' active.pk %}" class="font-medium underline">{% translate "Progress" %}</a></p>
+    {% endif %}
+    {% if stuck_request %}
+    {% translate "The host has not taken the update request for an hour: the lamnezia-update unit does not run. Check it on the host: systemctl status lamnezia-update.path" as stuck_text %}
+    {% include "components/alert.html" with level="warning" text=stuck_text %}
+    {% elif pending %}
+    <p>{% translate "The request is left for the host; the update starts in a few seconds. The panel restarts during the update and may not answer for a minute." %}</p>
+    {% endif %}
+    {% if status %}
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="badge {{ status.badge }}">{{ status.state_label }}</span>
+      <span>{% if status.previous %}{{ status.previous }} → {% endif %}{{ status.version|default:"—" }}</span>
+      {% if status.started %}<span class="help-text">· {{ status.started|date:"SHORT_DATETIME_FORMAT" }}{% if status.finished %} – {{ status.finished|time:"TIME_FORMAT" }}{% endif %}</span>{% endif %}
+    </div>
+    {% if status_reason %}<p class="text-sm {% if status.state == 'rolled_back' %}text-warning-soft-fg{% else %}text-danger{% endif %}">{{ status_reason }}{% if status.state == 'rolled_back' %} {% translate "The previous version runs again." %}{% endif %}</p>{% endif %}
+    {% if log %}<pre class="max-h-96 overflow-auto whitespace-pre-wrap rounded bg-black/5 p-3 text-xs dark:bg-white/5">{{ log }}</pre>{% endif %}
+    {% elif not pending and not active %}
+    <p class="help-text">{% translate "The panel has not been updated from here yet." %}</p>
+    {% endif %}
+  </div>
+</section>

@@ -25,6 +25,8 @@ from apps.operations.models import Operation, OperationStatus
 from apps.relays.models import Relay
 from apps.servers.models import Server
 from apps.support.services.inbox import Inbox
+from apps.updates.services.releases import PanelRelease
+from apps.updates.services.updates import PanelUpdate
 
 # A VPS paid for fewer days than this is worth a reminder.
 PAYMENT_SOON_DAYS = 7
@@ -128,6 +130,13 @@ class Attention:
         joining = GroupMember.objects.filter(state=MemberState.JOINING)
         troubled.update(member.group_id for member in joining if join_failed(member))
         return len(troubled)
+
+    @cached_property
+    def panel_release(self) -> PanelRelease | None:
+        """A release newer than the running panel; updating the panel is an administrator's."""
+        if not self._member.is_admin:
+            return None
+        return PanelUpdate.from_settings().offer().release
 
     def offline(self) -> list[Server]:
         return [server for server in self.servers if server.online is False]
@@ -243,6 +252,17 @@ class Attention:
                     % {"count": self.broken_links},
                     reverse("admin:guides_usefulmaterial_changelist") + "?is_broken__exact=1",
                     "broken-links",
+                )
+            )
+        if self.panel_release:
+            version = self.panel_release.version
+            notices.append(
+                Notice(
+                    "info",
+                    "arrow-up",
+                    _("Lamnezia %(version)s is released") % {"version": version},
+                    reverse("updates:update"),
+                    f"panel-release:{version}",
                 )
             )
         return notices

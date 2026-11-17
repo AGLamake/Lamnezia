@@ -259,6 +259,9 @@ msgstr "Участник группы работает на сервере ре�
 msgid "A new domain moves the keys of the group to it at once, and without a relay the keys go back to the leading server; their owners are told to import them again. With another relay the keys move once it runs the group."
 msgstr "Новый домен сразу переносит на себя ключи группы, а без ретранслятора ключи возвращаются на ведущий сервер; владельцам приходит просьба импортировать их заново. С другим ретранслятором ключи переедут, когда он начнёт обслуживать группу."
 
+msgid "A new release is out"
+msgstr "Вышел новый релиз"
+
 msgid "A new subscription link is ready."
 msgstr "Новая ссылка-подписка готова."
 
@@ -478,6 +481,9 @@ msgstr "Пустой параметр не записывается в awg0.conf
 msgid "An invite gives its plan right away, in any registration mode."
 msgstr "Приглашение сразу выдаёт свой тариф при любом режиме регистрации."
 
+msgid "An update is already asked for or running."
+msgstr "Обновление уже запрошено или идёт."
+
 msgid "Android version"
 msgstr "Версия Android"
 
@@ -546,6 +552,9 @@ msgstr "Спросите что угодно: ответ появится зде
 msgid "Ask the administrator to give you one."
 msgstr "Попросите администратора назначить его."
 
+msgid "Ask the host to update the panel"
+msgstr "Попросить хост обновить панель"
+
 msgid "Ask the relay to switch"
 msgstr "Попросить ретранслятор переключиться"
 
@@ -611,6 +620,9 @@ msgstr "Резервные коды"
 
 msgid "Bad request"
 msgstr "Неверный запрос"
+
+msgid "Before the update the panel makes an archive (System → Panel archive) with this password. The database is not taken back when the update fails: if the previous version does not work with it, restore the archive."
+msgstr "Перед обновлением панель создаёт архив (Система → Архив панели) с этим паролем. При неудачном обновлении база данных не откатывается: если предыдущая версия с ней не работает, восстановите архив."
 
 msgid "Block this user?"
 msgstr "Заблокировать этого пользователя?"
@@ -1320,6 +1332,9 @@ msgstr "Передать пользователю"
 msgid "Give to another user"
 msgstr "Передать другому пользователю"
 
+msgid "Going back to the previous version failed: check the host."
+msgstr "Вернуться к предыдущей версии не удалось: проверьте хост."
+
 msgid "Group"
 msgstr "Группа"
 
@@ -1663,6 +1678,9 @@ msgstr "Последнее чтение %(when)s."
 msgid "Last switch %(when)s."
 msgstr "Последнее переключение %(when)s."
 
+msgid "Last update"
+msgstr "Последнее обновление"
+
 msgid "Later"
 msgstr "Позже"
 
@@ -1958,6 +1976,9 @@ msgstr "Новый пароль"
 msgid "New password saved. Sign in with it."
 msgstr "Новый пароль сохранён. Войдите с ним."
 
+msgid "New release"
+msgstr "Новый релиз"
+
 msgid "New secret"
 msgstr "Новый секрет"
 
@@ -2032,6 +2053,9 @@ msgstr "Ключей нет."
 
 msgid "No materials yet."
 msgstr "Материалов пока нет."
+
+msgid "No newer release is known. The panel checks GitHub twice a day."
+msgstr "Более нового релиза нет. Панель проверяет GitHub дважды в день."
 
 msgid "No operations found."
 msgstr "Операции не найдены."
@@ -2268,6 +2292,9 @@ msgstr "Откройте бота и нажмите «Старт». Ссылка
 msgid "Open the link while signed in to the account. Until then the old email stays."
 msgstr "Откройте ссылку, войдя в аккаунт. До тех пор остаётся старая почта."
 
+msgid "Open the page again: the panel offers only the latest release."
+msgstr "Откройте страницу заново: панель предлагает только последний релиз."
+
 msgid "Open the panel, choose a server and your device. You get a vpn:// link and a QR code."
 msgstr "Откройте панель, выберите сервер и устройство. Вы получите ссылку vpn:// и QR-код."
 
@@ -2352,6 +2379,9 @@ msgstr "Домен панели"
 
 msgid "Panel move"
 msgstr "Перенос панели"
+
+msgid "Panel update"
+msgstr "Обновление панели"
 
 msgid "Password"
 msgstr "Пароль"
@@ -2596,6 +2626,9 @@ msgstr "Состояние ретранслятора прочитано %(when)
 msgid "Release notes"
 msgstr "Что нового"
 
+msgid "Release on GitHub"
+msgstr "Релиз на GitHub"
+
 msgid "Reload the page: another action has already changed it."
 msgstr "Обновите страницу: его состояние уже изменилось."
 
@@ -2712,6 +2745,9 @@ msgstr "Строк"
 
 msgid "Rows per page"
 msgstr "Строк на странице"
+
+msgid "Run install.sh of the current version on the host once: it installs the lamnezia-update unit. Or update by hand as the Upgrade page of the wiki says."
+msgstr "Один раз запустите на хосте install.sh текущей версии: он установит юнит lamnezia-update. Или обновите панель вручную, как описано на странице вики «Обновление»."
 
 msgid "Run it again when the move is over."
 msgstr "Запустите снова, когда перенос закончится."
@@ -3202,6 +3238,15 @@ msgstr "Браузер не включил уведомления. Попроб�
 msgid "The check did not finish. We will look at the server ourselves."
 msgstr "Проверка не завершилась. Мы посмотрим сервер сами."
 
+msgid "The check for new releases is turned off (LAMNEZIA_UPDATE_CHECK=False)."
+msgstr "Проверка новых релизов выключена (LAMNEZIA_UPDATE_CHECK=False)."
+
+msgid "The check is queued: open the page again in a minute."
+msgstr "Проверка поставлена в очередь: откройте страницу снова через минуту."
+
+msgid "The code could not be moved to the release."
+msgstr "Не удалось перевести код на релиз."
+
 msgid "The code is wrong or expired. Get a new one in your profile."
 msgstr "Код неверный или устарел. Получите новый в профиле."
 
@@ -3311,8 +3356,30 @@ msgstr "Группы больше нет: делать нечего."
 msgid "The group still has other servers."
 msgstr "В группе ещё есть другие серверы."
 
+msgid "The host could not read the request."
+msgstr "Хост не смог прочитать запрос."
+
+msgid "The host does not take update requests from the panel: run install.sh of the current version on the host once, or update by hand as the Upgrade page of the wiki says."
+msgstr "Хост не принимает запросы на обновление от панели: один раз запустите на хосте install.sh текущей версии или обновите панель вручную, как описано на странице вики «Обновление»."
+
+msgid "The host has not taken the update request for an hour: the lamnezia-update unit does not run. Check it on the host: systemctl status lamnezia-update.path"
+msgstr "Хост уже час не забирает запрос на обновление: юнит lamnezia-update не работает. Проверьте его на хосте: systemctl status lamnezia-update.path"
+
+msgid "The host of this panel does not take update requests."
+msgstr "Хост этой панели не принимает запросы на обновление."
+
 msgid "The host stops this copy within a minute. If it keeps running, stop it by hand: cd /opt/lamnezia && docker compose down."
 msgstr "Сервер остановит эту копию в течение минуты. Если она продолжит работать, остановите её вручную: cd /opt/lamnezia && docker compose down."
+
+#, python-format
+msgid "The host updates the panel to %(version)s; its log is on the Panel update page."
+msgstr "Хост обновляет панель до %(version)s; журнал — на странице «Обновление панели»."
+
+msgid "The image could not be built."
+msgstr "Не удалось собрать образ."
+
+msgid "The image of the release could not be downloaded."
+msgstr "Не удалось скачать образ релиза."
 
 msgid "The installer failed on the new machine."
 msgstr "Установщик на новой машине завершился с ошибкой."
@@ -3423,6 +3490,12 @@ msgstr "На новой машине мало свободного места н
 msgid "The new machine is the machine this panel runs on."
 msgstr "Новая машина — та, на которой работает эта панель."
 
+msgid "The new version could not be started."
+msgstr "Не удалось запустить новую версию."
+
+msgid "The new version did not answer the health check."
+msgstr "Новая версия не ответила на проверку работоспособности."
+
 msgid "The old key is revoked. The new one will be ready in a moment."
 msgstr "Старый ключ отозван. Новый будет готов через мгновение."
 
@@ -3438,6 +3511,9 @@ msgstr "Страница была открыта слишком долго ил�
 msgid "The panel accepts no changes until the move is confirmed or cancelled"
 msgstr "Панель не принимает изменений, пока перенос не подтверждён или не отменён"
 
+msgid "The panel archive is being made before the update."
+msgstr "Перед обновлением создаётся архив панели."
+
 msgid "The panel cannot be reached. Check the internet connection and try again."
 msgstr "Панель недоступна. Проверьте подключение к интернету и попробуйте ещё раз."
 
@@ -3446,6 +3522,9 @@ msgstr "Панель сейчас не может прочитать состо�
 
 msgid "The panel cannot read the relay state. The relay may still forward the clients on its own."
 msgstr "Панель не может прочитать состояние ретранслятора. Сам ретранслятор при этом может продолжать пересылать клиентов."
+
+msgid "The panel checks GitHub for a new release. The update runs on the host: the panel makes an archive, the host moves to the release, checks that the panel answers and goes back to the previous version if it does not."
+msgstr "Панель проверяет новые релизы на GitHub. Обновление выполняет хост: панель создаёт архив, хост переходит на релиз, проверяет, что панель отвечает, а если нет — возвращает предыдущую версию."
 
 msgid "The panel compares its keys with the server files regularly. A difference appears when clients are added or removed in the Amnezia app or by hand."
 msgstr "Панель регулярно сравнивает свои ключи с файлами на серверах. Расхождение появляется, когда клиентов добавляют или удаляют в приложении Amnezia или вручную."
@@ -3471,6 +3550,9 @@ msgstr "В панели пока нет бэкапа этого протокол
 msgid "The panel has no domain in SITE_URL: there is no A record to check. Open the panel by the address of the new machine."
 msgstr "У панели нет домена в SITE_URL: проверять нечего. Открывайте панель по адресу новой машины."
 
+msgid "The panel has not been updated from here yet."
+msgstr "Из панели её ещё не обновляли."
+
 msgid "The panel installer supports Debian and Ubuntu only. Choose another machine."
 msgstr "Установщик панели поддерживает только Debian и Ubuntu. Выберите другую машину."
 
@@ -3485,6 +3567,9 @@ msgstr "Панель переезжает на другую машину и не
 
 msgid "The panel is moving to another machine: changes are paused."
 msgstr "Панель переезжает на другую машину: изменения приостановлены."
+
+msgid "The panel is not installed from git: update it by hand."
+msgstr "Панель установлена не из git: обновите её вручную."
 
 msgid "The panel is reading the key's settings from the server. Refresh the page in a few seconds to show the key."
 msgstr "Панель читает настройки ключа с сервера. Обновите страницу через несколько секунд, чтобы показать ключ."
@@ -3550,6 +3635,9 @@ msgstr "Порты групп публикуются на сервере как 
 msgid "The preview failed. Save the article to see it."
 msgstr "Предпросмотр не удался. Сохраните статью, чтобы увидеть её."
 
+msgid "The previous version runs again."
+msgstr "Снова работает предыдущая версия."
+
 msgid "The protocol container is removed from the server."
 msgstr "Контейнер протокола удалён с сервера."
 
@@ -3614,11 +3702,26 @@ msgstr "Ретранслятор принимает клиентов групп,
 msgid "The relay takes the UDP port of the group on its server, and every member listens on that same port. Take a server other than the relay, or pick another relay."
 msgstr "Ретранслятор занимает UDP-порт группы на своём сервере, а каждый участник слушает тот же порт. Возьмите другой сервер или выберите другой ретранслятор."
 
+msgid "The release could not be fetched from GitHub."
+msgstr "Не удалось получить релиз с GitHub."
+
+msgid "The release does not match the manifest published with it."
+msgstr "Релиз не совпадает с манифестом, опубликованным вместе с ним."
+
+msgid "The release is not newer than the running version: nothing was changed."
+msgstr "Релиз не новее работающей версии: ничего не изменено."
+
+msgid "The release is not on the branch this installation follows."
+msgstr "Релиза нет в ветке, за которой следует эта установка."
+
 msgid "The request is closed. If the problem comes back, open a new one."
 msgstr "Обращение закрыто. Если проблема вернётся, откройте новое."
 
 msgid "The request is closed: only internal notes can be added."
 msgstr "Обращение закрыто: можно добавить только внутреннюю заметку."
+
+msgid "The request is left for the host; the update starts in a few seconds. The panel restarts during the update and may not answer for a minute."
+msgstr "Запрос передан хосту; обновление начнётся через несколько секунд. Во время обновления панель перезапускается и может не отвечать около минуты."
 
 msgid "The same notifications in this browser or the installed app, even when the panel is closed. A click opens the page they are about."
 msgstr "Те же уведомления в этом браузере или установленном приложении, даже когда панель закрыта. Нажатие открывает страницу, о которой уведомление."
@@ -3758,6 +3861,12 @@ msgstr "Трафик части ключей неизвестен, поэтом�
 msgid "The traffic of some keys of the user is unknown: the limit may run out sooner."
 msgstr "Трафик части ключей пользователя неизвестен: лимит может кончиться раньше."
 
+msgid "The update is started."
+msgstr "Обновление запущено."
+
+msgid "The update was interrupted."
+msgstr "Обновление прервано."
+
 msgid "The user has no subscription link yet."
 msgstr "У пользователя пока нет ссылки-подписки."
 
@@ -3813,6 +3922,9 @@ msgstr "Этот период"
 
 msgid "This server is not available to you."
 msgstr "Этот сервер вам недоступен."
+
+msgid "This version is not the latest release newer than the panel."
+msgstr "Эта версия — не последний релиз новее панели."
 
 msgid "Tick all"
 msgstr "Отметить все"
@@ -3980,6 +4092,12 @@ msgstr "Сначала обновите приложение"
 msgid "Update the keys"
 msgstr "Обновить ключи"
 
+msgid "Update the panel"
+msgstr "Обновить панель"
+
+msgid "Update the panel now? It does not answer for a minute or two."
+msgstr "Обновить панель сейчас? Минуту-две она не будет отвечать."
+
 msgid "Update the relay"
 msgstr "Обновить ретранслятор"
 
@@ -3988,6 +4106,10 @@ msgstr "Обновить агент ретранслятора"
 
 msgid "Update the relay on the server card, then switch again."
 msgstr "Обновите ретранслятор в карточке сервера и переключите ещё раз."
+
+#, python-format
+msgid "Update to %(version)s"
+msgstr "Обновить до %(version)s"
 
 msgid "Upload speed"
 msgstr "Отдача"
@@ -4058,6 +4180,9 @@ msgstr "Действует до"
 msgid "Version %(version)s from %(date)s."
 msgstr "Версия %(version)s от %(date)s."
 
+msgid "Versions"
+msgstr "Версии"
+
 msgid "Wait for it to finish, see the operations page."
 msgstr "Дождитесь его окончания, см. страницу операций."
 
@@ -4072,6 +4197,9 @@ msgstr "Дождитесь догона или выведите сервер и�
 
 msgid "Wait for the changes already under way"
 msgstr "Дождаться уже начатых изменений"
+
+msgid "Wait until it ends; its log is on this page."
+msgstr "Дождитесь окончания; журнал — на этой странице."
 
 msgid "Wait until that operation finishes."
 msgstr "Дождитесь окончания этой операции."
@@ -4113,6 +4241,9 @@ msgstr "Мы отправили ссылку на %(email)s. Почта смен
 
 msgid "What"
 msgstr "Что"
+
+msgid "What is new"
+msgstr "Что нового"
 
 msgid "What users get: servers, protocols, traffic and how long the access lasts."
 msgstr "Что получают пользователи: серверы, протоколы, трафик и срок доступа."
@@ -4255,6 +4386,9 @@ msgstr "Ваше имя будет показано при публикации.
 msgid "Your plan, keys and browser are attached to the request, so you need not describe them."
 msgstr "Тариф, ключи и браузер прикладываются к обращению сами — описывать их не нужно."
 
+msgid "a build between releases"
+msgstr "сборка между релизами"
+
 #
 msgid "a member runs on the relay server"
 msgstr "участник группы работает на сервере ретранслятора"
@@ -4285,6 +4419,10 @@ msgstr "как в тарифе"
 
 msgid "author"
 msgstr "автор"
+
+#, python-format
+msgid "branch %(channel)s"
+msgstr "ветка %(channel)s"
 
 msgid "broken link"
 msgstr "битая ссылка"
@@ -4359,6 +4497,9 @@ msgstr "домен"
 
 msgid "domain checked at"
 msgstr "домен проверен"
+
+msgid "done"
+msgstr "готово"
 
 msgid "due today"
 msgstr "сегодня"
@@ -4787,6 +4928,9 @@ msgstr "отозван"
 
 msgid "role"
 msgstr "роль"
+
+msgid "rolled back"
+msgstr "откачено"
 
 msgid "running"
 msgstr "идёт"

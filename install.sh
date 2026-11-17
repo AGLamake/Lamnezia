@@ -325,6 +325,50 @@ UNIT
     systemctl enable --now lamnezia-stop.timer
 }
 
+# The panel asks for a release update by a file in update/request (it writes there as uid 1000);
+# the host writes the status and log to update/status, which the panel only reads. Made before
+# the first start: docker would create missing folders owned by root.
+prepare_update_dir() {
+    mkdir -p "$DIR/update/request" "$DIR/update/status"
+    chown root:root "$DIR/update" "$DIR/update/status"
+    chmod 755 "$DIR/update" "$DIR/update/status"
+    chown 1000:1000 "$DIR/update/request"
+    chmod 700 "$DIR/update/request"
+}
+
+# The panel has no access to Docker or to the host: lamnezia-update.path starts the update script
+# when the panel leaves a request. Only a git checkout can be updated this way.
+install_update_unit() {
+    local unit=/etc/systemd/system/lamnezia-update
+    [ -d "$DIR/.git" ] || return 0
+    install -m 755 "$DIR/deploy/update/lamnezia-deploy.sh" /usr/local/sbin/lamnezia-deploy
+    cat >"$unit.service" <<UNIT
+[Unit]
+Description=Lamnezia: update the panel to the release it asks for
+
+[Service]
+Type=oneshot
+Environment=LAMNEZIA_DIR=$DIR
+ExecStart=/usr/local/sbin/lamnezia-deploy release
+TimeoutStartSec=40min
+UNIT
+    cat >"$unit.path" <<UNIT
+[Unit]
+Description=Lamnezia: wait for an update request from the panel
+
+[Path]
+PathExists=$DIR/update/request/update
+
+[Install]
+WantedBy=paths.target
+UNIT
+    # The channel the panel shows; the update script refreshes it on every run.
+    git -C "$DIR" symbolic-ref -q --short HEAD >"$DIR/update/status/agent" ||
+        echo releases >"$DIR/update/status/agent"
+    systemctl daemon-reload
+    systemctl enable --now lamnezia-update.path
+}
+
 main() {
     parse_args "$@"
     check_system
@@ -333,10 +377,12 @@ main() {
     choose_proxy
     if [ -n "$RESTORE" ]; then unpack_archive; else write_env; fi
     save_image
+    prepare_update_dir
     prepare_images
     if [ -n "$RESTORE" ]; then restore_data; fi
     start_stack
     install_stop_timer
+    install_update_unit
     if [ "$PROXY" = "nginx" ]; then setup_nginx; fi
     if [ "$MOVING" = 1 ]; then
         log "The copy is running and waits: confirm the move in the old panel, then point $DOMAIN here"

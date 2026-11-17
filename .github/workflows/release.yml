@@ -63,7 +63,8 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
 
-      - uses: docker/build-push-action@v6
+      - id: build
+        uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -73,10 +74,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # The update from the panel (deploy/update/lamnezia-deploy.sh release) takes only a tag whose
+      # commit, and image digest for a ready-image install, match this file of the release.
+      - name: Release manifest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: printf 'commit %s\nimage %s\n' "$GITHUB_SHA" "$DIGEST" > "$RUNNER_TEMP/lamnezia-release.txt"
+
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           PRERELEASE=""
           case "$VERSION" in *-*) PRERELEASE="--prerelease" ;; esac
-          gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" $PRERELEASE
+          gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" $PRERELEASE \
+            "$RUNNER_TEMP/lamnezia-release.txt"

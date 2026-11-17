@@ -43,6 +43,38 @@ restarts; background operations that were running are marked interrupted after
 New optional settings get their defaults; compare your `.env` with `.env.example` to see them
 ([Configuration](Configuration.md)).
 
+## Update from the panel
+
+Twice a day the panel asks GitHub for the latest release (only its tag; nothing about the panel is
+sent). When a newer one is out, administrators see it on the dashboard and on **System → Panel
+update**, with links to the release and its CHANGELOG. `LAMNEZIA_UPDATE_CHECK=False` turns the check
+off ([Configuration](Configuration.md)).
+
+On that page an administrator starts the update with a password for the panel archive:
+
+1. The panel makes an archive ([Panel archive](Backup.md#panel-archive)) with that password.
+2. It leaves a request in `update/request` of the install folder. The panel has no access to Docker
+   or to the host: the `lamnezia-update.path` unit on the host sees the request and runs
+   `/usr/local/sbin/lamnezia-deploy release`.
+3. The host script takes only a release tag `vX.Y.Z` of the branch the installation follows, newer
+   than the running version, and checks it against the manifest published with the GitHub release
+   (the tagged commit and, with `LAMNEZIA_IMAGE`, the image digest). It moves the code to the tag,
+   rebuilds or pulls the image, restarts the panel and waits for `/healthz`.
+4. If the panel does not come up healthy, the script goes back to the previous version.
+
+The status and the log of the host script are on the same page. One update runs at a time; a request
+the host has not taken for an hour is shown as stuck. The panel does not
+answer for a minute or two while it restarts.
+
+Database migrations are not taken back on a rollback. If the previous version does not work with the
+migrated database, restore the archive made before the update ([Backup](Backup.md#panel-archive)).
+
+The installer sets up the unit. An installation made before it shows the new release without the
+**Update** button: run `install.sh` of the current version once, or update by hand as above. Only a
+git checkout can be updated from the panel. Check the unit with
+`systemctl status lamnezia-update.path`; the script log of the last run is in
+`update/status/log`.
+
 ## Automatic update from GitHub
 
 The **Deploy** workflow updates the panel after every green CI on `dev` (it can also be run by

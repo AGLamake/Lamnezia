@@ -31,3 +31,6 @@ Thumbs.db
 
 # Panel archives (System → Panel archive)
 /archives/
+
+# Release update requests and host status (install.sh, System → Panel update)
+/update/
