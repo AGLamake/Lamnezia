@@ -40,7 +40,8 @@ shown while a plugin is on), with filters by status, payment method, user and da
 - **waiting for payment**: the user went to the payment page and the service has not reported yet;
 - **paid**: the payment came and access is renewed;
 - **not paid**: the service refused the order or reported a failed payment;
-- **expired**: no report came within a day of the order; the user can simply buy again. A payment
+- **expired**: no report came within a day of the order (`LAMNEZIA_ORDER_EXPIRES_HOURS`); the user
+  can simply buy again. A payment
   reported later still counts: money that came is never turned away;
 - **refunded**: an administrator returned the money (see below).
 

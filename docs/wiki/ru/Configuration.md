@@ -64,6 +64,7 @@
 | `LAMNEZIA_EMAIL_URL` | `consolemail://` | Почтовый сервер для писем (сброс пароля, подтверждение email, ссылки для входа), например `smtp+tls://user:password@smtp.example.com:587`. По умолчанию письма только пишутся в лог `web`. |
 | `LAMNEZIA_DEFAULT_FROM_EMAIL` | `Lamnezia <noreply@localhost>` | Отправитель писем. |
 | `LAMNEZIA_PLUGINS` | пусто | Django-приложения через запятую, которые добавляются в панель, например плагины оплаты ([Плагины оплаты](Billing-plugins.md)). |
+| `LAMNEZIA_ORDER_EXPIRES_HOURS` | `24` | Сколько часов заказ ждёт оплаты, прежде чем стать просроченным ([Плагины оплаты](Billing-plugins.md)). |
 | `LAMNEZIA_HSTS_SECONDS` | `31536000` (`0` при `DEBUG`) | Срок HSTS: браузеры открывают панель только по HTTPS. `0` выключает HSTS. |
 
 ## Настройки панели

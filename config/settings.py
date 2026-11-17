@@ -334,7 +334,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 # An order not paid this long after checkout is marked expired; a payment that still arrives
 # counts all the same.
-ORDER_EXPIRES_AFTER = timedelta(days=1)
+ORDER_EXPIRES_AFTER = timedelta(hours=env.int("ORDER_EXPIRES_HOURS", default=24))
 # Notification delivery: seconds to wait for a channel, attempts, delay before the second attempt
 # (it doubles with every next one).
 NOTIFICATION_TIMEOUT = 10
