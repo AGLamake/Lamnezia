@@ -3,7 +3,7 @@
 FROM ghcr.io/astral-sh/uv:0.13 AS uv
 
 # Build stage: install dependencies and collect static files.
-FROM python:3.12-slim AS build
+FROM python:3.12-slim-trixie AS build
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -24,10 +24,14 @@ RUN LAMNEZIA_SECRET_KEY=build-only LAMNEZIA_ENCRYPTION_KEY=build-only \
     .venv/bin/python manage.py collectstatic --noinput
 
 # Runtime stage: the same Python, the built app, an unprivileged user.
-FROM python:3.12-slim
-RUN useradd --system --create-home --uid 1000 lamnezia \
-    && mkdir -p /app/media \
-    && chown lamnezia:lamnezia /app/media
+# pg_dump for the panel archive must not be older than the postgres:17 service; trixie ships 17.
+FROM python:3.12-slim-trixie
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-17 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --create-home --uid 1000 lamnezia \
+    && mkdir -p /app/media /app/archives \
+    && chown lamnezia:lamnezia /app/media /app/archives
 ENV PATH=/app/.venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     DJANGO_SETTINGS_MODULE=config.settings

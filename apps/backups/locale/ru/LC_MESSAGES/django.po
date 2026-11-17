@@ -15,8 +15,28 @@ msgstr "Новую копию сохранить не удалось: для в�
 msgid "Another AmneziaWG 2.0 server with other keys already runs on this server."
 msgstr "На этом сервере уже работает другой AmneziaWG 2.0 с другими ключами."
 
+#, python-format
+msgid "Archive %(name)s, %(size)s."
+msgstr "Архив %(name)s, %(size)s."
+
+msgid "Archive password"
+msgstr "Пароль архива"
+
+msgid "Archive the panel"
+msgstr "Архив панели"
+
+#, python-format
+msgid "At least %(count)d characters. The panel does not keep it: without the password the archive cannot be restored."
+msgstr "Не короче %(count)d символов. Панель его не хранит: без пароля архив не восстановить."
+
 msgid "Change the port of the protocol back in its settings, then restore the snapshot."
 msgstr "Верните порт протокола в его настройках и восстановите снимок снова."
+
+msgid "Check that the postgres service runs: docker compose ps. Then make the archive again."
+msgstr "Проверьте, что сервис postgres работает: docker compose ps. Затем создайте архив снова."
+
+msgid "Check the password. A damaged or incomplete file does not open either."
+msgstr "Проверьте пароль. Повреждённый или недокачанный файл тоже не открывается."
 
 #, python-format
 msgid "Clients to restore: %(count)d."
@@ -40,6 +60,9 @@ msgstr "Импортируйте протокол с сервера ещё ра�
 msgid "Imported client %(number)d"
 msgstr "Импортированный клиент %(number)d"
 
+msgid "Install the panel with install.sh or compose.yaml to make archives."
+msgstr "Чтобы делать архивы, установите панель через install.sh или compose.yaml."
+
 msgid "Install the protocol anew and issue new keys."
 msgstr "Установите протокол заново и выдайте новые ключи."
 
@@ -62,12 +85,22 @@ msgstr "Отозвано ключей: %(count)d."
 msgid "Load the saved database"
 msgstr "Загрузить сохранённую базу данных"
 
+msgid "Make a new archive and enter the password again."
+msgstr "Создайте новый архив и введите пароль ещё раз."
+
 msgid "No copy could be saved: the keys of this protocol will not work again."
 msgstr "Копию сохранить не удалось: ключи этого протокола больше не заработают."
 
 #, python-format
+msgid "Old archives removed: %(count)d."
+msgstr "Удалено старых архивов: %(count)d."
+
+#, python-format
 msgid "Owners notified: %(count)d."
 msgstr "Уведомлено владельцев: %(count)d."
+
+msgid "Password again"
+msgstr "Пароль ещё раз"
 
 #, python-format
 msgid "Peers left out, their keys live on another server: %(count)d."
@@ -97,6 +130,9 @@ msgstr "Сохранить копию файлов сервера"
 msgid "Save a snapshot of the server files"
 msgstr "Сохранить снимок файлов сервера"
 
+msgid "Save the database, settings and files into the archive"
+msgstr "Сохранение базы, настроек и файлов в архив"
+
 msgid "Save the result in the panel"
 msgstr "Сохранить результат в панели"
 
@@ -105,6 +141,15 @@ msgstr "Сначала выведите сервер из группы, зате
 
 msgid "The Amnezia app may have changed the server meanwhile. Run the restore again."
 msgstr "Возможно, приложение Amnezia тем временем изменило сервер. Запустите восстановление ещё раз."
+
+msgid "The archive cannot be read with this password."
+msgstr "С этим паролем архив не читается."
+
+msgid "The archive is deleted."
+msgstr "Архив удалён."
+
+msgid "The archive password is not kept after the first attempt."
+msgstr "Пароль архива не хранится после первой попытки."
 
 msgid "The container already has its files, they are kept."
 msgstr "В контейнере уже есть свои файлы, они сохранены."
@@ -121,9 +166,15 @@ msgstr "В контейнере те же ключи, что хранит пан
 msgid "The container of this protocol on the server has other keys."
 msgstr "Контейнер этого протокола на сервере работает с другими ключами."
 
+msgid "The database could not be saved."
+msgstr "Не удалось сохранить базу данных."
+
 #, python-format
 msgid "The key %(name)s has no address and is skipped."
 msgstr "У ключа %(name)s нет адреса, он пропущен."
+
+msgid "The panel archive needs the PostgreSQL database of docker compose."
+msgstr "Архиву панели нужна база PostgreSQL из docker compose."
 
 msgid "The panel does not overwrite it. Remove the amnezia-awg2 container on the server or restore to another server."
 msgstr "Панель его не перезаписывает. Удалите контейнер amnezia-awg2 на сервере или восстановите на другой сервер."
@@ -133,6 +184,9 @@ msgstr "Панель его не перезаписывает. Удалите к
 
 msgid "The panel has no copy of the files of this protocol."
 msgstr "В панели нет копии файлов этого протокола."
+
+msgid "The passwords differ."
+msgstr "Пароли не совпадают."
 
 msgid "The saved copy belongs to other server keys than the panel has for the protocol."
 msgstr "Сохранённая копия относится к другим ключам сервера, чем те, что есть в панели для этого протокола."

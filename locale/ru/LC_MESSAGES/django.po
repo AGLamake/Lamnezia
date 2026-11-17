@@ -424,6 +424,9 @@ msgstr "Аккаунт с этим email уже есть."
 msgid "An administrator will open access soon. Meanwhile, install the app: keys appear here once access opens."
 msgstr "Администратор скоро откроет доступ. Пока установите приложение: ключи появятся здесь, когда доступ откроется."
 
+msgid "An archive is being made now."
+msgstr "Сейчас создаётся архив."
+
 #, python-format
 msgid "An empty field keeps port %(default_port)s of the Amnezia app, which is above 9999. Where UDP on high ports is throttled, enter a port up to 9999, for example %(low_port)s."
 msgstr "Пустое поле оставляет порт %(default_port)s приложения Amnezia, он выше 9999. Если провайдер режет UDP на высоких портах, укажите порт до 9999, например %(low_port)s."
@@ -467,6 +470,12 @@ msgstr "Подтвердить или отклонить"
 
 msgid "Approve or reject:"
 msgstr "Подтвердить или отклонить:"
+
+msgid "Archive"
+msgstr "Архив"
+
+msgid "Archives on the panel"
+msgstr "Архивы на панели"
 
 msgid "Are you sure?"
 msgstr "Вы уверены?"
@@ -892,6 +901,9 @@ msgstr "Удалить ссылку-подписку?"
 
 msgid "Delete the template"
 msgstr "Удалить шаблон"
+
+msgid "Delete this archive from the panel?"
+msgstr "Удалить этот архив с панели?"
 
 msgid "Delete this channel?"
 msgstr "Удалить этот канал?"
@@ -1673,6 +1685,9 @@ msgstr "Сначала сделайте один из серверов груп�
 msgid "Make a server the leading one of its group"
 msgstr "Сделать сервер ведущим в группе"
 
+msgid "Make an archive"
+msgstr "Создать архив"
+
 msgid "Make another server of the group the leading one first, then let this one leave."
 msgstr "Сначала сделайте ведущим другой сервер группы, затем выведите этот."
 
@@ -1752,6 +1767,9 @@ msgstr "Имя в мессенджере"
 msgid "Needs attention"
 msgstr "Требует внимания"
 
+msgid "New archive"
+msgstr "Новый архив"
+
 msgid "New codes replace all the previous ones. To get them, enter the code from the app."
 msgstr "Новые коды заменяют все прежние. Чтобы получить их, введите код из приложения."
 
@@ -1787,6 +1805,9 @@ msgstr "К этому аккаунту не привязан ни один по�
 
 msgid "No account yet?"
 msgstr "Ещё нет аккаунта?"
+
+msgid "No archives yet."
+msgstr "Архивов пока нет."
 
 msgid "No articles yet."
 msgstr "Статей пока нет."
@@ -1979,6 +2000,9 @@ msgstr "На некоторых VPS отдача через VPN падает в 
 msgid "On the client, for every port: download over UDP, upload over UDP, then download over TCP."
 msgstr "На клиенте для каждого порта: скачивание по UDP, отдача по UDP, затем скачивание по TCP."
 
+msgid "One encrypted file with the database, the secrets key, the settings and the uploaded files. A new panel restored from it sees the same servers and keys."
+msgstr "Один зашифрованный файл с базой данных, ключом секретов, настройками и загруженными файлами. Панель, восстановленная из него, видит те же серверы и ключи."
+
 msgid "One link for v2rayN, v2RayTun, Hiddify and other XRay clients: they update your XRay keys themselves."
 msgstr "Одна ссылка для v2rayN, v2RayTun, Hiddify и других клиентов XRay: они сами обновляют ваши ключи XRay."
 
@@ -2106,6 +2130,9 @@ msgstr "Страницы"
 msgid "Panel"
 msgstr "Панель"
 
+msgid "Panel archive"
+msgstr "Архив панели"
+
 msgid "Password"
 msgstr "Пароль"
 
@@ -2197,6 +2224,9 @@ msgstr "Профиль"
 
 msgid "Profile sections"
 msgstr "Разделы профиля"
+
+msgid "Progress"
+msgstr "Ход выполнения"
 
 msgid "Protocol or service"
 msgstr "Протокол или сервис"
@@ -3084,6 +3114,10 @@ msgstr "В панели пока нет бэкапа этого протокол
 
 msgid "The panel is reading the key's settings from the server. Refresh the page in a few seconds to show the key."
 msgstr "Панель читает настройки ключа с сервера. Обновите страницу через несколько секунд, чтобы показать ключ."
+
+#, python-format
+msgid "The panel keeps the newest %(keep)s archives. Download the archive and keep it away from this server: restore it on a new one with <code>install.sh --restore FILE</code>."
+msgstr "Панель хранит %(keep)s последних архива. Скачайте архив и держите его не на этом сервере: на новом он восстанавливается командой <code>install.sh --restore FILE</code>."
 
 msgid "The panel keeps the server keys and a copy of the protocol files. If the VPS is lost, change the address and login of this server to a new VPS and restore: clients keep their keys and need nothing new while the server address stays the same."
 msgstr "Панель хранит ключи сервера и копию файлов протокола. Если VPS потерян, укажите у этого сервера адрес и логин нового VPS и восстановите: клиенты сохранят свои ключи, и им ничего не нужно менять, пока адрес сервера прежний."

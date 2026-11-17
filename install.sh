@@ -2,6 +2,7 @@
 # Lamnezia installer for Debian/Ubuntu. Run as root:
 #   curl -fsSL https://raw.githubusercontent.com/AGLamake/Lamnezia/releases/install.sh | bash -s -- --domain panel.example.com
 # Running it again updates an existing installation and keeps its .env.
+# A panel archive (System -> Panel archive) is restored on a new server with --restore FILE.
 set -euo pipefail
 
 REPO="${LAMNEZIA_REPO:-https://github.com/AGLamake/Lamnezia.git}"
@@ -13,10 +14,13 @@ EMAIL=""
 PROXY="auto"
 IMAGE=""
 IMAGE_REPO="ghcr.io/aglamake/lamnezia"
+RESTORE=""
+RESTORE_DIR=""
 
 usage() {
     cat <<EOF
 Usage: install.sh [--domain NAME] [--email ADDRESS] [--proxy auto|nginx|caddy] [--image TAG] [--dir PATH]
+                  [--restore FILE]
 
   --domain  panel domain; its DNS A record must point to this server
   --email   address for Let's Encrypt expiry notices (optional)
@@ -26,6 +30,8 @@ Usage: install.sh [--domain NAME] [--email ADDRESS] [--proxy auto|nginx|caddy] [
   --image   take the ready image from GHCR instead of building it: a version (1.2.0, 1.2),
             latest or a full image reference; kept in .env for later runs
   --dir     installation directory (default /opt/lamnezia)
+  --restore install from a panel archive: its database, secrets and files; the password is
+            asked or taken from LAMNEZIA_ARCHIVE_PASSWORD; --domain overrides the archived one
 EOF
 }
 
@@ -40,11 +46,13 @@ parse_args() {
             --proxy) PROXY="${2:?}"; shift 2 ;;
             --image) IMAGE="${2:?}"; shift 2 ;;
             --dir) DIR="${2:?}"; shift 2 ;;
+            --restore) RESTORE="$(realpath "${2:?}")"; shift 2 ;;
             -h|--help) usage; exit 0 ;;
             *) usage; die "unknown option: $1" ;;
         esac
     done
     case "$PROXY" in auto|nginx|caddy) ;; *) die "--proxy must be auto, nginx or caddy" ;; esac
+    [ -z "$RESTORE" ] || [ -f "$RESTORE" ] || die "no archive file $RESTORE"
 }
 
 # Prompts read from the terminal, so they work under "curl ... | bash" too.
@@ -126,10 +134,63 @@ write_env() {
         -e "s|^LAMNEZIA_HTTP_BIND=.*|LAMNEZIA_HTTP_BIND=127.0.0.1:$(free_port)|" \
         "$DIR/.env.example" >"$env_file"
     # compose reads COMPOSE_PROFILES from .env, so later "docker compose up" keeps Caddy.
-    if [ "$PROXY" = "caddy" ]; then
-        printf '\n# Start the bundled Caddy reverse proxy.\nCOMPOSE_PROFILES=caddy\n' >>"$env_file"
-    fi
+    add_proxy_profile "$env_file"
     chmod 600 "$env_file"
+}
+
+add_proxy_profile() {
+    if [ "$PROXY" = "caddy" ]; then
+        printf '\n# Start the bundled Caddy reverse proxy.\nCOMPOSE_PROFILES=caddy\n' >>"$1"
+    fi
+}
+
+archive_password() {
+    if [ -n "${LAMNEZIA_ARCHIVE_PASSWORD:-}" ]; then return; fi
+    [ -r /dev/tty ] || die "set LAMNEZIA_ARCHIVE_PASSWORD, there is no terminal to ask the password"
+    read -r -s -p "Archive password: " LAMNEZIA_ARCHIVE_PASSWORD </dev/tty
+    printf '\n'
+    export LAMNEZIA_ARCHIVE_PASSWORD
+}
+
+# Decrypt the archive and write .env from it: the secrets key must stay the one of the archive.
+unpack_archive() {
+    local env_file="$DIR/.env" bind
+    [ ! -f "$env_file" ] || die "$env_file exists: --restore is for a new installation only"
+    archive_password
+    # Outside $DIR: the image build must not take the decrypted data into its context.
+    RESTORE_DIR="$(mktemp -d -t lamnezia-restore.XXXXXX)"
+    trap 'rm -rf "$RESTORE_DIR"' EXIT
+    log "Decrypting and checking the archive"
+    bash "$DIR/deploy/archive/unpack.sh" "$RESTORE" "$RESTORE_DIR" "$DIR"
+    grep -v '^COMPOSE_PROFILES=' "$RESTORE_DIR/env" >"$env_file"
+    chmod 600 "$env_file"
+    if [ -n "$DOMAIN" ]; then
+        sed -i '/^LAMNEZIA_DOMAIN=/d' "$env_file"
+        printf 'LAMNEZIA_DOMAIN=%s\n' "$DOMAIN" >>"$env_file"
+    fi
+    DOMAIN="$(sed -n 's/^LAMNEZIA_DOMAIN=//p' "$env_file")"
+    bind="$(sed -n 's/^LAMNEZIA_HTTP_BIND=//p' "$env_file")"
+    if [ -z "$bind" ] || ss -Htln "sport = :${bind##*:}" | grep -q .; then
+        sed -i '/^LAMNEZIA_HTTP_BIND=/d' "$env_file"
+        printf 'LAMNEZIA_HTTP_BIND=127.0.0.1:%s\n' "$(free_port)" >>"$env_file"
+    fi
+    add_proxy_profile "$env_file"
+}
+
+# The database must be empty: pg_restore into a used one would mix two panels.
+restore_data() {
+    local tables
+    log "Restoring the database and the uploaded files"
+    (cd "$DIR" && docker compose up -d --wait postgres)
+    tables="$(cd "$DIR" && docker compose exec -T postgres psql -U lamnezia -d lamnezia -tAc \
+        "select count(*) from information_schema.tables where table_schema = 'public'")"
+    [ "$tables" = "0" ] ||
+        die "the database is not empty; to start over: cd $DIR && docker compose down -v && rm .env"
+    (cd "$DIR" && docker compose exec -T postgres pg_restore -U lamnezia -d lamnezia \
+        --no-owner --no-privileges --exit-on-error) <"$RESTORE_DIR/database.dump"
+    mkdir -p "$RESTORE_DIR/media"
+    (cd "$DIR" && docker compose run --rm --no-deps --user root -v "$RESTORE_DIR/media:/restore:ro" \
+        web sh -c 'cp -a /restore/. /app/media/ && chown -R lamnezia:lamnezia /app/media')
 }
 
 # A bare tag means the published image; the choice is saved in .env, where compose reads it.
@@ -141,14 +202,19 @@ save_image() {
     printf 'LAMNEZIA_IMAGE=%s\n' "$IMAGE" >>"$env_file"
 }
 
-start_stack() {
+prepare_images() {
     if grep -q '^LAMNEZIA_IMAGE=' "$DIR/.env"; then
-        log "Pulling the ready image and starting containers"
-        (cd "$DIR" && docker compose pull -q && docker compose up -d --no-build)
+        log "Pulling the ready image"
+        (cd "$DIR" && docker compose pull -q)
     else
-        log "Building and starting containers (the first build takes a few minutes)"
-        (cd "$DIR" && docker compose up -d --build)
+        log "Building the image (the first build takes a few minutes)"
+        (cd "$DIR" && docker compose build -q)
     fi
+}
+
+start_stack() {
+    log "Starting containers"
+    (cd "$DIR" && docker compose up -d --no-build)
     log "Waiting for the panel to become healthy"
     for _ in $(seq 60); do
         if (cd "$DIR" && docker compose ps --format '{{.Service}} {{.Health}}') | grep -q '^web healthy$'; then
@@ -190,12 +256,18 @@ main() {
     install_packages
     fetch_code
     choose_proxy
-    write_env
+    if [ -n "$RESTORE" ]; then unpack_archive; else write_env; fi
     save_image
+    prepare_images
+    if [ -n "$RESTORE" ]; then restore_data; fi
     start_stack
     if [ "$PROXY" = "nginx" ]; then setup_nginx; fi
     log "Lamnezia is running at https://$DOMAIN/"
-    log "Create the first administrator: cd $DIR && docker compose exec web python manage.py createadmin --username admin"
+    if [ -n "$RESTORE" ]; then
+        log "Restored from $RESTORE: sign in with the accounts of the archived panel"
+    else
+        log "Create the first administrator: cd $DIR && docker compose exec web python manage.py createadmin --username admin"
+    fi
 }
 
 main "$@"

@@ -7,8 +7,11 @@ Three things need saving:
   client keys cannot be decrypted, even with the database;
 - **the `media` volume**: uploaded files (support screenshots).
 
-The panel keeps two kinds of backups:
+The panel keeps three kinds of backups:
 
+- **the panel archive**: all three in one file encrypted with a password; it is made on the
+  **System → Panel archive** page or by a command, and restored on a new server with
+  `install.sh --restore`;
 - **panel backups**: the database and the `media` volume, saved by the `backup` service of
   `compose.yaml` into `/opt/lamnezia/backups`; `.env` is saved by you;
 - **server keys**: the database holds the keys of every AmneziaWG 2.0 server and every client, and
@@ -16,6 +19,47 @@ The panel keeps two kinds of backups:
   `clientsTable` of AmneziaWG 2.0, the folders of the other protocols, the keys of the Tor site,
   the Telegram proxies and SFTP. With them a protocol or a service is installed on a new VPS with
   the same keys.
+
+## Panel archive
+
+The archive is one file `lamnezia-YYYYMMDD-HHMMSS.lamnezia` (UTC time) with everything a new panel
+needs: the database, `.env` with the secrets encryption key `LAMNEZIA_ENCRYPTION_KEY`, the `media`
+volume. It is encrypted with a password (AES-256, the key derived by PBKDF2-SHA256 with 600,000
+iterations); without the password it cannot be read. The panel does not keep the password: lose it
+and the archive cannot be restored.
+
+**From the panel.** **System → Panel archive**: type the password twice (at least 12 characters)
+and press **Make an archive**. A background operation makes it; the password reaches it encrypted,
+and the operation erases it before saving the database, so the password never gets into the
+archive. The finished archive shows in the list: **Download** it and keep it away from this server.
+Downloads and removals go to the [audit log](Audit.md).
+
+**By a command** on the panel server:
+
+```bash
+cd /opt/lamnezia
+docker compose exec web python manage.py panel_archive create
+docker compose cp web:/app/archives/lamnezia-20260101-030000.lamnezia /root/
+```
+
+The password is asked twice; scripts pass `--password-stdin`. To check an archive (password and
+checksums): `docker compose exec web python manage.py panel_archive verify /app/archives/NAME`.
+
+Archives live in the `archives` volume; the newest `LAMNEZIA_PANEL_ARCHIVE_KEEP` (3 by default)
+stay, older ones are removed when a new one is made. Only the panel user can read the files.
+
+What is inside (a `tar.gz` under the encryption):
+
+| File | What it is |
+|---|---|
+| `database.dump` | The database, `pg_dump --format=custom`. |
+| `env` | The panel `.env`: every `LAMNEZIA_*` and `COMPOSE_*` variable. |
+| `media/` | Uploaded files. |
+| `migrations.txt` | Applied migrations: a panel older than the archive refuses it. |
+| `manifest.json`, `SHA256SUMS` | Panel version, time, checksums. |
+
+After its first line the file is what `openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256`
+writes; `deploy/archive/unpack.sh` unpacks it.
 
 ## Panel backups
 
@@ -55,6 +99,34 @@ rsync -a root@panel.example.com:/opt/lamnezia/backups/ /srv/lamnezia-backups/
 
 ## Restoring the panel
 
+### From a panel archive
+
+On a new server (Debian or Ubuntu) where the panel was never installed, copy the archive and run
+the installer with `--restore`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AGLamake/Lamnezia/releases/install.sh -o install.sh
+bash install.sh --restore /root/lamnezia-20260101-030000.lamnezia
+```
+
+The installer asks for the archive password (or takes it from `LAMNEZIA_ARCHIVE_PASSWORD`),
+decrypts and checks the archive, writes `.env` from it, restores the database and the files, starts
+the panel and sets up HTTPS as a normal install does. Sign in with the old accounts: the panel sees
+the same servers, keys and SSH credentials.
+
+- Another domain: `--domain new.example.com`; its DNS record must point to the new server.
+- The reverse proxy is chosen anew (`--proxy`), as on install.
+- If the `LAMNEZIA_HTTP_BIND` port of the archive is taken on the new server, a free one is used.
+- An archive of a newer panel than the code being installed is refused: install the same version or
+  newer (`LAMNEZIA_REF=...` or `--image`).
+- An archive is not restored into a running panel: if `.env` exists or the database is not empty,
+  the installer stops and says how to start over.
+
+VPN servers keep working while the panel is down. If a VPN server was lost too, restore it after the
+panel: [Restoring a protocol](#restoring-a-protocol-on-a-new-vps).
+
+### From backups by hand
+
 Restore on a server where the panel has not been started yet: the PostgreSQL password is set when the
 database starts for the first time and must match the one in the saved `.env`.
 
@@ -70,8 +142,7 @@ docker compose up -d --build
 ```
 
 Here `/root/lamnezia.env` is the saved `.env` and `/root/backups` holds the copied backups; take the
-newest pair of files. VPN servers keep working while the panel is down. If a VPN server was lost
-too, restore it after the panel: [Restoring a protocol](#restoring-a-protocol-on-a-new-vps).
+newest pair of files.
 
 Then set up HTTPS: run `install.sh` (it keeps the restored `.env`) or follow [Installation, section 5](Installation.md#5-manual-install).
 If the domain changed, update `LAMNEZIA_DOMAIN` in `.env`; if the `LAMNEZIA_HTTP_BIND` port is taken
@@ -237,7 +308,7 @@ back in the protocol settings.
 
 When both the panel and a VPN server are lost:
 
-1. Restore the panel from its backup and the saved `.env`
+1. Restore the panel from a panel archive, or from its backup and the saved `.env`
    ([Restoring the panel](#restoring-the-panel)).
 2. For every lost VPN server follow [Restoring a protocol](#restoring-a-protocol-on-a-new-vps).
 3. Open **Keys → Differences with servers → Check now**: if the panel and the servers still differ,

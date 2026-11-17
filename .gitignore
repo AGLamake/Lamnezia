@@ -28,3 +28,6 @@ Thumbs.db
 
 # Panel backups (compose service `backup`)
 /backups/
+
+# Panel archives (System → Panel archive)
+/archives/

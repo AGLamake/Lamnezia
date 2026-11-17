@@ -35,6 +35,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_PROTOCOL_BACKUP_INTERVAL` | `3600` | Seconds between copies of the server files (`awg0.conf`, `clientsTable`) into the panel ([Backup](Backup.md#copies-of-the-server-files)). |
 | `LAMNEZIA_BACKUP_INTERVAL` | `86400` | Seconds between backups of the database and uploaded files. |
 | `LAMNEZIA_BACKUP_KEEP` | `14` | Backups of each kind to keep. |
+| `LAMNEZIA_PANEL_ARCHIVE_KEEP` | `3` | Newest panel archives kept in the `archives` volume ([Panel archive](Backup.md#panel-archive)). |
 | `LAMNEZIA_BACKUP_DIR` | `./backups` | Host directory for the backups. |
 | `LAMNEZIA_MONITOR_INTERVAL` | `60` | Seconds between server health readings. A server that does not answer for two intervals is shown offline. |
 | `LAMNEZIA_METRICS_TOKEN` | empty | Token for the Prometheus endpoint `/metrics`. Empty keeps it off. |

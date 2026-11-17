@@ -262,6 +262,9 @@ RELAY_MONITOR_INTERVAL = env.int("RELAY_MONITOR_INTERVAL", default=60)
 GROUP_LAG_ALERT = env.int("GROUP_LAG_ALERT", default=3600)
 # Seconds between copies of the protocol files of every server into the panel, for a restore.
 PROTOCOL_BACKUP_INTERVAL = env.int("PROTOCOL_BACKUP_INTERVAL", default=3600)
+# Encrypted panel archives (database, .env, uploaded files); the newest PANEL_ARCHIVE_KEEP stay.
+PANEL_ARCHIVE_DIR = BASE_DIR / "archives"
+PANEL_ARCHIVE_KEEP = env.int("PANEL_ARCHIVE_KEEP", default=3)
 # Seconds between server health readings; a server is offline after two intervals without an answer.
 MONITOR_INTERVAL = env.int("MONITOR_INTERVAL", default=60)
 # Days of server readings and relay load readings; readings older than MONITOR_DETAIL_DAYS keep

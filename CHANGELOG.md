@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Panel archive and restore**: **System → Panel archive** (or `manage.py panel_archive create`)
+  makes one file encrypted with a password holding the database, `.env` with the secrets key and
+  the uploaded files; `install.sh --restore FILE` installs a new server from it with the same
+  servers, keys and SSH credentials. Archives are kept in the new `archives` volume, the newest
+  `LAMNEZIA_PANEL_ARCHIVE_KEEP` (3) stay; downloads and removals are audited. The image now has
+  the PostgreSQL 17 client and is based on Debian trixie.
 - **Wiki page about server groups and the relay**, moved out of *Servers and import*, with the
   measured switching times: 12-14 s to switch and 17-22 s without connection when the active
   member fails, 11-14 s for a planned switch, with the default timers.

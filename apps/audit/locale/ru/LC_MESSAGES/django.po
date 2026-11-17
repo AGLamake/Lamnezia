@@ -66,6 +66,9 @@ msgstr "Удаление приглашения"
 msgid "Delete notification channel"
 msgstr "Удаление канала уведомлений"
 
+msgid "Delete panel archive"
+msgstr "Удаление архива панели"
+
 msgid "Delete plan"
 msgstr "Удаление тарифа"
 
@@ -83,6 +86,9 @@ msgstr "Удалить ссылку-подписку"
 
 msgid "Disable keys of users"
 msgstr "Отключение ключей пользователей"
+
+msgid "Download panel archive"
+msgstr "Скачивание архива панели"
 
 msgid "Edit plan"
 msgstr "Изменение тарифа"

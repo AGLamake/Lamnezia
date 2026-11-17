@@ -1,4 +1,4 @@
-"""Errors of restoring a protocol on a server, with a message and a hint."""
+"""Errors of restoring a protocol and of the panel archive, each with a message and a hint."""
 
 from enum import StrEnum
 
@@ -67,3 +67,36 @@ class RestoreError(CatalogError[RestoreErrorCode]):
     """Restoring a protocol failed."""
 
     catalog = RESTORE_ERRORS
+
+
+class PanelArchiveErrorCode(StrEnum):
+    NOT_POSTGRES = "not_postgres"
+    DUMP_FAILED = "dump_failed"
+    NO_PASSWORD = "no_password"
+    WRONG_PASSWORD = "wrong_password"
+
+
+PANEL_ARCHIVE_ERRORS: dict[PanelArchiveErrorCode, ErrorDescription] = {
+    PanelArchiveErrorCode.NOT_POSTGRES: ErrorDescription(
+        _("The panel archive needs the PostgreSQL database of docker compose."),
+        _("Install the panel with install.sh or compose.yaml to make archives."),
+    ),
+    PanelArchiveErrorCode.DUMP_FAILED: ErrorDescription(
+        _("The database could not be saved."),
+        _("Check that the postgres service runs: docker compose ps. Then make the archive again."),
+    ),
+    PanelArchiveErrorCode.NO_PASSWORD: ErrorDescription(
+        _("The archive password is not kept after the first attempt."),
+        _("Make a new archive and enter the password again."),
+    ),
+    PanelArchiveErrorCode.WRONG_PASSWORD: ErrorDescription(
+        _("The archive cannot be read with this password."),
+        _("Check the password. A damaged or incomplete file does not open either."),
+    ),
+}
+
+
+class PanelArchiveError(CatalogError[PanelArchiveErrorCode]):
+    """Making or reading a panel archive failed."""
+
+    catalog = PANEL_ARCHIVE_ERRORS

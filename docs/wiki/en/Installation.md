@@ -71,6 +71,9 @@ The value is a version (`1.2.0`, `1.2`), `latest` or a full image reference. The
 `docker compose pull && docker compose up -d --no-build`. To build again, delete the
 `LAMNEZIA_IMAGE` line from `.env`. Take the same code tag as the image: `LAMNEZIA_REF=v1.2.0`.
 
+`--restore FILE` installs the panel from a [panel archive](Backup.md#from-a-panel-archive): with its
+database, secrets and files instead of new ones.
+
 ## 4. First administrator
 
 ```bash
@@ -158,4 +161,4 @@ certbot --nginx -d panel.example.com --redirect
 | `redis` | Job broker and WebSocket channel layer |
 | `caddy` | Only with the `caddy` profile: HTTPS without nginx |
 
-State lives in the `postgres-data` and `media` volumes (plus `caddy-data` with the `caddy` profile).
+State lives in the `postgres-data`, `media` and `archives` volumes (plus `caddy-data` with the `caddy` profile).

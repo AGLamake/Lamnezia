@@ -23,5 +23,6 @@
   <p class="nav-group">{% translate "System" %}</p>
   <a href="{% url 'notifications:channels' %}" class="nav-link"{% if active == 'notifications' %} aria-current="page"{% endif %}>{% icon "bell" %}<span class="nav-text">{% translate "Notifications" %}</span></a>
   <a href="{% url 'core:settings' %}" class="nav-link"{% if active == 'settings' %} aria-current="page"{% endif %}>{% icon "settings" %}<span class="nav-text">{% translate "Settings" %}</span></a>
+  <a href="{% url 'backups:panel-archives' %}" class="nav-link"{% if active == 'panel-archives' %} aria-current="page"{% endif %}>{% icon "database" %}<span class="nav-text">{% translate "Panel archive" %}</span></a>
   <a href="{% url 'audit:list' %}" class="nav-link"{% if active == 'audit' %} aria-current="page"{% endif %}>{% icon "history" %}<span class="nav-text">{% translate "Audit log" %}</span></a>
 {% endif %}

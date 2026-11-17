@@ -1,0 +1,67 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Panel archive" %} · {{ site_name }}{% endblock %}
+
+{% block nav %}{% include "components/admin_nav.html" with active="panel-archives" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Panel archive" %}</h1>
+    <p class="page-lead">{% translate "One encrypted file with the database, the secrets key, the settings and the uploaded files. A new panel restored from it sees the same servers and keys." %}</p>
+  </div>
+</div>
+
+<div class="min-w-0 space-y-6">
+  {% if active %}
+  <div class="alert alert-info" role="status">
+    {% icon "info" "icon mt-px" %}
+    <p class="min-w-0 flex-1 break-words">{% translate "An archive is being made now." %} <a href="{% url 'operations:detail' active.pk %}" class="font-medium underline">{% translate "Progress" %}</a></p>
+  </div>
+  {% endif %}
+
+  <form method="post" class="form-section">
+    {% csrf_token %}
+    <h2 class="section-title flex items-center gap-2">{% icon "database" "icon-sm text-muted" %}{% translate "New archive" %}</h2>
+    <div class="form-section-body">
+      {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+      {{ form.password.as_field_group }}
+      {{ form.confirmation.as_field_group }}
+      <p class="help-text">{% blocktranslate %}The panel keeps the newest {{ keep }} archives. Download the archive and keep it away from this server: restore it on a new one with <code>install.sh --restore FILE</code>.{% endblocktranslate %}</p>
+      <div><button type="submit" class="btn btn-primary"{% if active %} disabled{% endif %}>{% icon "plus" %}{% translate "Make an archive" %}</button></div>
+    </div>
+  </form>
+
+  <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "history" "icon-sm text-muted" %}{% translate "Archives on the panel" %}</h2>
+    {% if archives %}
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead>
+          <tr><th>{% translate "Archive" %}</th><th>{% translate "Size" %}</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for archive in archives %}
+          <tr>
+            <td class="cell-title"><span class="font-mono text-xs break-all">{{ archive.name }}</span> <span class="help-text">· {{ archive.created_at|date:"SHORT_DATETIME_FORMAT" }}</span></td>
+            <td data-label="{% translate 'Size' %}">{{ archive.size|filesizeformat }}</td>
+            <td>
+              <div class="flex flex-wrap gap-2">
+                <a href="{% url 'backups:download-panel-archive' archive.name %}" class="btn btn-secondary">{% icon "download" %}{% translate "Download" %}</a>
+                <form method="post" action="{% url 'backups:delete-panel-archive' archive.name %}" data-confirm="{% translate "Delete this archive from the panel?" %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-ghost">{% icon "trash" %}{% translate "Delete" %}</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="help-text">{% translate "No archives yet." %}</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

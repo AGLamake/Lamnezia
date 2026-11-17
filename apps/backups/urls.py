@@ -1,6 +1,9 @@
 from django.urls import path
 
 from apps.backups.views import (
+    PanelArchiveDeleteView,
+    PanelArchiveDownloadView,
+    PanelArchiveListView,
     ProtocolRestoreView,
     ServiceRestoreView,
     SnapshotDeleteView,
@@ -22,4 +25,11 @@ urlpatterns = [
         name="delete-snapshot",
     ),
     path("restore-service/<int:service_pk>/", ServiceRestoreView.as_view(), name="restore-service"),
+    path("panel/", PanelArchiveListView.as_view(), name="panel-archives"),
+    path(
+        "panel/<str:name>/download/",
+        PanelArchiveDownloadView.as_view(),
+        name="download-panel-archive",
+    ),
+    path("panel/<str:name>/delete/", PanelArchiveDeleteView.as_view(), name="delete-panel-archive"),
 ]

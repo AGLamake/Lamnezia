@@ -71,6 +71,9 @@ curl -fsSL https://raw.githubusercontent.com/AGLamake/Lamnezia/releases/install.
 `docker compose pull && docker compose up -d --no-build`. Чтобы вернуться к сборке, удалите строку
 `LAMNEZIA_IMAGE` из `.env`. Для версии образа стоит взять тот же тег кода: `LAMNEZIA_REF=v1.2.0`.
 
+`--restore ФАЙЛ` ставит панель из [архива панели](Backup.md#из-архива-панели): с её базой,
+секретами и файлами вместо новых.
+
 ## 4. Первый администратор
 
 ```bash
@@ -158,4 +161,4 @@ certbot --nginx -d panel.example.com --redirect
 | `redis` | Брокер задач и канал WebSocket |
 | `caddy` | Только с профилем `caddy`: HTTPS без nginx |
 
-Состояние хранится в томах `postgres-data`, `media` (и `caddy-data` с профилем `caddy`).
+Состояние хранится в томах `postgres-data`, `media`, `archives` (и `caddy-data` с профилем `caddy`).

@@ -26,6 +26,11 @@ class OperationContext:
     def params(self) -> dict[str, Any]:
         return dict(self._operation.params)
 
+    def forget(self, name: str) -> None:
+        """Remove a parameter for good, e.g. a secret the operation needs only once."""
+        self._operation.params.pop(name, None)
+        self._operation.save(update_fields=["params"])
+
     @property
     def user(self) -> User | None:
         """Who started the operation; None for a scheduled one or a deleted account."""
