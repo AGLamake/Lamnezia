@@ -75,6 +75,8 @@ class ReplyForm(forms.Form):
         required=False,
         widget=forms.FileInput(attrs={"accept": _IMAGE_TYPES, "class": "sr-only"}),
     )
+    # Set by static/js/chat-send.js for each message: a retry with it is not saved twice.
+    token = forms.CharField(required=False, max_length=64, widget=forms.HiddenInput)
 
     def clean(self) -> dict[str, Any]:
         data = super().clean() or {}

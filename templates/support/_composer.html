@@ -1,9 +1,9 @@
 {% load i18n ui %}{% comment %} The reply box under a chat, as in a messenger: one line that grows while typing, Enter sends and Shift+Enter
    starts a new line (ui.js), a clip for a screenshot and a send button. `staff` adds reply templates and the internal note.
+   chat-send.js sends it: the message shows at once in the thread's [data-chat-pending] (support/_pending.html);
+   without scripts the form posts and the page reloads.
    `prefix` sets the ids apart in the chat widget. {% endcomment %}
-<form id="{{ prefix }}reply" method="post" action="{{ send_url }}" enctype="multipart/form-data"
-      hx-post="{{ send_url }}" hx-encoding="multipart/form-data" hx-target="#{{ prefix }}thread" hx-swap="outerHTML"
-      class="composer">
+<form id="{{ prefix }}reply" method="post" action="{{ send_url }}" enctype="multipart/form-data" class="composer" data-chat-send>
   {% csrf_token %}
   {% for error in form.non_field_errors %}<p class="error-text">{{ error }}</p>{% endfor %}
   {% for field in form %}{% if field.errors %}<div id="{{ field.auto_id }}_error">{% for error in field.errors %}<p class="error-text">{{ error }}</p>{% endfor %}</div>{% endif %}{% endfor %}

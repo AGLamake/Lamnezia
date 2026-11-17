@@ -25,6 +25,7 @@ from apps.support.services.check import CheckReport
 from apps.support.services.client import ClientCard
 from apps.support.services.inbox import Inbox
 from apps.support.services.incidents import close_incident, incidents
+from apps.support.services.sending import SendOnce
 from apps.support.services.tickets import ClosedConversationError
 
 _PAGE_SIZE = 50
@@ -99,7 +100,9 @@ class ConversationView(_ConversationView, View):
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         form = StaffReplyForm(request.POST, request.FILES)
         if form.is_valid():
-            self.send(form.cleaned_data)
+            with SendOnce(self.member, form.cleaned_data["token"]) as fresh:
+                if fresh:
+                    self.send(form.cleaned_data)
             form = StaffReplyForm()
         if not request.headers.get("HX-Request"):
             return redirect("support:inbox-conversation", pk=pk)

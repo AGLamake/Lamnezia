@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Messages show before the answer**: a message in the support chat, a request or the inbox
+  appears in the thread at once, muted and marked *Sending…*, and the field is cleared for the next
+  one; a screenshot shows after the upload. A message that could not be sent stays marked
+  **Not sent** with a **Retry** button and its text kept; a retry is never saved twice.
 - **Telegram straight from the offer card**: **Link Telegram** on the card that offers to link a
   messenger opens the bot by its `t.me` link with a link code in a new tab, without the profile;
   the card waits for the confirmation in the bot and goes away once the account is linked.

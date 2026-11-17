@@ -2109,6 +2109,9 @@ msgstr "Не привязан"
 msgid "Not now"
 msgstr "Не сейчас"
 
+msgid "Not sent"
+msgstr "Не отправлено"
+
 msgid "Nothing changes on the leading server: the group takes its keys, settings and clients as they are."
 msgstr "На ведущем сервере ничего не меняется: группа берёт его ключи, настройки и клиентов как есть."
 
@@ -2752,6 +2755,9 @@ msgstr "Отправьте команду пользователю: он отп�
 
 msgid "Send this link to the user: they open it and press Start in the bot. It works once."
 msgstr "Отправьте ссылку пользователю: он открывает её и нажимает «Старт» в боте. Ссылка срабатывает один раз."
+
+msgid "Sending…"
+msgstr "Отправляется…"
 
 msgid "Sent"
 msgstr "Отправлено"

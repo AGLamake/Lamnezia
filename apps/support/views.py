@@ -19,6 +19,7 @@ from apps.support.models import Attachment, Conversation, Kind
 from apps.support.services.chat import MyChat
 from apps.support.services.check import CheckReport
 from apps.support.services.inbox import Inbox
+from apps.support.services.sending import SendOnce
 from apps.support.services.thread import MyThreads, TooManyMessagesError
 from apps.support.services.tickets import (
     ClosedConversationError,
@@ -120,9 +121,10 @@ class ConversationView(_ConversationView, View):
         form = ReplyForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                self.requests.reply(
-                    self.conversation, form.cleaned_data["text"], form.cleaned_data["image"]
-                )
+                data = form.cleaned_data
+                with SendOnce(self.user, data["token"]) as fresh:
+                    if fresh:
+                        self.requests.reply(self.conversation, data["text"], data["image"])
                 form = ReplyForm()
             except ClosedConversationError:
                 messages.error(request, _("The request is closed. Open a new one."))
@@ -173,7 +175,10 @@ class ChatView(_SupportView, View):
         form = self.form(request.POST, request.FILES)
         if form.is_valid():
             try:
-                MyChat(self.user).send(form.cleaned_data["text"], form.cleaned_data["image"])
+                data = form.cleaned_data
+                with SendOnce(self.user, data["token"]) as fresh:
+                    if fresh:
+                        MyChat(self.user).send(data["text"], data["image"])
                 form = self.form()
             except TooManyMessagesError:
                 _too_often(form)

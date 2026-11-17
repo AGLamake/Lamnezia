@@ -190,7 +190,10 @@ class TestWidget:
         response = client.post(reverse("support:chat"), {"text": "Hi"}, HTTP_HX_REQUEST="true")
 
         page = response.content.decode()
-        assert 'hx-target="#chat-thread"' in page
+        assert 'id="chat-thread"' in page
+        # chat-send.js shows the next message at once under the messages, before the answer.
+        assert "data-chat-send" in page
+        assert "data-chat-pending" in page
         assert "Hi" in page
 
     def test_a_request_event_shows_as_a_line_with_a_link(self, client: Client) -> None:

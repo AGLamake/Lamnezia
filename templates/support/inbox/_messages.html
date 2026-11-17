@@ -1,5 +1,5 @@
 {% load i18n %}{# The staff's view of a thread; refetched from `messages_url` when it changes. #}
-<div id="messages" class="space-y-3" data-live-thread="{{ conversation.pk }}" hx-get="{{ messages_url }}" hx-trigger="support:thread from:body" hx-swap="outerHTML">
+<div id="messages" class="space-y-3" data-chat-messages data-live-thread="{{ conversation.pk }}" hx-get="{{ messages_url }}" hx-trigger="support:thread from:body" hx-swap="outerHTML">
   {% for message in thread %}
     {% if message.event %}
       {% url 'support:inbox-conversation' message.ticket_id as ticket_url %}{% include "support/_event.html" %}

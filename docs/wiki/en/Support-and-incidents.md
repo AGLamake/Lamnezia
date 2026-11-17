@@ -26,7 +26,12 @@ else last connected (for XRay, which has no handshake, the last time a client ha
 The request page is a thread of messages, as in a messenger: the messages scroll in a box of their
 own and the reply field stays under them. The field is one line that grows while typing; Enter
 sends and Shift+Enter starts a new line (on a phone the keyboard's button starts a new line and the
-arrow sends). The clip attaches a screenshot. A reply is sent without reloading the page. The
+arrow sends). The clip attaches a screenshot. A reply is sent without reloading the page and
+without waiting: it shows in the thread at once, muted and marked *Sending…*, and the field is
+free for the next one; a screenshot shows by its name until it is uploaded. Messages go in the
+order they were written. One that could not be sent stays marked **Not sent** with the reason,
+when the panel gave one, and a **Retry** button, its text kept; a retry after an answer lost on
+the way is not saved twice. The same goes for the chat and for the staff's replies. The
 thread opens at the latest message and follows new ones down only when it is scrolled to the
 bottom, so reading the history is not interrupted. A user's reply to a request *waiting for you* puts it back *in progress*. A closed
 request takes no replies — a new one is opened instead. The notes administrators leave for each

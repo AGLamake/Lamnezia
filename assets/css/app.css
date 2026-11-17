@@ -748,6 +748,13 @@ html[data-loading]::before {
   .composer .composer-select {
     @apply min-h-8 w-auto py-1 text-xs;
   }
+  /* A message on its way (support/_pending.html): muted until sent, plain again when it failed. */
+  .chat-pending {
+    @apply opacity-60 transition-opacity;
+  }
+  .chat-pending[data-failed] {
+    @apply border-danger opacity-100;
+  }
   /* A line about a request: not a message, so no card. */
   .chat-event {
     @apply text-center text-xs text-muted;
