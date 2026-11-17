@@ -676,12 +676,8 @@ msgstr "Проверить сейчас"
 msgid "Check that AmneziaWG of the server is running, then switch again."
 msgstr "Проверьте, что AmneziaWG на сервере работает, и переключите ещё раз."
 
-msgid ""
-"Check that the leading server is online; the relay keeps its members and is "
-"updated again on the next sync."
-msgstr ""
-"Проверьте, что ведущий сервер на связи; ретранслятор сохранит участников и "
-"обновится снова при следующей синхронизации."
+msgid "Check that the leading server is online; the relay keeps its members and is updated again on the next sync."
+msgstr "Проверьте, что ведущий сервер на связи; ретранслятор сохранит участников и обновится снова при следующей синхронизации."
 
 msgid "Check that the server is a clone"
 msgstr "Проверить, что сервер — клон"
@@ -1433,12 +1429,12 @@ msgstr "Добавьте его как одиночный сервер AmneziaWG
 msgid "Join the group"
 msgstr "Вступить в группу"
 
+msgid "Keep in the group"
+msgstr "Оставить в группе"
+
 #, python-format
 msgid "Keep the service peer of %(group)s"
 msgstr "Оставить служебный пир группы %(group)s"
-
-msgid "Keep in the group"
-msgstr "Оставить в группе"
 
 msgid "Key"
 msgstr "Ключ"
@@ -3014,11 +3010,11 @@ msgstr "Ключи и бэкап сохранены: восстановите п
 msgid "The lead cannot be handed over until these key operations finish:"
 msgstr "Роль ведущего нельзя передать, пока не закончатся эти операции с ключами:"
 
-msgid "The leading server of the group could not be reached to change the service peer."
-msgstr "Ведущий сервер группы не ответил, служебный пир изменить нельзя."
-
 msgid "The leading server cannot leave while other servers are in the group."
 msgstr "Ведущий сервер не может выйти, пока в группе есть другие серверы."
+
+msgid "The leading server of the group could not be reached to change the service peer."
+msgstr "Ведущий сервер группы не ответил, служебный пир изменить нельзя."
 
 msgid "The leave operation failed. Run it again, or keep the server in the group."
 msgstr "Операция выхода не удалась. Повторите её или оставьте сервер в группе."
