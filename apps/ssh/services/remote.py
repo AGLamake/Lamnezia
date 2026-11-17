@@ -90,6 +90,11 @@ class RemoteHost(ShellTarget):
     def sh(self, script: str, *, stdin: bytes = b"", timeout: float | None = None) -> CommandResult:
         return self._runner.run(self._as_root(script), stdin=stdin, timeout=timeout)
 
+    def client_address(self) -> str | None:
+        """The address the server sees this connection come from; sudo would drop SSH_CONNECTION."""
+        fields = self._runner.run('printf %s "$SSH_CONNECTION"').output.split()
+        return fields[0] if fields else None
+
     def docker(self, *args: str) -> str:
         """Run a docker CLI command on the server and return its stdout."""
         result = self.sh(shlex.join(["docker", *args]))

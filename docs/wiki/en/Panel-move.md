@@ -12,7 +12,9 @@ step is pointing the panel domain to the new machine.
 - The machine runs Debian or Ubuntu, has at least 3 GB free on `/` and has no panel yet
   (`/opt/lamnezia` and the nginx site `lamnezia` must not exist).
 - It is not the machine this panel runs on: the form refuses a server whose address is the panel
-  domain, the address the panel is opened at, or an IP address these names point to.
+  domain, the address the panel is opened at, or an IP address these names point to. The
+  preparation checks it again over SSH and stops before any change when the panel connects from
+  an address of the machine (one of its own or of its containers) or the panel domain points there.
 - With nginx installed, the panel adds its site to it. Without nginx, the bundled Caddy needs TCP
   80/443 and UDP 443 free; a relay never takes them.
 - Servers that allow SSH only from the panel address must allow the address of the new machine.

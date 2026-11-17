@@ -3256,6 +3256,9 @@ msgstr "На новой машине не Debian и не Ubuntu."
 msgid "The new machine has too little free disk space."
 msgstr "На новой машине мало свободного места на диске."
 
+msgid "The new machine is the machine this panel runs on."
+msgstr "Новая машина — та, на которой работает эта панель."
+
 msgid "The old key is revoked. The new one will be ready in a moment."
 msgstr "Старый ключ отозван. Новый будет готов через мгновение."
 
@@ -3282,6 +3285,9 @@ msgstr "Панель не может прочитать состояние ре�
 
 msgid "The panel compares its keys with the server files regularly. A difference appears when clients are added or removed in the Amnezia app or by hand."
 msgstr "Панель регулярно сравнивает свои ключи с файлами на серверах. Расхождение появляется, когда клиентов добавляют или удаляют в приложении Amnezia или вручную."
+
+msgid "The panel connects to it from its own address. Choose another machine: the move installs the panel there."
+msgstr "Панель подключается к ней со своего же адреса. Выберите другую машину: перенос ставит панель на неё."
 
 msgid "The panel copies the files of a member that answers. Check that one is online."
 msgstr "Панель копирует файлы отвечающего участника. Проверьте, что хотя бы один в сети."

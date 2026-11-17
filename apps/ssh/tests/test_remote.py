@@ -33,6 +33,15 @@ def test_sudo_user_runs_scripts_through_passwordless_sudo() -> None:
     assert runner.last_command == "sudo -n sh -c 'echo ok'"
 
 
+def test_the_client_address_is_read_without_sudo() -> None:
+    connection = result(stdout=b"198.51.100.7 51234 203.0.113.5 22")
+    runner = FakeRunner({"id -u": result(stdout=b"1000\n"), "SSH_CONNECTION": connection})
+
+    assert host_for(runner).client_address() == "198.51.100.7"
+    assert not runner.last_command.startswith("sudo")
+    assert host_for(FakeRunner()).client_address() is None
+
+
 def test_privileges_are_checked_once() -> None:
     runner = FakeRunner()
     host = host_for(runner)

@@ -24,7 +24,7 @@ class PanelMachine:
         self._addresses: set[str] | None = None
 
     @classmethod
-    def current(cls, request_host: str) -> "PanelMachine":
+    def current(cls, request_host: str = "") -> "PanelMachine":
         """The panel's domain from SITE_URL and the host the admin opened the panel at."""
         return cls([urlsplit(settings.SITE_URL).hostname or "", request_host])
 

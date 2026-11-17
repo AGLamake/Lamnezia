@@ -147,7 +147,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Panel move refuses the panel's own machine**: the form rejects a server whose address is the
-  panel domain, the address the panel is opened at, or an IP address these names point to.
+  panel domain, the address the panel is opened at, or an IP address these names point to. The
+  preparation checks again over SSH, before any change: the address the panel connects from, and
+  the IP of its domain, must not be an address of the machine or of its containers.
 - **A relay sync after a change touches only the relays of the changed groups** (and the old relay
   of a group that moved), with one `relays.sync` task per transaction however many records it
   saves. `relays.sync` takes the relay servers to compare; the sync by the minute still compares

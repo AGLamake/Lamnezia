@@ -2,6 +2,7 @@ import hashlib
 import tarfile
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from django.conf import settings
@@ -73,6 +74,57 @@ def test_an_unfit_machine_is_refused(
     with pytest.raises(MoveError) as error:
         target.check()
     assert error.value.code == code
+
+
+def own_addresses(*lines: str) -> CommandResult:
+    return result(stdout="\n".join(lines).encode())
+
+
+THE_MACHINE = own_addresses("127.0.0.1/8", "::1/128", "203.0.113.5/24", "172.17.0.1/16")
+
+
+@pytest.mark.parametrize(
+    ("answers", "site_url"),
+    [
+        # The panel connects to its own public address.
+        ({"SSH_CONNECTION": result(stdout=b"203.0.113.5 50000 203.0.113.5 22")}, ""),
+        # The panel runs in a container of the machine: it comes from the docker bridge.
+        (
+            {
+                "SSH_CONNECTION": result(stdout=b"172.17.0.3 50000 203.0.113.5 22"),
+                "ip -o addr": own_addresses("203.0.113.5/24", "172.17.0.1/16", "172.17.0.3 "),
+            },
+            "",
+        ),
+        # The panel domain points to the machine.
+        ({}, "https://panel.example.com"),
+    ],
+)
+def test_the_machine_of_the_panel_is_refused_before_any_change(
+    answers: dict[str, CommandResult], site_url: str, ctx: OperationContext, settings: Any
+) -> None:
+    settings.SITE_URL = site_url or "http://localhost:8000"
+    machine_addresses = own_addresses("203.0.113.10/24") if site_url else THE_MACHINE
+    target, runner = machine(
+        ctx,
+        {**CLEAN, "[ -f /opt/lamnezia/.moving ]": result(0), "ip -o addr": machine_addresses}
+        | answers,
+    )
+
+    with pytest.raises(MoveError) as error:
+        target.check()
+    assert error.value.code == MoveErrorCode.SAME_MACHINE
+    assert "docker compose --profile caddy down" not in commands(runner)
+
+
+def test_another_machine_and_loopback_do_not_count_as_the_panel(
+    ctx: OperationContext, settings: Any
+) -> None:
+    settings.SITE_URL = "http://localhost:8000"
+    connection = result(stdout=b"198.51.100.7 50000 203.0.113.5 22")
+    target, _ = machine(ctx, {**CLEAN, "SSH_CONNECTION": connection, "ip -o addr": THE_MACHINE})
+
+    target.check()
 
 
 def test_a_copy_left_by_an_earlier_move_is_removed_first(ctx: OperationContext) -> None:

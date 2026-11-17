@@ -1,6 +1,7 @@
 """The new machine of a panel move: checks, the upload, the installer and the copy's state."""
 
 import hashlib
+import ipaddress
 import re
 import shlex
 from pathlib import Path
@@ -10,6 +11,7 @@ from django.utils.translation import gettext as _
 
 from apps.operations.services.context import OperationContext
 from apps.relocation.errors import MoveError, MoveErrorCode
+from apps.relocation.services.panel_machine import PanelMachine
 from apps.ssh.services import RemoteHost
 
 INSTALL_DIR = "/opt/lamnezia"
@@ -25,6 +27,15 @@ _PUBLISHED = re.compile(r":(\d+)->\d+/(tcp|udp)")
 _COLOR = re.compile(r"\x1b\[[0-9;]*m")
 _INSTALL_LOG_PREFIXES = ("==>", "Error:")
 _FAILURE_TAIL = 15
+# Addresses of the machine: its interfaces and its containers (the panel may be one of them).
+_OWN_ADDRESSES = """
+ip -o addr show 2>/dev/null | awk '{print $4}'
+if command -v docker >/dev/null; then
+    docker ps -q | xargs -r docker inspect \
+        -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' 2>/dev/null
+fi
+true
+"""
 
 # Takes back everything a move installed; install.sh --moving writes the certificate timer.
 _DISCARD = f"""
@@ -60,6 +71,7 @@ class TargetMachine:
     def check(self) -> None:
         """Refuse a machine the installer cannot use; a copy left by an earlier move goes."""
         self._host.check_privileges()
+        self._check_not_the_panel()
         if not self._host.sh("command -v apt-get").ok:
             raise MoveError(MoveErrorCode.UNSUPPORTED_SYSTEM)
         if self._host.sh(f"[ -f {MARKER} ]").ok:
@@ -146,6 +158,12 @@ class TargetMachine:
             f"python manage.py relocation {command} {self._move_id}"
         )
 
+    def _check_not_the_panel(self) -> None:
+        """Refuse the panel's own machine: the panel connects from it or its domain points there."""
+        panel = _addresses([self._host.client_address() or "", *PanelMachine.current().addresses])
+        if panel & _addresses(self._host.run(_OWN_ADDRESSES).split()):
+            raise MoveError(MoveErrorCode.SAME_MACHINE)
+
     def _check_disk(self) -> None:
         free = self._host.run("df -Pm / | awk 'NR == 2 {print $4}'").strip()
         if not free.isdigit() or int(free) < settings.RELOCATION_MIN_FREE_MB:
@@ -179,3 +197,16 @@ class TargetMachine:
         written = self._host.run(f"sha256sum {remote}").split()
         if not written or written[0] != digest.hexdigest():
             raise MoveError(MoveErrorCode.UPLOAD_FAILED, remote)
+
+
+def _addresses(values: list[str]) -> set[ipaddress.IPv4Address | ipaddress.IPv6Address]:
+    """IP addresses among the values («10.0.0.5/24» counts), without loopback and link-local."""
+    found = set()
+    for value in values:
+        try:
+            address = ipaddress.ip_address(value.split("/")[0].split("%")[0])
+        except ValueError:
+            continue
+        if not (address.is_loopback or address.is_link_local or address.is_unspecified):
+            found.add(address)
+    return found

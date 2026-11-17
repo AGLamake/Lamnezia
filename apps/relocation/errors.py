@@ -12,6 +12,7 @@ class MoveErrorCode(StrEnum):
     WRONG_STATE = "wrong_state"
     UNSUPPORTED_SYSTEM = "unsupported_system"
     TARGET_IN_USE = "target_in_use"
+    SAME_MACHINE = "same_machine"
     LOW_DISK = "low_disk"
     PORTS_BUSY = "ports_busy"
     UPLOAD_FAILED = "upload_failed"
@@ -40,6 +41,13 @@ MOVE_ERRORS: dict[MoveErrorCode, ErrorDescription] = {
         _(
             "The move installs the panel only on a machine without one. Remove /opt/lamnezia "
             "and /etc/nginx/sites-available/lamnezia there, or choose another machine."
+        ),
+    ),
+    MoveErrorCode.SAME_MACHINE: ErrorDescription(
+        _("The new machine is the machine this panel runs on."),
+        _(
+            "The panel connects to it from its own address. Choose another machine: the move "
+            "installs the panel there."
         ),
     ),
     MoveErrorCode.LOW_DISK: ErrorDescription(
