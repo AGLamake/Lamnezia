@@ -92,13 +92,25 @@ install_packages() {
 fetch_code() {
     if [ -d "$DIR/.git" ]; then
         log "Updating code in $DIR"
-        git -C "$DIR" fetch -q origin "$REF"
-        git -C "$DIR" checkout -q FETCH_HEAD
+        checkout_ref
     elif [ -f "$DIR/compose.yaml" ]; then
         log "Using code already in $DIR"
     else
         log "Downloading Lamnezia to $DIR"
         git clone -q --branch "$REF" "$REPO" "$DIR"
+    fi
+}
+
+# A branch is kept as a local branch tracking origin, so `git pull` works later;
+# a tag stays a fixed version.
+checkout_ref() {
+    if git -C "$DIR" ls-remote --exit-code --heads origin "$REF" >/dev/null; then
+        git -C "$DIR" fetch -q origin "+refs/heads/$REF:refs/remotes/origin/$REF"
+        git -C "$DIR" checkout -q -B "$REF" "origin/$REF"
+        git -C "$DIR" branch -q --set-upstream-to="origin/$REF" "$REF"
+    else
+        git -C "$DIR" fetch -q origin "+refs/tags/$REF:refs/tags/$REF"
+        git -C "$DIR" checkout -q "$REF"
     fi
 }
 

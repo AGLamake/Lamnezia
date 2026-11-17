@@ -46,7 +46,8 @@ curl -fsSL https://raw.githubusercontent.com/AGLamake/Lamnezia/releases/install.
 
 1. ставит `git`, `curl`, `openssl` и Docker, если их нет;
 2. скачивает последний релиз панели (ветка `releases`; другой тег или ветку задаёт `LAMNEZIA_REF`,
-   например `LAMNEZIA_REF=dev`) в `/opt/lamnezia`;
+   например `LAMNEZIA_REF=dev`) в `/opt/lamnezia`. Ветка остаётся локальной веткой, которая следит
+   за `origin`, так что дальше код обновляет `git pull`; тег ставит эту версию и на ней остаётся;
 3. создаёт `/opt/lamnezia/.env` со случайными секретами и свободным локальным портом;
 4. собирает и запускает контейнеры, ждёт, пока панель ответит;
 5. настраивает HTTPS:

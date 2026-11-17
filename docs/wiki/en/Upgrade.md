@@ -22,8 +22,14 @@ docker compose up -d --build
 Or run the installer again: it updates the code and keeps `.env`, the nginx site and the data.
 
 `git pull` follows the branch of the installation: `releases` holds only releases (the
-installer takes it), `dev` is the development branch. An installation made before 1.0 is on
-`main`, which is gone; move it to the releases once:
+installer takes it), `dev` is the development branch. The installer keeps the code on a local
+branch that tracks the same branch of `origin`, so `git pull` works after the installer runs again
+too. An installation on a tag (`LAMNEZIA_REF=vX.Y.Z`) stays on that version and `git pull` does not
+work on it — see "Releases".
+
+An installation made before 1.0 is on `main`, which is gone, and running an older installer again
+left the code on no branch (`git pull` answers "You are not currently on a branch"). Move such an
+installation to the releases once:
 
 ```bash
 git fetch origin releases

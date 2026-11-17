@@ -260,6 +260,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Title of a "server does not work" request with a topic**: such a request showed as
   "Server Helsinki is slow does not work"; it now shows its topic, the server separately, and keeps
   "Server … does not work" only for the quick report without a topic.
+- **`git pull` after running the installer again**: on an existing installation `install.sh` left
+  the code on no branch, so `git pull` from the upgrade guide failed. It now keeps a local branch
+  tracking `origin/<ref>` (`releases` by default); a tag in `LAMNEZIA_REF` still installs that fixed
+  version.
 - **Demo data ready for screenshots**: after `seed_demo` the portal shows traffic for the period
   (the plans now start a few days back), the demo chat has a support reply, and tickets and chat
   messages are written in the panel language.

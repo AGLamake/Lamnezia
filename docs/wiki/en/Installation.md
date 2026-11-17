@@ -46,7 +46,9 @@ The script:
 
 1. installs `git`, `curl`, `openssl` and Docker when missing;
 2. downloads the latest release of the panel (the `releases` branch; another tag or branch with
-   `LAMNEZIA_REF`, for example `LAMNEZIA_REF=dev`) to `/opt/lamnezia`;
+   `LAMNEZIA_REF`, for example `LAMNEZIA_REF=dev`) to `/opt/lamnezia`. A branch stays a local branch
+   tracking `origin`, so `git pull` updates the code later; a tag installs that version and stays
+   on it;
 3. creates `/opt/lamnezia/.env` with random secrets and a free local port;
 4. builds and starts the containers and waits for the panel to answer;
 5. sets up HTTPS:
