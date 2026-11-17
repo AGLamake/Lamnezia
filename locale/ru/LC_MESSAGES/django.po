@@ -879,6 +879,9 @@ msgstr "Создать группу"
 msgid "Created"
 msgstr "Создан"
 
+msgid "Created by"
+msgstr "Создал"
+
 msgid "Current password"
 msgstr "Текущий пароль"
 
@@ -2252,6 +2255,9 @@ msgstr "Ширина страницы"
 
 msgid "Pages"
 msgstr "Страницы"
+
+msgid "Paid among the orders found:"
+msgstr "Оплачено по найденным заказам:"
 
 msgid "Panel"
 msgstr "Панель"

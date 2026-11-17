@@ -23,12 +23,13 @@ class OrderListView(PageSizeMixin, AdminRequiredMixin, ListView):  # type: ignor
 
     def get_queryset(self) -> Any:
         self.filter_form = OrderFilterForm(self.request.GET or None)
-        return self.filter_form.filter(Order.objects.select_related("user", "plan"))
+        self.found = self.filter_form.filter(Order.objects.select_related("user", "plan"))
+        return self.found
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(
             filter_form=self.filter_form,
-            totals=paid_totals(self.object_list),
+            totals=paid_totals(self.found),
             refundable=[p.key for p in payment_providers.available() if p.refunds],
             **kwargs,
         )

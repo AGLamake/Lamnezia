@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   *stop the old copy* operation marks it in the journal, and the new `lamnezia-stop.timer` of
   `install.sh` runs `docker compose down`. The option is on by default and can be turned off in the
   move form or on the move progress screen. Older installs need `install.sh` run again for the timer.
+- **Payment totals in the orders list**: above the administrator's orders the paid ones among those
+  found are summed by currency, so a date filter gives the takings of the period.
+- **Who created an invite**: the administrator's list of invites in **Registration** names the
+  staff member who created each one.
+- **`LAMNEZIA_ORDER_EXPIRES_HOURS`** (24): how long an order waits for payment before it is marked
+  expired.
 - **XRay shortId change notice**: when the panel finds a new Reality shortId on an XRay server, the
   owners of keys shown before get the new `short_id_changed` notification: the keys added to the
   app no longer connect and must be imported again.
@@ -160,6 +166,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **No Plans link for moderators**: the admin menu of a moderator no longer links the plans page,
+  which only administrators may open.
+- **Subscription address in the portal app**: the `/sub/<token>` handler moved from `apps/keys`
+  to `apps/portal`; the address stays the same.
+
 - **DNS rebuild step name**: the operation now calls the step "Start the new container" instead of
   "Start the container on the new port".
 - **Panel move refuses the panel's own machine**: the form rejects a server whose address is the
@@ -197,6 +208,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with one `syncconf` instead of one per key.
 
 ### Fixed
+
+- **The limits turned on the keys of a blocked user**: in a new period or after an extension the
+  scheduled limit run turned back on the keys of a user blocked meanwhile; they now stay off.
+- **Moderator key quota race**: two keys issued at once from the admin interface could both pass a
+  moderator's key quota; the quota is now checked again with the moderator's row locked.
 
 - **Building the profiles of imported XRay keys failed at the end**: the profiles were saved, but
   the operation was marked failed.
