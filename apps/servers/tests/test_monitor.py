@@ -4,8 +4,11 @@ from datetime import datetime, timedelta
 
 import pytest
 from django.conf import settings
+from django.test import Client
 from django.utils import timezone
 
+from apps.accounts.models import Role
+from apps.accounts.tests.factories import UserFactory
 from apps.servers.models import Server, ServerSample
 from apps.servers.services.monitor import ServerMonitor, daily_history
 from apps.servers.tests.factories import ServerFactory
@@ -35,6 +38,12 @@ class FakeServers:
         yield RemoteHost(runner, TIMEOUTS)
 
 
+@pytest.fixture
+def admin_client(client: Client) -> Client:
+    client.force_login(UserFactory(role=Role.ADMIN))
+    return client
+
+
 def monitor(servers: FakeServers, at: datetime | None = None) -> ServerMonitor:
     return ServerMonitor(WEEK, servers.connect, clock=lambda: at or timezone.now())
 
@@ -57,6 +66,29 @@ def test_an_answering_server_is_online_with_its_metrics() -> None:
     assert sample.stopped_containers == ["amnezia-xray", "lamnezia-probe"]
     assert sample.stopped_vpn_containers == ["amnezia-xray"]
     assert sample.cpu_percent is None
+
+
+def test_awg3_settings_dropped_by_the_kernel_module_show_on_the_server_card(
+    admin_client: Client,
+) -> None:
+    server = ServerFactory()
+
+    sample = monitor(FakeServers(OUTPUT + "@@lamnezia-awg3\ndropped\n")).poll(server)
+
+    assert sample.awg3_dropped
+    assert sample.containers[0] == {
+        "name": "amnezia-awg2",
+        "state": "running",
+        "awg3_dropped": True,
+    }
+    html = admin_client.get(f"/servers/{server.pk}/").content.decode()
+    assert "AmneziaWG runs without the 3.1 settings" in html
+
+
+def test_a_server_without_dropped_settings_shows_nothing() -> None:
+    sample = monitor(FakeServers()).poll(ServerFactory())
+
+    assert not sample.awg3_dropped
 
 
 def test_cpu_load_comes_from_the_previous_reading() -> None:

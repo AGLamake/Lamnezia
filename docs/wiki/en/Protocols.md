@@ -126,8 +126,11 @@ An AmneziaWG 2.0 card (installed by the panel or imported from the Amnezia app) 
    reissued as well.
 
 If the image is not built, AmneziaWG does not start, or the kernel module drops the 3.1 parameters,
-the old container comes back and the server stays on 2.0 with the same keys. The header protection
-key is not written to the operation log or the audit log. Clients are offline for a few minutes and
+the old container comes back and the server stays on 2.0 with the same keys. When AmneziaWG
+refuses the config, the error says why: the image does not know a parameter (the log names the
+parameter, not its value) or S1–S4 are below 12 next to the header protection key. After a
+successful move the old image, left without a name, is removed. The header protection key is not
+written to the operation log or the audit log. Clients are offline for a few minutes and
 need an app version from the table above. Repeating the operation on a server already moved only
 updates the panel.
 
@@ -142,7 +145,8 @@ operation:
    new peers in one change of `awg0.conf` and `clientsTable`;
 3. notifies the owners (`keys_moved`): each user imports the new key from the personal account.
 
-The old container and its keys keep working, so the clients switch when they are ready. Disabled
+If the server has the [TSO/GSO workaround](#tsogso-workaround) on, the new container gets it at
+once. The old container and its keys keep working, so the clients switch when they are ready. Disabled
 keys get disabled new keys and come back together. If a key is issued on the old container later,
 run the move again: it gives new keys only to the clients that have none. An `amnezia-awg2` still on
 2.0 must be moved to 3.1 first; one removed with its backup kept must be restored or the backup
@@ -244,8 +248,8 @@ The services of the app are installed from the same list, with its scripts (`ser
   DNS address the VPN containers give their clients. It has no port to choose. A DNS container
   the app built does not turn the query logs off, so the server card marks it **built by the
   app** and offers **Rebuild**: the panel builds a new image from its own Dockerfile while the old
-  container still answers, then swaps the containers; if the new one does not start, the old one
-  comes back.
+  container still answers, then swaps the containers and removes the old image; if the new one
+  does not start, the old one comes back.
 - **SFTP file sharing** (`amnezia-sftp`) listens on TCP `222` by default. The panel creates the
   user `sftp_user` with a random 16-character password, as the app does.
 - **Website in Tor network** (`amnezia-torwebsite`) gets an onion address from Tor. It publishes
@@ -364,7 +368,11 @@ tells no owner to import the key. **Apply** starts an operation:
 
 - **Parameters only.** The `[Interface]` of `awg0.conf` is rewritten and AmneziaWG is restarted in
   the same container (`awg-quick down`/`up`). Peers, the server key and `clientsTable` stay. If awg
-  refuses the new config, the old one is put back.
+  refuses the new config, the old one is put back, and the error says whether the image does not
+  know a parameter (move the server to 3.1) or S1–S4 are below 12 with `HeaderProtectionKey`.
+  After the restart the panel checks that `awg show awg0` has the `header protection key` line:
+  a kernel module older than 3.1 drops the 3.1 parameters without an error, and the old config
+  comes back then too.
 - **New port.** The container has to be recreated, because the port is published by docker. The panel
   checks the port is free, saves the server files, renames the old container to
   `amnezia-awg2-previous` and stops it, starts a new one on the new port and writes the files into
@@ -376,6 +384,9 @@ tells no owner to import the key. **Apply** starts an operation:
   container comes back with the old addresses. The subnet must be private, from `/16` to the
   current size (all clients must fit), and must not overlap another subnet of the server.
 - **DNS only.** The server is not touched: DNS goes only into the client profiles.
+
+The header protection key is not written to the operation parameters, its log or the audit log,
+neither for a protocol nor for a [group](Server-groups.md).
 
 Then the profiles of all issued keys are updated, and their owners get the **Keys must be imported
 again** notification. Keys imported from the server have no private key in the panel, so their

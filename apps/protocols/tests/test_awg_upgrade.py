@@ -1,5 +1,3 @@
-import json
-
 import pytest
 from django.test import Client
 from django.urls import reverse
@@ -14,7 +12,7 @@ from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.profile import ServerProfile
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
-from apps.operations.models import Operation, OperationStatus, OperationStep
+from apps.operations.models import Operation, OperationStatus
 from apps.protocols.errors import SetupErrorCode
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.services.awg_upgrade import UPGRADE_KIND, can_upgrade, start_awg_upgrade
@@ -24,24 +22,12 @@ from apps.protocols.tests.awg_case import (
     Start,
     fixture,
     issued_key,
+    secrets_written,
     server_config,
 )
 from apps.protocols.tests.fake_awg import FakeAwgServer
 
 pytestmark = pytest.mark.django_db
-
-
-def secrets_written(operation: Operation, key: str) -> list[str]:
-    """Where the operation, its steps or the audit carry `key`."""
-    places = {
-        "params": json.dumps(operation.params),
-        "error": operation.error_message + operation.error_hint,
-        "steps": "".join(
-            OperationStep.objects.filter(operation=operation).values_list("log", flat=True)
-        ),
-        "audit": json.dumps(list(AuditEvent.objects.values_list("data", flat=True))),
-    }
-    return [place for place, text in places.items() if key in text]
 
 
 def test_server_moves_to_awg3_with_its_keys_and_clients(
@@ -74,12 +60,24 @@ def test_server_moves_to_awg3_with_its_keys_and_clients(
     assert ServerProfile.from_json(key.profile).params == config.awg_params
     assert Notification.objects.get(event=Event.KEYS_CHANGED).user == key.user
     assert secrets_written(operation, config.awg_params["HeaderProtectionKey"]) == []
+    assert connected.removed_images == ["sha256:first"]
 
 
-FAULTS = {
-    SetupErrorCode.AWG_NOT_RUNNING: ("awg_starts", False),
-    SetupErrorCode.AWG3_DROPPED: ("drops_awg3", True),
-    SetupErrorCode.IMAGE_BUILD_FAILED: ("build_error", b"no space left on device"),
+UNRECOGNIZED = (
+    b"Line unrecognized: `HeaderProtectionKey = c2VjcmV0LWtleQ=='\nConfiguration parsing error\n"
+)
+FAULTS: dict[SetupErrorCode, dict[str, object]] = {
+    SetupErrorCode.AWG_NOT_RUNNING: {"awg_starts": False},
+    SetupErrorCode.AWG3_DROPPED: {"drops_awg3": True},
+    SetupErrorCode.AWG_IMAGE_OUTDATED: {
+        "awg_refuses": "HeaderProtectionKey",
+        "refusal": UNRECOGNIZED,
+    },
+    SetupErrorCode.AWG_PADDING_REFUSED: {
+        "awg_refuses": "HeaderProtectionKey",
+        "refusal": b"Unable to modify interface: Invalid argument\n",
+    },
+    SetupErrorCode.IMAGE_BUILD_FAILED: {"build_error": b"no space left on device"},
 }
 
 
@@ -93,12 +91,15 @@ def test_failed_upgrade_leaves_the_server_on_awg2(
 ) -> None:
     key = issued_key(instance)
     profile = key.profile
-    setattr(connected, *FAULTS[code])
+    for name, value in FAULTS[code].items():
+        setattr(connected, name, value)
 
     operation = start(lambda: start_awg_upgrade(instance, admin, reissue=False))
 
     assert operation.status == OperationStatus.FAILED
     assert operation.error_code == code
+    assert secrets_written(operation, "c2VjcmV0LWtleQ") == []
+    assert connected.removed_images == []
     assert connected.container_state == "running"
     assert connected.published_port == 55424
     assert connected.container_files[AWG_CONFIG_PATH] == fixture("awg0.conf")

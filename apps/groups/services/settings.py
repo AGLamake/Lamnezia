@@ -73,7 +73,8 @@ def start_group_settings(
             **settings.to_params(),
         }
         operation = launch(SETTINGS_KIND, params, user=user, subject=str(group))
-        audit.log(SETTINGS_KIND, actor=user, target=group, data=params, ip=ip)
+        data = Operation.without_secrets(params)
+        audit.log(SETTINGS_KIND, actor=user, target=group, data=data, ip=ip)
     return operation
 
 

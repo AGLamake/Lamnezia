@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -24,7 +26,7 @@ class Operation(models.Model):
     `rotate_encryption_key` re-encrypts it too and a retry after the rotation still reads it.
     """
 
-    SECRET_PARAMS = ("password_token",)
+    SECRET_PARAMS = ("password_token", "header_protection_key_token")
 
     kind = models.CharField(_("kind"), max_length=100)
     subject = models.CharField(_("subject"), max_length=200, blank=True)
@@ -66,6 +68,11 @@ class Operation(models.Model):
 
     def __str__(self) -> str:
         return f"{self.kind} #{self.pk}"
+
+    @classmethod
+    def without_secrets(cls, params: dict[str, Any]) -> dict[str, Any]:
+        """The params fit for the audit journal: the encrypted secrets left out."""
+        return {key: value for key, value in params.items() if key not in cls.SECRET_PARAMS}
 
     @property
     def is_finished(self) -> bool:

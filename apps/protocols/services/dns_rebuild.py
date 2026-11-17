@@ -4,7 +4,8 @@ The app builds amnezia-dns from its own Dockerfile, whose forward-records.conf s
 the logs; the panel's Dockerfile turns them off there (upstream/dns/Dockerfile). The import notes
 a DNS container without these lines, and the server card offers to rebuild it. The new image is
 built first, while the old container still answers; then the old container is set aside and a
-new one runs as upstream run_container.sh starts it. If it does not run, the old one comes back.
+new one runs as upstream run_container.sh starts it. If it does not run, the old one comes back;
+if it does, the old image, left without a name, is removed.
 """
 
 from contextlib import ExitStack
@@ -56,11 +57,13 @@ class DnsRebuild:
                 raise SetupError(SetupErrorCode.DNS_NOT_RUNNING, DNS_CONTAINER)
             installer = DnsInstaller(self._host, self._ctx, port=DNS_PORT, logs=docker.keeps_log())
             with self._ctx.step(_("Build the image")):
+                old_image = docker.image_id()
                 docker.build(upstream_file("dns/Dockerfile"))
             with ContainerSwap(self._host, self._ctx, docker).replace():
                 docker.run_container(installer.run_arguments())
                 if docker.state() != "running":
                     raise SetupError(SetupErrorCode.CONTAINER_START_FAILED, DNS_CONTAINER)
+            docker.remove_old_image(old_image)
             with self._ctx.step(_("Read the service")):
                 running = RunningContainer(DNS_CONTAINER, DNS_PORT, str(installer.transport))
                 ServiceFiles.read(self._host, running).save(

@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   servers, keys and SSH credentials. Archives are kept in the new `archives` volume, the newest
   `LAMNEZIA_PANEL_ARCHIVE_KEEP` (3) stay; downloads and removals are audited. The image now has
   the PostgreSQL 17 client and is based on Debian trixie.
+- **AmneziaWG 3.1 diagnostics**: when `awg-quick up` refuses the config, the error says whether the
+  image does not know a parameter (move the server to 3.1) or S1–S4 are below 12 next to
+  `HeaderProtectionKey`; the refused line goes to the log with the parameter name only. After
+  every start the panel compares `awg show awg0` with `awg0.conf`: a kernel module older than 3.1
+  that dropped the 3.1 parameters fails the change, and the monitor marks the server card.
+- **Old images are removed**: the move to AmneziaWG 3.1 and the rebuild of AmneziaDNS remove the
+  image left without a name.
+- **TSO/GSO workaround after the move from legacy AmneziaWG**: a server with the workaround on
+  applies it to the new `amnezia-awg2` at once.
 - **Wiki page about server groups and the relay**, moved out of *Servers and import*, with the
   measured switching times: 12-14 s to switch and 17-22 s without connection when the active
   member fails, 11-14 s for a planned switch, with the default timers.

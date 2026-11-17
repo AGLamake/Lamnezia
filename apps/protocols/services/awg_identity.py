@@ -5,6 +5,7 @@ Shared by the groups (join, catch-up, leave) and the snapshot restore of the bac
 """
 
 from collections.abc import Iterable, Mapping
+from contextlib import suppress
 
 from django.db import transaction
 from django.utils import timezone
@@ -18,7 +19,7 @@ from apps.keys.models import GONE_STATUSES, AccessKey, KeyStatus
 from apps.notifications.events import Event
 from apps.notifications.services.delivery import emit
 from apps.operations.services.context import OperationContext
-from apps.protocols.errors import SetupError, SetupErrorCode
+from apps.protocols.errors import SetupError
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.services.awg_container import AwgContainer
 from apps.protocols.services.awg_settings import kept_files
@@ -40,21 +41,22 @@ class AwgFiles:
         previous = {
             path: shell.read_file(path) for path in kept_files(AWG2) if self._docker.has_file(path)
         }
-        if self._bring_up(files):
-            self._docker.check_header_protection()
-            return
-        if self._bring_up(previous):
-            self._ctx.log(_("The VPN interface runs with the old files again."))
-        raise SetupError(SetupErrorCode.AWG_NOT_RUNNING, AWG2.interface)
+        try:
+            self._bring_up(files)
+        except SetupError:
+            with suppress(SetupError):
+                self._bring_up(previous, check=False)
+                self._ctx.log(_("The VPN interface runs with the old files again."))
+            raise
 
     def write_clients_table(self, text: str) -> None:
         """Only the client list differs: it is written alone, the interface keeps running."""
         self._docker.shell.write_file_atomic(AWG2.clients_table_path, text.encode())
 
-    def _bring_up(self, files: Mapping[str, bytes]) -> bool:
+    def _bring_up(self, files: Mapping[str, bytes], *, check: bool = True) -> None:
         for path, data in files.items():
             self._docker.shell.write_file_atomic(path, data)
-        return self._docker.restart_awg()
+        self._docker.restart_awg(check=check)
 
 
 @transaction.atomic

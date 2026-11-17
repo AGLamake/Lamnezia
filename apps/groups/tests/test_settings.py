@@ -5,6 +5,7 @@ from django.test import Client
 
 from amnezia_core.awg import AwgServerConfig
 from amnezia_core.awg_install import DEFAULT_TIMERS, SHORT_TIMERS
+from amnezia_core.keys import KeyPair
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
 from apps.groups.errors import GroupError, GroupErrorCode
@@ -29,7 +30,7 @@ from apps.protocols.errors import SetupErrorCode
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.services.awg_settings import AwgSettings
 from apps.protocols.services.settings_change import start_settings_change
-from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
+from apps.protocols.tests.awg_case import OnCommit, Start, issued_key, secrets_written
 
 pytestmark = pytest.mark.django_db
 
@@ -105,6 +106,17 @@ def test_new_parameters_reach_every_member_and_keep_them_clones(
     assert config(servers, JOINER_HOST).awg_params["Jc"] == "7"
     assert not lagging(joined)
     assert {instance.params["Jc"] for instance in ProtocolInstance.objects.all()} == {"7"}
+
+
+def test_header_protection_key_stays_out_of_the_params_and_the_audit(
+    servers: Fakes, joined: GroupMember, change: Change
+) -> None:
+    key = KeyPair.generate().private_key
+    operation = change(params={"HeaderProtectionKey": key})
+
+    succeeded(operation)
+    assert config(servers, JOINER_HOST).awg_params["HeaderProtectionKey"] == key
+    assert secrets_written(operation, key) == []
 
 
 def test_new_subnet_moves_every_member_into_it(

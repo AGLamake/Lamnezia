@@ -101,6 +101,27 @@ class ProtocolContainer:
     def has_image(self) -> bool:
         return self._host.sh(shlex.join(["docker", "image", "inspect", self.name])).ok
 
+    def image_id(self) -> str:
+        """The ID of the image the container name stands for; empty if there is none."""
+        result = self._host.sh(
+            shlex.join(["docker", "image", "inspect", "--format", "{{.Id}}", self.name])
+        )
+        return result.output.strip() if result.ok else ""
+
+    def remove_old_image(self, image_id: str) -> None:
+        """Remove the image `image_id` a rebuild left without a name; a failure only is logged.
+
+        The new container runs from the new image, so the old one is of no use.
+        """
+        if not image_id or image_id == self.image_id():
+            return
+        with self._ctx.step(_("Remove the old image")):
+            result = self._host.sh(shlex.join(["docker", "rmi", image_id]))
+            if result.ok:
+                self._ctx.log(_("The old image is removed."))
+            else:
+                log_tail(self._ctx, result)
+
     def build(self, dockerfile: str) -> None:
         """Upload the Dockerfile and build the image, as upstream build_container.sh does."""
         folder = container_variables(self.name)["$DOCKERFILE_FOLDER"]

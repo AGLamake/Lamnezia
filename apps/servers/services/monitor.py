@@ -5,16 +5,24 @@ from collections.abc import Callable
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from typing import Any
 
 from django.db.models import Avg, Count, ExpressionWrapper, F, FloatField, Max, Min, Q
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
+from amnezia_core.containers import AWG2
 from apps.notifications.events import Event
 from apps.notifications.services.trouble import report_recovery, report_trouble
 from apps.servers.models import Server, ServerSample
 from apps.servers.services.connection import connect
-from apps.servers.services.metrics import METRICS_SCRIPT, CpuTimes, HostMetrics, parse_metrics
+from apps.servers.services.metrics import (
+    METRICS_SCRIPT,
+    ContainerState,
+    CpuTimes,
+    HostMetrics,
+    parse_metrics,
+)
 from apps.ssh.errors import SshError
 from apps.ssh.services import RemoteHost
 
@@ -97,7 +105,7 @@ def _sample(server: Server, metrics: HostMetrics, at: datetime) -> ServerSample:
         disk_total=metrics.disk_total,
         disk_free=metrics.disk_free,
         uptime=metrics.uptime,
-        containers=[{"name": c.name, "state": c.state} for c in metrics.containers],
+        containers=[_container(c, metrics) for c in metrics.containers],
     )
 
 
@@ -149,3 +157,10 @@ def daily_history(server: Server, days: int) -> list[DayHealth]:
         )
         for row in rows
     ]
+
+
+def _container(container: ContainerState, metrics: HostMetrics) -> dict[str, Any]:
+    entry: dict[str, Any] = {"name": container.name, "state": container.state}
+    if metrics.awg3_dropped and container.name == AWG2.name:
+        entry["awg3_dropped"] = True
+    return entry

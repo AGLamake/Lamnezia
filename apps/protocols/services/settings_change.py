@@ -48,5 +48,5 @@ def start_settings_change(
         **settings.to_params(),
     }
     operation = launch(settings.kind, params, user=user, subject=str(instance))
-    audit.log(settings.kind, actor=user, target=instance, data=params)
+    audit.log(settings.kind, actor=user, target=instance, data=Operation.without_secrets(params))
     return operation

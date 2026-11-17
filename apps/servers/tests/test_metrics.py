@@ -1,4 +1,10 @@
-from apps.servers.services.metrics import ContainerState, CpuTimes, HostMetrics, parse_metrics
+from apps.servers.services.metrics import (
+    METRICS_SCRIPT,
+    ContainerState,
+    CpuTimes,
+    HostMetrics,
+    parse_metrics,
+)
 
 OUTPUT = """\
 @@lamnezia-stat
@@ -41,6 +47,16 @@ def test_values_the_server_did_not_report_stay_unknown() -> None:
     output = "@@lamnezia-stat\n@@lamnezia-disk\nsomething odd\n@@lamnezia-containers\n"
 
     assert parse_metrics(output) == HostMetrics()
+
+
+def test_awg3_settings_dropped_by_the_kernel_module_are_reported() -> None:
+    assert parse_metrics(OUTPUT + "@@lamnezia-awg3\ndropped\n").awg3_dropped
+    assert not parse_metrics(OUTPUT + "@@lamnezia-awg3\n").awg3_dropped
+
+
+def test_the_script_checks_the_awg3_settings_of_amnezia_awg2() -> None:
+    assert "docker exec amnezia-awg2 sh -c" in METRICS_SCRIPT
+    assert "awg show awg0 | grep -q 'header protection key'" in METRICS_SCRIPT
 
 
 def test_cpu_load_is_the_busy_share_between_two_readings() -> None:

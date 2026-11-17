@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from amnezia_core.awg import AwgServerConfig
 from amnezia_core.containers import AWG2, WgContainer
 from amnezia_core.keys import KeyPair
+from apps.protocols.services import offload_scripts
+from apps.protocols.tests.fake_offload_host import FakeOffloadHost
 from apps.protocols.tests.fakes import FakeDebianServer
 from apps.ssh.services import CommandResult
 from apps.ssh.tests.fakes import result
@@ -17,6 +19,14 @@ _EMPTY_VALUE = re.compile(r"^[^=]*= *$")
 _PSK = "c2VjcmV0LXByZXNoYXJlZC1rZXktZm9yLXRlc3RzLTA="
 _SCRIPT_LINE_END = ";\\\n"
 _MISSING_EXIT = re.compile(r"\|\| exit (\d+);")
+_OFFLOAD_SCRIPTS = (
+    offload_scripts.STATUS,
+    offload_scripts.ENABLE,
+    offload_scripts.DISABLE,
+    offload_scripts.HAS_SYSTEMD,
+    offload_scripts.MISSING_COMMANDS,
+)
+_OFFLOAD_FILES = tuple(path for path, _content, _mode in offload_scripts.FILES)
 
 
 @dataclass
@@ -40,11 +50,14 @@ class FakeAwgServer(FakeDebianServer):
     host_files: dict[str, bytes] = field(default_factory=dict)
     awg_up: bool = False
     awg_starts: bool = True
-    # What `<tool>-quick up` must find in the config to bring the interface up.
+    # What `<tool>-quick up` must find in the config to refuse it, and what it then prints.
     awg_refuses: str = ""
+    refusal: bytes = b"Configuration parsing error\n"
     # An old amneziawg kernel module brings the interface up without the 3.x settings.
     drops_awg3: bool = False
     has_image: bool = True
+    image_id: str = "sha256:first"
+    removed_images: list[str] = field(default_factory=list)
     published_port: int | None = None
     # `--log-driver` of the running container: Amnezia runs it with none.
     log_driver: str = "none"
@@ -59,6 +72,8 @@ class FakeAwgServer(FakeDebianServer):
         b"Error response from daemon: configured logging driver does not support reading\n"
     )
     server_keys: KeyPair = field(default_factory=KeyPair.generate)
+    # The TSO/GSO workaround of the host: its scripts are answered by this fake.
+    offload: FakeOffloadHost = field(default_factory=lambda: FakeOffloadHost(interfaces={}))
 
     def run(
         self, command: str, *, stdin: bytes = b"", timeout: float | None = None
@@ -99,6 +114,8 @@ class FakeAwgServer(FakeDebianServer):
         return self._on_host(script, command, stdin)
 
     def _on_host(self, script: str, command: str, stdin: bytes) -> CommandResult:
+        if script in _OFFLOAD_SCRIPTS or any(path in script for path in _OFFLOAD_FILES):
+            return self.offload.run(command, stdin=stdin)
         if script == "uname -r":
             return result(stdout=f"{self.kernel}\n".encode())
         if script.startswith("lsof "):
@@ -139,12 +156,16 @@ class FakeAwgServer(FakeDebianServer):
         return None
 
     def _show(self, script: str) -> CommandResult:
-        """`awg show`: up while AWG runs; prints the header protection key of AWG 3.x."""
+        """`awg show`: up while AWG runs; prints the header protection key of AWG 3.x.
+
+        The check of the key passes for a config without one.
+        """
         if "header protection key" not in script:
             return result(0 if self.awg_up else 1)
         config = self.container_files.get(self.kind.config_path, b"")
-        applied = b"HeaderProtectionKey" in config and not self.drops_awg3
-        return result(0 if self.awg_up and applied else 1)
+        if b"HeaderProtectionKey" not in config:
+            return result()
+        return result(0 if self.awg_up and not self.drops_awg3 else 1)
 
     def _dump(self) -> str:
         """`show all dump` after syncconf: the interface has the peers of the config."""
@@ -180,7 +201,9 @@ class FakeAwgServer(FakeDebianServer):
             return result()
         config = self.container_files[self.kind.config_path].decode()
         if self.awg_refuses and self.awg_refuses in config:
-            return result(1, stderr=b"Line unrecognized\n")
+            return result(1, stderr=b"[#] awg setconf awg0 /dev/fd/63\n" + self.refusal)
+        if not self.awg_starts:
+            return result(1, stderr=b"RTNETLINK answers: Operation not permitted\n")
         self.awg_up = True
         self.awg_starts_count += 1
         return result()
@@ -202,6 +225,7 @@ class FakeAwgServer(FakeDebianServer):
         if self.build_error:
             return result(1, stderr=self.build_error)
         self.has_image = True
+        self.image_id = f"sha256:build-{len(self.docker_calls)}"
         return result()
 
     def _docker_run(self, words: list[str]) -> CommandResult:
@@ -228,7 +252,9 @@ class FakeAwgServer(FakeDebianServer):
         return result()
 
     def _docker_image(self, words: list[str]) -> CommandResult:
-        return result(0 if self.has_image else 1)
+        if not self.has_image:
+            return result(1)
+        return result(stdout=f"{self.image_id}\n".encode() if "--format" in words else b"")
 
     def _docker_stop(self, words: list[str]) -> CommandResult:
         if words[-1] == self.previous_name:
@@ -270,6 +296,10 @@ class FakeAwgServer(FakeDebianServer):
         return self._docker_start(words)
 
     def _docker_rmi(self, words: list[str]) -> CommandResult:
+        if words[-1].startswith("sha256:"):
+            assert words[-1] != self.image_id, "the image is in use"
+            self.removed_images.append(words[-1])
+            return result()
         assert not self.container_state, "the image is in use"
         self.has_image = False
         return result()
@@ -288,7 +318,9 @@ class FakeAwgServer(FakeDebianServer):
         return f"{self.kind.tool}-quick"
 
     def _starts_interface(self, start_script: bytes) -> bool:
-        return f"{self._quick} up".encode() in start_script
+        config = self.container_files.get(self.kind.config_path, b"").decode()
+        refused = bool(self.awg_refuses) and self.awg_refuses in config
+        return f"{self._quick} up".encode() in start_script and not refused
 
 
 def _target(script: str) -> str:

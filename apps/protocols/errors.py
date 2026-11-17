@@ -19,6 +19,8 @@ class SetupErrorCode(StrEnum):
     CONTAINER_START_FAILED = "container_start_failed"
     AWG_NOT_RUNNING = "awg_not_running"
     AWG3_DROPPED = "awg3_dropped"
+    AWG_IMAGE_OUTDATED = "awg_image_outdated"
+    AWG_PADDING_REFUSED = "awg_padding_refused"
     PREVIOUS_CONTAINER_LEFT = "previous_container_left"
     CONTAINER_NOT_REMOVED = "container_not_removed"
     DATA_VOLUME_LEFT = "data_volume_left"
@@ -101,6 +103,20 @@ SETUP_ERRORS: dict[SetupErrorCode, ErrorDescription] = {
             "The server probably has an old amneziawg kernel module: it drops the new settings "
             "without an error. Update or unload the module and try again. The server stays on "
             "AmneziaWG 2.0."
+        ),
+    ),
+    SetupErrorCode.AWG_IMAGE_OUTDATED: ErrorDescription(
+        _("The AmneziaWG image of the container does not know a parameter of the config."),
+        _(
+            "The image was built before AmneziaWG 3.1. Move the server to 3.1 with the button "
+            "on the server page: it builds a fresh image. The step log names the parameter."
+        ),
+    ),
+    SetupErrorCode.AWG_PADDING_REFUSED: ErrorDescription(
+        _("AmneziaWG refused the config: Invalid argument."),
+        _(
+            "With HeaderProtectionKey each of S1-S4 must be at least 12. Change them in the "
+            "protocol settings and try again."
         ),
     ),
     SetupErrorCode.PREVIOUS_CONTAINER_LEFT: ErrorDescription(

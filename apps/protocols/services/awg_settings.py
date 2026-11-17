@@ -11,7 +11,7 @@ subnet when the container starts; the server and every client keep their host pa
 """
 
 from collections.abc import Callable, Mapping
-from contextlib import ExitStack
+from contextlib import ExitStack, suppress
 from dataclasses import dataclass, replace
 from functools import partial
 from ipaddress import IPv4Address, IPv4Interface, IPv4Network
@@ -29,15 +29,19 @@ from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.profile import ServerProfile
 from apps.keys.services.reissue import KeyReissue
 from apps.operations.services.context import OperationContext
-from apps.protocols.errors import SetupError, SetupErrorCode
+from apps.protocols.errors import SetupError
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.services.awg_container import AwgContainer
 from apps.protocols.services.container import Transport
 from apps.protocols.services.container_swap import ContainerSwap
 from apps.protocols.signals import keys_changed
+from apps.ssh.encryption import SecretCipher
 from apps.ssh.services import RemoteHost
 
 SETTINGS_KIND = "protocols.change_settings"
+_HPK = "HeaderProtectionKey"
+# Operation.SECRET_PARAMS: the key is kept out of the params and the audit journal.
+_HPK_TOKEN = "header_protection_key_token"
 
 
 def kept_files(kind: WgContainer) -> tuple[str, ...]:
@@ -99,16 +103,25 @@ class AwgSettings:
         primary, secondary = data["dns"]
         logs = data.get("logs", False)
         subnet = data.get("subnet", "")
-        return cls(data["port"], dict(data["params"]), (primary, secondary), logs, subnet)
+        params = dict(data["params"])
+        if token := data.get(_HPK_TOKEN):
+            params[_HPK] = SecretCipher.from_settings().decrypt(token)
+        return cls(data["port"], params, (primary, secondary), logs, subnet)
 
     def to_params(self) -> dict[str, Any]:
-        return {
+        """HeaderProtectionKey goes in encrypted, outside `params`: it is a secret."""
+        params = dict(self.params)
+        key = params.pop(_HPK, "")
+        data: dict[str, Any] = {
             "port": self.port,
-            "params": self.params,
+            "params": params,
             "dns": list(self.dns),
             "logs": self.logs,
             "subnet": self.subnet,
         }
+        if key:
+            data[_HPK_TOKEN] = SecretCipher.from_settings().encrypt(key)
+        return data
 
     def within(self, current: "AwgSettings") -> "AwgSettings":
         """These settings with the subnet of `current` if they have none."""
@@ -182,15 +195,11 @@ class AwgReconfiguration:
                 return config
             with self._ctx.step(_("Build the image with AmneziaWG 3.1")):
                 # The running container keeps its old image until the new one replaces it.
+                old_image = self._docker.image_id()
                 self._docker.build_image()
             config.update_interface(port, upgraded_awg_params(config.awg_params))
-            self._move(
-                config,
-                port,
-                logs=self._docker.keeps_log(),
-                check_port=False,
-                verify=self._docker.check_header_protection,
-            )
+            self._move(config, port, logs=self._docker.keeps_log(), check_port=False)
+            self._docker.remove_old_image(old_image)
         return config
 
     def _renumber(self, config: AwgServerConfig, subnet: str) -> bool:
@@ -206,15 +215,17 @@ class AwgReconfiguration:
 
     def _restart(self, text: str, *, previous: str) -> None:
         """Bring the interface up with the new file; if it does not come up, with the old one."""
-        if self._bring_up(text):
-            return
-        if self._bring_up(previous):
-            self._ctx.log(_("The VPN interface runs with the old settings again."))
-        raise SetupError(SetupErrorCode.AWG_NOT_RUNNING, self._kind.interface)
+        try:
+            self._bring_up(text)
+        except SetupError:
+            with suppress(SetupError):
+                self._bring_up(previous, check=False)
+                self._ctx.log(_("The VPN interface runs with the old settings again."))
+            raise
 
-    def _bring_up(self, text: str) -> bool:
+    def _bring_up(self, text: str, *, check: bool = True) -> None:
         self._docker.shell.write_file_atomic(self._kind.config_path, text.encode())
-        return self._docker.restart_awg()
+        self._docker.restart_awg(check=check)
 
     def _move(
         self,
@@ -223,11 +234,11 @@ class AwgReconfiguration:
         *,
         logs: bool,
         check_port: bool,
-        verify: Callable[[], None] | None = None,
     ) -> None:
         """A new container with the files of the old one; its own port needs no check.
 
-        `verify` checks the running interface; if it raises, the old container comes back.
+        If the interface does not come up with the settings of the config, the old container
+        comes back.
         """
         with self._ctx.step(_("Save the server files")):
             files = {
@@ -245,8 +256,6 @@ class AwgReconfiguration:
             for path, data in files.items():
                 self._docker.shell.write_file_atomic(path, data)
             self._docker.start_awg(config.address.network)
-            if verify:
-                verify()
 
 
 class InstanceSettings:

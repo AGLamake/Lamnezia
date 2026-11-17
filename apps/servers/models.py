@@ -243,6 +243,11 @@ class ServerSample(models.Model):
         return [name for name in self.stopped_containers if name != PROBE_CONTAINER]
 
     @property
+    def awg3_dropped(self) -> bool:
+        """amnezia-awg2 runs without the AmneziaWG 3.1 settings: its kernel module is older."""
+        return any(c.get("awg3_dropped") for c in self.containers)
+
+    @property
     def probe_running(self) -> bool:
         return any(
             c["name"] == PROBE_CONTAINER and c["state"] == "running" for c in self.containers

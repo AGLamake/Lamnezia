@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from amnezia_core.containers import AWG2
 from apps.servers.models import PROBE_CONTAINER
 
 _MARKER = "@@lamnezia-"
@@ -9,6 +10,14 @@ _CONTAINER_PREFIX = "amnezia"
 # cpu user nice system idle iowait irq softirq steal guest guest_nice; guest time is already
 # counted in user, so only the first eight fields add up to the total.
 _CPU_FIELDS = 8
+# AmneziaWG 3.1 settings in awg0.conf that the running interface lacks: a kernel module older
+# than 3.1 accepts the config and drops them.
+_AWG3_DROPPED = (
+    f"grep -q '^[[:space:]]*HeaderProtectionKey' {AWG2.config_path}"
+    f" && {AWG2.tool} show {AWG2.interface} >/dev/null 2>&1"
+    f" && ! {AWG2.tool} show {AWG2.interface} | grep -q 'header protection key'"
+    " && echo dropped"
+)
 
 # One SSH command per reading. CPU load comes from the difference between two readings, so the
 # script does not sleep to measure it. Docker may be missing: then the container list is empty.
@@ -18,6 +27,7 @@ METRICS_SCRIPT = (
     f"echo {_MARKER}uptime; cat /proc/uptime\n"
     f"echo {_MARKER}disk; df -Pk / | awk 'NR == 2 {{print $2, $4}}'\n"
     f"echo {_MARKER}containers; docker ps -a --format '{{{{.Names}}}} {{{{.State}}}}' 2>/dev/null\n"
+    f'echo {_MARKER}awg3; docker exec {AWG2.name} sh -c "{_AWG3_DROPPED}" 2>/dev/null\n'
     "true\n"
 )
 
@@ -59,6 +69,8 @@ class HostMetrics:
     disk_free: int | None = None
     uptime: int | None = None
     containers: tuple[ContainerState, ...] = ()
+    # amnezia-awg2 runs without the AmneziaWG 3.1 settings of its config
+    awg3_dropped: bool = False
 
 
 def parse_metrics(output: str) -> HostMetrics:
@@ -73,6 +85,7 @@ def parse_metrics(output: str) -> HostMetrics:
         disk_free=disk[1] * 1024 if disk else None,
         uptime=_parse_uptime(sections.get("uptime", "")),
         containers=_parse_containers(sections.get("containers", "")),
+        awg3_dropped=sections.get("awg3", "").strip() == "dropped",
     )
 
 

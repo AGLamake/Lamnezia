@@ -18,7 +18,13 @@ from apps.notifications.events import Event
 from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
 from apps.protocols.errors import SetupErrorCode
-from apps.protocols.models import AwgMigration, InstanceOrigin, ProtocolInstance
+from apps.protocols.models import (
+    AwgMigration,
+    InstanceOrigin,
+    OffloadWorkaround,
+    ProtocolInstance,
+)
+from apps.protocols.services import offload_scripts as scripts
 from apps.protocols.services.awg_migration import (
     FINISH_KIND,
     MIGRATE_KIND,
@@ -26,9 +32,9 @@ from apps.protocols.services.awg_migration import (
     start_finish,
     start_migration,
 )
-from apps.protocols.tests.awg_case import APP_CONFIG, PSK, Start, issued_key
+from apps.protocols.tests.awg_case import APP_CONFIG, PSK, Start, issued_key, secrets_written
 from apps.protocols.tests.fake_awg import START_SCRIPT, FakeAwgServer
-from apps.protocols.tests.test_awg_upgrade import secrets_written
+from apps.protocols.tests.fake_offload_host import FakeOffloadHost, Interface
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
 from apps.ssh.services import RemoteHost
@@ -134,6 +140,34 @@ def test_clients_get_keys_on_a_new_awg3_container(
     assert state.migration is not None and state.migration.moved_at is not None
     assert state.can_finish
     assert secrets_written(operation, new.params["HeaderProtectionKey"]) == []
+
+
+def test_tso_gso_workaround_of_the_server_reaches_the_new_container(
+    fresh: FakeAwgServer, legacy: ProtocolInstance, admin: User, start: Start
+) -> None:
+    fresh.offload = FakeOffloadHost(
+        commands={"ip", "nsenter", "ethtool"},
+        interfaces={AWG_LEGACY.name: Interface(tso="off", gso="off"), AWG2.name: Interface()},
+        timer_active=True,
+    )
+
+    operation = start(lambda: start_migration(legacy, admin, port=NEW_PORT))
+
+    assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
+    assert fresh.offload.interfaces[AWG2.name].tso == "off"
+    assert OffloadWorkaround.objects.get(server=legacy.server).enabled
+
+
+def test_server_without_the_workaround_keeps_the_offloads(
+    fresh: FakeAwgServer, legacy: ProtocolInstance, admin: User, start: Start
+) -> None:
+    fresh.offload = FakeOffloadHost(interfaces={AWG2.name: Interface()})
+
+    operation = start(lambda: start_migration(legacy, admin, port=NEW_PORT))
+
+    assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
+    assert fresh.offload.interfaces[AWG2.name].tso == "on"
+    assert scripts.TIMER_PATH not in fresh.offload.files
 
 
 def test_run_again_moves_only_keys_issued_since(

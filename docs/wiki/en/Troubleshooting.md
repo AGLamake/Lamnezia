@@ -63,6 +63,16 @@ raise the limit, and the keys come back on at the next check
 An earlier port change was interrupted. Compare the containers in `docker ps -a` on the server and
 remove the one that is not needed ([Protocols](Protocols.md#protocol-settings)).
 
+**AmneziaWG does not start after a change: the image does not know a parameter.**
+The image of `amnezia-awg2` was built before AmneziaWG 3.1. Move the server to 3.1 with the button
+on the server page: it builds a fresh image ([Protocols](Protocols.md#moving-an-amneziawg-20-server-to-31)).
+With *Invalid argument* instead, raise S1–S4 to at least 12 in the protocol settings.
+
+**The server card says AmneziaWG runs without the 3.1 settings.**
+The host has an `amneziawg` kernel module older than 3.1. `awg-quick` picks the module before
+`amneziawg-go`, and an old module drops the 3.1 parameters without an error, so 3.1 clients do not
+connect. Update the module on the host to 3.1 or remove it, then restart `amnezia-awg2`.
+
 **The container log is empty.**
 Containers started by the Amnezia app have logging turned off. Tick **Keep the container log** in
 the protocol settings ([Protocols](Protocols.md#container-restart-stop-log-removal)).

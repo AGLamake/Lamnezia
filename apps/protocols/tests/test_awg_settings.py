@@ -16,6 +16,7 @@ from apps.keys.services.profile import ServerProfile
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
+from apps.protocols.errors import SetupErrorCode
 from apps.protocols.models import InstanceOrigin, ProtocolInstance
 from apps.protocols.services.awg_settings import AwgSettings
 from apps.protocols.services.settings_change import start_settings_change
@@ -25,6 +26,7 @@ from apps.protocols.tests.awg_case import (
     Start,
     fixture,
     issued_key,
+    secrets_written,
     server_config,
 )
 from apps.protocols.tests.fake_awg import PREVIOUS, START_SCRIPT, FakeAwgServer
@@ -167,6 +169,55 @@ def test_parameters_awg_refuses_are_rolled_back(
     assert connected.awg_up
     instance.refresh_from_db()
     assert instance.params["Jc"] == "4"
+
+
+def test_header_protection_key_stays_out_of_the_params_and_the_audit(
+    connected: FakeAwgServer, instance: ProtocolInstance, admin: User, start: Start
+) -> None:
+    params = upgraded_awg_params(instance.params)
+    settings = settings_of(instance, params=params)
+
+    operation = start(lambda: start_settings_change(instance, settings, admin, reissue=False))
+
+    assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
+    key = params["HeaderProtectionKey"]
+    assert server_config(connected).awg_params["HeaderProtectionKey"] == key
+    assert secrets_written(operation, key) == []
+    assert AwgSettings.from_params(operation.params) == settings
+
+
+REFUSALS = {
+    SetupErrorCode.AWG_IMAGE_OUTDATED: b"Line unrecognized: `HeaderProtectionKey = {key}'\n",
+    SetupErrorCode.AWG_PADDING_REFUSED: b"Unable to modify interface: Invalid argument\n",
+}
+
+
+@pytest.mark.parametrize("code", [*REFUSALS, SetupErrorCode.AWG3_DROPPED])
+def test_awg3_parameters_the_server_cannot_take_are_rolled_back(
+    connected: FakeAwgServer,
+    instance: ProtocolInstance,
+    admin: User,
+    start: Start,
+    code: SetupErrorCode,
+) -> None:
+    params = upgraded_awg_params(instance.params)
+    key = params["HeaderProtectionKey"]
+    if code in REFUSALS:
+        connected.awg_refuses = "HeaderProtectionKey"
+        connected.refusal = REFUSALS[code].replace(b"{key}", key.encode())
+    else:
+        connected.drops_awg3 = True
+    settings = settings_of(instance, params=params)
+
+    operation = start(lambda: start_settings_change(instance, settings, admin, reissue=False))
+
+    assert operation.status == OperationStatus.FAILED
+    assert operation.error_code == code
+    assert secrets_written(operation, key) == []
+    assert connected.container_files[AWG_CONFIG_PATH] == fixture("awg0.conf")
+    assert connected.awg_up
+    instance.refresh_from_db()
+    assert "HeaderProtectionKey" not in instance.params
 
 
 def test_dns_alone_changes_only_the_profiles(

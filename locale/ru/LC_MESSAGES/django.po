@@ -412,6 +412,9 @@ msgstr "AmneziaWG 3.1 всех серверов группы, UDP-порт %(por
 msgid "AmneziaWG 3.1, UDP port %(port)s."
 msgstr "AmneziaWG 3.1, UDP-порт %(port)s."
 
+msgid "AmneziaWG runs without the 3.1 settings: the kernel module of the server is older and dropped them."
+msgstr "AmneziaWG работает без настроек 3.1: модуль ядра на сервере старше и отбросил их."
+
 msgid "AmneziaWG version, as the Amnezia app determines it from the parameters"
 msgstr "Версия AmneziaWG, как её определяет по параметрам приложение Amnezia"
 

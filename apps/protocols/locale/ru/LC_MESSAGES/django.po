@@ -106,6 +106,9 @@ msgstr "AmneziaWG — специальный протокол от Amnezia, ос
 msgid "AmneziaWG needs Linux 4.14 or newer. Upgrade the system or use another server."
 msgstr "AmneziaWG нужен Linux 4.14 или новее. Обновите систему или используйте другой сервер."
 
+msgid "AmneziaWG refused the config: Invalid argument."
+msgstr "AmneziaWG отверг конфиг: Invalid argument."
+
 msgid "AmneziaWG started without the settings of version 3.1."
 msgstr "AmneziaWG запустился без настроек версии 3.1."
 
@@ -678,6 +681,9 @@ msgstr "Удаление контейнера iperf3"
 msgid "Remove the old container"
 msgstr "Удаление старого контейнера"
 
+msgid "Remove the old image"
+msgstr "Удаление старого образа"
+
 msgid "Remove the service"
 msgstr "Удаление сервиса"
 
@@ -872,6 +878,9 @@ msgstr "В приложении Amnezia у IPsec нет параметров: е
 msgid "The AmneziaDNS container does not run, so it is not rebuilt."
 msgstr "Контейнер AmneziaDNS не запущен, поэтому он не пересобран."
 
+msgid "The AmneziaWG image of the container does not know a parameter of the config."
+msgstr "Образ AmneziaWG в контейнере не знает параметра из конфига."
+
 msgid "The IP address of the server cannot be found from its name."
 msgstr "Не удалось определить IP-адрес сервера по его имени."
 
@@ -946,6 +955,9 @@ msgstr "У домена прокси нет IPv4-адреса в DNS."
 msgid "The domain or IP address in the links; empty for the address of the server."
 msgstr "Домен или IP-адрес в ссылках; пусто — адрес сервера."
 
+msgid "The image was built before AmneziaWG 3.1. Move the server to 3.1 with the button on the server page: it builds a fresh image. The step log names the parameter."
+msgstr "Образ собран до AmneziaWG 3.1. Переведите сервер на 3.1 кнопкой на странице сервера: она собирает свежий образ. Какой параметр не принят — видно в журнале шага."
+
 msgid "The keys and the backup are kept: the protocol can be restored."
 msgstr "Ключи и бэкап сохранены: протокол можно восстановить."
 
@@ -968,6 +980,9 @@ msgstr "Сеть %(name)s создана."
 
 msgid "The old container is back with all its clients. See the step log and try again."
 msgstr "Старый контейнер возвращён со всеми клиентами. Посмотрите журнал шагов и повторите."
+
+msgid "The old image is removed."
+msgstr "Старый образ удалён."
 
 msgid "The onion address of the site is ready."
 msgstr "Onion-адрес сайта готов."
@@ -1141,6 +1156,9 @@ msgstr "WireGuard — популярный VPN-протокол с высоко�
 
 msgid "With HeaderProtectionKey each of S1-S4 must be at least 12, or AmneziaWG does not start."
 msgstr "С HeaderProtectionKey каждый из S1-S4 должен быть не меньше 12, иначе AmneziaWG не запустится."
+
+msgid "With HeaderProtectionKey each of S1-S4 must be at least 12. Change them in the protocol settings and try again."
+msgstr "С HeaderProtectionKey каждый из S1-S4 должен быть не меньше 12. Измените их в настройках протокола и повторите."
 
 msgid "With these S1-S4 two kinds of packets get the same size: change one of them."
 msgstr "С такими S1-S4 два вида пакетов получают одинаковый размер: измените один из них."

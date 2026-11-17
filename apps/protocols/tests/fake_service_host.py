@@ -44,6 +44,9 @@ class FakeServiceHost(FakeDebianServer):
     networks: set[str] = field(default_factory=lambda: {"bridge", "amnezia-dns-net"})
     containers: dict[str, Container] = field(default_factory=dict)
     images: set[str] = field(default_factory=set)
+    # The ID of each image by name; a build gives a new one, `rmi` of an ID is recorded.
+    image_ids: dict[str, str] = field(default_factory=dict)
+    removed_images: list[str] = field(default_factory=list)
     host_files: dict[str, bytes] = field(default_factory=dict)
     tor_starts: bool = True
     fails_to_start: bool = False
@@ -83,8 +86,15 @@ class FakeServiceHost(FakeDebianServer):
             case ["ps", *_]:
                 return self._ps(words)
             case ["build", *_]:
-                self.images.add(words[words.index("-t") + 1])
+                name = words[words.index("-t") + 1]
+                self.images.add(name)
+                self.image_ids[name] = f"sha256:{name}-{len(self.image_ids) + 1}"
                 return result()
+            case ["image", "inspect", "--format", _, name]:
+                if name not in self.images:
+                    return result(1)
+                image_id = self.image_ids.get(name, f"sha256:{name}")
+                return result(stdout=f"{image_id}\n".encode())
             case ["run", *_]:
                 name = words[words.index("--name") + 1]
                 assert name in self.images and name not in self.containers
@@ -116,6 +126,10 @@ class FakeServiceHost(FakeDebianServer):
                 return result()
             case ["rm", "-fv" | "-f", name]:
                 self.containers.pop(name, None)
+                return result()
+            case ["rmi", image] if image.startswith("sha256:"):
+                assert image not in self.image_ids.values(), "the image is in use"
+                self.removed_images.append(image)
                 return result()
             case ["rmi", name]:
                 self.images.discard(name)

@@ -42,7 +42,9 @@ from apps.protocols.services.importer import ServerImporter
 from apps.protocols.services.installation import used_ports
 from apps.protocols.services.installer import installers
 from apps.protocols.services.lifecycle import ContainerLifecycle, RemovedInstance
+from apps.protocols.services.offload import OffloadFix
 from apps.protocols.signals import keys_moved
+from apps.servers.models import Server
 from apps.ssh.services import RemoteHost
 
 MIGRATE_KIND = "protocols.migrate_awg"
@@ -167,10 +169,21 @@ class AwgMigrationRun:
         installers.get(AWG2.name).from_params(self._host, self._ctx, params).run()
         server = self._legacy.server
         ServerImporter(server, self._host, self._ctx, origin=InstanceOrigin.INSTALLED).run()
+        self._keep_offload_fix(server)
         target = target_of(self._legacy)
         if target is None:
             raise SetupError(SetupErrorCode.MIGRATION_TARGET_MISSING)
         return target
+
+    def _keep_offload_fix(self, server: Server) -> None:
+        """The TSO/GSO workaround of the old container reaches the new one at once.
+
+        The timer of the workaround covers every container of the server within half a minute;
+        turning it on again applies it now and saves the reading for the server card.
+        """
+        fix = OffloadFix(server, self._host, self._ctx)
+        if fix.check().timer_active:
+            fix.enable()
 
     @transaction.atomic
     def _plan(self, target: ProtocolInstance) -> list[Reissue]:

@@ -356,10 +356,12 @@ def test_dns_of_the_app_is_rebuilt_with_the_logs_off(
 ) -> None:
     assert app_dns.dns_logs_unset
     assert "built by the app" in admin_client.get(f"/servers/{server.pk}/").content.decode()
+    host.images.add("amnezia-dns")
 
     operation = rebuild(admin_client, app_dns, django_capture_on_commit_callbacks)
 
     assert operation.status == OperationStatus.SUCCEEDED, log_of(operation)
+    assert host.removed_images == ["sha256:amnezia-dns"]
     dns = host.containers["amnezia-dns"]
     assert dns.arguments == DNS_RUN
     assert dns.files[DNS_FORWARD_RECORDS_PATH] == PANEL_RECORDS
@@ -379,10 +381,12 @@ def test_dns_that_does_not_start_after_the_rebuild_comes_back(
     django_capture_on_commit_callbacks: OnCommit,
 ) -> None:
     host.fails_to_start = True
+    host.images.add("amnezia-dns")
 
     operation = rebuild(admin_client, app_dns, django_capture_on_commit_callbacks)
 
     assert operation.status == OperationStatus.FAILED
+    assert host.removed_images == []
     dns = host.containers["amnezia-dns"]
     assert (dns.state, dns.files[DNS_FORWARD_RECORDS_PATH]) == ("running", APP_RECORDS)
     assert set(host.containers) == {"amnezia-dns"}
