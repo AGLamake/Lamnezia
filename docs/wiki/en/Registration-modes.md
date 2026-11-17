@@ -19,7 +19,8 @@ mode: the user gets the invite plan at once (it wins over the default plan) and 
 administrator queue; the email is confirmed as in open registration. An expired or used-up invite does not open
 registration.
 
-A moderator creates invites in **Registration** too and sees only their own. A user who comes by a
+A moderator creates invites in **Registration** too and sees only their own; an administrator sees
+all of them, with who created each. A user who comes by a
 moderator's invite joins the moderator's [zone](Security.md#moderators-zone) at once; with the
 moderator's user quota used up the invite says "This invite cannot take new users now."
 

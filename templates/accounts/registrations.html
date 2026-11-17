@@ -55,7 +55,7 @@
   {% if invites %}
     <div class="table-wrap">
       <table class="table table-cards">
-        <thead><tr><th>{% translate "Link" %}</th><th>{% translate "Plan" %}</th><th>{% translate "Registrations" %}</th><th>{% translate "Valid until" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr></thead>
+        <thead><tr><th>{% translate "Link" %}</th><th>{% translate "Plan" %}</th>{% if user.is_admin %}<th>{% translate "Created by" %}</th>{% endif %}<th>{% translate "Registrations" %}</th><th>{% translate "Valid until" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr></thead>
         <tbody>
           {% for invite, link in invites %}
             <tr>
@@ -67,6 +67,7 @@
                 </div>
               </td>
               <td data-label="{% translate 'Plan' %}">{{ invite.plan }}</td>
+              {% if user.is_admin %}<td data-label="{% translate 'Created by' %}">{{ invite.created_by.username|default:"—" }}</td>{% endif %}
               <td data-label="{% translate 'Registrations' %}" class="tabular-nums">{{ invite.uses }} / {{ invite.max_uses }}</td>
               <td data-label="{% translate 'Valid until' %}">{% if invite.expires_at %}{{ invite.expires_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% translate "no end" %}{% endif %}</td>
               <td>

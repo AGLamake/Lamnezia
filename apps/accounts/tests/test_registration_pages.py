@@ -216,6 +216,18 @@ class TestAdminPages:
         assert f"http://testserver/accounts/invite/{invite.code}/" in page
         assert not Invite.objects.exists()
 
+    @pytest.mark.parametrize(("role", "shown"), [(Role.ADMIN, True), (Role.MODERATOR, False)])
+    def test_the_creator_of_an_invite_is_shown_to_admins(
+        self, client: Client, role: Role, shown: bool
+    ) -> None:
+        member = UserFactory(role=role)
+        InviteFactory(created_by=member)
+        client.force_login(member)
+
+        page = client.get("/accounts/registrations/").content.decode()
+
+        assert (f">{member.username}</td>" in page) is shown
+
 
 class TestPendingUserGetsNoKeys:
     def test_key_actions_refuse(self) -> None:
