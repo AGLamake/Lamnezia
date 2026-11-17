@@ -21,7 +21,9 @@ uv run uvicorn config.asgi:application --reload
 Demo data for screenshots and trying the interface: `uv run python manage.py seed_demo`. It adds
 three servers with readings, AWG 2 protocols, plans, users with keys and traffic, tickets, a chat
 and notifications. Nothing goes over SSH, the addresses are documentation ones. Running it again
-adds nothing. Logins: `admin`, `moderator`, `anna`, `boris`, `vera`, `gleb`, password
+adds nothing. Tickets and chat messages are written in the panel language (`LANGUAGE_CODE`),
+and the plans start a few days back, so the portal shows traffic for the
+period right away. Logins: `admin`, `moderator`, `anna`, `boris`, `vera`, `gleb`, password
 `demo-password`. With `LAMNEZIA_DEBUG` off the command refuses; `--force` runs it anyway (never
 on a production database).
 

@@ -253,6 +253,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Demo data ready for screenshots**: after `seed_demo` the portal shows traffic for the period
+  (the plans now start a few days back), the demo chat has a support reply, and tickets and chat
+  messages are written in the panel language.
 - **The limits turned on the keys of a blocked user**: in a new period or after an extension the
   scheduled limit run turned back on the keys of a user blocked meanwhile; they now stay off.
 - **Moderator key quota race**: two keys issued at once from the admin interface could both pass a

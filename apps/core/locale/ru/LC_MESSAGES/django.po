@@ -43,6 +43,12 @@ msgstr "Токен GitHub"
 msgid "Given to new users in open registration with automatic approval."
 msgstr "Выдаётся новым пользователям при открытой регистрации с автоматическим допуском."
 
+msgid "Hello! Can I pay for a year?"
+msgstr "Здравствуйте! Можно оплатить сразу год?"
+
+msgid "Helsinki is slow"
+msgstr "Хельсинки тормозит"
+
 msgid "None"
 msgstr "Нет"
 
@@ -85,6 +91,9 @@ msgstr "Настройки сохранены."
 msgid "Signed-in users send links and texts for the guides; the staff review them."
 msgstr "Вошедшие пользователи присылают ссылки и тексты для инструкций; персонал их проверяет."
 
+msgid "Speed dropped to 1 Mbit/s since the morning."
+msgstr "С утра скорость упала до 1 Мбит/с."
+
 msgid "Telegram and Discord keep chats on their servers without end-to-end encryption."
 msgstr "Telegram и Discord хранят чаты на своих серверах без сквозного шифрования."
 
@@ -94,8 +103,17 @@ msgstr "Токен Telegram-бота"
 msgid "Telegram bot username"
 msgstr "Имя Telegram-бота"
 
+msgid "The app says the config is wrong."
+msgstr "Приложение пишет, что конфигурация неверная."
+
+msgid "The key does not import"
+msgstr "Ключ не импортируется"
+
 msgid "The key itself"
 msgstr "Сам ключ"
+
+msgid "Update the app, please."
+msgstr "Обновите, пожалуйста, приложение."
 
 msgid "Users with a linked Discord can sign in with it."
 msgstr "Пользователи с привязанным Discord смогут входить через него."
@@ -114,6 +132,9 @@ msgstr "Без @. Через этого бота пользователи при
 
 msgid "Without scopes. Raises the GitHub limit for Amnezia app download links."
 msgstr "Без прав доступа. Повышает лимит GitHub для ссылок на загрузку приложения Amnezia."
+
+msgid "Yes, write the plan and we will send the payment details."
+msgstr "Да, напишите тариф, и мы пришлём реквизиты для оплаты."
 
 msgid "cleanup"
 msgstr "чистка"

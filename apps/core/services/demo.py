@@ -8,8 +8,10 @@ import random
 from dataclasses import dataclass
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import transaction
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.utils.translation import gettext as _
 
 from amnezia_core.awg_install import generate_awg_params
 from amnezia_core.keys import KeyPair, generate_preshared_key
@@ -28,6 +30,8 @@ PASSWORD = "demo-password"
 AWG2 = "amnezia-awg2"
 GIB = 1024**3
 _TRAFFIC_HOURS = 72
+# The plan starts before the traffic history, so "traffic for the period" counts all of it.
+_PLAN_AGE = timedelta(days=5)
 
 
 @dataclass(frozen=True)
@@ -65,8 +69,13 @@ class DemoSeed:
         self._rng = random.Random(seed)
         self._now = timezone.now()
 
-    @transaction.atomic
     def run(self) -> None:
+        """Seeds the database; tickets and chats are written in the panel language."""
+        with translation.override(settings.LANGUAGE_CODE):
+            self._seed()
+
+    @transaction.atomic
+    def _seed(self) -> None:
         self._user("admin", Role.ADMIN)
         self._user("moderator", Role.MODERATOR)
         instances = [self._instance(self._server(demo), demo) for demo in SERVERS]
@@ -74,7 +83,8 @@ class DemoSeed:
         for index, (username, plan_name, devices) in enumerate(USERS):
             user = self._user(username, Role.USER)
             UserLimits.objects.get_or_create(
-                user=user, defaults={"plan": plans[plan_name], "plan_assigned_at": self._now}
+                user=user,
+                defaults={"plan": plans[plan_name], "plan_assigned_at": self._now - _PLAN_AGE},
             )
             for number, device in enumerate(devices):
                 instance = instances[(index + number) % len(instances)]
@@ -205,21 +215,32 @@ class DemoSeed:
         self._conversation(
             anna,
             Kind.TICKET,
-            "The key does not import",
-            [(anna, "The app says the config is wrong."), (staff, "Update the app, please.")],
+            _("The key does not import"),
+            [
+                (anna, _("The app says the config is wrong.")),
+                (staff, _("Update the app, please.")),
+            ],
             type=TicketType.BUG,
             status=TicketStatus.WAITING_USER,
         )
         self._conversation(
             boris,
             Kind.TICKET,
-            "Helsinki is slow",
-            [(boris, "Speed dropped to 1 Mbit/s since the morning.")],
+            _("Helsinki is slow"),
+            [(boris, _("Speed dropped to 1 Mbit/s since the morning."))],
             type=TicketType.SERVER_DOWN,
             status=TicketStatus.NEW,
             server=troubled,
         )
-        self._conversation(boris, Kind.CHAT, "", [(boris, "Hello! Can I pay for a year?")])
+        self._conversation(
+            boris,
+            Kind.CHAT,
+            "",
+            [
+                (boris, _("Hello! Can I pay for a year?")),
+                (staff, _("Yes, write the plan and we will send the payment details.")),
+            ],
+        )
         if not Incident.objects.filter(server=troubled).exists():
             Incident.objects.create(server=troubled)
 
@@ -241,13 +262,13 @@ class DemoSeed:
             )
 
     def _notifications(self) -> None:
-        channel, _ = Channel.objects.get_or_create(
+        channel, _created = Channel.objects.get_or_create(
             name="Demo webhook",
             defaults={"kind": ChannelKind.WEBHOOK, "target": "https://example.com/hook"},
         )
         events = (
             (Event.SERVER_DOWN, {"server": "Helsinki", "host": "198.51.100.30", "last_seen": ""}),
-            (Event.CHAT_MESSAGE, {"user": "boris", "text": "Hello! Can I pay for a year?"}),
+            (Event.CHAT_MESSAGE, {"user": "boris", "text": _("Hello! Can I pay for a year?")}),
             (Event.TICKET_CREATED, {"user": "anna", "type": "Something is broken"}),
         )
         for number, (event, data) in enumerate(events):
