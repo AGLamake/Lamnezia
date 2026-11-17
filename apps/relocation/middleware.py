@@ -18,6 +18,7 @@ ALLOWED_VIEWS = frozenset(
         "set_language",
         "relocation:confirm",
         "relocation:cancel",
+        "relocation:auto-stop",
     }
 )
 # Payment providers and clients retry a 503; by then the domain points to the new machine.

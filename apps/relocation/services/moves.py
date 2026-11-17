@@ -19,8 +19,11 @@ MOVE_PARAM = "move_id"
 _ACTIVE = (OperationStatus.PENDING, OperationStatus.RUNNING)
 
 
-def start_move(target: Server, user: User, ip: str | None) -> PanelMove:
-    """Freeze the panel and queue the preparation of the copy on `target`."""
+def start_move(target: Server, user: User, ip: str | None, *, auto_stop: bool = True) -> PanelMove:
+    """Freeze the panel and queue the preparation of the copy on `target`.
+
+    With `auto_stop` this copy stops itself once the domain points to `target`.
+    """
     with transaction.atomic():
         # The settings row is the panel-wide lock: two admins never start two moves.
         SiteSettings.load()
@@ -29,9 +32,12 @@ def start_move(target: Server, user: User, ip: str | None) -> PanelMove:
             raise MoveError(MoveErrorCode.WRONG_STATE)
         if Operation.objects.filter(status__in=_ACTIVE).exists():
             raise MoveError(MoveErrorCode.BUSY)
-        move = PanelMove.objects.create(target=target, target_host=target.host, created_by=user)
+        move = PanelMove.objects.create(
+            target=target, target_host=target.host, auto_stop=auto_stop, created_by=user
+        )
         _launch(move, PREPARE_KIND, user)
-        audit.log(PREPARE_KIND, actor=user, target=target, data={"host": target.host}, ip=ip)
+        data = {"host": target.host, "auto_stop": auto_stop}
+        audit.log(PREPARE_KIND, actor=user, target=target, data=data, ip=ip)
     return move
 
 

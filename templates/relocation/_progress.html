@@ -25,6 +25,7 @@
       </div>
       {% endfor %}
       {% include "relocation/_actions.html" %}
+      {% include "relocation/_auto_stop.html" %}
     </div>
   </section>
 
@@ -44,7 +45,9 @@
       <p class="help-text">{% blocktranslate with found=move.domain_addresses|default:"—" checked=move.domain_checked_at|time:"TIME_FORMAT" %}A records: {{ found }}. Checked at {{ checked }}; the panel checks once a minute.{% endblocktranslate %}</p>
       {% endif %}
       {% if move.domain_status == "pointed" %}
-      {% if move.state == "left" %}
+      {% if move.state == "left" and move.auto_stop %}
+      {% translate "The domain points to the new machine. This copy stops once the copy there answers." as text %}
+      {% elif move.state == "left" %}
       {% translate "The domain points to the new machine. When your DNS caches have expired, stop this copy with docker compose down." as text %}
       {% else %}
       {% translate "The domain points to this machine: the move is over." as text %}

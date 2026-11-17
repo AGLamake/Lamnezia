@@ -8,6 +8,7 @@ from apps.relocation.models import PanelMove
 from apps.relocation.services.completion import MoveCancellation, MoveConfirmation
 from apps.relocation.services.moves import CANCEL_KIND, CONFIRM_KIND, MOVE_PARAM, PREPARE_KIND
 from apps.relocation.services.preparation import MovePreparation
+from apps.relocation.services.shutdown import STOP_KIND, OldCopyShutdown
 
 
 def _move(ctx: OperationContext) -> PanelMove:
@@ -27,3 +28,8 @@ def confirm_move(ctx: OperationContext) -> None:
 @operations.register(CANCEL_KIND, gettext_lazy("Move the panel: cancel"))
 def cancel_move(ctx: OperationContext) -> None:
     MoveCancellation(_move(ctx), ctx).run()
+
+
+@operations.register(STOP_KIND, gettext_lazy("Move the panel: stop the old copy"))
+def stop_old_copy(ctx: OperationContext) -> None:
+    OldCopyShutdown(_move(ctx), ctx).run()

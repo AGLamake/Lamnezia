@@ -13,6 +13,7 @@ from apps.operations.tests.factories import OperationFactory
 from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.services.bundle import write_code_bundle
 from apps.relocation.services.relay_guard import RelayGuard
+from apps.relocation.services.shutdown import STOP_REQUEST
 from apps.relocation.services.target import TargetMachine
 from apps.ssh.services import CommandResult, RemoteHost
 from apps.ssh.tests.fakes import TIMEOUTS, FakeRunner, result
@@ -210,6 +211,17 @@ def test_the_copy_must_answer_and_hold_the_move(ctx: OperationContext) -> None:
     assert error.value.code == MoveErrorCode.NOT_STARTED
 
 
+def test_a_live_copy_must_accept_changes(ctx: OperationContext) -> None:
+    target, _ = machine(ctx, {"relocation status": result(stdout=b"arrived\n")})
+    target.verify_live()
+    assert "accepts changes" in step_log()
+
+    waiting, _ = machine(ctx, {"relocation status": result(stdout=b"preparing\n")})
+    with pytest.raises(MoveError) as error:
+        waiting.verify_live()
+    assert error.value.code == MoveErrorCode.NOT_STARTED
+
+
 def test_arriving_drops_the_marker_and_a_failed_discard_is_reported(ctx: OperationContext) -> None:
     target, runner = machine(ctx, {})
     target.arrive()
@@ -298,3 +310,11 @@ def test_the_installer_knows_the_move_option() -> None:
 
     assert "--moving) MOVING=1" in script
     assert "lamnezia-certificate.timer" in script
+
+
+def test_the_installer_stops_the_stack_on_the_panel_request() -> None:
+    script = (settings.BASE_DIR / "install.sh").read_text(encoding="utf-8")
+
+    assert f"/app/archives/{STOP_REQUEST}" in script
+    assert "systemctl enable --now lamnezia-stop.timer" in script
+    assert "\n    install_stop_timer\n" in script

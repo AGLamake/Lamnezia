@@ -1836,6 +1836,9 @@ msgstr "Перенос панели: передача новой машине"
 msgid "Move the panel: prepare the new machine"
 msgstr "Перенос панели: подготовка новой машины"
 
+msgid "Move the panel: stop the old copy"
+msgstr "Перенос панели: остановка старой копии"
+
 msgid "Move the server into the subnet of the group"
 msgstr "Перенести сервер в подсеть группы"
 
@@ -2959,6 +2962,12 @@ msgstr "Остановить сейчас"
 msgid "Stop the container? Clients cannot connect until it is restarted."
 msgstr "Остановить контейнер? Клиенты не смогут подключиться, пока его не перезапустят."
 
+msgid "Stop this copy"
+msgstr "Остановить эту копию"
+
+msgid "Stop this copy once the domain points to the new machine"
+msgstr "Остановить эту копию, когда домен укажет на новую машину"
+
 msgid "Storage"
 msgstr "Хранение"
 
@@ -3086,6 +3095,12 @@ msgstr "Автор просит указать его имя."
 msgid "The author gets it in the notification."
 msgstr "Автор получит её в уведомлении."
 
+msgid "The automatic stop of this copy is off."
+msgstr "Автоостановка этой копии выключена."
+
+msgid "The automatic stop of this copy is on."
+msgstr "Автоостановка этой копии включена."
+
 #, python-format
 msgid "The bots service last reported %(ago)s ago. Is the bots container running?"
 msgstr "Сервис ботов последний раз присылал отчёт %(ago)s назад. Запущен ли контейнер bots?"
@@ -3128,6 +3143,9 @@ msgstr "Копия удалена."
 msgid "The copy on the new machine already accepts changes."
 msgstr "Копия на новой машине уже принимает изменения."
 
+msgid "The copy on the new machine answers and accepts changes."
+msgstr "Копия на новой машине отвечает и принимает изменения."
+
 msgid "The copy on the new machine could not be removed."
 msgstr "Не удалось удалить копию на новой машине."
 
@@ -3137,6 +3155,9 @@ msgstr "Копия на новой машине отвечает не так, к
 msgid "The copy on the new machine is up and waits. Confirm to hand over: this panel becomes read-only and the copy starts accepting changes."
 msgstr "Копия на новой машине запущена и ждёт. Подтвердите передачу: эта панель станет только для чтения, а копия начнёт принимать изменения."
 
+msgid "The copy on the new machine must answer first. The host of this panel needs the timer of a current install.sh for it."
+msgstr "Сначала должна ответить копия на новой машине. Для этого на сервере этой панели нужен таймер из актуального install.sh."
+
 msgid "The current link will stop working. Continue?"
 msgstr "Текущая ссылка перестанет работать. Продолжить?"
 
@@ -3145,6 +3166,9 @@ msgstr "Устройство сразу потеряет доступ. Это н
 
 msgid "The device name"
 msgstr "Название устройства"
+
+msgid "The domain points to the new machine. This copy stops once the copy there answers."
+msgstr "Домен указывает на новую машину. Эта копия остановится, как только ответит копия там."
 
 msgid "The domain points to the new machine. When your DNS caches have expired, stop this copy with docker compose down."
 msgstr "Домен указывает на новую машину. Когда истечёт кэш DNS, остановите эту копию командой docker compose down."
@@ -3192,6 +3216,9 @@ msgstr "Группы больше нет: делать нечего."
 
 msgid "The group still has other servers."
 msgstr "В группе ещё есть другие серверы."
+
+msgid "The host stops this copy within a minute. If it keeps running, stop it by hand: cd /opt/lamnezia && docker compose down."
+msgstr "Сервер остановит эту копию в течение минуты. Если она продолжит работать, остановите её вручную: cd /opt/lamnezia && docker compose down."
 
 msgid "The installer failed on the new machine."
 msgstr "Установщик на новой машине завершился с ошибкой."
@@ -3637,6 +3664,10 @@ msgstr "Тема"
 msgid "This account is already linked to another user of the panel."
 msgstr "Этот аккаунт уже привязан к другому пользователю панели."
 
+#, python-format
+msgid "This copy asked its host to stop at %(at)s. The host stops it within a minute; if it keeps running, stop it with docker compose down."
+msgstr "Эта копия попросила сервер остановить её в %(at)s. Сервер остановит её в течение минуты; если она продолжит работать, остановите её командой docker compose down."
+
 msgid "This invite cannot take new users now."
 msgstr "По этому инвайту сейчас нельзя зарегистрироваться."
 
@@ -3967,6 +3998,9 @@ msgstr "Что получают пользователи: серверы, про
 
 msgid "When opened"
 msgstr "На момент обращения"
+
+msgid "When the domain points to the new machine and the copy there answers, this copy stops its stack and leaves a mark in the operations journal."
+msgstr "Когда домен укажет на новую машину и копия там ответит, эта копия остановит свой стек и оставит отметку в журнале операций."
 
 msgid "Where"
 msgstr "Куда"
@@ -4679,6 +4713,12 @@ msgstr "статус"
 
 msgid "stayed in the group after a failed leave"
 msgstr "остался в группе после неудачного выхода"
+
+msgid "stop requested at"
+msgstr "остановка запрошена"
+
+msgid "stop the old copy automatically"
+msgstr "останавливать старую копию автоматически"
 
 msgid "suggested by"
 msgstr "предложил"

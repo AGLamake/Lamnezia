@@ -25,6 +25,7 @@ _LABELS: dict[str, Promise] = {
     "backups.delete_snapshot": _("Delete protocol snapshot"),
     "backups.download_panel_archive": _("Download panel archive"),
     "backups.delete_panel_archive": _("Delete panel archive"),
+    "relocation.auto_stop": _("Switch the automatic stop of the old panel"),
     "billing.checkout": _("Start payment of plan"),
     "billing.paid": _("Receive payment"),
     "billing.refunded": _("Refund payment"),

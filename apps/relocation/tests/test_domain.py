@@ -163,6 +163,7 @@ def test_the_screen_shows_the_steps_while_the_operation_runs(admin: Client) -> N
 @override_settings(SITE_URL=f"https://{DOMAIN}")
 def test_the_screen_shows_the_status_of_the_a_record(admin: Client) -> None:
     move = handed_over()
+    PanelMove.objects.filter(pk=move.pk).update(auto_stop=False)
     url = f"/backups/move/{move.pk}/progress/"
     waiting = admin.get(url).content.decode()
     assert "not checked yet" in waiting

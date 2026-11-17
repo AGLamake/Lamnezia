@@ -165,6 +165,9 @@ msgstr "Вход по резервному коду"
 msgid "Start payment of plan"
 msgstr "Начало оплаты тарифа"
 
+msgid "Switch the automatic stop of the old panel"
+msgstr "Переключение автоостановки старой панели"
+
 msgid "To"
 msgstr "По"
 

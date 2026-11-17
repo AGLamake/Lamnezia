@@ -35,8 +35,9 @@ step is pointing the panel domain to the new machine.
    stays read-only for good.
 5. Point the panel domain to the new machine. With nginx, the certificate request is retried every
    10 minutes (`lamnezia-certificate.timer`) until the domain points there; Caddy retries by itself.
-6. When the domain points to the new machine, stop the old panel: `cd /opt/lamnezia && docker
-   compose down`.
+6. When the domain points to the new machine, the old panel stops itself (see
+   [Automatic stop of the old copy](#automatic-stop-of-the-old-copy)). With the option off, stop it
+   by hand: `cd /opt/lamnezia && docker compose down`.
 
 ## Move progress screen
 
@@ -51,12 +52,36 @@ where the A record of the domain from `SITE_URL` points:
 - *has no A record* — the domain does not resolve to an IPv4 address;
 - *points to another machine* — at least one A record leads elsewhere (for example, still to the
   old machine);
-- *points to the new machine* — every A record leads to the new machine's address; on the old
-  panel the screen suggests stopping it once DNS caches have expired.
+- *points to the new machine* — every A record leads to the new machine's address; the old panel
+  stops itself, or, with the automatic stop off, the screen suggests stopping it once DNS caches
+  have expired.
 
 A background job checks the domain once a minute (on the old panel it runs while the panel is
 read-only too); the page itself never looks up DNS. The checks stop once the domain has switched.
 A panel opened by an IP address (no domain in `SITE_URL`) has nothing to check.
+
+## Automatic stop of the old copy
+
+The option **Stop this copy once the domain points to the new machine** is on by default in the
+move form. Until the stop is requested it can be turned off or on again on the move progress
+screen, also while the panel is read-only.
+
+The old copy stops only when all of this holds:
+
+- the move is confirmed (the old panel is in the *moved away* state);
+- the option is on;
+- every A record of the panel domain leads to the new machine;
+- the copy on the new machine answers its health check and accepts changes.
+
+Then the *Move the panel: stop the old copy* operation appears in the operations journal. It checks
+the new copy over SSH and leaves the request file `stop-after-move` in the panel archives folder;
+the `lamnezia-stop.timer` on the host of the old panel finds it within a minute, removes it and
+runs `docker compose down`. If the new copy does not answer, the operation fails and the old copy
+keeps running; retry the operation from the journal once the new copy is up.
+
+The panel has no access to Docker, so the timer is installed by `install.sh`. A panel installed by
+an older `install.sh` has no timer: run `install.sh` once more on its host, or stop the old copy by
+hand.
 
 ## Cancel and failures
 

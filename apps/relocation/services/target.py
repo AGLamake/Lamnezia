@@ -11,6 +11,7 @@ from django.utils.translation import gettext as _
 
 from apps.operations.services.context import OperationContext
 from apps.relocation.errors import MoveError, MoveErrorCode
+from apps.relocation.models import MoveState
 from apps.relocation.services.panel_machine import PanelMachine
 from apps.ssh.services import RemoteHost
 
@@ -37,7 +38,8 @@ fi
 true
 """
 
-# Takes back everything a move installed; install.sh --moving writes the certificate timer.
+# Takes back everything a move installed; install.sh writes the stop timer and, with --moving,
+# the certificate timer.
 _DISCARD = f"""
 dir={INSTALL_DIR}
 [ -f "$dir/.moving" ] || exit 0
@@ -46,9 +48,10 @@ if [ -f "$dir/.env" ] && command -v docker >/dev/null; then
         exit 1
 fi
 if command -v systemctl >/dev/null; then
-    systemctl disable --now lamnezia-certificate.timer 2>/dev/null
-    rm -f /etc/systemd/system/lamnezia-certificate.timer \\
-        /etc/systemd/system/lamnezia-certificate.service
+    for unit in lamnezia-certificate lamnezia-stop; do
+        systemctl disable --now "$unit.timer" 2>/dev/null
+        rm -f "/etc/systemd/system/$unit.timer" "/etc/systemd/system/$unit.service"
+    done
     systemctl daemon-reload
 fi
 if [ -e {NGINX_SITE} ]; then
@@ -122,16 +125,13 @@ class TargetMachine:
 
     def verify(self, expected_state: str) -> None:
         """The copy answers its health check and holds the move in the expected state."""
-        health = self._host.sh(
-            f"cd {INSTALL_DIR} && bind=$(sed -n 's/^LAMNEZIA_HTTP_BIND=//p' .env) && "
-            "curl -fsS -H 'Host: localhost' \"http://$bind/healthz\""
-        )
-        if not health.ok:
-            raise MoveError(MoveErrorCode.NOT_STARTED, health.errors.strip())
-        state = self.copy_state()
-        if state != expected_state:
-            raise MoveError(MoveErrorCode.NOT_STARTED, f"state {state!r}")
+        self._check_health(expected_state)
         self._ctx.log(_("The copy answers and accepts no changes yet."))
+
+    def verify_live(self) -> None:
+        """The copy answers its health check and accepts changes: the move arrived there."""
+        self._check_health(MoveState.ARRIVED)
+        self._ctx.log(_("The copy on the new machine answers and accepts changes."))
 
     def copy_state(self) -> str | None:
         """The state of this move in the copy's database; None when the copy does not answer."""
@@ -151,6 +151,17 @@ class TargetMachine:
 
     def remove_uploads(self) -> None:
         self._host.sh(f"rm -rf {self._work_dir}")
+
+    def _check_health(self, expected_state: str) -> None:
+        health = self._host.sh(
+            f"cd {INSTALL_DIR} && bind=$(sed -n 's/^LAMNEZIA_HTTP_BIND=//p' .env) && "
+            "curl -fsS -H 'Host: localhost' \"http://$bind/healthz\""
+        )
+        if not health.ok:
+            raise MoveError(MoveErrorCode.NOT_STARTED, health.errors.strip())
+        state = self.copy_state()
+        if state != expected_state:
+            raise MoveError(MoveErrorCode.NOT_STARTED, f"state {state!r}")
 
     def _manage(self, command: str) -> str:
         return (

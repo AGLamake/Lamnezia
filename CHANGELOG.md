@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Automatic stop of the old panel after a move**: once a confirmed move's domain points to the new
+  machine and the copy there answers, the old read-only copy asks its host to stop it; the
+  *stop the old copy* operation marks it in the journal, and the new `lamnezia-stop.timer` of
+  `install.sh` runs `docker compose down`. The option is on by default and can be turned off in the
+  move form or on the move progress screen. Older installs need `install.sh` run again for the timer.
 - **XRay shortId change notice**: when the panel finds a new Reality shortId on an XRay server, the
   owners of keys shown before get the new `short_id_changed` notification: the keys added to the
   app no longer connect and must be imported again.

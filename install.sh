@@ -285,6 +285,34 @@ UNIT
     systemctl enable --now lamnezia-certificate.timer
 }
 
+# The panel has no access to Docker: after a move it leaves stop-after-move in its archives
+# volume, and this timer stops the stack once a minute after it finds the file.
+install_stop_timer() {
+    local unit=/etc/systemd/system/lamnezia-stop
+    local request=/app/archives/stop-after-move
+    cat >"$unit.service" <<UNIT
+[Unit]
+Description=Lamnezia: stop the panel when it asks to after a move
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'cd $DIR && if docker compose exec -T web sh -c "test -e $request && rm -f $request" 2>/dev/null; then docker compose down; fi'
+UNIT
+    cat >"$unit.timer" <<UNIT
+[Unit]
+Description=Lamnezia: check once a minute whether the panel asks to stop
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target
+UNIT
+    systemctl daemon-reload
+    systemctl enable --now lamnezia-stop.timer
+}
+
 main() {
     parse_args "$@"
     check_system
@@ -296,6 +324,7 @@ main() {
     prepare_images
     if [ -n "$RESTORE" ]; then restore_data; fi
     start_stack
+    install_stop_timer
     if [ "$PROXY" = "nginx" ]; then setup_nginx; fi
     if [ "$MOVING" = 1 ]; then
         log "The copy is running and waits: confirm the move in the old panel, then point $DOMAIN here"

@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from apps.relocation.models import DomainStatus, PanelMove
+from apps.relocation.services.shutdown import request_stop
 
 
 def a_records(name: str) -> set[str]:
@@ -40,15 +41,19 @@ class DomainCheck:
         return cls(panel_domain())
 
     def run(self) -> PanelMove | None:
-        """Check the latest move if it waits for the domain; the move with the new status."""
+        """Check the latest move if it waits for the domain; the move with the new status.
+
+        Once the domain points to the new machine, the old copy asks to stop (services/shutdown.py).
+        """
         move = PanelMove.latest()
-        if not self._domain or move is None or not move.awaits_domain:
+        if not self._domain or move is None or not (move.awaits_domain or move.should_stop):
             return None
         found = a_records(self._domain)
         move.domain_status = self._status(found, self._target_addresses(move.target_host))
         move.domain_addresses = ", ".join(sorted(found))[:255]
         move.domain_checked_at = timezone.now()
         move.save(update_fields=["domain_status", "domain_addresses", "domain_checked_at"])
+        request_stop(move)
         return move
 
     @staticmethod

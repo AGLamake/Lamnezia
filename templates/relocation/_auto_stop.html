@@ -1,0 +1,15 @@
+{% load i18n %}{# The stop of the old copy once the domain points to the new machine. #}
+{% if move.stop_requested_at %}
+{% blocktranslate asvar text with at=move.stop_requested_at|time:"TIME_FORMAT" %}This copy asked its host to stop at {{ at }}. The host stops it within a minute; if it keeps running, stop it with docker compose down.{% endblocktranslate %}
+{% include "components/alert.html" with level="success" text=text %}
+{% elif move.can_switch_auto_stop %}
+<div class="flex flex-wrap items-center gap-2">
+  <p><strong>{% if move.auto_stop %}{% translate "The automatic stop of this copy is on." %}{% else %}{% translate "The automatic stop of this copy is off." %}{% endif %}</strong></p>
+  <form method="post" action="{% url 'relocation:auto-stop' move.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="enabled" value="{% if move.auto_stop %}0{% else %}1{% endif %}">
+    <button type="submit" class="btn btn-ghost btn-sm">{% if move.auto_stop %}{% translate "Turn off" %}{% else %}{% translate "Turn on" %}{% endif %}</button>
+  </form>
+</div>
+<p class="help-text">{% translate "When the domain points to the new machine and the copy there answers, this copy stops its stack and leaves a mark in the operations journal." %}</p>
+{% endif %}

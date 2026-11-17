@@ -23,6 +23,7 @@ from apps.relocation.services.moves import (
     start_move,
 )
 from apps.relocation.services.panel_machine import PanelMachine
+from apps.relocation.services.shutdown import switch_auto_stop
 
 
 class MoveView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
@@ -39,7 +40,12 @@ class MoveView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
 
     def form_valid(self, form: MoveForm) -> HttpResponse:
         try:
-            move = start_move(form.cleaned_data["target"], self.member, self.client_ip)
+            move = start_move(
+                form.cleaned_data["target"],
+                self.member,
+                self.client_ip,
+                auto_stop=form.cleaned_data["auto_stop"],
+            )
         except MoveError as exc:
             form.add_error(None, f"{exc.message} {exc.hint}")
             return self.form_invalid(form)
@@ -61,7 +67,7 @@ class MoveProgressView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg
         return super().get_context_data(
             operations=move_operations(move),
             domain=panel_domain(),
-            polling=move.busy or move.awaits_domain,
+            polling=move.busy or move.awaits_domain or move.should_stop,
             poll_seconds=poll_seconds,
             **kwargs,
         )
@@ -78,9 +84,7 @@ class _MoveActionView(AdminRequiredMixin, View):
         try:
             move = type(self).action(pk, self.member, self.client_ip)
         except (MoveError, PanelMove.DoesNotExist) as exc:
-            text = f"{exc.message} {exc.hint}" if isinstance(exc, MoveError) else str(exc)
-            messages.error(request, text)
-            return redirect("relocation:move")
+            return _refused(request, exc)
         return redirect("relocation:progress", pk=move.pk)
 
 
@@ -90,3 +94,21 @@ class MoveConfirmView(_MoveActionView):
 
 class MoveCancelView(_MoveActionView):
     action = staticmethod(cancel_move)
+
+
+class MoveAutoStopView(AdminRequiredMixin, View):
+    """Turns the stop of the old copy on or off; works while the panel is read-only."""
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        enabled = request.POST.get("enabled") == "1"
+        try:
+            switch_auto_stop(pk, enabled, self.member, self.client_ip)
+        except (MoveError, PanelMove.DoesNotExist) as exc:
+            return _refused(request, exc)
+        return redirect("relocation:progress", pk=pk)
+
+
+def _refused(request: HttpRequest, exc: MoveError | PanelMove.DoesNotExist) -> HttpResponse:
+    text = f"{exc.message} {exc.hint}" if isinstance(exc, MoveError) else str(exc)
+    messages.error(request, text)
+    return redirect("relocation:move")

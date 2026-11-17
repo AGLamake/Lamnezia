@@ -64,6 +64,9 @@ class FakeMachine:
     def verify(self, expected_state: str) -> None:
         self._do("verify")
 
+    def verify_live(self) -> None:
+        self._do("verify_live")
+
     def copy_state(self) -> str | None:
         self._do("copy_state")
         return self.copy

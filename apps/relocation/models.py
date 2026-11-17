@@ -72,6 +72,9 @@ class PanelMove(models.Model):
     )
     domain_addresses = models.CharField(_("addresses of the domain"), max_length=255, blank=True)
     domain_checked_at = models.DateTimeField(_("domain checked at"), null=True, blank=True)
+    # The old copy stops its stack once the domain points to the new machine (services/shutdown.py).
+    auto_stop = models.BooleanField(_("stop the old copy automatically"), default=True)
+    stop_requested_at = models.DateTimeField(_("stop requested at"), null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name=_("started by"),
@@ -117,6 +120,22 @@ class PanelMove(models.Model):
     def awaits_domain(self) -> bool:
         """Handed over, and the domain does not point to the new machine yet."""
         return self.state in self.HANDED_OVER and self.domain_status != DomainStatus.POINTED
+
+    @property
+    def can_switch_auto_stop(self) -> bool:
+        """The old copy has not asked its host to stop yet; only it decides about its stack."""
+        waiting = (MoveState.PREPARING, MoveState.READY, MoveState.LEFT)
+        return self.state in waiting and self.stop_requested_at is None
+
+    @property
+    def should_stop(self) -> bool:
+        """The move is confirmed, the domain points to the new machine and the stop is wanted."""
+        return (
+            self.state == MoveState.LEFT
+            and self.auto_stop
+            and self.domain_status == DomainStatus.POINTED
+            and self.stop_requested_at is None
+        )
 
     def mark(self, state: MoveState) -> None:
         self.state = state

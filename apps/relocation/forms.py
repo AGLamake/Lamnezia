@@ -18,6 +18,15 @@ class MoveForm(forms.Form):
             "It must run Debian or Ubuntu and have no panel yet."
         ),
     )
+    auto_stop = forms.BooleanField(
+        label=_("Stop this copy once the domain points to the new machine"),
+        required=False,
+        initial=True,
+        help_text=_(
+            "The copy on the new machine must answer first. The host of this panel needs "
+            "the timer of a current install.sh for it."
+        ),
+    )
     understood = forms.BooleanField(
         label=_("The panel accepts no changes until the move is confirmed or cancelled"),
     )
