@@ -166,6 +166,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **WebSockets closed during a panel move**: while the panel is read-only, a new WebSocket is
+  refused and a message on one opened before closes it unread, so no consumer can change data
+  behind the move; the support pages fall back to polling. `/ws/ping` keeps answering.
 - **No Plans link for moderators**: the admin menu of a moderator no longer links the plans page,
   which only administrators may open.
 - **Subscription address in the portal app**: the `/sub/<token>` handler moved from `apps/keys`

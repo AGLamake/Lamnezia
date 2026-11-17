@@ -22,7 +22,8 @@ step is pointing the panel domain to the new machine.
 ## How it goes
 
 1. Choose the machine and start the move. From this click the panel is **read-only**: pages open,
-   but changes answer `503` with `Retry-After`; background jobs and bots pause. Operations queued a
+   but changes answer `503` with `Retry-After`; background jobs and bots pause. The live updates of
+   the support pages (WebSocket) are closed: the pages refresh by polling instead. Operations queued a
    moment before end with "the panel is moving"; a running operation stops the move — start it
    again when the operation ends.
 2. The *prepare* operation checks the machine, makes an archive with a one-time password, uploads

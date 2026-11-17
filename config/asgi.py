@@ -11,6 +11,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 # Django must be set up before anything that imports models.
 django_application = get_asgi_application()
 
+from apps.relocation.socket_guard import FrozenSocketGuard  # noqa: E402
 from apps.support.consumers import SupportConsumer  # noqa: E402
 from config.health import PingConsumer  # noqa: E402
 
@@ -25,8 +26,11 @@ application = ProtocolTypeRouter(
     {
         "http": django_application,
         # The session cookie signs the socket in; the origin check keeps other sites from using it.
+        # A panel moving to another machine keeps its sockets closed.
         "websocket": AllowedHostsOriginValidator(
-            AuthMiddlewareStack(URLRouter(websocket_urlpatterns))  # type: ignore[arg-type]
+            AuthMiddlewareStack(
+                FrozenSocketGuard(URLRouter(websocket_urlpatterns))  # type: ignore[arg-type]
+            )
         ),
     }
 )
