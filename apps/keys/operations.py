@@ -207,7 +207,7 @@ def build_xray_profiles(ctx: OperationContext) -> None:
     instance = instances.get(ctx.params["source"])
     with instance.connect() as host, ctx.step(_("Read the protocol configuration")):
         built = xray_profiles.XrayProfiles(instance, host).fill()
-    ctx.log(_("Keys ready to be shown: %(count)d.") % {"count": built})
+        ctx.log(_("Keys ready to be shown: %(count)d.") % {"count": built})
 
 
 @operations.register(drift.RESOLVE, _("Resolve a difference with the server"))

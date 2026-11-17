@@ -8,6 +8,8 @@ Sent after the transaction of the change commits, for notifications:
   keys on it are revoked.
 - `keys_moved(user, server)`: the user's keys of a legacy AmneziaWG on `server` got new ones on
   AmneziaWG 3.1; they must be imported into the app before the old container goes.
+- `short_id_changed(user, server)`: the Reality shortId of XRay on `server` changed; the user's
+  keys added to the app no longer connect and must be imported again.
 
 Sent in the operation, under the server lock:
 
@@ -24,5 +26,6 @@ from django.dispatch import Signal
 keys_changed = Signal()
 keys_revoked = Signal()
 keys_moved = Signal()
+short_id_changed = Signal()
 container_removing = Signal()
 service_changed = Signal()

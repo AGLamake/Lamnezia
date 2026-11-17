@@ -10,12 +10,17 @@ import shlex
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 
+from django.utils.functional import Promise
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from apps.operations.services.context import OperationContext
 from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.protocols.services.container import ProtocolContainer, Transport
 from apps.ssh.services import RemoteHost
+
+# The step the new container starts in, when the change is of its port; other changes name theirs.
+NEW_PORT_STEP = gettext_lazy("Start the container on the new port")
 
 
 def previous_name(container: str) -> str:
@@ -38,11 +43,13 @@ class ContainerSwap:
         new_ports: Iterable[tuple[int, Transport]] = (),
         *,
         restore: Callable[[], None] | None = None,
+        step: str | Promise = NEW_PORT_STEP,
     ) -> Iterator[None]:
         """Set the old container aside and stop it; the body runs the new one.
 
         Only `new_ports` are checked: the old container holds its own ports. `restore` runs in
         the old container once it is back, to undo what the body changed in a shared volume.
+        `step` names the step the body runs in.
         """
         with self._ctx.step(_("Check the port")):
             if self._docker.state(self.previous):
@@ -52,7 +59,7 @@ class ContainerSwap:
         with self._ctx.step(_("Set the old container aside")):
             self._host.docker("rename", self._docker.name, self.previous)
         try:
-            with self._ctx.step(_("Start the container on the new port")):
+            with self._ctx.step(step):
                 self._host.docker("stop", self.previous)
                 yield
         except Exception:

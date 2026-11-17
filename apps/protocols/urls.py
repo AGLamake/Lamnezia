@@ -21,6 +21,7 @@ from apps.protocols.views import (
     ServiceSettingsView,
     SpeedTestStopView,
     SpeedTestView,
+    XrayProfilesView,
 )
 
 app_name = "protocols"
@@ -34,6 +35,7 @@ urlpatterns = [
     path("speed-test/<int:server_pk>/stop/", SpeedTestStopView.as_view(), name="speed-test-stop"),
     path("<int:pk>/ipsec/reissue/", IpsecReissueView.as_view(), name="ipsec-reissue"),
     path("<int:pk>/settings/", ProtocolSettingsView.as_view(), name="settings"),
+    path("<int:pk>/xray-profiles/", XrayProfilesView.as_view(), name="xray-profiles"),
     path("<int:pk>/awg-upgrade/", AwgUpgradeView.as_view(), name="awg-upgrade"),
     path("<int:pk>/awg-migration/", AwgMigrationView.as_view(), name="awg-migration"),
     path(

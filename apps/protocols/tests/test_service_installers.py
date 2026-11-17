@@ -372,6 +372,9 @@ def test_dns_of_the_app_is_rebuilt_with_the_logs_off(
     assert app_dns.origin == InstanceOrigin.IMPORTED
     assert AuditEvent.objects.filter(action="protocols.rebuild_dns").exists()
     assert host.locks >= 1
+    steps = list(operation.steps.values_list("title", flat=True))
+    assert "Start the new container" in steps
+    assert "Start the container on the new port" not in steps
 
 
 def test_dns_that_does_not_start_after_the_rebuild_comes_back(

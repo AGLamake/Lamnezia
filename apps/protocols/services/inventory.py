@@ -6,7 +6,9 @@ from django.db.models import Count
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
+from amnezia_core.xray import XRAY_CONTAINER
 from apps.keys.models import AccessKey, KeyStatus
+from apps.keys.services.xray_profiles import waiting_profiles
 from apps.protocols.catalog import CATALOG, ContainerGroup
 from apps.protocols.models import ProtocolInstance, ServiceInstance
 from apps.protocols.services.awg_migration import MigrationState, can_migrate
@@ -58,6 +60,13 @@ class ContainerRow:
         if self.instance is None or not can_migrate(self.instance):
             return None
         return MigrationState.of(self.instance)
+
+    @property
+    def xray_waiting(self) -> int:
+        """Imported XRay keys whose profile is not built yet; 0 for other containers."""
+        if self.instance is None or self.instance.container != XRAY_CONTAINER:
+            return 0
+        return waiting_profiles(self.instance.source)
 
 
 def server_containers(server: Server) -> list[ContainerRow]:

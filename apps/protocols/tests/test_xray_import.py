@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from django.test import Client
+from django.urls import reverse
 
 from amnezia_core.clients_table import ClientsTable
 from amnezia_core.xray import (
@@ -18,11 +20,15 @@ from amnezia_core.xray import (
     XrayServerConfig,
     client_fingerprint,
 )
+from apps.accounts.models import User
+from apps.accounts.tests.factories import UserFactory
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.instances import instances
 from apps.keys.services.profile import XrayKeyProfile
 from apps.keys.services.xray_profiles import follow_short_id, request_profiles
 from apps.keys.tests.fake_xray import FakeXrayServer
+from apps.notifications.events import Event
+from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import InstanceOrigin, ProtocolInstance
 from apps.protocols.services.importer import start_import
@@ -157,6 +163,84 @@ def test_a_new_short_id_is_remembered_by_the_instance(imported: Server) -> None:
     instance.refresh_from_db()
     assert instance.params["short_id"] == "0011223344556677"
     assert instances.get(instance.source).short_id == "0011223344556677"
+
+
+def shown(django_capture_on_commit_callbacks: OnCommit) -> list[AccessKey]:
+    """Every imported key with its profile built, as after the owners added them to the app."""
+    with django_capture_on_commit_callbacks(execute=True):
+        request_profiles(AccessKey.objects.all())
+    return list(AccessKey.objects.order_by("pk"))
+
+
+def test_owners_of_keys_with_the_old_short_id_are_told_to_import_them_again(
+    imported: Server, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    anna, bob = UserFactory(), UserFactory()
+    first, second, ownerless = shown(django_capture_on_commit_callbacks)
+    AccessKey.objects.filter(pk__in=[first.pk, second.pk]).update(user=anna)
+    AccessKey.objects.filter(pk=ownerless.pk).update(user=None)
+    AccessKey.objects.create(source=first.source, name="New", public_key="x", user=bob)
+    source = ProtocolInstance.objects.get().source
+
+    with django_capture_on_commit_callbacks(execute=True):
+        assert follow_short_id(source, "0011223344556677") == 3
+
+    told = Notification.objects.filter(event=Event.SHORT_ID_CHANGED)
+    assert [(n.user, n.data["server"]) for n in told] == [(anna, imported.name)]
+
+
+def test_nobody_is_told_while_the_short_id_stays(
+    imported: Server, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    key, *_ = shown(django_capture_on_commit_callbacks)
+    AccessKey.objects.filter(pk=key.pk).update(user=UserFactory())
+
+    with django_capture_on_commit_callbacks(execute=True):
+        assert follow_short_id(key.source, SHORT_ID) == 0
+
+    assert not Notification.objects.filter(event=Event.SHORT_ID_CHANGED).exists()
+
+
+@pytest.fixture
+def admin_client(admin: User) -> Client:
+    client = Client()
+    client.force_login(admin)
+    return client
+
+
+def test_card_offers_to_prepare_all_imported_keys(imported: Server, admin_client: Client) -> None:
+    instance = ProtocolInstance.objects.get()
+
+    [row] = server_containers(imported)
+    response = admin_client.get(reverse("servers:detail", args=[imported.pk]))
+
+    assert row.xray_waiting == 3
+    assert reverse("protocols:xray-profiles", args=[instance.pk]) in response.content.decode()
+
+
+def test_one_operation_prepares_all_imported_keys(
+    imported: Server, admin_client: Client, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    url = reverse("protocols:xray-profiles", args=[ProtocolInstance.objects.get().pk])
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = admin_client.post(url)
+
+    operation = Operation.objects.get(kind="keys.build_xray_profiles")
+    assert response.headers["Location"] == reverse("operations:detail", args=[operation.pk])
+    assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
+    assert all(key.can_export for key in AccessKey.objects.all())
+    [row] = server_containers(imported)
+    assert row.xray_waiting == 0
+
+
+def test_a_build_under_way_is_not_started_twice(imported: Server, admin_client: Client) -> None:
+    url = reverse("protocols:xray-profiles", args=[ProtocolInstance.objects.get().pk])
+
+    first, second = admin_client.post(url), admin_client.post(url)
+
+    assert first.headers["Location"] == second.headers["Location"]
+    assert Operation.objects.filter(kind="keys.build_xray_profiles").count() == 1
 
 
 def test_import_changes_nothing_on_the_server(app_server: XrayAppServer, imported: Server) -> None:

@@ -28,6 +28,7 @@ class Event(StrEnum):
     KEYS_CHANGED = "keys_changed"
     KEYS_REVOKED = "keys_revoked"
     KEYS_MOVED = "keys_moved"
+    SHORT_ID_CHANGED = "short_id_changed"
     KEYS_UPDATED = "keys_updated"
     REGISTRATION_PENDING = "registration_pending"
     TICKET_CREATED = "ticket_created"
@@ -157,6 +158,16 @@ EVENTS: dict[Event, EventType] = {
         _(
             "Your VPN keys on {server} are moved to AmneziaWG 3.1. Open the personal account "
             "and import the new keys into the Amnezia app: the old ones stop working soon."
+        ),
+        to_user=True,
+    ),
+    Event.SHORT_ID_CHANGED: EventType(
+        _("XRay keys must be imported again"),
+        _("New XRay settings on {server}"),
+        _(
+            "The XRay settings of {server} have changed. Open your keys in the personal account "
+            "and import them into the Amnezia app again: the ones added before no longer "
+            "connect. A subscription link picks the change up by itself."
         ),
         to_user=True,
     ),

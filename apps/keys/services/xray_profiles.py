@@ -1,7 +1,8 @@
 """Profiles of XRay keys kept in line with server.json: built for imported keys, a new shortId.
 
 The panel keeps the server half of a profile with every key. An imported XRay key has only its
-UUID, so its profile is built from server.json when the key is first shown. The shortId is part
+UUID, so its profile is built from server.json when the key is first shown, or for all imported
+keys of an instance at once from its card. The shortId is part
 of every profile: when it changes on the server (e.g. the app set the protocol up anew), the
 stored profiles get the new one.
 """
@@ -18,8 +19,9 @@ from amnezia_core.xray import (
     XRAY_PUBLIC_KEY_PATH,
     XrayServerConfig,
 )
+from apps.accounts.models import User
 from apps.keys.errors import explained_format_errors
-from apps.keys.models import AccessKey, KeyStatus
+from apps.keys.models import GONE_STATUSES, AccessKey, KeyStatus
 from apps.keys.services.instances import Instance, instances
 from apps.keys.services.profile import XrayKeyProfile, profile_container
 from apps.keys.signals import xray_short_id_changed
@@ -72,7 +74,8 @@ class XrayProfiles:
 def follow_short_id(source: str, short_id: str) -> int:
     """Put `short_id` into the stored XRay profiles of `source`; how many profiles changed.
 
-    The instance remembers it through `xray_short_id_changed`.
+    The instance remembers it through `xray_short_id_changed`, which also names the owners of
+    the changed keys.
     """
     changed = []
     for key in AccessKey.objects.filter(source=source).exclude(status=KeyStatus.REVOKED):
@@ -83,7 +86,8 @@ def follow_short_id(source: str, short_id: str) -> int:
             key.profile = replace(profile, short_id=short_id).to_json()
             changed.append(key)
     AccessKey.objects.bulk_update(changed, ["profile"])
-    xray_short_id_changed.send(XrayProfiles, source=source, short_id=short_id)
+    owners = list({key.user for key in changed if key.user is not None})
+    xray_short_id_changed.send(XrayProfiles, source=source, short_id=short_id, owners=owners)
     return len(changed)
 
 
@@ -97,9 +101,31 @@ def request_profiles(keys: Iterable[AccessKey]) -> bool:
     return any([_request(source, xray[source]) for source in sorted(sources)])
 
 
+def waiting_profiles(source: str) -> int:
+    """How many keys of the instance wait for their profile."""
+    keys = AccessKey.objects.filter(source=source).exclude(status__in=GONE_STATUSES)
+    return sum(key.awaits_profile for key in keys)
+
+
+def prepare_all(source: str, user: User) -> Operation:
+    """Build the profiles of every key of the instance that waits: one operation, or the one
+    already under way.
+    """
+    operation = _latest_build(source)
+    if operation is not None and operation.status in _UNFINISHED:
+        return operation
+    return launch(
+        BUILD_PROFILES, {"source": source}, user=user, subject=instances.get(source).title
+    )
+
+
+def _latest_build(source: str) -> Operation | None:
+    builds = Operation.objects.filter(kind=BUILD_PROFILES, params__source=source)
+    return builds.order_by("-pk").first()
+
+
 def _request(source: str, title: str) -> bool:
-    latest = Operation.objects.filter(kind=BUILD_PROFILES, params__source=source).order_by("-pk")
-    operation = latest.first()
+    operation = _latest_build(source)
     if operation is not None and operation.status in _UNFINISHED:
         return True
     if (

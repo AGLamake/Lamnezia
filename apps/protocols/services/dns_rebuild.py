@@ -59,7 +59,9 @@ class DnsRebuild:
             with self._ctx.step(_("Build the image")):
                 old_image = docker.image_id()
                 docker.build(upstream_file("dns/Dockerfile"))
-            with ContainerSwap(self._host, self._ctx, docker).replace():
+            with ContainerSwap(self._host, self._ctx, docker).replace(
+                step=_("Start the new container")
+            ):
                 docker.run_container(installer.run_arguments())
                 if docker.state() != "running":
                     raise SetupError(SetupErrorCode.CONTAINER_START_FAILED, DNS_CONTAINER)

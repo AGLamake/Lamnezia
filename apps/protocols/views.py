@@ -23,6 +23,7 @@ from apps.accounts.permissions import AdminRequiredMixin
 from apps.audit.services import journal as audit
 from apps.groups.models import ServerGroup
 from apps.keys.services.counts import InstanceKeyCount
+from apps.keys.services.xray_profiles import prepare_all
 from apps.protocols.forms import (
     AwgMigrationForm,
     AwgUpgradeForm,
@@ -477,6 +478,16 @@ class AwgMigrationFinishView(AdminRequiredMixin, InstanceMixin, View):
         if not can_migrate(self.instance) or not MigrationState.of(self.instance).can_finish:
             raise Http404
         operation = start_finish(self.instance, self.member, ip=self.client_ip)
+        return redirect("operations:detail", pk=operation.pk)
+
+
+class XrayProfilesView(AdminRequiredMixin, InstanceMixin, View):
+    """Prepare every imported XRay key for showing by one operation."""
+
+    containers = (XRAY_CONTAINER,)
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        operation = prepare_all(self.instance.source, self.member)
         return redirect("operations:detail", pk=operation.pk)
 
 

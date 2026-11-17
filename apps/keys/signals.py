@@ -15,5 +15,6 @@ clients_adding = Signal()
 keys_written = Signal()
 
 # Sent when the panel finds a new shortId in the server.json of an XRay instance and has put it
-# into the stored profiles of its keys. Arguments: `source` (the instance) and `short_id`.
+# into the stored profiles of its keys. Arguments: `source` (the instance), `short_id` and
+# `owners` (the users whose keys had the old one: the keys they added to the app no longer connect).
 xray_short_id_changed = Signal()

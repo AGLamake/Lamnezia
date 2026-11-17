@@ -826,6 +826,9 @@ msgstr "Запустите контейнер из его карточки ил�
 msgid "Start the container on the new port"
 msgstr "Запуск контейнера на новом порту"
 
+msgid "Start the new container"
+msgstr "Запуск нового контейнера"
+
 msgid "Start the port speed test"
 msgstr "Запуск замера скорости по портам"
 

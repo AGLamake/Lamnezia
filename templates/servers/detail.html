@@ -138,6 +138,13 @@
                     <button type="submit" class="text-link hover:underline">{% translate "Move to AmneziaWG 3.1" %}</button>
                   </form>
                 {% endif %}
+                {% with waiting=row.xray_waiting %}{% if waiting %}
+                  <form method="post" action="{% url 'protocols:xray-profiles' row.instance.pk %}" class="flex flex-wrap items-center gap-x-3 gap-y-1 help-text">
+                    {% csrf_token %}
+                    <span>{% blocktranslate count keys=waiting %}{{ keys }} imported key is not ready to be shown yet.{% plural %}{{ keys }} imported keys are not ready to be shown yet.{% endblocktranslate %}</span>
+                    <button type="submit" class="text-link hover:underline">{% translate "Prepare all imported keys" %}</button>
+                  </form>
+                {% endif %}{% endwith %}
                 {% with migration=row.awg_migration %}{% if migration %}
                   {% include "protocols/_awg_migration.html" with instance=row.instance %}
                 {% endif %}{% endwith %}

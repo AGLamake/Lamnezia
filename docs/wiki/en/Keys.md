@@ -28,12 +28,16 @@ Keys imported from a server were not created by the panel and have no private pa
 shown, only revoked or re-issued. Imported XRay keys are the exception: the panel knows their UUID,
 so the first time such a key is opened it reads the server settings from `server.json` in the
 background and the key can be shown a few seconds later; a key in a subscription link joins the
-feed on one of the next refreshes.
+feed on one of the next refreshes. To prepare them all at once, use **Prepare all imported keys**
+on the XRay row of the server card: one background operation builds the profiles of every
+imported key that has none yet.
 
 The Reality shortId is part of every XRay key. The panel keeps the one it last read from
 `server.json`; when the shortId changes on the server (for example the protocol was set up anew in
 the Amnezia app), the panel notices it on the next key issue or periodic check and updates the
-stored profiles, so the keys shown afterwards carry the new one.
+stored profiles, so the keys shown afterwards carry the new one. The keys already added to the app
+keep the old shortId and no longer connect: their owners get the **XRay keys must be imported
+again** notification (`short_id_changed`). A subscription link picks the change up by itself.
 
 ## Other actions
 

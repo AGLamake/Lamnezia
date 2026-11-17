@@ -42,6 +42,7 @@
 | Ключи отозваны | `keys_revoked` | `user`, `server` |
 | Ключи переведены на AmneziaWG 3.1 | `keys_moved` | `user`, `server` |
 | Ключи обновлены для группы серверов | `keys_updated` | `user`, `server` |
+| Ключи XRay нужно импортировать заново | `short_id_changed` | `user`, `server` |
 | Заявка на регистрацию | `registration_pending` | `user`, `email` |
 | Новое обращение в поддержку | `ticket_created` | `user`, `type`, `subject` |
 | Сообщение в чате | `chat_message` | `user`, `text`, `count` |

@@ -41,6 +41,7 @@ channels hear each event.
 | Keys revoked | `keys_revoked` | `user`, `server` |
 | Keys moved to AmneziaWG 3.1 | `keys_moved` | `user`, `server` |
 | Keys updated for a server group | `keys_updated` | `user`, `server` |
+| XRay keys must be imported again | `short_id_changed` | `user`, `server` |
 | Registration request | `registration_pending` | `user`, `email` |
 | New support ticket | `ticket_created` | `user`, `type`, `subject` |
 | Chat message | `chat_message` | `user`, `text`, `count` |

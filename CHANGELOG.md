@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **XRay shortId change notice**: when the panel finds a new Reality shortId on an XRay server, the
+  owners of keys shown before get the new `short_id_changed` notification: the keys added to the
+  app no longer connect and must be imported again.
+- **Prepare all imported XRay keys**: a button on the XRay row of the server card builds the
+  profiles of every imported key in one background operation.
 - **App versions for AmneziaWG 3.1 keys**: the portal key page and the bot key card (and the key
   itself in the bot) list the minimum Amnezia VPN and AmneziaWG versions per platform for a key of
   an AmneziaWG 3.1 server; other keys show no hint.
@@ -146,6 +151,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **DNS rebuild step name**: the operation now calls the step "Start the new container" instead of
+  "Start the container on the new port".
 - **Panel move refuses the panel's own machine**: the form rejects a server whose address is the
   panel domain, the address the panel is opened at, or an IP address these names point to. The
   preparation checks again over SSH, before any change: the address the panel connects from, and
@@ -182,6 +189,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Building the profiles of imported XRay keys failed at the end**: the profiles were saved, but
+  the operation was marked failed.
 - **A failed service peer made the leading server lag**: when a relay update met the leading server
   busy with another operation (for example a change of the group settings), the leader was marked
   lagging and the relay got a config without the group, so every client lost connection; a group of

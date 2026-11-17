@@ -141,6 +141,10 @@ msgstr "Новые ключи VPN на {server}"
 msgid "New VPN settings on {server}"
 msgstr "Новые настройки VPN на {server}"
 
+#, python-brace-format
+msgid "New XRay settings on {server}"
+msgstr "Новые настройки XRay на {server}"
+
 msgid "New answer to your request"
 msgstr "Новый ответ на ваше обращение"
 
@@ -269,6 +273,10 @@ msgstr "Доступ к VPN пользователя {user} заканчивае
 msgid "The VPN protocol is removed from {server}, and your keys on it no longer connect. Open the personal account to see the keys you have."
 msgstr "VPN-протокол удалён с сервера {server}, и ваши ключи на нём больше не подключаются. Откройте личный кабинет, чтобы увидеть свои ключи."
 
+#, python-brace-format
+msgid "The XRay settings of {server} have changed. Open your keys in the personal account and import them into the Amnezia app again: the ones added before no longer connect. A subscription link picks the change up by itself."
+msgstr "Настройки XRay на сервере {server} изменились. Откройте свои ключи в личном кабинете и заново импортируйте их в приложение Amnezia: добавленные раньше больше не подключаются. Ключи по ссылке-подписке обновятся сами."
+
 msgid "The body is signed with it in the X-Lamnezia-Signature header."
 msgstr "Им подписывается тело запроса в заголовке X-Lamnezia-Signature."
 
@@ -373,6 +381,9 @@ msgstr "Вебхук"
 
 msgid "Webhook URL"
 msgstr "Webhook URL"
+
+msgid "XRay keys must be imported again"
+msgstr "Ключи XRay нужно импортировать заново"
 
 #, python-brace-format
 msgid "Your VPN keys on {server} are moved to AmneziaWG 3.1. Open the personal account and import the new keys into the Amnezia app: the old ones stop working soon."
