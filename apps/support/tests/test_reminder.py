@@ -11,7 +11,7 @@ from django.db import transaction
 from apps.accounts.models import LinkedAccount, Messenger, NotifyVia, User
 from apps.accounts.tests.registration import configure as configure_site
 from apps.notifications.events import EVENTS, Event
-from apps.notifications.models import Notification
+from apps.notifications.models import Delivery, Notification
 from apps.notifications.services.channels import DeliveryError, HttpClient
 from apps.notifications.tests.conftest import FakeHttp
 from apps.support import tasks
@@ -195,6 +195,20 @@ class TestReminder:
         assert reminder.skip_via == NotifyVia.TELEGRAM
         assert len(http.to(TELEGRAM_SEND)) == 1  # the answer only
         assert reminder.sent_via == NotifyVia.EMAIL
+
+    def test_no_reminder_when_only_the_reached_channel_is_left(
+        self, answer: Answer, http: FakeHttp
+    ) -> None:
+        user = on_telegram(NotifyVia.DISCORD)  # Discord chosen but never linked
+        User.objects.filter(pk=user.pk).update(email="")
+
+        delay_is_over(answer(user.conversations.get(), "Hi"))
+
+        assert reminders(user) == []
+        assert not Delivery.objects.filter(
+            notification__key__startswith="support-reminder"
+        ).exists()
+        assert len(http.to(TELEGRAM_SEND)) == 1  # the answer only
 
     def test_a_chat_reminder_names_the_chat_and_a_request_reminder_its_topic(
         self, answer: Answer

@@ -56,9 +56,30 @@ class PersonalChannels:
             return destinations
         return [self._email()]
 
+    def reach_besides(self, skip: str) -> bool:
+        """Whether the user can get a message by a channel other than `skip`."""
+        return any(self._reachable(via) for via in self.ORDER if via != skip)
+
+    def _reachable(self, via: str) -> bool:
+        if via == NotifyVia.EMAIL:
+            return bool(self._user and self._user.email)
+        return self._chat(via) is not None
+
     def _destination(self, via: str) -> Destination | None:
         if via == NotifyVia.EMAIL:
-            return self._email() if self._user and self._user.email else None
+            return self._email() if self._reachable(via) else None
+        found = self._chat(via)
+        if found is None:
+            return None
+        token, chat = found
+        menu = _("Menu")
+        if via == NotifyVia.TELEGRAM:
+            # A private chat with the bot has the user's id as its chat id.
+            return Destination(TelegramChannel(token, chat.external_id, self._http, menu), chat)
+        return Destination(DiscordDmChannel(token, chat.external_id, self._http, menu), chat)
+
+    def _chat(self, via: str) -> tuple[str, LinkedAccount] | None:
+        """The token of the bot of messenger `via` and the user's chat with it."""
         if via not in (NotifyVia.TELEGRAM, NotifyVia.DISCORD) or self._user is None:
             return None
         site = cached_settings.get()
@@ -67,13 +88,7 @@ class PersonalChannels:
         else:
             token = site.discord_bot_token
         chat = self._user.linked_accounts.filter(messenger=via).first() if token else None
-        if chat is None:
-            return None
-        menu = _("Menu")
-        if via == NotifyVia.TELEGRAM:
-            # A private chat with the bot has the user's id as its chat id.
-            return Destination(TelegramChannel(token, chat.external_id, self._http, menu), chat)
-        return Destination(DiscordDmChannel(token, chat.external_id, self._http, menu), chat)
+        return (token, chat) if chat else None
 
     def _email(self) -> Destination:
         """Email even without an address: sending then fails with a clear error."""

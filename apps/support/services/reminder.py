@@ -2,9 +2,10 @@
 
 The answer reaches the user where they last wrote. If they neither answer nor read it within
 SUPPORT_REMINDER_DELAY, their chosen channel gets one short notice with a link to the thread,
-unless the answer itself reached them there; the channel it reached is never reminded. An answer
-the messenger did not take (the bot is blocked) does not count as reached. Answers in a row before
-the user's next message make one reminder.
+unless the answer itself reached them there; the channel it reached is never reminded, and with no
+other channel left there is no reminder at all. An answer the messenger did not take (the bot is
+blocked) does not count as reached. Answers in a row before the user's next message make one
+reminder.
 """
 
 from django.conf import settings
@@ -12,7 +13,9 @@ from django.urls import reverse
 
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
+from apps.notifications.services.channels import HttpClient
 from apps.notifications.services.delivery import emit
+from apps.notifications.services.personal import PersonalChannels
 from apps.support.models import Conversation, Kind, Message
 
 
@@ -33,6 +36,10 @@ class AnswerReminder:
         user = conversation.user
         reached = self._reached()
         if self._answer.read_at is not None or reached == user.notify_via:
+            return
+        if reached and not PersonalChannels(user, HttpClient.from_settings()).reach_besides(
+            reached
+        ):
             return
         first = self._first_unanswered(conversation)
         if first is None or first > self._answer.pk:
