@@ -169,6 +169,13 @@ class Conversation(models.Model):
     def is_open(self) -> bool:
         return self.status in OPEN_STATUSES
 
+    @property
+    def has_topic(self) -> bool:
+        """Whether the user wrote a topic: the quick server report keeps only the server's name."""
+        if not self.subject or self.type != TicketType.SERVER_DOWN:
+            return bool(self.subject)
+        return self.server is not None and self.subject != self.server.name
+
 
 class Message(models.Model):
     """A message of a thread. `internal` notes are for the staff only; no author is the panel.

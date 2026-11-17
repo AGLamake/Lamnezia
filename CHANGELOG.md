@@ -253,6 +253,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Title of a "server does not work" request with a topic**: such a request showed as
+  "Server Helsinki is slow does not work"; it now shows its topic, the server separately, and keeps
+  "Server … does not work" only for the quick report without a topic.
 - **Demo data ready for screenshots**: after `seed_demo` the portal shows traffic for the period
   (the plans now start a few days back), the demo chat has a support reply, and tickets and chat
   messages are written in the panel language.

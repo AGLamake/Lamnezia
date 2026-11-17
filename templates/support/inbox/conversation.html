@@ -10,7 +10,7 @@
   <h1 class="page-title break-words">{% if conversation.kind == "chat" %}{% blocktranslate with user=conversation.user.username %}Chat with {{ user }}{% endblocktranslate %}{% else %}#{{ conversation.pk }} {% include "support/_subject.html" %}{% endif %}</h1>
   <p class="help-text">
     {% if user.is_admin %}<a href="{% url 'dashboard:user' conversation.user_id %}" class="hover:underline">{{ conversation.user.username }}</a>{% else %}{{ conversation.user.username }}{% endif %}
-    {% if conversation.kind == "ticket" %}· {{ conversation.get_type_display }} · {{ conversation.created_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}
+    {% if conversation.kind == "ticket" %}· {{ conversation.get_type_display }}{% if conversation.server %} · {{ conversation.server.name }}{% endif %} · {{ conversation.created_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}
     {% if conversation.incident_id and user.is_admin %}· <a href="{% url 'support:incidents' %}" class="hover:underline">{% translate "part of an incident" %}</a>{% endif %}
   </p>
 </div>

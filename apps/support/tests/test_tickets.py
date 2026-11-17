@@ -3,6 +3,7 @@ from datetime import timedelta
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.template.loader import render_to_string
 from django.test import override_settings
 from django.utils import timezone
 
@@ -308,3 +309,26 @@ class TestThread:
         answer.refresh_from_db()
         assert answer.read_at is not None
         assert conversation.messages.get(author=user).read_at is None
+
+
+@pytest.mark.parametrize(
+    ("type", "subject", "title"),
+    [
+        (TicketType.SERVER_DOWN, "Helsinki", "Server Helsinki does not work"),
+        (TicketType.SERVER_DOWN, "Helsinki is slow", "Helsinki is slow"),
+        (TicketType.QUESTION, "", "Question"),
+    ],
+)
+def test_subject_shows_topic_instead_of_server_template(
+    type: TicketType, subject: str, title: str
+) -> None:
+    conversation = Conversation.objects.create(
+        user=UserFactory(),
+        type=type,
+        subject=subject,
+        server=ServerFactory(name="Helsinki"),
+    )
+
+    html = render_to_string("support/_subject.html", {"conversation": conversation})
+
+    assert html.strip() == title

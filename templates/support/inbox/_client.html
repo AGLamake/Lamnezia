@@ -18,7 +18,7 @@
   <div class="space-y-1">
     <h3 class="text-sm font-medium">{% translate "Open requests" %}</h3>
     {% for request in client.open_requests %}
-      <p class="help-text"><a href="{% url 'support:inbox-conversation' request.pk %}" class="link">#{{ request.pk }} {% include "support/_subject.html" with conversation=request %}</a> · {{ request.get_status_display }}</p>
+      <p class="help-text"><a href="{% url 'support:inbox-conversation' request.pk %}" class="link">#{{ request.pk }} {% include "support/_subject.html" with conversation=request %}</a>{% if request.has_topic and request.server %} · {{ request.server.name }}{% endif %} · {{ request.get_status_display }}</p>
     {% empty %}
       <p class="help-text">{% translate "None." %}</p>
     {% endfor %}
