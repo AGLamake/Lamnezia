@@ -12,7 +12,7 @@ from django.views.generic import ListView
 from apps.accounts.permissions import AdminRequiredMixin
 from apps.billing.forms import OrderFilterForm
 from apps.billing.models import Order
-from apps.billing.services.orders import RefundRefusedError, refund
+from apps.billing.services.orders import RefundRefusedError, paid_totals, refund
 from apps.billing.services.providers import PaymentProviderError, payment_providers
 from apps.core.paging import PageSizeMixin
 
@@ -28,6 +28,7 @@ class OrderListView(PageSizeMixin, AdminRequiredMixin, ListView):  # type: ignor
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(
             filter_form=self.filter_form,
+            totals=paid_totals(self.object_list),
             refundable=[p.key for p in payment_providers.available() if p.refunds],
             **kwargs,
         )

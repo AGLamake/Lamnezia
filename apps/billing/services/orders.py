@@ -2,10 +2,11 @@
 
 from collections.abc import Callable
 from datetime import datetime
+from decimal import Decimal
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Sum
 
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
@@ -126,6 +127,17 @@ def expire(now: datetime) -> int:
         status=OrderStatus.PENDING, created_at__lt=now - settings.ORDER_EXPIRES_AFTER
     )
     return stale.update(status=OrderStatus.EXPIRED)
+
+
+def paid_totals(orders: QuerySet[Order]) -> dict[str, Decimal]:
+    """Money of the paid orders among `orders` by currency; refunded ones are not counted."""
+    rows = (
+        orders.filter(status=OrderStatus.PAID)
+        .order_by("currency")
+        .values("currency")
+        .annotate(total=Sum("amount"))
+    )
+    return {row["currency"]: row["total"] for row in rows}
 
 
 def refund(order: Order, actor: User, ip: str | None = None) -> None:

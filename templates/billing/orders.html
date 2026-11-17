@@ -14,6 +14,12 @@
 
 {% include "components/filters.html" with form=filter_form %}
 
+{% if totals %}
+  <p class="help-text mb-4">{% translate "Paid among the orders found:" %}
+    {% for currency, total in totals.items %}<span class="font-medium tabular-nums">{{ total|floatformat:2 }} {{ currency }}</span>{% if not forloop.last %} · {% endif %}{% endfor %}
+  </p>
+{% endif %}
+
 {% if orders %}
   <div class="table-wrap">
     <table class="table table-cards">

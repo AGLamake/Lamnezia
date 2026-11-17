@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from datetime import timedelta
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -217,6 +218,26 @@ class TestOrdersPage:
         assert list(by_status.context["orders"]) == [done]
         assert list(by_user.context["orders"]) == [waiting]
         assert reverse("billing:orders") in everything.content.decode()
+
+    def test_the_page_sums_the_payments_by_currency_for_the_period(
+        self, client: Client, provider: FakeProvider
+    ) -> None:
+        paid(provider)
+        paid(provider)
+        dollars = paid(provider)
+        Order.objects.filter(pk=dollars.pk).update(amount=Decimal("9.50"), currency="USD")
+        refunded = paid(provider)
+        Order.objects.filter(pk=refunded.pk).update(status=OrderStatus.REFUNDED)
+        old = paid(provider)
+        Order.objects.filter(pk=old.pk).update(created_at=timezone.now() - timedelta(days=40))
+        checkout(UserFactory(), monthly(), provider)
+        admin(client)
+        since = (timezone.now() - timedelta(days=7)).date().isoformat()
+
+        page = client.get(reverse("billing:orders"), {"since": since})
+
+        assert page.context["totals"] == {"RUB": Decimal(200), "USD": Decimal("9.50")}
+        assert "200.00 RUB" in page.content.decode()
 
     def test_a_deleted_buyer_is_found_by_their_old_name(
         self, client: Client, provider: FakeProvider

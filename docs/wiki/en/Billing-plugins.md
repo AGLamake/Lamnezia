@@ -35,7 +35,9 @@ not paid, and a successful report for the same order later still counts. The **A
 ## Orders in the panel
 
 Administrators see every order on the **Orders** page of the admin interface (`/billing/orders/`,
-shown while a plugin is on), with filters by status, payment method, user and date. Statuses:
+shown while a plugin is on), with filters by status, payment method, user and date. Above the list,
+the paid orders among those found are summed by currency, so a date filter gives the takings of
+the period; refunded orders are not counted. Statuses:
 
 - **waiting for payment**: the user went to the payment page and the service has not reported yet;
 - **paid**: the payment came and access is renewed;
