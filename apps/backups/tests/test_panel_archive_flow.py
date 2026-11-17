@@ -2,6 +2,7 @@ import io
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -139,8 +140,15 @@ needs_tools = pytest.mark.skipif(
     any(shutil.which(tool) is None for tool in ("bash", "openssl", "tar", "sha256sum")),
     reason="no bash, openssl, tar or sha256sum",
 )
+# unpack.sh hands the password to openssl as `-pass fd:3`: stdin carries the ciphertext, and
+# the password stays off the command line and the environment. OpenSSL on Windows (Git Bash
+# ships a native build) has no `fd:` source, and the script is for the Linux server anyway.
+linux_script = pytest.mark.skipif(
+    sys.platform == "win32", reason="unpack.sh needs openssl with `-pass fd:` (no Windows)"
+)
 
 
+@linux_script
 @needs_tools
 def test_unpack_script_restores_the_files(archive_settings: Path) -> None:
     archive, _ = folder().create(PASSWORD, FakeDump())
@@ -153,6 +161,7 @@ def test_unpack_script_restores_the_files(archive_settings: Path) -> None:
     assert (target / "media" / "logos" / "logo.png").read_bytes() == b"png"
 
 
+@linux_script
 @needs_tools
 def test_unpack_script_refuses_a_wrong_password_and_a_newer_panel(archive_settings: Path) -> None:
     archive, _ = folder().create(PASSWORD, FakeDump())
