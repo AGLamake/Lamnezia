@@ -1,0 +1,6 @@
+{% load i18n %}
+{# The secret is not in the page: the button asks for it, and the look goes to the journal. #}
+{% url action pk as reveal_url %}
+<form method="post" action="{{ reveal_url }}" hx-post="{{ reveal_url }}" hx-swap="outerHTML">
+  {% csrf_token %}<button type="submit" class="cursor-pointer hover:underline">{{ label|default:_("Show") }}</button>
+</form>

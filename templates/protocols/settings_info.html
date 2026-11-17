@@ -15,7 +15,7 @@
     <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
       {% for row in info.rows %}
         <dt class="help-text">{{ row.label }}</dt>
-        <dd>{% if row.secret %}{% include "protocols/_password_reveal.html" with service_pk=subject.pk %}{% else %}<code class="break-all">{{ row.value }}</code>{% endif %}</dd>
+        <dd>{% if row.secret %}{% include "protocols/_reveal.html" with action="protocols:service-password" pk=subject.pk %}{% else %}<code class="break-all">{{ row.value }}</code>{% endif %}</dd>
       {% endfor %}
     </dl>
   {% endif %}

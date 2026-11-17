@@ -3,7 +3,7 @@
   <dl class="grid grid-cols-[auto_1fr] gap-x-3">
     <dt class="help-text">{% translate "User name" %}</dt><dd><code>{{ service.login }}</code></dd>
     <dt class="help-text">{% translate "Password" %}</dt>
-    <dd>{% include "protocols/_password_reveal.html" with service_pk=service.pk %}</dd>
+    <dd>{% include "protocols/_reveal.html" with action="protocols:service-password" pk=service.pk %}</dd>
   </dl>
 {% elif service.is_socks5 %}
   <dl class="grid grid-cols-[auto_1fr] gap-x-3">
@@ -11,7 +11,7 @@
     {% if service.login %}
       <dt class="help-text">{% translate "User name" %}</dt><dd><code>{{ service.login }}</code></dd>
       <dt class="help-text">{% translate "Password" %}</dt>
-      <dd><details><summary class="cursor-pointer hover:underline">{% translate "Show" %}</summary><code>{{ service.secret }}</code></details></dd>
+      <dd>{% include "protocols/_reveal.html" with action="protocols:service-password" pk=service.pk %}</dd>
     {% endif %}
   </dl>
   {% if service.app_log_size is not None %}
@@ -23,16 +23,11 @@
     </form>
   {% endif %}
 {% elif service.links %}
-  {% with links=service.links %}
-    <details>
-      <summary class="cursor-pointer hover:underline">{% translate "Show the links for Telegram" %}</summary>
-      <p><code class="break-all">{{ links.tg }}</code></p>
-      <p><a href="{{ links.tme }}" class="break-all hover:underline" rel="noreferrer" target="_blank">{{ links.tme }}</a></p>
-      <form method="post" action="{% url 'protocols:service-secret' service.pk %}" data-confirm="{% translate "Make a new secret? The links given out so far stop working." %}">
-        {% csrf_token %}<button type="submit" class="help-text hover:underline">{% translate "New secret" %}</button>
-      </form>
-    </details>
-  {% endwith %}
+  {% translate "Show the links for Telegram" as show_links %}
+  {% include "protocols/_reveal.html" with action="protocols:service-links" pk=service.pk label=show_links %}
+  <form method="post" action="{% url 'protocols:service-secret' service.pk %}" data-confirm="{% translate "Make a new secret? The links given out so far stop working." %}">
+    {% csrf_token %}<button type="submit" class="help-text hover:underline">{% translate "New secret" %}</button>
+  </form>
 {% elif service.is_tor_site %}
   {% if service.secret %}
     <p><span class="help-text">{% translate "Address in Tor" %}</span> <code class="break-all">{{ service.secret }}</code></p>

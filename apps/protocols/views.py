@@ -87,6 +87,7 @@ SERVICE_SETTINGS_FORMS: dict[str, type[ServiceSettingsForm]] = {
 }
 
 PASSWORD_VIEW = "protocols.service_password_view"
+LINKS_VIEW = "protocols.service_links_view"
 
 # Container actions started by a button on the server card.
 _ACTION_KINDS = {"restart": RESTART_KIND, "stop": STOP_KIND, "logs": LOGS_KIND}
@@ -349,17 +350,48 @@ class ServiceSecretView(AdminRequiredMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class ServicePasswordView(AdminRequiredMixin, View):
-    """The SFTP password, sent only on request; every look is written to the audit journal."""
+class _ServiceRevealView(AdminRequiredMixin, View):
+    """A secret of a service, sent only on request and not cached; every look goes to the journal."""
+
+    action: str
+    template_name: str
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
-        if not (service.is_sftp and service.secret):
+        context = self.reveal(service)
+        if context is None:
             raise Http404
-        audit.log_request(request, PASSWORD_VIEW, service)
-        response = render(request, "protocols/_password.html", {"password": service.secret})
+        audit.log_request(request, self.action, service)
+        response = render(request, self.template_name, context)
         add_never_cache_headers(response)
         return response
+
+    def reveal(self, service: ServiceInstance) -> dict[str, Any] | None:
+        """The template context with the secret; None if the service has nothing to show."""
+        raise NotImplementedError
+
+
+class ServicePasswordView(_ServiceRevealView):
+    """The password of SFTP or SOCKS5."""
+
+    action = PASSWORD_VIEW
+    template_name = "protocols/_password.html"
+
+    def reveal(self, service: ServiceInstance) -> dict[str, Any] | None:
+        if not ((service.is_sftp or service.is_socks5) and service.secret):
+            return None
+        return {"password": service.secret}
+
+
+class ServiceLinksView(_ServiceRevealView):
+    """The tg:// and t.me links of a Telegram proxy: they carry its secret."""
+
+    action = LINKS_VIEW
+    template_name = "protocols/_proxy_links.html"
+
+    def reveal(self, service: ServiceInstance) -> dict[str, Any] | None:
+        links = service.links
+        return {"links": links} if links else None
 
 
 class ServiceLogDeletionView(AdminRequiredMixin, View):

@@ -356,6 +356,81 @@ class TestSftpPassword:
         assert admin_client.post(f"/protocols/services/{tor.pk}/password/").status_code == 404
 
 
+class TestProxySecrets:
+    """The SOCKS5 password and the Telegram links are not in the card, only sent on request."""
+
+    @pytest.fixture
+    def socks5(self, server: Server) -> ServiceInstance:
+        return ServiceInstance.objects.create(
+            server=server,
+            container=SOCKS5_CONTAINER,
+            port=38080,
+            login="proxy-user",
+            secret="socks-password",
+            origin=InstanceOrigin.INSTALLED,
+        )
+
+    @pytest.fixture
+    def mtproxy(self, server: Server) -> ServiceInstance:
+        return ServiceInstance.objects.create(
+            server=server,
+            container=MTPROXY_CONTAINER,
+            port=443,
+            secret=SECRET,
+            origin=InstanceOrigin.INSTALLED,
+        )
+
+    def test_the_card_holds_no_secret(
+        self,
+        admin_client: Client,
+        server: Server,
+        socks5: ServiceInstance,
+        mtproxy: ServiceInstance,
+    ) -> None:
+        html = admin_client.get(f"/servers/{server.pk}/").content.decode()
+
+        assert f"/protocols/services/{socks5.pk}/password/" in html
+        assert f"/protocols/services/{mtproxy.pk}/links/" in html
+        assert "socks-password" not in html
+        assert SECRET not in html
+        assert "tg://" not in html
+
+    def test_showing_the_socks5_password_is_written_to_the_journal(
+        self, admin_client: Client, socks5: ServiceInstance
+    ) -> None:
+        response = admin_client.post(f"/protocols/services/{socks5.pk}/password/")
+
+        assert "socks-password" in response.content.decode()
+        assert "no-store" in response["Cache-Control"]
+        event = AuditEvent.objects.get()
+        assert (event.action, event.target_id) == ("protocols.service_password_view", str(socks5.pk))
+
+    def test_showing_the_links_is_written_to_the_journal(
+        self, admin_client: Client, mtproxy: ServiceInstance
+    ) -> None:
+        response = admin_client.post(f"/protocols/services/{mtproxy.pk}/links/")
+
+        html = response.content.decode()
+        assert f"tg://proxy?server={mtproxy.server.host}&amp;port=443&amp;secret=" in html
+        assert "https://t.me/proxy?server=" in html
+        assert "no-store" in response["Cache-Control"]
+        event = AuditEvent.objects.get()
+        assert (event.action, event.target_id) == ("protocols.service_links_view", str(mtproxy.pk))
+        assert SECRET not in str(event.data)
+
+    def test_only_admins_see_the_links(self, client: Client, mtproxy: ServiceInstance) -> None:
+        client.force_login(UserFactory(role=Role.MODERATOR))
+
+        assert client.post(f"/protocols/services/{mtproxy.pk}/links/").status_code == 403
+        assert not AuditEvent.objects.exists()
+
+    def test_a_service_without_links_has_none_to_show(
+        self, admin_client: Client, socks5: ServiceInstance
+    ) -> None:
+        assert admin_client.post(f"/protocols/services/{socks5.pk}/links/").status_code == 404
+        assert not AuditEvent.objects.exists()
+
+
 def test_ipsec_settings_page_explains_its_fixed_ports(admin_client: Client, server: Server) -> None:
     ipsec = ProtocolInstance.objects.create(
         server=server, container="amnezia-ipsec", port=500, origin=InstanceOrigin.INSTALLED
