@@ -159,12 +159,10 @@ class PushMessage:
 
     @classmethod
     def of(cls, message: Message) -> Self:
-        url = str(message.data.get("url") or "")
-        body = message.text.removesuffix(f"\n{url}") if url else message.text
         return cls(
             title=message.title[:_TITLE_LIMIT],
-            body=body[:_BODY_LIMIT],
-            url=cls._page(message, url),
+            body=message.summary[:_BODY_LIMIT],
+            url=cls._page(message, message.link),
             tag=message.uid,
         )
 

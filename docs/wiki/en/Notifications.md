@@ -9,7 +9,7 @@ A channel is one place messages go to. There can be several channels of each kin
 
 | Kind | What to fill in |
 |---|---|
-| Email | One or more addresses separated by commas. Letters go through the panel's mail server ([Configuration](Configuration.md)). |
+| Email | One or more addresses separated by commas. Letters go through the panel's mail server ([Configuration](Configuration.md)): plain text with an HTML version in the panel's style, where the event's link is an **Open in the panel** button. |
 | Telegram | Chat ID of a user, group or channel the bot can write to. Bot token: the channel's own, or empty to use the one from the panel settings. |
 | Discord | Webhook URL of a Discord channel (**Channel settings → Integrations → Webhooks**). Messages come as an embed. |
 | Discord direct message | The Discord user ID (developer mode → right click → Copy User ID). Sent by the panel Discord bot; the user must share a server with it. |
@@ -73,6 +73,13 @@ browsers where they turned notifications on ([In the browser](#in-the-browser)).
 Users themselves get an email about their reached limit and three days before their access ends,
 if they have an address. When an incident is closed, everyone who reported it gets an email
 that the server works again (`incident_resolved`; it goes only to the users, never to a channel).
+
+A letter to a user, like one to an email channel, is plain text with an HTML version in the
+panel's style: the event's title, its text and the link to its page as an **Open in the panel**
+button. The letters about the end of access and the reached limit offer a user without a linked
+messenger to get notifications in Telegram or Discord (when the panel has their bot set up): as a
+line with the profile link in the text, and as a block of its own with a **Link** button in the
+HTML. A letter is written in the recipient's language.
 
 An answer of the support staff goes where the user last wrote from: from a bot, the answer itself
 goes to that messenger, even when they have no email (`chat_answer`, `request_answer`); from the

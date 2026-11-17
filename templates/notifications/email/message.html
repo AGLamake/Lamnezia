@@ -1,0 +1,16 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+{% comment %} A notification letter (EmailChannel): the event's title and text, its link as a button, and the offer to link a messenger as a block of its own. {% endcomment %}
+{% block heading %}{{ title }}{% endblock %}
+{% block content %}
+<p style="margin:0;">{{ text|linebreaksbr }}</p>
+{% if link %}{% translate "Open in the panel" as action %}{% include "email/_button.html" %}{% endif %}
+{% if offer %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;border-top:1px solid #d5dce8;">
+  <tr><td style="padding:20px 0 0;">
+    <p style="margin:0;">{% blocktranslate with messengers=offer.messengers trimmed %}Notifications can also come to {{ messengers }}. Link it in your profile.{% endblocktranslate %}</p>
+    {% translate "Link" context "link a messenger" as action %}{% include "email/_button.html" with link=offer.url %}
+  </td></tr>
+</table>
+{% endif %}
+{% endblock %}

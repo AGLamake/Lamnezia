@@ -8,7 +8,7 @@ from django.conf import settings
 from django.utils import timezone, translation
 
 from apps.accounts.models import Messenger
-from apps.accounts.services.link_offer import letter_line
+from apps.accounts.services.link_offer import letter_offer
 from apps.bots.services.session import Panels
 from apps.core.services.site_settings import cached_settings
 from apps.notifications.events import EVENTS, Event
@@ -123,8 +123,8 @@ class Dispatcher:
             return message
         if not EVENTS[Event(message.event)].link_offer:
             return message
-        line = letter_line(user, cached_settings.get())
-        return replace(message, text=f"{message.text}\n\n{line}") if line else message
+        offer = letter_offer(user, cached_settings.get())
+        return replace(message, offer=offer) if offer else message
 
     def _destinations(self, notification: Notification) -> list[Destination]:
         """The messenger `via`, else the user's choice (DESIGN.md 6.8). A `fallback` event goes

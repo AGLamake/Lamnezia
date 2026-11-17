@@ -1,6 +1,7 @@
 """The offer to link Telegram or Discord: which messengers the panel can link and when to offer."""
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -32,18 +33,31 @@ def named(messengers: list[Messenger]) -> str:
             return "".join(labels)
 
 
-def letter_line(user: User, site: SiteSettings) -> str:
-    """The line for a letter about the end of access: notifications can come to a messenger.
-    Empty when the user has one linked or no bot is set up.
+@dataclass(frozen=True)
+class LetterOffer:
+    """The offer in a letter about the end of access: notifications can come to `messengers`,
+    linked on the profile page at `url`.
+    """
+
+    messengers: str
+    url: str
+
+    def line(self) -> str:
+        """The offer as a line of the plain-text letter, in the active language."""
+        return _(
+            "Notifications can also come to %(messengers)s. Link it in your profile: %(url)s"
+        ) % {"messengers": self.messengers, "url": self.url}
+
+
+def letter_offer(user: User, site: SiteSettings) -> LetterOffer | None:
+    """The offer for a letter to `user`; None when they have a messenger linked or no bot is
+    set up.
     """
     messengers = linkable(site)
     if not messengers or user.linked_accounts.exists():
-        return ""
+        return None
     url = settings.SITE_URL.rstrip("/") + reverse("accounts:linked")
-    return _("Notifications can also come to %(messengers)s. Link it in your profile: %(url)s") % {
-        "messengers": named(messengers),
-        "url": url,
-    }
+    return LetterOffer(named(messengers), url)
 
 
 class LinkOffer:

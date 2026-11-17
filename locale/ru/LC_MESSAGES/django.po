@@ -1724,6 +1724,10 @@ msgstr "Когда кончится лимит"
 msgid "Link"
 msgstr "Ссылка"
 
+msgctxt "link a messenger"
+msgid "Link"
+msgstr "Привязать"
+
 #, python-format
 msgid "Link %(names)s"
 msgstr "Привяжите %(names)s"
@@ -2167,6 +2171,10 @@ msgid "Notifications are on in this browser."
 msgstr "В этом браузере уведомления включены."
 
 #, python-format
+msgid "Notifications can also come to %(messengers)s. Link it in your profile."
+msgstr "Уведомления можно получать и в %(messengers)s. Привяжите мессенджер в профиле."
+
+#, python-format
 msgid "Notifications can also come to %(messengers)s. Link it in your profile: %(url)s"
 msgstr "Уведомления можно получать и в %(messengers)s. Привяжите мессенджер в профиле: %(url)s"
 
@@ -2232,6 +2240,9 @@ msgstr "Открыть в App Store"
 
 msgid "Open in Google Play"
 msgstr "Открыть в Google Play"
+
+msgid "Open in the panel"
+msgstr "Открыть в панели"
 
 msgid "Open menu"
 msgstr "Открыть меню"

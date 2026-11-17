@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   provider or its billing page (`http://` and `https://` only). The server card shows it under
   *VPS paid until* and opens it in a new tab, and the VPS payment reminder on the dashboard has a
   button with the same link.
+- **HTML notification letters**: notification letters to users and to email channels now carry an
+  HTML version in the same frame as the account letters — the event's title, its text and the link
+  to its page as an **Open in the panel** button; the plain text stays as it was. The offer to link
+  Telegram or Discord in the letters about the end of access and the limit is a block of its own
+  with a **Link** button to the profile.
 - **Messages show before the answer**: a message in the support chat, a request or the inbox
   appears in the thread at once, muted and marked *Sending…*, and the field is cleared for the next
   one; a screenshot shows after the upload. A message that could not be sent stays marked

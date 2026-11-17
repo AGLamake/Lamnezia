@@ -17,8 +17,10 @@ from typing import Any, ClassVar, Self
 from urllib.parse import urlsplit
 
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 
+from apps.accounts.services.link_offer import LetterOffer
 from apps.core.services.site_settings import cached_settings
 from apps.notifications.models import Channel, ChannelKind
 from apps.notifications.services.addresses import (
@@ -58,7 +60,10 @@ class DeliveryError(Exception):
 
 @dataclass(frozen=True)
 class Message:
-    """A notification as channels send it: text for people, `payload()` for programs."""
+    """A notification as channels send it: text for people, `payload()` for programs.
+
+    `offer`: a letter to the user also offers to link a messenger; other channels ignore it.
+    """
 
     uid: str
     event: str
@@ -66,6 +71,17 @@ class Message:
     title: str
     text: str
     data: dict[str, Any]
+    offer: LetterOffer | None = None
+
+    @property
+    def link(self) -> str:
+        """The page the notification points to (`data['url']`); empty when there is none."""
+        return str(self.data.get("url") or "")
+
+    @property
+    def summary(self) -> str:
+        """The text without the link line that `EventType.render` puts at its end."""
+        return self.text.removesuffix(f"\n{self.link}") if self.link else self.text
 
     def payload(self) -> dict[str, Any]:
         """The webhook body; its schema is documented and stable."""
@@ -186,16 +202,17 @@ def build_channel(channel: Channel, http: HttpClient) -> NotificationChannel:
     return _REGISTRY[channel.kind].from_model(channel, http)
 
 
-Mailer = Callable[[str, str, str | None, list[str]], int]
-
-
 @register
 class EmailChannel(NotificationChannel):
-    kind = ChannelKind.EMAIL
+    """A letter: the plain text, with an HTML version in the frame of email/base.html where the
+    link of the event and the offer to link a messenger are buttons.
+    """
 
-    def __init__(self, recipients: list[str], mailer: Mailer = send_mail) -> None:
+    kind = ChannelKind.EMAIL
+    TEMPLATE = "notifications/email/message.html"
+
+    def __init__(self, recipients: list[str]) -> None:
         self._recipients = recipients
-        self._mailer = mailer
 
     @classmethod
     def from_model(cls, channel: Channel, http: HttpClient) -> Self:
@@ -204,11 +221,30 @@ class EmailChannel(NotificationChannel):
     def send(self, message: Message) -> None:
         if not self._recipients:
             raise DeliveryError("no email address", retryable=False)
+        letter = EmailMultiAlternatives(message.title, self._text(message), None, self._recipients)
+        letter.attach_alternative(self._html(message), "text/html")
         try:
-            self._mailer(message.title, message.text, None, self._recipients)
+            letter.send()
         # SMTP errors and connection failures are OSError.
         except OSError as error:
             raise DeliveryError(f"mail server: {error}", retryable=True) from None
+
+    @staticmethod
+    def _text(message: Message) -> str:
+        offer = message.offer
+        return f"{message.text}\n\n{offer.line()}" if offer else message.text
+
+    def _html(self, message: Message) -> str:
+        return render_to_string(
+            self.TEMPLATE,
+            {
+                "site_name": cached_settings.get().site_name,
+                "title": message.title,
+                "text": message.summary,
+                "link": message.link,
+                "offer": message.offer,
+            },
+        )
 
 
 def parse_addresses(text: str) -> list[str]:
