@@ -2116,6 +2116,10 @@ msgstr "Пока ничего не отправлялось."
 msgid "Notifications"
 msgstr "Уведомления"
 
+#, python-format
+msgid "Notifications can also come to %(messengers)s. Link it in your profile: %(url)s"
+msgstr "Уведомления можно получать и в %(messengers)s. Привяжите мессенджер в профиле: %(url)s"
+
 msgid "Numbers and trends"
 msgstr "Числа и динамика"
 

@@ -65,7 +65,7 @@ class EventType:
     language. `coded`: details that hold a choice value, which a webhook gets as it is and a
     message shows by its label. `joined`: occurrences about one user close in time make one
     notification. `fallback`: when the user's channel does not take it, their other channels
-    are tried in turn.
+    are tried in turn. `link_offer`: a letter to the user offers to link a messenger.
     """
 
     label: Promise
@@ -77,6 +77,7 @@ class EventType:
     coded: Mapping[str, type[models.TextChoices]] = field(default_factory=dict)
     joined: bool = False
     fallback: bool = False
+    link_offer: bool = False
 
     def render(self, data: dict[str, Any]) -> tuple[str, str]:
         """Title and text in the active language with the details filled in; a missing detail
@@ -127,12 +128,14 @@ EVENTS: dict[Event, EventType] = {
         _("The keys of {user} are turned off: {reason}."),
         to_user=True,
         coded={"reason": LimitReason},
+        link_offer=True,
     ),
     Event.ACCESS_EXPIRING: EventType(
         _("Access ends soon"),
         _("Access ends soon"),
         _("The VPN access of {user} ends on {until}."),
         to_user=True,
+        link_offer=True,
     ),
     Event.KEYS_CHANGED: EventType(
         _("Keys must be imported again"),

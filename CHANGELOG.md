@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Messenger offer in letters**: the letters about the end of access and the limit tell a user
+  without linked messengers that notifications can come to Telegram or Discord, with a link to the
+  profile, when the administrator has set up a bot.
 - **Automatic stop of the old panel after a move**: once a confirmed move's domain points to the new
   machine and the copy there answers, the old read-only copy asks its host to stop it; the
   *stop the old copy* operation marks it in the journal, and the new `lamnezia-stop.timer` of

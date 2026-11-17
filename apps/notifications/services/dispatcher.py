@@ -1,13 +1,16 @@
 """Sending one delivery, with retries on a growing delay."""
 
 from collections.abc import Callable
+from dataclasses import replace
 from datetime import datetime
 
 from django.conf import settings
 from django.utils import timezone, translation
 
 from apps.accounts.models import Messenger
+from apps.accounts.services.link_offer import letter_line
 from apps.bots.services.session import Panels
+from apps.core.services.site_settings import cached_settings
 from apps.notifications.events import EVENTS, Event
 from apps.notifications.models import Delivery, DeliveryStatus, Notification
 from apps.notifications.services.channels import (
@@ -92,7 +95,7 @@ class Dispatcher:
         errors: list[DeliveryError] = []
         for destination in destinations:
             try:
-                destination.channel.send(message)
+                destination.channel.send(self._addressed(message, destination, delivery))
             except DeliveryError as error:
                 errors.append(error)
             else:
@@ -100,6 +103,19 @@ class Dispatcher:
         raise DeliveryError(
             "; ".join(map(str, errors)), retryable=any(error.retryable for error in errors)
         )
+
+    @staticmethod
+    def _addressed(message: Message, destination: Destination, delivery: Delivery) -> Message:
+        """The message for this channel: a letter about the end of access also offers to link
+        a messenger.
+        """
+        user = delivery.notification.user
+        if destination.chat is not None or user is None:
+            return message
+        if not EVENTS[Event(message.event)].link_offer:
+            return message
+        line = letter_line(user, cached_settings.get())
+        return replace(message, text=f"{message.text}\n\n{line}") if line else message
 
     def _destinations(self, notification: Notification) -> list[Destination]:
         """The messenger `via`, else the user's choice (DESIGN.md 6.8). A `fallback` event goes

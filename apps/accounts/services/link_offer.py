@@ -3,6 +3,8 @@
 from collections.abc import Callable
 from datetime import datetime, timedelta
 
+from django.conf import settings
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -28,6 +30,20 @@ def named(messengers: list[Messenger]) -> str:
             return _("%(first)s or %(second)s") % {"first": first, "second": second}
         case _:
             return "".join(labels)
+
+
+def letter_line(user: User, site: SiteSettings) -> str:
+    """The line for a letter about the end of access: notifications can come to a messenger.
+    Empty when the user has one linked or no bot is set up.
+    """
+    messengers = linkable(site)
+    if not messengers or user.linked_accounts.exists():
+        return ""
+    url = settings.SITE_URL.rstrip("/") + reverse("accounts:linked")
+    return _("Notifications can also come to %(messengers)s. Link it in your profile: %(url)s") % {
+        "messengers": named(messengers),
+        "url": url,
+    }
 
 
 class LinkOffer:

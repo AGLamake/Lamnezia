@@ -28,7 +28,8 @@ card that offers to link Telegram or Discord: sign in with one tap, get keys and
 (access ending, the limit, answers of support) and manage keys right in the messenger. Its
 buttons start linking at once; the same card opens the support chat. **Not now** hides it for
 30 days, the second time for good. The letter that confirms the email of a new account also
-says that the messengers can be linked in the profile.
+says that the messengers can be linked in the profile, and so do the letters about the end of
+access and the limit, with a link to the messengers of the profile.
 
 ## Linking
 
