@@ -1331,6 +1331,12 @@ msgstr "Пользователям выдано ключей группы: %(cou
 msgid "Groups forwarded: %(count)d."
 msgstr "Групп пересылается: %(count)d."
 
+msgid "Groups of the panel missing on the relay:"
+msgstr "Групп панели нет на ретрансляторе:"
+
+msgid "Groups the panel does not have:"
+msgstr "Чужие группы, которых нет в панели:"
+
 msgid "Groups with a lagging or stuck server, or with no server answering the relay"
 msgstr "Группы, где сервер отстаёт или застрял при выходе либо ни один сервер не отвечает ретранслятору"
 
@@ -3493,6 +3499,9 @@ msgstr "Эти порты нужны веб-серверу панели. Осв�
 msgid "The panel prepares the server and installs the container the same way the Amnezia app does, so the app keeps working with it."
 msgstr "Панель готовит сервер и устанавливает контейнер так же, как приложение Amnezia, поэтому приложение продолжает с ним работать."
 
+msgid "The panel writes its settings to the relay at the next sync. If this warning stays, press Update or Reinstall."
+msgstr "Панель запишет свои настройки на ретранслятор при ближайшей синхронизации. Если предупреждение не уходит, нажмите «Обновить» или «Переустановить»."
+
 msgid "The password is wrong."
 msgstr "Неверный пароль."
 
@@ -3565,6 +3574,9 @@ msgstr "Ретранслятор пересылает на IPv4-адрес: пр
 
 msgid "The relay on the new machine does not run with its ports after the install."
 msgstr "После установки ретранслятор на новой машине не работает со своими портами."
+
+msgid "The relay on the server has other settings than the panel wrote: clients of the groups may not get through."
+msgstr "На сервере у ретранслятора другие настройки, не те, что записала панель: клиенты групп могут не проходить."
 
 msgid "The relay or the member is gone: nothing to do."
 msgstr "Ретранслятора или участника больше нет: делать нечего."
@@ -4617,6 +4629,9 @@ msgstr "необязательно"
 msgid "or"
 msgstr "или"
 
+msgid "other servers"
+msgstr "чужие серверы"
+
 #, python-format
 msgid "overdue by %(days)s day"
 msgid_plural "overdue by %(days)s days"
@@ -4780,6 +4795,9 @@ msgstr "группа серверов"
 msgid "server groups"
 msgstr "группы серверов"
 
+msgid "servers missing"
+msgstr "нет серверов"
+
 msgid "servers of the moderator"
 msgstr "серверы модератора"
 
@@ -4788,6 +4806,9 @@ msgstr "служебный пир"
 
 msgid "service peers"
 msgstr "служебные пиры"
+
+msgid "settings mismatch"
+msgstr "расхождение настроек"
 
 #, python-format
 msgid "signed in %(when)s"

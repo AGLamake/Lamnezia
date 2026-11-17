@@ -167,6 +167,15 @@ a member lagging longer than `LAMNEZIA_GROUP_LAG_ALERT` come as notifications
 ([Notifications](Notifications.md)). Clients of a group are seen by the members at the relay's
 address; the panel shows no client addresses.
 
+On every reading the panel compares the groups and members the agent forwards with what the panel
+wrote. When the config on the server was replaced (a group the panel does not have, a group of the
+panel missing, or other members in a group), the relay card warns that **the relay on the server
+has other settings** and lists the differences; foreign groups are left out of the traffic list.
+The next sync writes the panel's settings again by itself and, when a port of a group is not
+published, starts the container again with the right ports. If the same difference stays after
+that, the panel no longer updates the relay by itself and only shows the warning: press
+**Update** or **Reinstall**.
+
 ## Keys of a group behind the relay
 
 Once the relay of a group is installed, the `vpn://` links and `.conf` files of its keys carry the

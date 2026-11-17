@@ -220,3 +220,16 @@ def test_a_group_never_switched_by_hand_shows_no_planned_switch(
     page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
 
     assert "Last planned switch" not in page
+
+
+def test_the_card_shows_settings_the_panel_did_not_write(browser: Client, watched: Relay) -> None:
+    group = watched.server.relayed_groups.get()
+    watched.health["groups"].append({"port": 5542, "active": None, "alive": [], "down": []})
+    watched.mismatch = {"foreign_ports": [5542], "missing_ports": [group.port], "groups": []}
+    watched.save(update_fields=["health", "mismatch"])
+
+    page = browser.get(reverse("servers:detail", args=[watched.server.pk])).content.decode()
+
+    assert "other settings than the panel wrote" in page
+    assert "UDP 5542" in page
+    assert "UDP 5542: no server reachable" not in page

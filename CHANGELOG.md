@@ -257,6 +257,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A relay with replaced settings is noticed and repaired**: the panel compared a relay only with
+  what it had written itself, so a relay whose config.json someone replaced (another group, other
+  members) went unnoticed, and its card showed the foreign group with an empty server list. Every
+  reading now compares the groups and members on the relay with the panel's; a difference shows on
+  the relay card, and the next sync writes the relay again, starting the container again when a
+  port of a group is not published.
 - **Title of a "server does not work" request with a topic**: such a request showed as
   "Server Helsinki is slow does not work"; it now shows its topic, the server separately, and keeps
   "Server … does not work" only for the quick report without a topic.

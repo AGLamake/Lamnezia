@@ -8,6 +8,8 @@ Each of these but a switch has a pair told once when it is over; an outage and a
 remembered apart from notifications (notifications/services/trouble.py), so the pair comes even
 when nobody hears of the trouble itself.
 Every reading with a known load is kept for the load chart (services/load.py).
+A reading is also compared with the groups the panel wrote (services/mismatch.py): a new
+mismatch drops the synced digest, so the next sync writes the relay again.
 """
 
 import logging
@@ -31,6 +33,7 @@ from apps.notifications.services.trouble import (
 )
 from apps.protocols.services.installer import ipv4_addresses
 from apps.relays.models import Relay, RelaySample
+from apps.relays.services.config import RelayPlan
 from apps.relays.services.container import FOLDER, NAME
 from apps.relays.services.health import (
     AllDown,
@@ -42,6 +45,7 @@ from apps.relays.services.health import (
     RelayHealth,
     Switched,
 )
+from apps.relays.services.mismatch import RelayMismatch
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.ssh.errors import SshError
@@ -109,7 +113,7 @@ class RelayMonitor:
         relay.health = health.to_dict()
         relay.read_at, relay.read_error = self._clock(), ""
         relay.rate_from_clients, relay.rate_to_clients = rates or (None, None)
-        relay.save(update_fields=[*_READING_FIELDS])
+        relay.save(update_fields=[*_READING_FIELDS, *_compare(relay, state)])
         if rates is not None:
             RelaySample.objects.create(
                 relay=relay, at=relay.read_at, rate_from_clients=rates[0], rate_to_clients=rates[1]
@@ -127,6 +131,33 @@ class RelayMonitor:
         last = relay.read_at or relay.installed_at
         if last is not None and self._clock() - last > 2 * self._interval:
             _report_down(relay)
+
+
+def _compare(relay: Relay, state: RelayState) -> list[str]:
+    """Set the mismatch of the reading on `relay` and return the fields it changed.
+
+    A mismatch the relay did not have drops `synced`: the next sync updates the relay, and the
+    update starts the container again when a port of a group is not published. The same mismatch
+    after that update is left to the card, so a relay that keeps it is not updated every minute.
+    The kept mismatch stays while the state may lag behind the panel: an update is due, or the
+    agent wrote the state before the last update.
+    """
+    plan = RelayPlan.of(relay.server)
+    try:
+        config = plan.config()
+    except OSError:
+        return []
+    written = relay.synced_at
+    if plan.digest(config) != relay.synced or (written and state.updated_at < written):
+        return []
+    found = RelayMismatch.of(config, state)
+    changed = ["mismatch"]
+    if found and found != relay.settings_mismatch:
+        logger.warning("relay %s forwards other groups than the panel wrote", relay.server.name)
+        relay.synced = ""
+        changed.append("synced")
+    relay.mismatch = found.to_dict()
+    return changed
 
 
 def _members(server: Server) -> dict[int, dict[Backend, Member]]:

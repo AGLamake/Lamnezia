@@ -21,6 +21,19 @@
       {% if relay.read_error %}
         <p class="text-sm text-danger-soft-fg">{% translate "The panel cannot read the relay state. The relay may still forward the clients on its own." %}{% if relay.read_at %} {% blocktranslate with when=relay.read_at|date:"SHORT_DATETIME_FORMAT" %}Last reading {{ when }}.{% endblocktranslate %}{% endif %}</p>
       {% endif %}
+      {% with mismatch=relay.settings_mismatch %}{% if mismatch %}
+        <div class="text-sm text-warning-soft-fg space-y-1">
+          <p>{% translate "The relay on the server has other settings than the panel wrote: clients of the groups may not get through." %}</p>
+          <ul class="space-y-1">
+            {% if mismatch.foreign_ports %}<li>{% translate "Groups the panel does not have:" %} <span class="font-mono">UDP {{ mismatch.foreign_ports|join:", " }}</span></li>{% endif %}
+            {% if mismatch.missing_ports %}<li>{% translate "Groups of the panel missing on the relay:" %} <span class="font-mono">UDP {{ mismatch.missing_ports|join:", " }}</span></li>{% endif %}
+            {% for group in mismatch.groups %}
+              <li>UDP {{ group.port }}:{% if group.foreign %} {% translate "other servers" %} <span class="font-mono">{{ group.foreign|join:", " }}</span>{% endif %}{% if group.missing %}{% if group.foreign %};{% endif %} {% translate "servers missing" %} <span class="font-mono">{{ group.missing|join:", " }}</span>{% endif %}</li>
+            {% endfor %}
+          </ul>
+          <p>{% translate "The panel writes its settings to the relay at the next sync. If this warning stays, press Update or Reinstall." %}</p>
+        </div>
+      {% endif %}{% endwith %}
       {% if relay.read_at %}
         <p>{% blocktranslate with incoming=relay.rate_from_clients|per_second outgoing=relay.rate_to_clients|per_second %}Channel load: {{ incoming }} from the clients, {{ outgoing }} to them.{% endblocktranslate %}</p>
         {% relay_load relay %}

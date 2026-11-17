@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 
 from amnezia_core.relay import DEFAULT_CHECK_INTERVAL, DEFAULT_FAILURES
 from apps.relays.services.health import GroupHealth, RelayHealth
+from apps.relays.services.mismatch import RelayMismatch
 from apps.ssh.encryption import EncryptedTextField
 
 MAX_CHECK_INTERVAL = 60
@@ -43,6 +44,8 @@ class Relay(models.Model):
     read_at = models.DateTimeField(_("state read at"), null=True, blank=True)
     # Why the last reading failed: an SSH error code, "bad_state" or "stale"; empty when it worked.
     read_error = models.CharField(_("reading error"), max_length=32, blank=True)
+    # What the last trusted reading forwards apart from what the panel wrote (services/mismatch.py).
+    mismatch = models.JSONField(_("settings mismatch"), default=dict, blank=True)
     # Bytes per second between the last two readings; empty when unknown.
     rate_from_clients = models.FloatField(_("bytes per second from clients"), null=True, blank=True)
     rate_to_clients = models.FloatField(_("bytes per second to clients"), null=True, blank=True)
@@ -81,10 +84,18 @@ class Relay(models.Model):
         return self.installed_at is not None
 
     @property
+    def settings_mismatch(self) -> RelayMismatch:
+        return RelayMismatch.load(self.mismatch)
+
+    @property
     def groups_health(self) -> list[GroupHealth]:
-        """The groups of the last reading by port; empty before one."""
+        """The groups of the last reading by port, but for groups the panel did not give the
+        relay; empty before a reading."""
         reading = RelayHealth.load(self.health)
-        return [group for _port, group in sorted(reading.groups.items())] if reading else []
+        if reading is None:
+            return []
+        foreign = set(self.settings_mismatch.foreign_ports)
+        return [group for port, group in sorted(reading.groups.items()) if port not in foreign]
 
     def group_health(self, port: int) -> GroupHealth | None:
         return next((group for group in self.groups_health if group.port == port), None)
