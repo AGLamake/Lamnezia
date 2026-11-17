@@ -28,8 +28,9 @@ messages-check: messages
 migrate:
 	uv run python manage.py migrate
 
+# Tests run on all cores and in a random order (pytest-xdist, pytest-randomly).
 test:
-	uv run pytest
+	uv run pytest -n auto
 
 coverage:
 	uv run pytest amnezia_core --cov

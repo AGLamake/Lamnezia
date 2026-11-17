@@ -58,8 +58,12 @@ Run before every commit (CI runs the same):
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy .
-uv run pytest
+uv run pytest -n auto
 ```
+
+The tests run in a random order (pytest-randomly) and with `-n auto` on all cores (pytest-xdist).
+The seed is printed at the top of the run: `--randomly-seed=N` repeats an order that failed,
+`-p no:randomly` keeps the file order.
 
 In a fresh clone or worktree compile the translations once before the tests, otherwise the
 translation tests fail:

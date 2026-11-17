@@ -1,3 +1,5 @@
+"""The page of the test payment provider where the user pays or refuses an order."""
+
 from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin

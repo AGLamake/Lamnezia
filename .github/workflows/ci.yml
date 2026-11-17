@@ -111,7 +111,7 @@ jobs:
       # Tests of the Russian interface need the compiled catalogs (*.mo are not in git).
       - run: uv run python manage.py compilemessages --ignore=.venv --settings=config.settings_test
       # --cov measures amnezia_core and enforces its coverage gate (pyproject.toml).
-      - run: uv run pytest --cov
+      - run: uv run pytest --cov -n auto
 
   ssh-integration:
     runs-on: ubuntu-latest

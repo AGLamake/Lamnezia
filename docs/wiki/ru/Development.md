@@ -58,8 +58,12 @@ PostgreSQL и Redis для разработки: `docker compose -f compose.dev.
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy .
-uv run pytest
+uv run pytest -n auto
 ```
+
+Тесты идут в случайном порядке (pytest-randomly), а с `-n auto` — на всех ядрах (pytest-xdist).
+Зерно печатается в начале прогона: `--randomly-seed=N` повторяет упавший порядок,
+`-p no:randomly` оставляет порядок файлов.
 
 В свежем клоне или worktree перед тестами один раз скомпилируйте переводы, иначе тесты переводов
 падают:
