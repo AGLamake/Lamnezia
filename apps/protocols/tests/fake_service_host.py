@@ -1,4 +1,5 @@
 import json
+import re
 import shlex
 from dataclasses import dataclass, field
 
@@ -163,6 +164,10 @@ class FakeServiceHost(FakeDebianServer):
             image = len(container.arguments) - container.arguments[::-1].index(name)
             arguments = container.arguments[image:]
             return result(stdout=f"[{' '.join(arguments)}]\n".encode())
+        if label := re.fullmatch(r'\{\{index \.Config\.Labels "(.+)"\}\}', words[-2]):
+            prefix = f"--label={label[1]}="
+            values = [w.removeprefix(prefix) for w in container.arguments if w.startswith(prefix)]
+            return result(stdout=f"{values[-1] if values else ''}\n".encode())
         if "{{.HostConfig.LogConfig.Type}}" in words:
             arguments = container.arguments
             logs = "--log-driver" in arguments

@@ -100,7 +100,9 @@ def save_protocol_backup(instance: ProtocolInstance, host: RemoteHost) -> Protoc
 
 
 def service_restorable(service: ServiceInstance) -> bool:
-    return archived_services.find(service.container) is not None and hasattr(service, "backup")
+    if archived_services.find(service.container) is None or not hasattr(service, "backup"):
+        return False
+    return bool(service.backup.has_copy)
 
 
 def save_service_backup(service: ServiceInstance, host: RemoteHost) -> ServiceBackup | None:

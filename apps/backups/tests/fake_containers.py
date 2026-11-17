@@ -1,5 +1,6 @@
 """Protocol and service fakes that also run the tar and cp commands of the backups."""
 
+import hashlib
 import io
 import shlex
 import tarfile
@@ -9,6 +10,7 @@ from pathlib import PurePosixPath
 from amnezia_core.container_archive import (
     EXTRACT_COMMAND,
     FINISH_COMMAND,
+    RESTORE_DONE,
     RESTORE_MARKER,
     SFTP_HOST_KEY_PATH,
     TOR_DATABASE_DUMP,
@@ -23,6 +25,7 @@ from apps.ssh.services import CommandResult
 from apps.ssh.tests.fakes import result
 
 _ARCHIVE = "tar -czf - "
+_FINGERPRINT = "tar -cf - "
 # `docker exec -i <name> sh -c <script>`: the place of the script.
 _SCRIPT_WORD = 6
 # The NSS database of the IPsec container: the fake keeps only whether it holds the CA.
@@ -49,6 +52,21 @@ def pack(files: dict[str, bytes], script: str) -> CommandResult:
     return result(stdout=buffer.getvalue())
 
 
+def fingerprint(files: dict[str, bytes], script: str) -> CommandResult:
+    """The size and hash of the files a fingerprint command names, as the server prints them."""
+    words = shlex.split(script[script.index(_FINGERPRINT) :].partition(" 2>")[0])
+    folders = [f"/{folder}" for folder in words[words.index("-C") + 2 :]]
+    dumped = TOR_DATABASE_DUMP.dump in script and SITE_DATABASE in files
+    found = {**files, TOR_DATABASE_DUMP.path: files[SITE_DATABASE]} if dumped else files
+    digest = hashlib.sha256()
+    size = 0
+    for path, content in sorted(found.items()):
+        if any(path == folder or path.startswith(f"{folder}/") for folder in folders):
+            digest.update(path.encode() + b"\0" + content)
+            size += len(content)
+    return result(stdout=f"{-(-size // 1024)} {digest.hexdigest()}\n".encode())
+
+
 def unpack(data: bytes) -> dict[str, bytes]:
     files = {}
     with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
@@ -63,12 +81,15 @@ def tar(files: dict[str, bytes], script: str, stdin: bytes) -> CommandResult | N
     """The answer to a tar command of the backups, or None for any other script."""
     if _ARCHIVE in script:
         return pack(files, script)
+    if _FINGERPRINT in script:
+        return fingerprint(files, script)
     if script == EXTRACT_COMMAND:
         files[RESTORE_MARKER] = b""
         files.update(unpack(stdin))
         return result()
     if script == FINISH_COMMAND:
         files.pop(RESTORE_MARKER, None)
+        files[RESTORE_DONE] = b""
         return result()
     if script == TOR_DATABASE_DUMP.load_command():
         files[SITE_DATABASE] = files.pop(TOR_DATABASE_DUMP.path)

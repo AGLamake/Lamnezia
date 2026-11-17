@@ -4,14 +4,18 @@ The keys of a protocol or the secret and settings of a service changed on the se
 """
 
 import logging
+from functools import partial
 from typing import Any
 
+from django.db import transaction
+from django.db.models.signals import post_delete
 from django.utils.translation import gettext as _
 
 from amnezia_core.errors import AmneziaFormatError
-from apps.backups.models import ProtocolBackup
+from apps.backups.models import ProtocolBackup, ServiceBackup
 from apps.backups.services.archived_services import archived_services
 from apps.backups.services.freshness import request_fresh_copy, request_fresh_service_copy
+from apps.backups.services.service_copies import forget_file
 from apps.backups.services.snapshot import backed_up_containers, save_protocol_backup
 from apps.keys.signals import keys_written
 from apps.operations.services.context import OperationContext
@@ -59,7 +63,16 @@ def on_service_changed(sender: object, service: ServiceInstance, **kwargs: Any) 
         request_fresh_service_copy(service.pk)
 
 
+def on_service_backup_deleted(sender: object, instance: ServiceBackup, **kwargs: Any) -> None:
+    """The file of a copy goes with its row, once the deletion is saved."""
+    if instance.file:
+        transaction.on_commit(partial(forget_file, str(instance.file.name)))
+
+
 def connect() -> None:
     container_removing.connect(on_container_removing, dispatch_uid="backups.container_removing")
     keys_written.connect(on_keys_written, dispatch_uid="backups.keys_written")
     service_changed.connect(on_service_changed, dispatch_uid="backups.service_changed")
+    post_delete.connect(
+        on_service_backup_deleted, sender=ServiceBackup, dispatch_uid="backups.copy_file"
+    )

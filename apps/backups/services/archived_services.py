@@ -9,7 +9,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from amnezia_core.container_archive import (
@@ -17,8 +16,11 @@ from amnezia_core.container_archive import (
     SFTP_STATE,
     TELEMT_STATE,
     TOR_STATE,
+    ArchiveFormatError,
+    ArchiveTooLargeError,
     ContainerArchive,
     ContainerState,
+    StateFingerprint,
 )
 from amnezia_core.errors import AmneziaFormatError
 from amnezia_core.proxies import (
@@ -35,6 +37,7 @@ from apps.backups.errors import RestoreError, RestoreErrorCode
 from apps.backups.models import ServiceBackup
 from apps.backups.services.archived import read_archive
 from apps.backups.services.guard import IdentityGuard
+from apps.backups.services.service_copies import service_copies
 from apps.operations.services.context import OperationContext
 from apps.protocols.models import ServiceInstance
 from apps.protocols.services.container import ProtocolContainer
@@ -86,15 +89,45 @@ class ArchivedService(ABC):
         )
 
     def save(self, service: ServiceInstance, host: RemoteHost) -> ServiceBackup | None:
-        """Copy the container into the panel; one with other keys keeps the last copy (None)."""
-        copy = read_archive(host, self.state)
+        """Copy the container into the panel; one with other keys keeps the last copy (None).
+
+        The files are fingerprinted on the server first. Unchanged since the last copy, they
+        are not sent again; larger than the copy may hold, they are not sent at all, and the
+        panel shows it. A container that cannot fingerprint them is copied every time.
+        """
+        fingerprint = self._fingerprint(host)
+        if fingerprint is not None:
+            if fingerprint.size > self.state.max_size:
+                return self._too_large(service, fingerprint.size)
+            if service_copies.holds(service, fingerprint.digest):
+                return service_copies.checked(service)
+        try:
+            copy = read_archive(host, self.state)
+        except ArchiveTooLargeError as error:
+            return self._too_large(service, error.size)
         if not self._runs_service(service, host, copy):
             logger.warning("%s has other keys, its backup is kept", self.state.container)
             return None
-        backup, _created = ServiceBackup.objects.update_or_create(
-            service=service, defaults={"archive": copy.encode(), "taken_at": timezone.now()}
+        return service_copies.save(service, copy, fingerprint.digest if fingerprint else "")
+
+    def _fingerprint(self, host: RemoteHost) -> StateFingerprint | None:
+        container = host.container(self.state.container)
+        result = container.sh(self.state.fingerprint_command(), timeout=self.state.timeout)
+        if not result.ok:
+            return None
+        try:
+            return StateFingerprint.parse(result.output)
+        except ArchiveFormatError:
+            return None
+
+    def _too_large(self, service: ServiceInstance, size: int) -> ServiceBackup:
+        logger.warning(
+            "%s is not copied: %d bytes, the limit is %d",
+            self.state.container,
+            size,
+            self.state.max_size,
         )
-        return backup
+        return service_copies.too_large(service, size)
 
     def _runs_service(
         self, service: ServiceInstance, host: RemoteHost, copy: ContainerArchive

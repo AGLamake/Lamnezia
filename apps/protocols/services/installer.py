@@ -47,6 +47,10 @@ def resolve_server_ip(ctx: OperationContext, server_host: str) -> str:
 class ContainerSeed(Protocol):
     """Files put into a new container before it is configured: a restore from a backup."""
 
+    def labels(self) -> dict[str, str]:
+        """Labels of the new container, set by `docker run`: they mark it as seeded."""
+        ...
+
     def put(self, docker: ProtocolContainer) -> None: ...
 
     def unfinished(self, docker: ProtocolContainer) -> bool:
@@ -231,7 +235,8 @@ class ContainerInstaller[ResultT](ABC):
         with self._ctx.step(_("Build the container image")):
             self._docker.build(upstream_file(f"{self.folder}/Dockerfile"))
         with self._ctx.step(_("Start the container")):
-            self._docker.run_container(self.run_arguments())
+            labels = self.seed.labels() if self.seed else {}
+            self._docker.run_container(self.run_arguments(), labels=labels)
             self._join_network()
 
     def _join_network(self) -> None:

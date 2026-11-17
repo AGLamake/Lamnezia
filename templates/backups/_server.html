@@ -61,12 +61,23 @@
         <div>
           <p>{{ service.title }}</p>
           <p class="help-text">
-            {% if service.backup %}
-              {% blocktranslate with date=service.backup.taken_at|date:"SHORT_DATETIME_FORMAT" %}Copy of the files from {{ date }}.{% endblocktranslate %}
+            {% with backup=service.backup %}
+            {% if backup.has_copy %}
+              {% blocktranslate with date=backup.taken_at|date:"SHORT_DATETIME_FORMAT" %}Copy of the files from {{ date }}.{% endblocktranslate %}
+              {% if backup.unchanged_since %}
+                {% blocktranslate with date=backup.checked_at|date:"SHORT_DATETIME_FORMAT" %}Checked {{ date }}: the files have not changed.{% endblocktranslate %}
+              {% endif %}
             {% else %}
               {% translate "No copy of the files yet: the panel saves it every hour while the container runs." %}
             {% endif %}
           </p>
+          {% if backup.too_large_at %}
+            <p class="help-text text-warning-soft-fg">
+              {% blocktranslate with size=backup.too_large_size|filesizeformat date=backup.too_large_at|date:"SHORT_DATETIME_FORMAT" %}{{ date }}: the files take {{ size }}, more than a copy may hold. They were not copied.{% endblocktranslate %}
+              {% if backup.has_copy %}{% translate "The last copy stays." %}{% endif %}
+            </p>
+          {% endif %}
+            {% endwith %}
         </div>
         {% if service|service_restorable %}
         <form method="post" action="{% url 'backups:restore-service' service.pk %}" data-confirm="{% translate "Install the service on this server from the saved copy?" %}">

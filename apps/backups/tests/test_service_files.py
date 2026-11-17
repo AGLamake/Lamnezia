@@ -23,6 +23,7 @@ from apps.backups import tasks
 from apps.backups.models import ServiceBackup
 from apps.backups.services import snapshot
 from apps.backups.services.freshness import take_fresh_service_copy
+from apps.backups.services.service_copies import service_copies
 from apps.backups.tests.fake_containers import SITE_DATABASE, TarServiceHost, pack
 from apps.backups.tests.test_services import CASES, OTHER_SECRET, installed, restore
 from apps.protocols.models import ServiceInstance
@@ -56,8 +57,9 @@ def test_tor_copy_holds_the_site_and_a_dump_of_its_database() -> None:
 
     assert command.startswith(f"mkdir -p /var/lib/lamnezia && {TOR_DATABASE_DUMP.dump} > ")
     assert "--ignore-failed-read" in command
-    for folder in ("var/www/html/wp-content", "var/www/html/wp-config.php", "var/lib/tor"):
-        assert folder in command
+    assert "--skip-dump-date" in command
+    for folder in ("var/www/html", "var/lib/tor"):
+        assert f" {folder}" in command
     assert command.endswith(f"status=$?; rm -f {TOR_DATABASE_DUMP.path}; exit $status")
     assert "home" in SFTP_STATE.archive_command()
 
@@ -151,4 +153,4 @@ def test_fresh_copy_holds_the_new_secret(
     take_fresh_service_copy(service.pk)
 
     backup = ServiceBackup.objects.get(service=service)
-    assert ContainerArchive.decode(archived.state, backup.archive).identity() == OTHER_SECRET
+    assert service_copies.archive(backup, archived.state).identity() == OTHER_SECRET

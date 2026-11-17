@@ -19,7 +19,8 @@ def keep_from_server_deletion(
     """A copy goes with the protocol or service the panel forgets; deleting a server refuses.
 
     A server deleted in one go would take the copies of all its protocols with it unnoticed:
-    they are what brings the keys back on a new VPS. Its protocols are removed first.
+    they are what brings the keys back on a new VPS. Its protocols are removed first. A row
+    with no copy in it, only a note that the copy was too large, keeps nothing.
     """
     origin = collector.origin
     deletes_server = (
@@ -27,9 +28,10 @@ def keep_from_server_deletion(
         if isinstance(origin, models.QuerySet)
         else isinstance(origin, Server)
     )
-    if deletes_server:
+    kept = {backup for backup in sub_objs if getattr(backup, "has_copy", True)}
+    if deletes_server and kept:
         raise models.ProtectedError(
-            "the server has backups; remove its protocols and services first", set(sub_objs)
+            "the server has backups; remove its protocols and services first", kept
         )
     models.CASCADE(collector, field, sub_objs, using)
 
@@ -106,12 +108,18 @@ class ProtocolSnapshot(models.Model):
 
 
 class ServiceBackup(models.Model):
-    """The state folders of a service container as read last time: a tar.gz in `archive`.
+    """The state folders of a service container as read last time, and what the reads found.
 
-    The onion keys of the Tor site, the secret and settings of a Telegram proxy, the host keys
-    of SFTP: a restore puts them into the new container, so the address, the links and the
-    account stay the same. Stored encrypted; the panel forgets it with the service, and
-    deleting the server refuses while the copy is there.
+    The onion keys and the WordPress site of Tor, the secret and settings of a Telegram proxy,
+    the host keys and uploads of SFTP: a restore puts them into the new container, so the
+    address, the links and the account stay the same. The tar.gz is a file on the panel disk,
+    encrypted under a key of its own kept in `file_key` (`services.service_copies`); a copy
+    saved by an older panel stays base64 in `archive` until the next one replaces it.
+
+    `digest` is the fingerprint the files had when copied: a read that finds the same one only
+    sets `checked_at`. A copy over the size limit is not taken; `too_large_size` says how
+    large the files were until a copy fits again. The panel forgets the row with the service,
+    and deleting the server refuses while there is a copy.
     """
 
     service = models.OneToOneField(
@@ -120,12 +128,28 @@ class ServiceBackup(models.Model):
         on_delete=keep_from_server_deletion,
         related_name="backup",
     )
-    archive = EncryptedTextField(_("container files"))
-    taken_at = models.DateTimeField(_("saved at"))
+    archive = EncryptedTextField(_("container files"), blank=True)
+    file = models.FileField(_("copy file"), upload_to="service-backups/", blank=True)
+    file_key = EncryptedTextField(_("copy file key"), blank=True)
+    digest = models.CharField(_("fingerprint of the files"), max_length=64, blank=True)
+    taken_at = models.DateTimeField(_("saved at"), null=True, blank=True)
+    checked_at = models.DateTimeField(_("checked at"), null=True, blank=True)
+    too_large_at = models.DateTimeField(_("found too large at"), null=True, blank=True)
+    too_large_size = models.PositiveBigIntegerField(_("size not copied"), null=True, blank=True)
 
     class Meta:
         verbose_name = _("service backup")
         verbose_name_plural = _("service backups")
 
     def __str__(self) -> str:
-        return f"{self.service} @ {self.taken_at:%Y-%m-%d %H:%M}"
+        taken_at = f"{self.taken_at:%Y-%m-%d %H:%M}" if self.taken_at else "—"
+        return f"{self.service} @ {taken_at}"
+
+    @property
+    def has_copy(self) -> bool:
+        return bool(self.file or self.archive)
+
+    @property
+    def unchanged_since(self) -> bool:
+        """The files were read again after the copy and had not changed."""
+        return bool(self.taken_at and self.checked_at and self.checked_at > self.taken_at)

@@ -49,14 +49,51 @@ _LOAD_ATTEMPTS = 30
 # Left in a container while a copy goes into it: one that still has it is a restore that did
 # not finish, with no keys or only some of them.
 RESTORE_MARKER = "/.lamnezia-restore"
+# A container a restore runs carries this label from `docker run` on, and gets the file once
+# the copy is all in: a labelled one without the file is a restore whose worker stopped
+# before the copy, even before the marker was written.
+RESTORE_LABEL = "lamnezia.restore"
+RESTORE_DONE = "/.lamnezia-restored"
 # Unpacks a copy into the container over the paths it holds, and the end of the restore.
 EXTRACT_COMMAND = f"touch {RESTORE_MARKER} && tar -xzf - -C /"
-FINISH_COMMAND = f"rm -f {RESTORE_MARKER}"
+FINISH_COMMAND = f"rm -f {RESTORE_MARKER} && touch {RESTORE_DONE}"
+# A time far in the past given to the dump and its folder, so an unchanged database leaves
+# the fingerprint of the files as it was.
+_PINNED_TIME = "197001010000"
 _ALLOWED_TYPES = (tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE)
+_SHA256_LENGTH = 64
 
 
 class ArchiveFormatError(AmneziaFormatError):
     """A copy of container files is not a tar.gz of plain files in the folders of its protocol."""
+
+
+class ArchiveTooLargeError(ArchiveFormatError):
+    """The files of the container are more than its copy may hold; `size` is in bytes."""
+
+    def __init__(self, size: int) -> None:
+        super().__init__("the copy is too large")
+        self.size = size
+
+
+@dataclass(frozen=True)
+class StateFingerprint:
+    """What the container holds now, without copying it: the size and a hash of the files.
+
+    The hash covers the paths, contents, owners and times of the files, so a copy is taken
+    again only when one of them changed. `size` is what the folders take on disk, in bytes.
+    """
+
+    size: int
+    digest: str
+
+    @classmethod
+    def parse(cls, output: str) -> "StateFingerprint":
+        """The output of `ContainerState.fingerprint_command`: kilobytes and the hash."""
+        match output.split():
+            case [kilobytes, digest] if kilobytes.isdigit() and len(digest) == _SHA256_LENGTH:
+                return cls(int(kilobytes) * 1024, digest)
+        raise ArchiveFormatError("the fingerprint of the container cannot be read")
 
 
 @dataclass(frozen=True)
@@ -71,12 +108,16 @@ class DatabaseDump:
     dump: str
     load: str
 
-    def around(self, archive: str) -> str:
-        """The archive command with the dump written before it; the exit code is the archive's."""
+    def around(self, archive: str, *, pinned: bool = False) -> str:
+        """The archive command with the dump written before it; the exit code is the archive's.
+
+        `pinned` gives the dump and its folder a fixed time, for a fingerprint of the files.
+        """
         folder = shlex.quote(str(PurePosixPath(self.path).parent))
         path = shlex.quote(self.path)
+        pin = f" && touch -t {_PINNED_TIME} {path} {folder}" if pinned else ""
         return (
-            f"mkdir -p {folder} && {self.dump} > {path} && {archive}; "
+            f"mkdir -p {folder} && {self.dump} > {path}{pin} && {archive}; "
             f"status=$?; rm -f {path}; exit $status"
         )
 
@@ -116,10 +157,29 @@ class ContainerState:
 
     def archive_command(self) -> str:
         """The tar command that writes the folders to stdout, with paths relative to /."""
+        archive = shlex.join(["tar", "-czf", "-", *self._tar_options()])
+        return self.database.around(archive) if self.database else archive
+
+    def fingerprint_command(self) -> str:
+        """Prints the kilobytes of the folders and a SHA-256 of their uncompressed tar.
+
+        Only the two words of `StateFingerprint` leave the server: the files are read there,
+        so a large copy is not sent while it has not changed.
+        """
+        size = (
+            f"du -sk {shlex.join(self.directories)} 2>/dev/null"
+            " | awk '{s += $1} END {print s + 0}'"
+        )
+        digest = shlex.join(["tar", "-cf", "-", *self._tar_options()])
+        command = (
+            f'kb=$({size}) && sum=$({digest} 2>/dev/null | sha256sum) && echo "$kb ${{sum%% *}}"'
+        )
+        return self.database.around(command, pinned=True) if self.database else command
+
+    def _tar_options(self) -> list[str]:
         relative = [directory.lstrip("/") for directory in self.directories]
         options = ["--ignore-failed-read"] if self.skip_missing else []
-        archive = shlex.join(["tar", "-czf", "-", *options, "-C", "/", *relative])
-        return self.database.around(archive) if self.database else archive
+        return [*options, "-C", "/", *relative]
 
     def holds(self, path: str) -> bool:
         """Whether an absolute path lies in one of the state folders."""
@@ -170,7 +230,7 @@ class ContainerArchive:
             path = self._checked_path(member)
             total += member.size
             if total > self.state.max_size:
-                raise ArchiveFormatError("the copy is too large")
+                raise ArchiveTooLargeError(total)
             if member.isfile():
                 extracted = archive.extractfile(member)
                 files[path] = extracted.read() if extracted else b""
@@ -220,13 +280,14 @@ IPSEC_STATE = ContainerState(
     IPSEC_CONTAINER, ("/etc/ipsec.d", IPSEC_DIR), IPSEC_CA_CERT_PATH, ipsec.ca_fingerprint
 )
 # The keys of the hidden service, from which the onion address of the site comes, and the
-# WordPress site: its content, wp-config.php with the salts of the logins, and a dump of the
-# database. The WordPress core stays the one of the image.
+# WordPress site as a whole: the core the site was updated to, its content, wp-config.php
+# with the salts of the logins, and a dump of the database. The core of the image would be
+# older than the database an updated site left.
 TOR_DATABASE_DUMP = DatabaseDump(
     "/var/lib/lamnezia/wordpress.sql",
     dump=(
         f"MYSQL_PWD={TOR_DATABASE_PASSWORD} mysqldump -u{TOR_DATABASE_USER} "
-        f"--single-transaction --no-tablespaces {TOR_DATABASE}"
+        f"--single-transaction --no-tablespaces --skip-dump-date {TOR_DATABASE}"
     ),
     load=f"MYSQL_PWD={TOR_DATABASE_PASSWORD} mysql -u{TOR_DATABASE_USER} {TOR_DATABASE}",
 )
@@ -234,9 +295,7 @@ TOR_STATE = ContainerState(
     TOR_CONTAINER,
     (
         str(PurePosixPath(ONION_PATH).parent),
-        f"{TOR_SITE_DIR}/wp-content",
-        f"{TOR_SITE_DIR}/wp-config.php",
-        f"{TOR_SITE_DIR}/.htaccess",
+        TOR_SITE_DIR,
         str(PurePosixPath(TOR_DATABASE_DUMP.path).parent),
     ),
     ONION_PATH,

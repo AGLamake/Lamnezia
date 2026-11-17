@@ -49,6 +49,10 @@ msgstr[1] "Всего %(counter)s ключа."
 msgstr[2] "Всего %(counter)s ключей."
 
 #, python-format
+msgid "%(date)s: the files take %(size)s, more than a copy may hold. They were not copied."
+msgstr "%(date)s: файлы занимают %(size)s — больше, чем вмещает копия. Они не скопированы."
+
+#, python-format
 msgid "%(days)s day"
 msgid_plural "%(days)s days"
 msgstr[0] "%(days)s день"
@@ -749,6 +753,10 @@ msgstr "Проверен"
 #, python-format
 msgid "Checked %(date)s."
 msgstr "Проверено %(date)s."
+
+#, python-format
+msgid "Checked %(date)s: the files have not changed."
+msgstr "Проверено %(date)s: файлы не менялись."
 
 #, python-format
 msgid "Checked at %(at)s."
@@ -3274,6 +3282,9 @@ msgstr "Ключ будет переименован через мгновени
 
 msgid "The keys and the backup are kept: restore the protocol in the Backup section."
 msgstr "Ключи и бэкап сохранены: восстановите протокол в разделе «Резервная копия»."
+
+msgid "The last copy stays."
+msgstr "Последняя копия сохранена."
 
 msgid "The lead cannot be handed over until these key operations finish:"
 msgstr "Роль ведущего нельзя передать, пока не закончатся эти операции с ключами:"

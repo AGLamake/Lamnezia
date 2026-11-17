@@ -12,6 +12,8 @@ from django.utils.translation import gettext as _
 from amnezia_core.container_archive import (
     EXTRACT_COMMAND,
     FINISH_COMMAND,
+    RESTORE_DONE,
+    RESTORE_LABEL,
     RESTORE_MARKER,
     ArchiveFormatError,
     ContainerArchive,
@@ -21,6 +23,7 @@ from apps.backups.errors import RestoreError, RestoreErrorCode
 from apps.backups.models import ProtocolBackup, ServiceBackup
 from apps.backups.services.archived import ArchivedProtocol
 from apps.backups.services.archived_services import ArchivedService
+from apps.backups.services.service_copies import service_copies
 from apps.keys.models import AccessKey, KeyStatus
 from apps.operations.services.context import OperationContext
 from apps.protocols.models import ProtocolInstance, ServiceInstance
@@ -38,6 +41,8 @@ class ArchiveSeed:
 
     The container is marked until the copy is all in: a restore that fails on the way leaves
     a container with keys of its own, which the next attempt removes instead of refusing it.
+    The mark starts with `docker run`, as a label: a worker that stops before the copy goes in
+    leaves a labelled container without the file of a finished restore.
     """
 
     def __init__(
@@ -47,10 +52,14 @@ class ArchiveSeed:
         self._ctx = ctx
         self._own_keys = own_keys
 
+    def labels(self) -> dict[str, str]:
+        return {RESTORE_LABEL: "1"}
+
     def put(self, docker: ProtocolContainer) -> None:
         with self._ctx.step(_("Put the saved files into the container")):
             if not self._own_keys and docker.has_file(self._archive.state.identity_path):
                 self._ctx.log(_("The container already has its files, they are kept."))
+                docker.shell.run(FINISH_COMMAND)
                 return
             docker.shell.run(EXTRACT_COMMAND, stdin=self._archive.data)
             self._ctx.log(_("Files put back: %(count)d.") % {"count": len(self._archive.files())})
@@ -63,7 +72,10 @@ class ArchiveSeed:
         docker.shell.run(FINISH_COMMAND)
 
     def unfinished(self, docker: ProtocolContainer) -> bool:
-        return docker.copy_file(RESTORE_MARKER) is not None
+        if docker.copy_file(RESTORE_MARKER) is not None:
+            return True
+        labelled = docker.label(RESTORE_LABEL) == "1"
+        return labelled and docker.copy_file(RESTORE_DONE) is None
 
 
 class ArchiveRestorer:
@@ -158,10 +170,10 @@ class ServiceRestorer:
 
     def _saved_copy(self) -> ContainerArchive:
         backup = ServiceBackup.objects.filter(service=self._service).first()
-        if backup is None:
+        if backup is None or backup.taken_at is None or not backup.has_copy:
             raise RestoreError(RestoreErrorCode.NO_BACKUP, str(self._service))
         try:
-            copy = ContainerArchive.decode(self._archived.state, backup.archive)
+            copy = service_copies.archive(backup, self._archived.state)
             matches = self._archived.copy_matches(self._service, copy)
         except AmneziaFormatError as error:
             raise RestoreError(RestoreErrorCode.BACKUP_INVALID, str(error)) from error

@@ -177,16 +177,25 @@ Of the services the panel copies what their users know them by:
 
 | Service | Folders | What they hold |
 |---|---|---|
-| Tor site (`amnezia-torwebsite`) | `/var/lib/tor/hidden_service`, `/var/www/html/wp-content`, `wp-config.php`, `.htaccess` | the keys of the onion address, the WordPress site and a dump of its database |
+| Tor site (`amnezia-torwebsite`) | `/var/lib/tor/hidden_service`, `/var/www/html` | the keys of the onion address, the WordPress site with its core and a dump of its database |
 | MTProxy (`amnezia-mtproxy`) | `/data` | the secret of the links and the install settings |
 | Telemt (`amnezia-telemt`) | `/data` | the secret, `config.toml` with the settings and switches |
 | SFTP (`amnezia-sftp`) | `/etc/ssh`, `/home` | the SSH host keys and the uploaded files |
 
 A service is copied only while its container runs with what the panel has: the same onion
 address, proxy secret or SFTP login and password. The copy of the Tor site and of SFTP may be up
-to 256 MB unpacked (64 MB for the others); a larger one is not taken and the last copy stays. The
-WordPress core is not copied: the image brings it. SOCKS5 has nothing of its own to keep (its
-login and password are in the panel) and the DNS service has no state.
+to 256 MB unpacked (64 MB for the others); a larger one is not taken, the last copy stays, and
+the **Backup** section shows a warning with the size the files take. The WordPress core is copied
+with the site, so a restore brings back the version the site ran, not the one of the image.
+SOCKS5 has nothing of its own to keep (its login and password are in the panel) and the DNS
+service has no state.
+
+**Where the copies are kept.** A service copy is a file in the `media` volume of the panel
+(`service-backups/`), encrypted under a key of its own; that key is kept encrypted in the
+database. The panel archive and the backup service take the folder along. Before each copy the
+panel asks the server for the size and a checksum of the files: unchanged since the last copy,
+they are not sent again, and the **Backup** section says when they were last checked. A copy made
+by an older panel is still restored and is replaced by a file with the next one.
 
 **A new proxy secret is in the copy at once.** **New secret** or new settings of a Telegram proxy
 ask for a copy of the service right after the operation: the old copy holds the old secret, which
@@ -274,9 +283,11 @@ is not started and the operation stops. Tor and sshd make keys of their own when
 starts: the restore replaces them with the copy and restarts the container. The Tor site comes
 back with its pages, uploads and database; SFTP with the files of its account.
 
-A restore that failed half way (the connection dropped while the files were put in) leaves a
-container with keys of its own. The panel marks such a container, and **Restore** run again
-removes it and installs the service anew instead of refusing it. A container the panel did not
+A restore that failed half way (the connection dropped while the files were put in, or the panel
+stopped right after creating the container) leaves a container with keys of its own. The panel
+labels the container when it creates it and marks it done only when the files are in, so
+**Restore** run again removes such a container and installs the service anew instead of
+refusing it. A container the panel did not
 leave this way is still never overwritten.
 
 ## AmneziaWG snapshots around a group

@@ -233,11 +233,26 @@ msgstr "перед восстановлением снимка"
 msgid "before taking a joining server out of its group"
 msgstr "перед откатом вступления в группу"
 
+msgid "checked at"
+msgstr "проверено"
+
 msgid "client list"
 msgstr "список клиентов"
 
 msgid "container files"
 msgstr "файлы контейнера"
+
+msgid "copy file"
+msgstr "файл копии"
+
+msgid "copy file key"
+msgstr "ключ файла копии"
+
+msgid "fingerprint of the files"
+msgstr "отпечаток файлов"
+
+msgid "found too large at"
+msgstr "слишком большой с"
 
 msgid "preshared key"
 msgstr "общий ключ"
@@ -274,3 +289,6 @@ msgstr "копия сервиса"
 
 msgid "service backups"
 msgstr "копии сервисов"
+
+msgid "size not copied"
+msgstr "размер без копии"

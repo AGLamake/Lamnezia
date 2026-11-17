@@ -170,7 +170,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which only administrators may open.
 - **Subscription address in the portal app**: the `/sub/<token>` handler moved from `apps/keys`
   to `apps/portal`; the address stays the same.
-
+- **Service copies are files**: the copy of a service (the Tor site, SFTP uploads, proxies) is now
+  an encrypted file in the `media` volume under a key of its own, not a value in the database. The
+  files are fingerprinted on the server first: unchanged since the last copy, they are not sent
+  again, and the backup section says when they were checked. Files larger than the limit are not
+  copied, the last copy stays, and the backup section shows a warning with their size. Copies made
+  by an older panel stay readable until the next one replaces them.
+- **The Tor site copy holds the WordPress core**: the whole `/var/www/html` is copied, so a restore
+  brings back the core version the site ran, not the one of the image.
 - **DNS rebuild step name**: the operation now calls the step "Start the new container" instead of
   "Start the container on the new port".
 - **Panel move refuses the panel's own machine**: the form rejects a server whose address is the
@@ -213,7 +220,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scheduled limit run turned back on the keys of a user blocked meanwhile; they now stay off.
 - **Moderator key quota race**: two keys issued at once from the admin interface could both pass a
   moderator's key quota; the quota is now checked again with the moderator's row locked.
-
+- **A restore cut off right after the container was created was refused**: the container is now
+  labelled at `docker run`, so a restore run again removes it even when the worker stopped before
+  the files went in.
 - **Building the profiles of imported XRay keys failed at the end**: the profiles were saved, but
   the operation was marked failed.
 - **A failed service peer made the leading server lag**: when a relay update met the leading server

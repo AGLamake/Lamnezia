@@ -7,6 +7,13 @@ from apps.backups.services.database_dump import PostgresDump
 from apps.backups.tests.panel_archive_helpers import FakeDump
 
 
+@pytest.fixture(autouse=True)
+def media_root(settings: Any, tmp_path: Path) -> Path:
+    """Copies of the services and other saved files go to a temp directory."""
+    settings.MEDIA_ROOT = tmp_path / "media"
+    return tmp_path / "media"
+
+
 @pytest.fixture
 def archive_settings(settings: Any, tmp_path: Path) -> Path:
     """Panel archives and uploaded files in a temp directory."""

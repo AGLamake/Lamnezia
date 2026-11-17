@@ -177,9 +177,12 @@ def test_copy_is_stored_encrypted() -> None:
     assert backup is not None
 
     with connection.cursor() as cursor:
-        cursor.execute("SELECT archive FROM backups_servicebackup WHERE id = %s", [backup.pk])
+        cursor.execute("SELECT file_key FROM backups_servicebackup WHERE id = %s", [backup.pk])
         (stored,) = cursor.fetchone()
-    assert stored != backup.archive
+    assert stored != backup.file_key
+    with backup.file.open("rb") as sealed:
+        assert sealed.read(2) != b"\x1f\x8b"  # not a bare tar.gz
+    assert backup.archive == ""
 
 
 def test_hourly_copy_covers_the_services(monkeypatch: pytest.MonkeyPatch) -> None:

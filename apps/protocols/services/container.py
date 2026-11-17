@@ -4,8 +4,10 @@ Shared by the installers, the lifecycle actions and the change of the protocol s
 """
 
 import io
+import json
 import shlex
 import tarfile
+from collections.abc import Mapping
 from enum import StrEnum
 from pathlib import Path
 
@@ -136,9 +138,15 @@ class ProtocolContainer:
             )
             raise SetupError(code, f"exit {result.exit_code}")
 
-    def run_container(self, arguments: list[str]) -> None:
-        """`docker run` with the arguments of upstream run_container.sh; there must be none yet."""
-        result = self._host.sh(shlex.join(arguments))
+    def run_container(
+        self, arguments: list[str], *, labels: Mapping[str, str] | None = None
+    ) -> None:
+        """`docker run` with the arguments of upstream run_container.sh; there must be none yet.
+
+        `labels` go right after `docker run`, before the options of upstream.
+        """
+        options = [f"--label={name}={value}" for name, value in (labels or {}).items()]
+        result = self._host.sh(shlex.join([*arguments[:2], *options, *arguments[2:]]))
         if result.ok:
             return
         log_tail(self._ctx, result)
@@ -192,6 +200,10 @@ class ProtocolContainer:
     def inspect(self, template: str) -> str:
         """`docker inspect --format` of the container, running or stopped."""
         return self._host.docker("inspect", "--format", template, self.name)
+
+    def label(self, name: str) -> str:
+        """The value of a label of the container; empty if it has none."""
+        return self.inspect(f"{{{{index .Config.Labels {json.dumps(name)}}}}}").strip()
 
     def has_file(self, path: str) -> bool:
         return self.shell.sh(f"[ -f {shlex.quote(path)} ]").ok
