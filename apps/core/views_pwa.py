@@ -53,7 +53,7 @@ class ServiceWorkerView(TemplateView):
     """The service worker, served from the root so that its scope is the whole panel.
 
     It keeps only the offline page and the files it needs: the panel's pages hold keys and
-    personal data, so they are never cached.
+    personal data, so they are never cached. It shows the notifications the panel pushes.
     """
 
     template_name = "pwa/sw.js"
@@ -67,7 +67,12 @@ class ServiceWorkerView(TemplateView):
         # Static names carry a content hash, so a new release gets a new cache.
         version = hashlib.sha256(" ".join(assets).encode()).hexdigest()[:12]
         return super().get_context_data(
-            offline=reverse("pwa-offline"), assets=assets, version=version, **kwargs
+            offline=reverse("pwa-offline"),
+            assets=assets,
+            version=version,
+            icon=static("brand/icon-192.png"),
+            site_name=cached_settings.get().site_name,
+            **kwargs,
         )
 
     def render_to_response(self, context: dict[str, Any], **kwargs: Any) -> Any:

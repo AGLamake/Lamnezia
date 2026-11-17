@@ -46,11 +46,14 @@ _DISCORD_ROW, _DISCORD_BUTTON, _DISCORD_SECONDARY = 1, 2, 2
 
 
 class DeliveryError(Exception):
-    """The channel did not take the message. `retryable`: a later attempt may succeed."""
+    """The channel did not take the message. `retryable`: a later attempt may succeed;
+    `status`: the HTTP status of the answer, when there was one.
+    """
 
-    def __init__(self, detail: str, *, retryable: bool) -> None:
+    def __init__(self, detail: str, *, retryable: bool, status: int | None = None) -> None:
         super().__init__(detail)
         self.retryable = retryable
+        self.status = status
 
 
 @dataclass(frozen=True)
@@ -123,7 +126,7 @@ class HttpClient:
             detail = error.read(_ERROR_DETAIL_LIMIT).decode(errors="replace")
             retryable = error.code >= _SERVER_ERROR or error.code in _RETRYABLE_STATUS
             raise DeliveryError(
-                f"HTTP {error.code} {detail}".strip(), retryable=retryable
+                f"HTTP {error.code} {detail}".strip(), retryable=retryable, status=error.code
             ) from None
         except (urllib.error.URLError, OSError) as error:
             reason = getattr(error, "reason", error)

@@ -66,6 +66,7 @@ class EventType:
     message shows by its label. `joined`: occurrences about one user close in time make one
     notification. `fallback`: when the user's channel does not take it, their other channels
     are tried in turn. `link_offer`: a letter to the user offers to link a messenger.
+    `browser`: the browsers the user subscribed get it too (only with `to_user`).
     """
 
     label: Promise
@@ -78,6 +79,7 @@ class EventType:
     joined: bool = False
     fallback: bool = False
     link_offer: bool = False
+    browser: bool = True
 
     def render(self, data: dict[str, Any]) -> tuple[str, str]:
         """Title and text in the active language with the details filled in; a missing detail
@@ -231,6 +233,8 @@ EVENTS: dict[Event, EventType] = {
         _("{text}\n\nWrite here to answer."),
         to_user=True,
         routable=False,
+        # The answer itself goes to the messenger; a push would repeat it.
+        browser=False,
     ),
     Event.REQUEST_ANSWER: EventType(
         _("Request answered in a messenger"),
@@ -238,6 +242,8 @@ EVENTS: dict[Event, EventType] = {
         _("{text}\n\nTo answer, open My requests (/requests)."),
         to_user=True,
         routable=False,
+        # The answer itself goes to the messenger; a push would repeat it.
+        browser=False,
     ),
     Event.REQUEST_STATUS: EventType(
         _("Request status changed"),

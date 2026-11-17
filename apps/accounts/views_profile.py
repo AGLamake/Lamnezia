@@ -28,6 +28,7 @@ from apps.accounts.services.two_factor import TwoFactor
 from apps.audit.services import journal as audit
 from apps.core.mail import mail_configured
 from apps.core.services.site_settings import cached_settings
+from apps.notifications.services.browser import BrowserSubscriptions, PanelKeys
 
 _TEMPLATE = "accounts/profile.html"
 
@@ -72,6 +73,8 @@ class ProfileMixin(LoginRequiredMixin):
             "email_form": EmailChangeForm(user),
             "password_form": self._password_form(PasswordChangeForm(user)),
             "notify_form": NotifyViaForm(instance=user),
+            "push_key": PanelKeys.public(),
+            "push_count": BrowserSubscriptions(user).count(),
         }
         return context | sections
 

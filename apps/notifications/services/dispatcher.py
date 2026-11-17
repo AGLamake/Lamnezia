@@ -13,6 +13,7 @@ from apps.bots.services.session import Panels
 from apps.core.services.site_settings import cached_settings
 from apps.notifications.events import EVENTS, Event
 from apps.notifications.models import Delivery, DeliveryStatus, Notification
+from apps.notifications.services.browser import push_to_user
 from apps.notifications.services.channels import (
     DeliveryError,
     HttpClient,
@@ -83,7 +84,15 @@ class Dispatcher:
             Panels().bury(Messenger(chat.messenger), chat.external_id)
 
     def _send(self, delivery: Delivery, message: Message) -> Destination | None:
-        """Send the message; return the user's channel it went to, None for a staff channel."""
+        """Send the message; return the user's channel it went to, None for a staff channel
+        and the user's browsers.
+        """
+        if delivery.to_browser:
+            user = delivery.notification.user
+            if user is None:
+                raise DeliveryError("the user is deleted", retryable=False)
+            push_to_user(user, message, self._http)
+            return None
         if not delivery.to_user:
             if delivery.channel is None:
                 raise DeliveryError("the channel is deleted", retryable=False)
@@ -140,7 +149,7 @@ class Dispatcher:
 def language_of(delivery: Delivery) -> str:
     """The language of the recipient: the user's own for a delivery to them, else the site's."""
     user = delivery.notification.user
-    if delivery.to_user and user is not None:
+    if (delivery.to_user or delivery.to_browser) and user is not None:
         return user.notification_language
     return settings.LANGUAGE_CODE
 

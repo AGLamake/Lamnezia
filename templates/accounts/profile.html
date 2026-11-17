@@ -124,6 +124,29 @@
     {{ notify_form.language.as_field_group }}
     <button type="submit" class="btn btn-primary btn-sm">{% translate "Save" %}</button>
   </form>
+  <div class="form-section-body space-y-3 border-t border-border pt-4" data-push
+       data-push-key="{{ push_key }}"
+       data-push-subscribe="{% url 'push:subscribe' %}"
+       data-push-unsubscribe="{% url 'push:unsubscribe' %}"
+       data-push-state="{% url 'push:state' %}"
+       data-push-test="{% url 'push:test' %}"
+       data-push-on-text="{% translate "Notifications are on in this browser." %}"
+       data-push-off-text="{% translate "Notifications are off in this browser." %}"
+       data-push-test-text="{% translate "A test notification is on its way." %}"
+       data-push-error-text="{% translate "The browser did not turn notifications on. Try again or reload the page." %}">
+    {% csrf_token %}
+    <h3 class="font-medium">{% translate "In the browser" %}</h3>
+    <p class="help-text">{% translate "The same notifications in this browser or the installed app, even when the panel is closed. A click opens the page they are about." %}</p>
+    <p class="help-text" data-push-show="ios" hidden>{% translate "On iPhone and iPad (iOS 16.4 or later), add the panel to the Home Screen first: Share → Add to Home Screen. Then open it from there and turn notifications on." %}</p>
+    <p class="help-text" data-push-show="unsupported" hidden>{% translate "This browser cannot show notifications from the panel." %}</p>
+    <p class="help-text" data-push-show="denied" hidden>{% translate "Notifications from the panel are blocked in the browser settings for this site. Allow them there, then reload the page." %}</p>
+    <p class="help-text">{% blocktranslate with count=push_count %}Browsers with notifications on: <span data-push-count>{{ count }}</span>.{% endblocktranslate %}</p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn btn-secondary btn-sm" data-push-action="on" data-push-show="off" hidden>{% icon "bell" "icon-sm" %}{% translate "Get notifications in this browser" %}</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-push-action="test" data-push-show="on" hidden>{% translate "Send a test" %}</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-push-action="off" data-push-show="on" hidden>{% translate "Turn off in this browser" %}</button>
+    </div>
+  </div>
 </section>
 
 <section id="sessions" class="form-section scroll-mt-24" aria-labelledby="sessions-title">

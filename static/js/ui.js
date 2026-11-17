@@ -540,6 +540,101 @@
     });
   }
 
+  // ---- Notifications in the browser (profile, <div data-push>) ------------------------------
+  // The browser subscribes with the panel's key, the panel keeps the subscription
+  // (apps/notifications/views_push.py), the service worker shows the pushes. Children with
+  // data-push-show="on off …" are shown in those states; buttons data-push-action="on|off|test".
+
+  const b64url = (buffer) =>
+    btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+  const fromB64url = (text) =>
+    Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+  const appleTouch = () =>
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  function browserPush(box) {
+    const data = box.dataset;
+    const supported =
+      window.isSecureContext && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    const show = (state) => {
+      box.querySelectorAll("[data-push-show]").forEach((element) => {
+        element.hidden = !element.dataset.pushShow.split(" ").includes(state);
+      });
+    };
+    const send = async (url, subscription) => {
+      const body = new FormData();
+      body.append("csrfmiddlewaretoken", box.querySelector("[name=csrfmiddlewaretoken]").value);
+      const json = subscription.toJSON();
+      body.append("endpoint", json.endpoint || "");
+      body.append("p256dh", json.keys?.p256dh || "");
+      body.append("auth", json.keys?.auth || "");
+      const response = await fetch(url, { method: "POST", body, credentials: "same-origin" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const answer = await response.json();
+      box.querySelectorAll("[data-push-count]").forEach((element) => {
+        element.textContent = answer.count;
+      });
+      return answer;
+    };
+    const current = async () => (await navigator.serviceWorker.ready).pushManager.getSubscription();
+    const refresh = async () => {
+      if (!supported) return show(appleTouch() ? "ios" : "unsupported");
+      if (Notification.permission === "denied") return show("denied");
+      const subscription = await current();
+      if (!subscription) return show("off");
+      show((await send(data.pushState, subscription)).subscribed ? "on" : "off");
+    };
+    const subscribe = async () => {
+      if ((await Notification.requestPermission()) !== "granted") return refresh();
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      const key = subscription?.options?.applicationServerKey;
+      // Made with another key of the panel: the push service would refuse the panel's pushes.
+      if (subscription && (!key || b64url(key) !== data.pushKey)) {
+        await subscription.unsubscribe();
+        subscription = null;
+      }
+      subscription ||= await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: fromB64url(data.pushKey),
+      });
+      await send(data.pushSubscribe, subscription);
+      show("on");
+      showToast("success", data.pushOnText);
+    };
+    const unsubscribe = async () => {
+      const subscription = await current();
+      if (subscription) {
+        await send(data.pushUnsubscribe, subscription);
+        await subscription.unsubscribe();
+      }
+      show("off");
+      showToast("success", data.pushOffText);
+    };
+    const test = async () => {
+      const subscription = await current();
+      if (!subscription) return refresh();
+      await send(data.pushTest, subscription);
+      showToast("info", data.pushTestText);
+    };
+    const actions = { on: subscribe, off: unsubscribe, test };
+    box.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-push-action]");
+      if (!button || button.getAttribute("aria-busy")) return;
+      button.setAttribute("aria-busy", "true");
+      actions[button.dataset.pushAction]()
+        .catch(() => showToast("error", data.pushErrorText))
+        .finally(() => button.removeAttribute("aria-busy"));
+    });
+    refresh().catch(() => show("off"));
+  }
+
+  document.querySelectorAll("[data-push]").forEach(browserPush);
+
   // ---- Small form helpers ------------------------------------------------------------------
 
   document.addEventListener("change", (event) => {

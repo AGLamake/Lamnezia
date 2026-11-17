@@ -15,6 +15,7 @@ class ChannelKind(models.TextChoices):
     DISCORD = "discord", "Discord"
     DISCORD_DM = "discord_dm", _("Discord direct message")
     WEBHOOK = "webhook", _("Webhook")
+    BROWSER = "browser", _("Browser push")
 
 
 class Channel(models.Model):
@@ -22,7 +23,7 @@ class Channel(models.Model):
 
     email — addresses / —; Telegram — chat_id / bot token (empty: the panel bot);
     Discord — — / webhook URL; Discord direct message — user ID / — (the panel bot);
-    webhook — URL / signing secret.
+    webhook — URL / signing secret; browser push — — / — (the browsers of the administrators).
     """
 
     name = models.CharField(_("name"), max_length=100)
@@ -125,6 +126,8 @@ class Delivery(models.Model):
         related_name="deliveries",
     )
     to_user = models.BooleanField(_("to the user"), default=False)
+    # To the browsers the user it is about subscribed (`PushSubscription`), besides `to_user`.
+    to_browser = models.BooleanField(_("to the user's browsers"), default=False)
     # Copied, so the log stays readable after the channel is deleted.
     channel_name = models.CharField(_("channel"), max_length=150)
     status = models.CharField(
@@ -152,7 +155,50 @@ class Delivery(models.Model):
                 condition=Q(to_user=True),
                 name="notifications_delivery_once_to_user",
             ),
+            models.UniqueConstraint(
+                fields=["notification"],
+                condition=Q(to_browser=True),
+                name="notifications_delivery_once_to_browser",
+            ),
         )
 
     def __str__(self) -> str:
         return f"{self.notification} → {self.channel_name}"
+
+
+class VapidKey(models.Model):
+    """The panel's one key pair for Web Push, made when it is first needed. A new pair would
+    leave every browser subscribed with the old public key without notifications.
+    """
+
+    public_key = models.CharField(max_length=100)
+    private_key = EncryptedTextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return self.public_key
+
+
+class PushSubscription(models.Model):
+    """A browser or an installed app that takes Web Push notifications for `user`.
+
+    `endpoint` is the address at the push service of the browser; a second subscription from the
+    same browser replaces the first, even for another account.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="push_subscriptions"
+    )
+    endpoint = models.URLField(max_length=1000, unique=True)
+    p256dh = models.CharField(max_length=100)
+    auth = EncryptedTextField()
+    device = models.CharField(_("browser"), max_length=100, blank=True)
+    created_at = models.DateTimeField(_("subscribed at"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("browser subscription")
+        verbose_name_plural = _("browser subscriptions")
+        ordering = ("-created_at", "-pk")
+
+    def __str__(self) -> str:
+        return f"{self.user} {self.device}".strip()

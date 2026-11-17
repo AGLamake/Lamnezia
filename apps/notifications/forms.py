@@ -150,6 +150,15 @@ class WebhookChannelForm(ChannelForm):
         return url
 
 
+class BrowserChannelForm(ChannelForm):
+    """Sent to the browsers where administrators turned notifications on in their profile."""
+
+    kind = ChannelKind.BROWSER
+
+    class Meta(ChannelForm.Meta):
+        fields = ("name", "enabled")
+
+
 def _public_url(url: str) -> None:
     try:
         AddressGuard.from_settings().check(url)
@@ -171,6 +180,7 @@ CHANNEL_FORMS: dict[str, type[ChannelForm]] = {
         DiscordChannelForm,
         DiscordDmChannelForm,
         WebhookChannelForm,
+        BrowserChannelForm,
     )
 }
 

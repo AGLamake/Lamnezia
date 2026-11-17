@@ -26,6 +26,7 @@ urlpatterns = [
     path("keys/", include("apps.keys.urls")),
     path("sub/<str:token>", SubscriptionFeedView.as_view(), name="subscription-feed"),
     path("notifications/", include("apps.notifications.urls")),
+    path("push/", include("apps.notifications.urls_push")),
     path("operations/", include("apps.operations.urls")),
     path("plans/", include("apps.plans.urls")),
     path("servers/groups/", include("apps.groups.urls")),

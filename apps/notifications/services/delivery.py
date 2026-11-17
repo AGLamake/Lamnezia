@@ -1,7 +1,8 @@
 """Routing and delivery of notifications (DESIGN.md 6.7).
 
 Any part of the panel calls `emit(event, data)`; the event goes to every enabled channel routed for
-it and, for user events, to the user's email. Each channel gets its own delivery row and job, so a
+it and, for user events, to the user's email or messenger and to the browsers they subscribed.
+Each channel gets its own delivery row and job, so a
 failing channel neither blocks nor repeats the others.
 
 Occurrences of a joined event (chat messages) about one user, close in time, make one
@@ -43,7 +44,10 @@ def emit(  # noqa: PLR0913 - the routing of one event is keyword-only
     channels = list(Channel.objects.filter(enabled=True, routes__event=event))
     kind = EVENTS[event]
     to_user = kind.to_user and user is not None and bool(user.email or via)
-    if not channels and not to_user:
+    to_browser = (
+        kind.to_user and kind.browser and user is not None and user.push_subscriptions.exists()
+    )
+    if not channels and not to_user and not to_browser:
         return None
     with transaction.atomic():
         if kind.joined and user is not None:
@@ -58,6 +62,10 @@ def emit(  # noqa: PLR0913 - the routing of one event is keyword-only
         deliveries = [_to_channel(notification, channel) for channel in channels]
         if to_user:
             deliveries.append(Delivery(notification=notification, to_user=True, channel_name=""))
+        if to_browser:
+            deliveries.append(
+                Delivery(notification=notification, to_browser=True, channel_name="")
+            )
         wait = settings.NOTIFICATION_JOIN_WINDOW if kind.joined else None
         _queue(Delivery.objects.bulk_create(deliveries), wait)
     return notification
@@ -71,6 +79,18 @@ def send_test(channel: Channel) -> Delivery:
         delivery.save()
         _queue([delivery])
     return delivery
+
+
+def send_browser_test(user: User, device: str) -> None:
+    """A test push to the browsers `user` subscribed; `device` names the one that asked."""
+    with transaction.atomic():
+        notification = Notification.objects.create(
+            event=Event.TEST, data={"channel": device}, user=user
+        )
+        delivery = Delivery.objects.create(
+            notification=notification, to_browser=True, channel_name=""
+        )
+        _queue([delivery])
 
 
 def set_routes(channel: Channel, events: list[str]) -> None:
