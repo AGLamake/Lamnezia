@@ -37,7 +37,10 @@ def disable_by_limit(user: User, reason: str) -> list[Operation]:
 
 
 def enable_by_limit(user: User) -> list[Operation]:
-    """Start turning back on the keys the limits turned off; keys turned off by hand stay off."""
+    """Start turning back on the keys the limits turned off; keys turned off by hand stay off, and
+    so do all the keys of a user who may not have them, such as a blocked one."""
+    if not user.can_have_keys:
+        return []
     return _switch(user, KeyStatus.DISABLED_LIMIT, LIMIT_ENABLE)
 
 

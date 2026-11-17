@@ -8,7 +8,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
 from amnezia_core.awg import AWG_CONFIG_PATH, AwgServerConfig
-from apps.accounts.models import Role, User
+from apps.accounts.models import Role, Status, User
 from apps.accounts.tests.factories import UserFactory
 from apps.audit.models import AuditEvent
 from apps.keys.models import AccessKey, KeyStatus
@@ -170,6 +170,26 @@ def test_new_period_turns_the_keys_back_on(
     assert status_of(key) == KeyStatus.ACTIVE
     assert key.public_key in peers_of(awg_server)
     assert [name for name, _data in events] == ["reached", "restored"]
+
+
+def test_a_new_period_leaves_the_keys_of_a_blocked_user_off(
+    awg_server: FakeAwgServer,
+    admin: KeyActions,
+    django_capture_on_commit_callbacks: OnCommit,
+    enforce: Callable[[datetime], None],
+    events: list[tuple[str, dict[str, Any]]],
+) -> None:
+    user = subscriber(traffic_limit=10 * GB)
+    key = issued(admin, user, django_capture_on_commit_callbacks)
+    used(key, 12, ASSIGNED + timedelta(hours=1))
+    enforce(ASSIGNED + DAY)
+    User.objects.filter(pk=user.pk).update(status=Status.BLOCKED)
+
+    enforce(ASSIGNED + 30 * DAY + timedelta(minutes=5))
+
+    assert status_of(key) == KeyStatus.DISABLED_LIMIT
+    assert key.public_key not in peers_of(awg_server)
+    assert [name for name, _data in events] == ["reached"]
 
 
 def test_total_traffic_stays_reached_in_a_new_period(
