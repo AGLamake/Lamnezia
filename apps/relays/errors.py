@@ -14,7 +14,7 @@ class RelayErrorCode(StrEnum):
     MEMBER_ON_RELAY = "member_on_relay"
     NOT_INSTALLED = "not_installed"
     NOT_REMOVED = "not_removed"
-    NO_MEMBER = "no_member"
+    LEADER_UNREACHABLE = "leader_unreachable"
     HOST_NOT_RESOLVED = "host_not_resolved"
     SWITCH_NOT_BACKEND = "switch_not_backend"
     SWITCH_RUNNING = "switch_running"
@@ -59,9 +59,12 @@ RELAY_ERRORS: dict[RelayErrorCode, ErrorDescription] = {
         _("The relay container is still on the server."),
         _("See the step log; remove it with `docker rm -f lamnezia-relay` and try again."),
     ),
-    RelayErrorCode.NO_MEMBER: ErrorDescription(
-        _("No member of the group could be reached to add the service peer."),
-        _("Check that the members are online; the relay is updated again on the next sync."),
+    RelayErrorCode.LEADER_UNREACHABLE: ErrorDescription(
+        _("The leading server of the group could not be reached to change the service peer."),
+        _(
+            "Check that the leading server is online; the relay keeps its members and is "
+            "updated again on the next sync."
+        ),
     ),
     RelayErrorCode.HOST_NOT_RESOLVED: ErrorDescription(
         _("The address of a member server could not be found."),

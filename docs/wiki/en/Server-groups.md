@@ -98,6 +98,12 @@ server can be the relay, including the panel's own machine.
    OS, adds the service peer "Lamnezia relay" to every member, builds the `lamnezia-relay`
    container and publishes the ports of the groups as UDP.
 
+The service peer goes to the leading server first. If the leading server is busy with another
+operation or fails to take the peer, the install or update fails and nobody is marked lagging: the
+relay keeps the members it has and the next sync tries again. A leading server that does not answer
+is left for the next sync too, without lagging. Only another member that fails is marked lagging and
+gets the peer on its catch-up.
+
 The port of a group is checked before the installation: ports 80 and 443 belong to the panel's web
 server, and a port another program or container listens on is refused with a clear error. A port
 taken by AmneziaWG on the relay server gets its own hint: if that AmneziaWG is a member of the
@@ -143,8 +149,9 @@ The card also sets how often the agent probes each member (5 seconds by default)
 many failed probes in a row it moves a group to the next member (3 by default). **Save the
 settings** writes them to the relay by a background update, without a reinstall; a shorter
 interval or fewer failures switch sooner but react to short losses too. **Remove** drops the container, the image and the volume, then takes the service peers off
-the members. A member that does not answer is marked lagging and loses the peer on its catch-up;
-when no member of a group answers, the panel keeps the peer. Keys of the groups go back to the
+the members, the leading server first. A member that does not answer is marked lagging and loses
+the peer on its catch-up; when the leading server does not answer, the panel keeps the peer on every
+member, and when it fails to drop the peer, the removal fails. Keys of the groups go back to the
 address of their leading servers, and their owners are told to import them again.
 
 Every `LAMNEZIA_RELAY_MONITOR_INTERVAL` seconds the panel reads the state the agent writes. The

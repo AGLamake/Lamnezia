@@ -460,23 +460,122 @@ def test_a_busy_member_falls_behind_without_breaking_the_install(
 
     succeeded(operation)
     joined.refresh_from_db()
-    assert joined.lagging
+    assert joined.lagging and not leading().lagging
     logs = "".join(step.log for step in operation.steps.all())
     assert ServerLockError(ErrorCode.SERVER_BUSY).message in logs
 
 
+def leading() -> GroupMember:
+    return GroupMember.objects.get(leading=True)
+
+
+def nobody_lags() -> bool:
+    return not GroupMember.objects.exclude(lagging_since=None).exists()
+
+
+def busy_first(monkeypatch: MonkeyPatch, method: str) -> None:
+    """The first call of the PeerManager method, made on the leading server, finds it busy."""
+    original = getattr(PeerManager, method)
+    calls: list[object] = []
+
+    def busy(self: PeerManager, *args: object, **kwargs: object) -> object:
+        calls.append(self)
+        if len(calls) == 1:
+            raise ServerLockError(ErrorCode.SERVER_BUSY, "exit 75")
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(PeerManager, method, busy)
+
+
+@pytest.mark.usefixtures("relayed")
+def test_a_busy_leader_fails_the_install_and_does_not_lag(
+    relay_server: Server, admin: User, start: Start, monkeypatch: MonkeyPatch
+) -> None:
+    busy_first(monkeypatch, "add")
+
+    operation = run(INSTALL_KIND, relay_server, admin, start)
+
+    assert operation.status == OperationStatus.FAILED
+    assert operation.error_code == ErrorCode.SERVER_BUSY
+    assert nobody_lags()
+    assert not ServicePeer.objects.exists()
+
+
+@pytest.mark.usefixtures("relayed")
+def test_a_busy_leader_fails_the_update_and_the_relay_keeps_its_members(
+    relay_server: Server,
+    relay_fake: FakeRelayServer,
+    admin: User,
+    start: Start,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    before = written(relay_fake)
+    busy_first(monkeypatch, "enable")
+
+    operation = run(UPDATE_KIND, relay_server, admin, start)
+
+    assert operation.status == OperationStatus.FAILED
+    assert nobody_lags()
+    assert written(relay_fake) == before
+
+
 @pytest.mark.usefixtures("relayed")
 @pytest.mark.parametrize("kind", [INSTALL_KIND, UPDATE_KIND])
-def test_no_member_answering_leaves_the_service_peer_for_later(
+def test_a_leader_that_does_not_answer_leaves_the_service_peer_for_later(
     kind: str, relay_server: Server, down: set[str], admin: User, start: Start
 ) -> None:
     if kind == UPDATE_KIND:
         succeeded(run(INSTALL_KIND, relay_server, admin, start))
         ServicePeer.objects.all().delete()
-    down.update({LEADER_HOST, JOINER_HOST})
+    down.add(LEADER_HOST)
 
     operation = run(kind, relay_server, admin, start)
 
     succeeded(operation)
+    assert nobody_lags()
     logs = "".join(step.log for step in operation.steps.all())
-    assert RelayError(RelayErrorCode.NO_MEMBER, "Europe").message in logs
+    assert RelayError(RelayErrorCode.LEADER_UNREACHABLE, "Europe").message in logs
+
+
+@pytest.mark.usefixtures("relayed")
+def test_a_leader_that_does_not_answer_stays_on_the_relay(
+    relay_server: Server, relay_fake: FakeRelayServer, down: set[str], admin: User, start: Start
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    down.add(LEADER_HOST)
+
+    succeeded(run(UPDATE_KIND, relay_server, admin, start))
+
+    assert nobody_lags()
+    (group,) = written(relay_fake)["groups"]
+    assert [backend["host"] for backend in group["backends"]] == [LEADER_HOST, JOINER_HOST]
+
+
+@pytest.mark.usefixtures("relayed")
+def test_a_busy_leader_fails_the_removal_and_keeps_the_service_peer(
+    relay_server: Server, admin: User, start: Start, monkeypatch: MonkeyPatch
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    busy_first(monkeypatch, "revoke")
+
+    operation = run(REMOVE_KIND, relay_server, admin, start)
+
+    assert operation.status == OperationStatus.FAILED
+    assert nobody_lags()
+    assert ServicePeer.objects.exists()
+
+
+@pytest.mark.usefixtures("relayed")
+def test_a_leader_down_at_removal_keeps_the_service_peer_on_every_member(
+    relay_server: Server, servers: Fakes, down: set[str], admin: User, start: Start
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    public_key = ServicePeer.objects.get().public_key
+    down.add(LEADER_HOST)
+
+    succeeded(run(REMOVE_KIND, relay_server, admin, start))
+
+    assert nobody_lags()
+    assert public_key in peers_of(servers[JOINER_HOST])
+    assert ServicePeer.objects.exists()

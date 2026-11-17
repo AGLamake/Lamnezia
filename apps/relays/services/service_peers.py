@@ -1,9 +1,9 @@
 """The service peer of a group on its members: the client the relay agent probes them with.
 
-It is made on the first member that answers, which gives it a free address of the group, and
-put with that address on the others, as a key of the group is (apps/keys/services/replicas.py).
-A member that cannot take it lags and gets it with the leader files on its catch-up; when the
-relay goes, a member that cannot drop it loses it on its catch-up the same way.
+It is made on the leading server, which gives it a free address of the group, and put with that
+address on the others, as a key of the group is (apps/keys/services/replicas.py). A failure on
+the leader fails the operation and nobody lags; another member that cannot take the peer lags
+and gets it with the leader files on its catch-up, and loses it the same way when the relay goes.
 """
 
 from contextlib import ExitStack
@@ -29,9 +29,16 @@ from apps.ssh.services import RemoteHost
 # The name the Amnezia app shows for the peer in the client list of a member.
 PEER_NAME = "Lamnezia relay"
 
+# A member and the connection to it.
+type Reached = tuple[GroupServer, RemoteHost]
+
 
 class ServicePeerPlacement:
-    """Puts the service peer of a group on its members that are up to date, or takes it off."""
+    """Puts the service peer of a group on its members that are up to date, or takes it off.
+
+    The leading server goes first and must succeed, as the primary of a key change does: when
+    it fails, the operation fails and nobody lags, so the relay keeps the members it has.
+    """
 
     def __init__(self, group: ServerGroup, ctx: OperationContext) -> None:
         self._group = group
@@ -39,58 +46,69 @@ class ServicePeerPlacement:
         self._replicas = GroupReplicas(group.pk)
 
     def place(self) -> None:
-        """Raises RelayError when no member answers; nothing is changed then."""
-        leader = self._group.leader
-        if leader is None:
+        """Raises RelayError when the leading server does not answer; nothing changes then."""
+        if self._group.leader is None:
             return
-        instance = leader.instance
+        instance = self._group.leader.instance
         with ExitStack() as stack:
-            reached = self._connect(stack)
+            leader, others = self._connect(stack)
             peer = ServicePeer.objects.filter(group=self._group).first()
             if peer is None:
-                peer = self._create(reached[0], instance.source)
-                reached = reached[1:]
-            for server in reached:
+                peer = self._create(leader, instance.source)
+            else:
+                self._enable(leader, peer, instance.preshared_key)
+            for server in others:
                 self._put(server, peer, instance.preshared_key)
         self._replicas.finish()
 
     def withdraw(self) -> None:
         """Take the peer off the members and forget it; a member that cannot drop it lags.
 
-        With no member answering the panel keeps the peer: a catch-up would have no files to
-        take, and the peer stays known to reconciliation until the relay is back.
+        With the leading server not answering the panel keeps the peer and touches no member:
+        a catch-up takes the files of the leader, and the peer stays known to reconciliation.
         """
         peer = ServicePeer.objects.filter(group=self._group).first()
         if peer is None:
             return
         with ExitStack() as stack:
-            reached = self._connect(stack, required=False)
-            if not reached:
+            try:
+                leader, others = self._connect(stack)
+            except RelayError as error:
+                title = _("Keep the service peer of %(group)s") % {"group": self._group.name}
+                with self._ctx.step(title):
+                    self._ctx.log(error.message)
                 return
-            for server in reached:
+            self._revoke(leader, peer)
+            for server in others:
                 self._drop(server, peer)
         self._replicas.finish()
         peer.delete()
 
-    def _connect(
-        self, stack: ExitStack, *, required: bool = True
-    ) -> list[tuple[GroupServer, RemoteHost]]:
-        """The members that answer; with none, RelayError when `required`."""
-        reached: list[tuple[GroupServer, RemoteHost]] = []
+    def _connect(self, stack: ExitStack) -> tuple[Reached, list[Reached]]:
+        """The leading server and the other members that answer; those that do not lag.
+
+        Raises RelayError when the leading server does not answer: then nobody lags.
+        """
         with self._ctx.step(_("Connect to the servers of %(group)s") % {"group": self._group.name}):
-            for server in self._replicas.members():
+            members = self._replicas.members()
+            if not members:
+                raise RelayError(RelayErrorCode.LEADER_UNREACHABLE, self._group.name)
+            first, *rest = members
+            try:
+                leader = (first, stack.enter_context(first.connect()))
+            except SshError as error:
+                self._ctx.log(f"{first.name}: {error.message}")
+                raise RelayError(RelayErrorCode.LEADER_UNREACHABLE, self._group.name) from error
+            others: list[Reached] = []
+            for server in rest:
                 try:
-                    reached.append((server, stack.enter_context(server.connect())))
+                    others.append((server, stack.enter_context(server.connect())))
                 except SshError as error:
                     self._ctx.log(f"{server.name}: {error.message}")
                     self._replicas.fall_behind(server)
-            if not reached and required:
-                raise RelayError(RelayErrorCode.NO_MEMBER, self._group.name)
-            if not reached:
-                self._ctx.log(_("No server of the group answers: the service peer stays."))
-        return reached
+        return leader, others
 
-    def _create(self, reached: tuple[GroupServer, RemoteHost], source: str) -> ServicePeer:
+    def _create(self, reached: Reached, source: str) -> ServicePeer:
         server, host = reached
         pair = KeyPair.generate()
         with self._ctx.step(_("Add the service peer on %(server)s") % {"server": server.name}):
@@ -104,28 +122,30 @@ class ServicePeerPlacement:
             address=added.allowed_ips[0].partition("/")[0],
         )
 
-    def _put(
-        self, reached: tuple[GroupServer, RemoteHost], peer: ServicePeer, preshared_key: str
-    ) -> None:
-        """Put the peer on a member; a member that fails lags and gets it on its catch-up."""
+    def _enable(self, reached: Reached, peer: ServicePeer, preshared_key: str) -> None:
         server, host = reached
         wanted = Peer(peer.public_key, (f"{peer.address}/32",), preshared_key or None)
-        try:
-            with self._ctx.step(_("Add the service peer on %(server)s") % {"server": server.name}):
-                PeerManager(host, self._ctx).enable(wanted, PEER_NAME)
-        except CatalogError as error:
-            self._fall_behind(server, error.message)
+        with self._ctx.step(_("Add the service peer on %(server)s") % {"server": server.name}):
+            PeerManager(host, self._ctx).enable(wanted, PEER_NAME)
 
-    def _drop(self, reached: tuple[GroupServer, RemoteHost], peer: ServicePeer) -> None:
-        """Revoke the peer on a member; a member that fails lags and loses it on its catch-up."""
+    def _revoke(self, reached: Reached, peer: ServicePeer) -> None:
         server, host = reached
+        with self._ctx.step(_("Remove the service peer from %(server)s") % {"server": server.name}):
+            PeerManager(host, self._ctx).revoke(peer.public_key)
+
+    def _put(self, reached: Reached, peer: ServicePeer, preshared_key: str) -> None:
+        """Put the peer on a member; a member that fails lags and gets it on its catch-up."""
         try:
-            with self._ctx.step(
-                _("Remove the service peer from %(server)s") % {"server": server.name}
-            ):
-                PeerManager(host, self._ctx).revoke(peer.public_key)
+            self._enable(reached, peer, preshared_key)
         except CatalogError as error:
-            self._fall_behind(server, error.message)
+            self._fall_behind(reached[0], error.message)
+
+    def _drop(self, reached: Reached, peer: ServicePeer) -> None:
+        """Revoke the peer on a member; a member that fails lags and loses it on its catch-up."""
+        try:
+            self._revoke(reached, peer)
+        except CatalogError as error:
+            self._fall_behind(reached[0], error.message)
 
     def _fall_behind(self, server: GroupServer, reason: str) -> None:
         """The failed step is closed already, so the reason goes into a step of its own."""

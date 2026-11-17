@@ -152,6 +152,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A failed service peer made the leading server lag**: when a relay update met the leading server
+  busy with another operation (for example a change of the group settings), the leader was marked
+  lagging and the relay got a config without the group, so every client lost connection; a group of
+  one member could never catch up. A failure on the leading server now fails the relay operation
+  and the relay keeps its members; a leading server that does not answer is not marked lagging.
+  Only another member that fails lags, as in key changes.
 - **The relay did not switch right after a member came back**: before a switch the agent probed
   the candidate a second time within milliseconds, and the member dropped that handshake, so on a
   short link the clients stayed without connection as long as the active member was down. The

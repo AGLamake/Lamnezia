@@ -27,7 +27,6 @@ from apps.relays.services.container import RESERVED_PORTS, RelayContainer
 from apps.relays.services.service_peers import ServicePeerPlacement
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
-from apps.ssh.errors import CatalogError
 from apps.ssh.services import RemoteHost
 
 INSTALL_KIND = "relays.install"
@@ -105,11 +104,14 @@ class RelayDeployment:
             yield
 
     def _place_service_peers(self) -> None:
-        """A group whose members cannot take the peer now is left for the next sync."""
+        """A group whose leading server does not answer is left for the next sync; a failure on
+        an answering leader fails the operation, so the relay keeps the members it has."""
         for group, _members in RelayPlan.of(self._relay.server).groups:
             try:
                 ServicePeerPlacement(group, self._ctx).place()
-            except CatalogError as error:
+            except RelayError as error:
+                if error.code != RelayErrorCode.LEADER_UNREACHABLE:
+                    raise
                 title = _("Leave the service peer of %(group)s for later") % {"group": group.name}
                 with self._ctx.step(title):
                     self._ctx.log(error.message)

@@ -676,8 +676,12 @@ msgstr "Проверить сейчас"
 msgid "Check that AmneziaWG of the server is running, then switch again."
 msgstr "Проверьте, что AmneziaWG на сервере работает, и переключите ещё раз."
 
-msgid "Check that the members are online; the relay is updated again on the next sync."
-msgstr "Проверьте, что участники на связи; ретранслятор обновится снова при следующей синхронизации."
+msgid ""
+"Check that the leading server is online; the relay keeps its members and is "
+"updated again on the next sync."
+msgstr ""
+"Проверьте, что ведущий сервер на связи; ретранслятор сохранит участников и "
+"обновится снова при следующей синхронизации."
 
 msgid "Check that the server is a clone"
 msgstr "Проверить, что сервер — клон"
@@ -1429,6 +1433,10 @@ msgstr "Добавьте его как одиночный сервер AmneziaWG
 msgid "Join the group"
 msgstr "Вступить в группу"
 
+#, python-format
+msgid "Keep the service peer of %(group)s"
+msgstr "Оставить служебный пир группы %(group)s"
+
 msgid "Keep in the group"
 msgstr "Оставить в группе"
 
@@ -1838,9 +1846,6 @@ msgstr "Ключей нет."
 msgid "No materials yet."
 msgstr "Материалов пока нет."
 
-msgid "No member of the group could be reached to add the service peer."
-msgstr "Ни один участник группы не ответил, служебный пир добавить некуда."
-
 msgid "No operations found."
 msgstr "Операции не найдены."
 
@@ -1886,9 +1891,6 @@ msgstr "Пока вам не доступен ни один сервер. Обр
 
 msgid "No server of the group answers."
 msgstr "Ни один сервер группы не отвечает."
-
-msgid "No server of the group answers: the service peer stays."
-msgstr "Ни один сервер группы не отвечает: служебный пир остаётся."
 
 msgid "No server of the group could be read."
 msgstr "Не удалось прочитать ни один сервер группы."
@@ -3011,6 +3013,9 @@ msgstr "Ключи и бэкап сохранены: восстановите п
 
 msgid "The lead cannot be handed over until these key operations finish:"
 msgstr "Роль ведущего нельзя передать, пока не закончатся эти операции с ключами:"
+
+msgid "The leading server of the group could not be reached to change the service peer."
+msgstr "Ведущий сервер группы не ответил, служебный пир изменить нельзя."
 
 msgid "The leading server cannot leave while other servers are in the group."
 msgstr "Ведущий сервер не может выйти, пока в группе есть другие серверы."
