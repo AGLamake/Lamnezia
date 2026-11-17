@@ -52,6 +52,14 @@ class RelayContainer:
     def exists(self) -> bool:
         return bool(self._docker.state())
 
+    @property
+    def running(self) -> bool:
+        return self._docker.state() == "running"
+
+    def start_again(self) -> None:
+        """Start the stopped container with its ports, e.g. after Docker was reinstalled."""
+        self._host.docker("start", NAME)
+
     def published_ports(self) -> set[int]:
         """UDP ports the container publishes now; empty when there is no container."""
         if not self.exists:

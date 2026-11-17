@@ -8,6 +8,7 @@
 | [Configuration](en/Configuration.md) | [Настройка](ru/Configuration.md) |
 | [Upgrade](en/Upgrade.md) | [Обновление](ru/Upgrade.md) |
 | [Backup](en/Backup.md) | [Бэкапы](ru/Backup.md) |
+| [Panel move](en/Panel-move.md) | [Перенос панели](ru/Panel-move.md) |
 | [Security](en/Security.md) | [Безопасность](ru/Security.md) |
 | [Troubleshooting](en/Troubleshooting.md) | [Решение проблем](ru/Troubleshooting.md) |
 | **Features** | **Возможности** |

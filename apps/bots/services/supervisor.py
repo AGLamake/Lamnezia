@@ -17,6 +17,7 @@ from django.utils import timezone
 
 from apps.bots.adapters.base import BotAdapter
 from apps.bots.models import BotRuntime, BotStatus
+from apps.relocation.services.freeze import panel_frozen
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +118,9 @@ class BotSlot:
             if leave:
                 runtime.leave_requests = []
                 runtime.save(update_fields=["leave_requests"])
-        return Wish(
-            self._adapter_class.token(), runtime.enabled, runtime.restart_requested_at, leave
-        )
+        # The panel accepts no changes while it moves: a bot here or on the new machine, not both.
+        enabled = runtime.enabled and not panel_frozen()
+        return Wish(self._adapter_class.token(), enabled, runtime.restart_requested_at, leave)
 
     def _report(self, wish: Wish) -> None:
         adapter = self._adapter if self.running else None

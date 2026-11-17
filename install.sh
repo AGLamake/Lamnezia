@@ -16,11 +16,12 @@ IMAGE=""
 IMAGE_REPO="ghcr.io/aglamake/lamnezia"
 RESTORE=""
 RESTORE_DIR=""
+MOVING=0
 
 usage() {
     cat <<EOF
 Usage: install.sh [--domain NAME] [--email ADDRESS] [--proxy auto|nginx|caddy] [--image TAG] [--dir PATH]
-                  [--restore FILE]
+                  [--restore FILE [--moving]]
 
   --domain  panel domain; its DNS A record must point to this server
   --email   address for Let's Encrypt expiry notices (optional)
@@ -32,6 +33,8 @@ Usage: install.sh [--domain NAME] [--email ADDRESS] [--proxy auto|nginx|caddy] [
   --dir     installation directory (default /opt/lamnezia)
   --restore install from a panel archive: its database, secrets and files; the password is
             asked or taken from LAMNEZIA_ARCHIVE_PASSWORD; --domain overrides the archived one
+  --moving  set by the panel move: the domain still points to the old machine, so a failed
+            certificate request is retried every 10 minutes instead of stopping the install
 EOF
 }
 
@@ -47,12 +50,14 @@ parse_args() {
             --image) IMAGE="${2:?}"; shift 2 ;;
             --dir) DIR="${2:?}"; shift 2 ;;
             --restore) RESTORE="$(realpath "${2:?}")"; shift 2 ;;
+            --moving) MOVING=1; shift ;;
             -h|--help) usage; exit 0 ;;
             *) usage; die "unknown option: $1" ;;
         esac
     done
     case "$PROXY" in auto|nginx|caddy) ;; *) die "--proxy must be auto, nginx or caddy" ;; esac
     [ -z "$RESTORE" ] || [ -f "$RESTORE" ] || die "no archive file $RESTORE"
+    [ "$MOVING" = 0 ] || [ -n "$RESTORE" ] || die "--moving needs --restore"
 }
 
 # Prompts read from the terminal, so they work under "curl ... | bash" too.
@@ -245,9 +250,39 @@ setup_nginx() {
         log "Requesting a Let's Encrypt certificate for $DOMAIN"
         local account=(--register-unsafely-without-email)
         [ -z "$EMAIL" ] || account=(--email "$EMAIL")
-        certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --redirect "${account[@]}" ||
-            die "certbot failed: check that $DOMAIN points to this server, then run install.sh again"
+        certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --redirect "${account[@]}" && return
+        [ "$MOVING" = 1 ] || die "certbot failed: check that $DOMAIN points to this server, then run install.sh again"
+        retry_certificate "${account[@]}"
     fi
+}
+
+# During a panel move the domain points to the old machine until the admin switches DNS:
+# a systemd timer asks for the certificate every 10 minutes and turns itself off on success.
+retry_certificate() {
+    local unit=/etc/systemd/system/lamnezia-certificate
+    log "No certificate yet: retrying every 10 minutes until $DOMAIN points to this server"
+    cat >"$unit.service" <<UNIT
+[Unit]
+Description=Lamnezia: Let's Encrypt certificate for $DOMAIN
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'certbot --nginx -d $DOMAIN --non-interactive --agree-tos --redirect $* && systemctl disable --now lamnezia-certificate.timer'
+UNIT
+    cat >"$unit.timer" <<UNIT
+[Unit]
+Description=Lamnezia: retry the certificate for $DOMAIN
+
+[Timer]
+OnActiveSec=10min
+OnBootSec=10min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target
+UNIT
+    systemctl daemon-reload
+    systemctl enable --now lamnezia-certificate.timer
 }
 
 main() {
@@ -262,6 +297,10 @@ main() {
     if [ -n "$RESTORE" ]; then restore_data; fi
     start_stack
     if [ "$PROXY" = "nginx" ]; then setup_nginx; fi
+    if [ "$MOVING" = 1 ]; then
+        log "The copy is running and waits: confirm the move in the old panel, then point $DOMAIN here"
+        return
+    fi
     log "Lamnezia is running at https://$DOMAIN/"
     if [ -n "$RESTORE" ]; then
         log "Restored from $RESTORE: sign in with the accounts of the archived panel"

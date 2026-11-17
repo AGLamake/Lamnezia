@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **App versions for AmneziaWG 3.1 keys**: the portal key page and the bot key card (and the key
   itself in the bot) list the minimum Amnezia VPN and AmneziaWG versions per platform for a key of
   an AmneziaWG 3.1 server; other keys show no hint.
+- **Panel move**: **System → Panel move** moves the panel to another machine added as a server. A
+  background operation installs the same code version there, restores a panel archive with a
+  one-time password and checks the copy; after the confirmation the copy accepts changes and the
+  old panel stays read-only. Only DNS is switched by hand. From the start the panel is read-only:
+  changes answer `503`, background jobs and bots pause. A relay on the new machine is checked
+  before and after the install and started again if needed; without nginx, Caddy ports are checked
+  first. A cancel removes the copy. `install.sh --moving` retries the nginx certificate every 10
+  minutes until the domain points to the new machine.
 - **Panel archive and restore**: **System → Panel archive** (or `manage.py panel_archive create`)
   makes one file encrypted with a password holding the database, `.env` with the secrets key and
   the uploaded files; `install.sh --restore FILE` installs a new server from it with the same

@@ -26,3 +26,5 @@ REQUIRE_ADMIN_2FA = False
 LANGUAGE_CODE = "en"
 # The example payment plugin; it only works with DEBUG on, so the core runs without it.
 INSTALLED_APPS = [*INSTALLED_APPS, "examples.billing_dummy"]  # noqa: F405
+# The panel move does not wait for running jobs to settle in tests.
+RELOCATION_SETTLE_SECONDS = 0

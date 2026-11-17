@@ -6,6 +6,7 @@ from celery import Celery
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
-app = Celery("lamnezia")
+# Every task pauses while the panel moves to another machine (apps/relocation).
+app = Celery("lamnezia", task_cls="apps.relocation.tasks:PanelTask")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()

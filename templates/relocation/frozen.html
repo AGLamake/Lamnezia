@@ -1,0 +1,6 @@
+{% extends "errors/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "The panel is moving" %}{% endblock %}
+{% block code %}503{% endblock %}
+{% block heading %}{% translate "The panel is moving" %}{% endblock %}
+{% block text %}{% if move.state == "left" %}{% blocktranslate with host=move.target_host %}The panel moved to {{ host }}. This copy is read-only and accepts no changes.{% endblocktranslate %}{% else %}{% translate "The panel is moving to another machine and accepts no changes. Try again when the move is over." %}{% endif %}{% endblock %}

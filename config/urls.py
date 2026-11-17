@@ -34,6 +34,7 @@ urlpatterns = [
     path("settings/bots/", include("apps.bots.urls")),
     path("settings/", include("apps.core.urls")),
     path("protocols/", include("apps.protocols.urls")),
+    path("backups/move/", include("apps.relocation.urls")),
     path("backups/", include("apps.backups.urls")),
     path("billing/", include("apps.billing.urls")),
     path("portal/", include("apps.portal.urls")),

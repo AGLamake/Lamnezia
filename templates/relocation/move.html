@@ -1,0 +1,60 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Panel move" %} · {{ site_name }}{% endblock %}
+
+{% block nav %}{% include "components/admin_nav.html" with active="panel-move" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Panel move" %}</h1>
+    <p class="page-lead">{% translate "Moves the panel with all its data to another machine. The panel installs itself there, restores its archive and checks the copy. You only point the domain to the new machine." %}</p>
+  </div>
+</div>
+
+<div class="min-w-0 space-y-6">
+  {% if move %}
+  <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "switch" "icon-sm text-muted" %}{% translate "Latest move" %}</h2>
+    <div class="form-section-body">
+      <p>{% translate "New machine" %}: <span class="font-mono">{{ move.target_host }}</span></p>
+      <p>{% translate "State" %}: <strong>{{ move.get_state_display }}</strong>{% if move.operation_id %} · <a href="{% url 'operations:detail' move.operation_id %}" class="font-medium underline">{% translate "Progress" %}</a>{% endif %}</p>
+      {% if move.state == "ready" %}
+      <p class="help-text">{% translate "The copy on the new machine is up and waits. Confirm to hand over: this panel becomes read-only and the copy starts accepting changes." %}</p>
+      {% elif move.state == "left" %}
+      {% blocktranslate asvar dns with host=move.target_host %}Point the panel domain to {{ host }}. Until then users reach this read-only copy. When the domain points to the new machine, stop this copy with docker compose down.{% endblocktranslate %}
+      {% include "components/alert.html" with level="info" text=dns %}
+      {% endif %}
+      <div class="flex flex-wrap gap-2">
+        {% if move.can_confirm %}
+        <form method="post" action="{% url 'relocation:confirm' move.pk %}" data-confirm="{% translate "Hand the panel over to the new machine? This copy becomes read-only." %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">{% icon "check" %}{% translate "Confirm the move" %}</button>
+        </form>
+        {% endif %}
+        {% if move.can_cancel %}
+        <form method="post" action="{% url 'relocation:cancel' move.pk %}" data-confirm="{% translate "Cancel the move and remove the copy from the new machine?" %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost">{% icon "trash" %}{% translate "Cancel the move" %}</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if not frozen_move %}
+  <form method="post" class="form-section">
+    {% csrf_token %}
+    <h2 class="section-title flex items-center gap-2">{% icon "server" "icon-sm text-muted" %}{% translate "New move" %}</h2>
+    <div class="form-section-body">
+      {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+      {{ form.target.as_field_group }}
+      {{ form.understood.as_field_group }}
+      <p class="help-text">{% translate "A relay on the new machine keeps working: the panel checks its ports before the install and after it. Servers that allow SSH only from the panel address must allow the new address too." %}</p>
+      <div><button type="submit" class="btn btn-primary">{% icon "switch" %}{% translate "Start the move" %}</button></div>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% load i18n ui %}{% if frozen_move %}
+<div class="alert alert-warning mb-6" role="status">
+  {% icon "warning" "icon mt-px" %}
+  <p class="min-w-0 flex-1 break-words">
+    {% if frozen_move.state == "left" %}{% blocktranslate with host=frozen_move.target_host %}The panel moved to {{ host }}. This copy is read-only.{% endblocktranslate %}{% else %}{% translate "The panel is moving to another machine: changes are paused." %}{% endif %}
+    {% if user.is_admin %}<a href="{% url 'relocation:move' %}" class="font-medium underline">{% translate "Panel move" %}</a>{% endif %}
+  </p>
+</div>
+{% endif %}

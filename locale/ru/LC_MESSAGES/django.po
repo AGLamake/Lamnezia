@@ -232,6 +232,9 @@ msgstr "3proxy.log приложения: %(size)s"
 msgid "7 days"
 msgstr "Неделя"
 
+msgid "A copy left by an earlier move is removed."
+msgstr "Копия, оставшаяся от прошлого переноса, удаляется."
+
 msgid "A link"
 msgstr "Ссылка"
 
@@ -252,6 +255,13 @@ msgstr "Новый пользователь ждёт подтверждения"
 
 msgid "A plan sets the servers, protocols and limits of its users."
 msgstr "Тариф задаёт серверы, протоколы и лимиты своих пользователей."
+
+msgid "A relay on the new machine keeps working: the panel checks its ports before the install and after it. Servers that allow SSH only from the panel address must allow the new address too."
+msgstr "Ретранслятор на новой машине продолжает работать: панель проверяет его порты до установки и после неё. Серверы, которые пускают по SSH только с адреса панели, должны пускать и с нового адреса."
+
+#, python-format
+msgid "A relay runs here, UDP ports: %(ports)s."
+msgstr "Здесь работает ретранслятор, UDP-порты: %(ports)s."
 
 msgid "A revoked key stops working at once and cannot be turned back on."
 msgstr "Отозванный ключ сразу перестаёт работать, вернуть его нельзя."
@@ -335,6 +345,9 @@ msgstr "Добавьте ключ в приложение"
 
 msgid "Add the link to v2rayN, v2RayTun, Hiddify, Streisand or another XRay client as a subscription. The client fetches your active XRay keys by it and updates them itself: a re-issued key or a changed server reaches it without a new link. The Amnezia app does not read subscription links: add keys to it one by one."
 msgstr "Добавьте ссылку в v2rayN, v2RayTun, Hiddify, Streisand или другой клиент XRay как подписку. Клиент забирает по ней ваши действующие ключи XRay и обновляет их сам: перевыпущенный ключ или изменённый сервер приходят без новой ссылки. Приложение Amnezia ссылки-подписки не читает: в него ключи добавляются по одному."
+
+msgid "Add the machine as a server first: the move uses its SSH access. It must run Debian or Ubuntu and have no panel yet."
+msgstr "Сначала добавьте машину как сервер: перенос использует её SSH-доступ. На ней должен быть Debian или Ubuntu и ещё не должно быть панели."
 
 #, python-format
 msgid "Add the service peer on %(server)s"
@@ -477,6 +490,10 @@ msgstr "Подтвердить или отклонить:"
 msgid "Archive"
 msgstr "Архив"
 
+#, python-format
+msgid "Archive of %(size)s."
+msgstr "Архив размером %(size)s."
+
 msgid "Archives on the panel"
 msgstr "Архивы на панели"
 
@@ -612,6 +629,12 @@ msgstr "Процессор"
 msgid "Cancel"
 msgstr "Отмена"
 
+msgid "Cancel the move"
+msgstr "Отменить перенос"
+
+msgid "Cancel the move and remove the copy from the new machine?"
+msgstr "Отменить перенос и удалить копию с новой машины?"
+
 msgid "Careful"
 msgstr "Осторожно"
 
@@ -694,6 +717,15 @@ msgstr "Проверьте, что ведущий сервер на связи; 
 msgid "Check that the server is a clone"
 msgstr "Проверить, что сервер — клон"
 
+msgid "Check the copy on the new machine"
+msgstr "Проверить копию на новой машине"
+
+msgid "Check the free space and the connection, then start the move again."
+msgstr "Проверьте свободное место и связь, затем начните перенос снова."
+
+msgid "Check the new machine"
+msgstr "Проверить новую машину"
+
 msgid "Check the ports of the groups"
 msgstr "Проверить порты групп"
 
@@ -771,6 +803,9 @@ msgstr "Подтвердить"
 msgid "Confirm the email"
 msgstr "Подтвердить email"
 
+msgid "Confirm the move"
+msgstr "Подтвердить перенос"
+
 msgid "Confirm the new email"
 msgstr "Подтвердите новую почту"
 
@@ -811,6 +846,9 @@ msgstr "Копия файлов от %(date)s."
 
 msgid "Copy the link and paste it in Amnezia VPN: «+» → «Insert key»."
 msgstr "Скопируйте ссылку и вставьте её в Amnezia VPN: «+» → «Вставить ключ»."
+
+msgid "Copy the panel to the new machine"
+msgstr "Скопировать панель на новую машину"
 
 msgid "Create"
 msgstr "Создать"
@@ -977,6 +1015,9 @@ msgstr "Диск"
 
 msgid "Docker"
 msgstr "Docker"
+
+msgid "Docker with compose is missing: the installer adds it, containers restart once."
+msgstr "Docker с compose не установлен: установщик поставит его, контейнеры один раз перезапустятся."
 
 msgid "Does not work"
 msgstr "Не работает"
@@ -1172,6 +1213,13 @@ msgstr "Форма"
 msgid "Free disk space"
 msgstr "Свободно на диске"
 
+#, python-format
+msgid "Free disk space: %(size)s MB."
+msgstr "Свободно на диске: %(size)s МБ."
+
+msgid "Free some space or choose a machine with a larger disk."
+msgstr "Освободите место или выберите машину с диском побольше."
+
 msgid "Free the UDP port of the group on the server, then join."
 msgstr "Освободите UDP-порт группы на сервере, затем вступайте."
 
@@ -1243,6 +1291,9 @@ msgstr "Группы, где сервер отстаёт или застрял �
 
 msgid "Guides"
 msgstr "Инструкции"
+
+msgid "Hand the panel over to the new machine? This copy becomes read-only."
+msgstr "Передать панель новой машине? Эта копия станет только для чтения."
 
 msgid "Help text under fields."
 msgstr "Подсказка под полем."
@@ -1391,6 +1442,9 @@ msgstr "Установить и вступить"
 msgid "Install the app"
 msgstr "Установите приложение"
 
+msgid "Install the panel there and restore the archive"
+msgstr "Установить там панель и восстановить архив"
+
 msgid "Install the protocol on this server with the saved keys?"
 msgstr "Установить протокол на этот сервер с сохранёнными ключами?"
 
@@ -1431,6 +1485,9 @@ msgstr "Выдайте первый ключ: он появится здесь �
 #, python-format
 msgid "Issued for %(ip)s"
 msgstr "Выпущен для %(ip)s"
+
+msgid "It is the panel now: it is not removed. Point the domain to it, or confirm the move again to make this copy read-only."
+msgstr "Теперь панель — она, её не удаляют. Направьте на неё домен или подтвердите перенос ещё раз, чтобы эта копия стала только для чтения."
 
 msgid "Its config does not turn the query logs off: they stay as the image has them."
 msgstr "Его конфиг не выключает журнал запросов: он остаётся таким, как в образе."
@@ -1545,6 +1602,9 @@ msgstr "Последнее переключение %(when)s."
 msgid "Later"
 msgstr "Позже"
 
+msgid "Latest move"
+msgstr "Последний перенос"
+
 msgid "Latest operation"
 msgstr "Последняя операция"
 
@@ -1578,6 +1638,12 @@ msgstr "Выйти из группы"
 #, python-format
 msgid "Leave the service peer of %(group)s for later"
 msgstr "Отложить служебный пир группы %(group)s"
+
+msgid "Leave this panel read-only"
+msgstr "Оставить эту панель только для чтения"
+
+msgid "Let the copy on the new machine accept changes"
+msgstr "Разрешить изменения копии на новой машине"
 
 msgid "Let them leave first: then the leading server stays as a standalone one."
 msgstr "Сначала выведите их: тогда ведущий сервер останется одиночным."
@@ -1666,6 +1732,9 @@ msgstr "Выйти"
 msgid "Login with"
 msgstr "Вход"
 
+msgid "Look at its logs there: cd /opt/lamnezia && docker compose logs web."
+msgstr "Посмотрите её журнал там: cd /opt/lamnezia && docker compose logs web."
+
 msgid "Lost the key or think someone else has it?"
 msgstr "Потеряли ключ или думаете, что он попал к кому-то ещё?"
 
@@ -1737,6 +1806,15 @@ msgstr "Вернуть ключи групп на их ведущие серве
 msgid "Move the keys of the groups to the relay address"
 msgstr "Перенести ключи групп на адрес ретранслятора"
 
+msgid "Move the panel: cancel"
+msgstr "Перенос панели: отмена"
+
+msgid "Move the panel: hand over to the new machine"
+msgstr "Перенос панели: передача новой машине"
+
+msgid "Move the panel: prepare the new machine"
+msgstr "Перенос панели: подготовка новой машины"
+
 msgid "Move the server into the subnet of the group"
 msgstr "Перенести сервер в подсеть группы"
 
@@ -1745,6 +1823,9 @@ msgstr "Перевести сервер на AmneziaWG 3.1? Контейнер �
 
 msgid "Move to AmneziaWG 3.1"
 msgstr "Перевести на AmneziaWG 3.1"
+
+msgid "Moves the panel with all its data to another machine. The panel installs itself there, restores its archive and checks the copy. You only point the domain to the new machine."
+msgstr "Переносит панель со всеми данными на другую машину. Панель сама ставится туда, восстанавливает свой архив и проверяет копию. Вам остаётся только направить домен на новую машину."
 
 msgid "My access"
 msgstr "Мой доступ"
@@ -1784,6 +1865,12 @@ msgstr "Новая группа"
 
 msgid "New link"
 msgstr "Новая ссылка"
+
+msgid "New machine"
+msgstr "Новая машина"
+
+msgid "New move"
+msgstr "Новый перенос"
 
 msgid "New password"
 msgstr "Новый пароль"
@@ -1874,6 +1961,9 @@ msgstr "Операций пока нет."
 
 msgid "No orders found."
 msgstr "Заказов не найдено."
+
+msgid "No other operation runs; the panel accepts no changes."
+msgstr "Других операций нет; панель не принимает изменений."
 
 msgid "No other server of the group answers: only its keys are compared."
 msgstr "Другие серверы группы не отвечают: сравниваются только ключи."
@@ -2030,6 +2120,9 @@ msgstr "Его видит только персонал."
 msgid "Open"
 msgstr "Открыть"
 
+msgid "Open System → Panel move to see what can be done now."
+msgstr "Откройте «Система → Перенос панели», чтобы увидеть, что можно сделать."
+
 msgid "Open Telegram"
 msgstr "Открыть Telegram"
 
@@ -2072,6 +2165,9 @@ msgstr "Откройте ссылку, войдя в аккаунт. До тех
 msgid "Open the panel, choose a server and your device. You get a vpn:// link and a QR code."
 msgstr "Откройте панель, выберите сервер и устройство. Вы получите ссылку vpn:// и QR-код."
 
+msgid "Open the relay of the server and update it, then start the move again."
+msgstr "Откройте ретранслятор сервера и обновите его, затем начните перенос снова."
+
 msgid "Open the retry"
 msgstr "Открыть повтор"
 
@@ -2095,6 +2191,9 @@ msgstr "Или отсканируйте QR-код"
 
 msgid "Orders"
 msgstr "Заказы"
+
+msgid "Other operations run on the panel."
+msgstr "В панели идут другие операции."
 
 msgid "Other sessions are signed out when the password changes."
 msgstr "При смене пароля остальные сеансы завершаются."
@@ -2135,6 +2234,9 @@ msgstr "Панель"
 
 msgid "Panel archive"
 msgstr "Архив панели"
+
+msgid "Panel move"
+msgstr "Перенос панели"
 
 msgid "Password"
 msgstr "Пароль"
@@ -2198,6 +2300,14 @@ msgstr "Тариф пользователя"
 msgid "Plans"
 msgstr "Тарифы"
 
+#, python-format
+msgid "Point the panel domain to %(host)s."
+msgstr "Направьте домен панели на %(host)s."
+
+#, python-format
+msgid "Point the panel domain to %(host)s. Until then users reach this read-only copy. When the domain points to the new machine, stop this copy with docker compose down."
+msgstr "Направьте домен панели на %(host)s. До тех пор пользователи попадают в эту копию только для чтения. Когда домен будет указывать на новую машину, остановите эту копию командой docker compose down."
+
 msgid "Port"
 msgstr "Порт"
 
@@ -2206,6 +2316,9 @@ msgstr "Макет портала"
 
 msgid "Ports 80 and 443 belong to the panel's web server (HTTPS and HTTP/3) on its machine. Give the group another port."
 msgstr "Порты 80 и 443 занимает веб-сервер панели (HTTPS и HTTP/3) на её машине. Назначьте группе другой порт."
+
+msgid "Ports 80 and 443 of the new machine are taken, and there is no nginx on it."
+msgstr "Порты 80 и 443 на новой машине заняты, а nginx на ней нет."
 
 msgid "Prepare the list of members"
 msgstr "Подготовить список участников"
@@ -2367,8 +2480,14 @@ msgstr "Обновите страницу: его состояние уже из
 msgid "Remove"
 msgstr "Удалить"
 
+msgid "Remove it on the new machine by hand: cd /opt/lamnezia && docker compose down -v, then delete /opt/lamnezia and the nginx site lamnezia, if there is one."
+msgstr "Удалите её на новой машине вручную: cd /opt/lamnezia && docker compose down -v, затем удалите /opt/lamnezia и сайт nginx lamnezia, если он есть."
+
 msgid "Remove the container"
 msgstr "Удалить контейнер"
+
+msgid "Remove the copy from the new machine"
+msgstr "Удалить копию с новой машины"
 
 msgid "Remove the relay"
 msgstr "Удалить ретранслятор"
@@ -2472,6 +2591,9 @@ msgstr "Строк"
 msgid "Rows per page"
 msgstr "Строк на странице"
 
+msgid "Run it again when the move is over."
+msgstr "Запустите снова, когда перенос закончится."
+
 msgid "Run the operation again. If it repeats, report a bug."
 msgstr "Запустите операцию снова. Если повторится — сообщите об ошибке."
 
@@ -2496,6 +2618,9 @@ msgstr "Сохранить"
 
 msgid "Save a snapshot of the server files"
 msgstr "Сохранить снимок файлов сервера"
+
+msgid "Save the panel into an archive"
+msgstr "Сохранить панель в архив"
 
 msgid "Save the password"
 msgstr "Сохранить пароль"
@@ -2766,6 +2891,9 @@ msgstr "Запустить"
 msgid "Start again"
 msgstr "Запустить заново"
 
+msgid "Start the move"
+msgstr "Начать перенос"
+
 msgid "Start the relay container"
 msgstr "Запустить контейнер ретранслятора"
 
@@ -2847,6 +2975,10 @@ msgstr "Убрать вступающий сервер из группы"
 #
 msgid "Take out of the group"
 msgstr "Убрать из группы"
+
+#, python-format
+msgid "Taken: %(ports)s."
+msgstr "Заняты: %(ports)s."
 
 msgid "Telegram and Discord: the bots and your notifications."
 msgstr "Telegram и Discord: боты и ваши уведомления."
@@ -2953,6 +3085,24 @@ msgstr "Контейнер заменяется новым с тем же цен
 msgid "The container removes itself at %(date)s."
 msgstr "Контейнер удалится сам в %(date)s."
 
+msgid "The copy answers and accepts no changes yet."
+msgstr "Копия отвечает и пока не принимает изменений."
+
+msgid "The copy is removed."
+msgstr "Копия удалена."
+
+msgid "The copy on the new machine already accepts changes."
+msgstr "Копия на новой машине уже принимает изменения."
+
+msgid "The copy on the new machine could not be removed."
+msgstr "Не удалось удалить копию на новой машине."
+
+msgid "The copy on the new machine does not answer as expected."
+msgstr "Копия на новой машине отвечает не так, как ожидалось."
+
+msgid "The copy on the new machine is up and waits. Confirm to hand over: this panel becomes read-only and the copy starts accepting changes."
+msgstr "Копия на новой машине запущена и ждёт. Подтвердите передачу: эта панель станет только для чтения, а копия начнёт принимать изменения."
+
 msgid "The current link will stop working. Continue?"
 msgstr "Текущая ссылка перестанет работать. Продолжить?"
 
@@ -2965,6 +3115,9 @@ msgstr "Название устройства"
 #, python-format
 msgid "The files of %(server)s are read."
 msgstr "Файлы %(server)s прочитаны."
+
+msgid "The files of the panel did not reach the new machine intact."
+msgstr "Файлы панели дошли до новой машины повреждёнными."
 
 msgid "The form is out of date"
 msgstr "Форма устарела"
@@ -2999,6 +3152,9 @@ msgstr "Группы больше нет: делать нечего."
 
 msgid "The group still has other servers."
 msgstr "В группе ещё есть другие серверы."
+
+msgid "The installer failed on the new machine."
+msgstr "Установщик на новой машине завершился с ошибкой."
 
 msgid "The invite is deleted."
 msgstr "Инвайт удалён."
@@ -3070,6 +3226,9 @@ msgstr "Ссылка неверна или страницу удалили."
 msgid "The link works once and not for long."
 msgstr "Ссылка работает один раз и недолго."
 
+msgid "The log of the step shows the reason. Fix it and start the move again."
+msgstr "Причина — в журнале шага. Устраните её и начните перенос снова."
+
 msgid "The moderator has as many users as allowed."
 msgstr "У модератора уже столько пользователей, сколько разрешено."
 
@@ -3079,8 +3238,23 @@ msgstr "Модератор, который обслуживает пользов
 msgid "The monitor did not find the probe running. Users are not warned about this server until it runs again: reinstall it."
 msgstr "Монитор не нашёл запущенный пробник. Пока он не заработает снова, пользователей не предупреждают о недоступности этого сервера: установите его заново."
 
+msgid "The move installs the panel only on a machine without one. Remove /opt/lamnezia and /etc/nginx/sites-available/lamnezia there, or choose another machine."
+msgstr "Перенос ставит панель только на машину без неё. Удалите там /opt/lamnezia и /etc/nginx/sites-available/lamnezia или выберите другую машину."
+
+msgid "The move is not in the state this step needs."
+msgstr "Перенос не в том состоянии, которое нужно для этого шага."
+
 msgid "The new email gets a link; the email changes when you open it."
 msgstr "На новую почту придёт ссылка; почта сменится, когда вы её откроете."
+
+msgid "The new machine already has a panel or its nginx site."
+msgstr "На новой машине уже есть панель или её сайт nginx."
+
+msgid "The new machine does not run Debian or Ubuntu."
+msgstr "На новой машине не Debian и не Ubuntu."
+
+msgid "The new machine has too little free disk space."
+msgstr "На новой машине мало свободного места на диске."
 
 msgid "The old key is revoked. The new one will be ready in a moment."
 msgstr "Старый ключ отозван. Новый будет готов через мгновение."
@@ -3093,6 +3267,9 @@ msgstr "Владельцы получат уведомление, что клю�
 
 msgid "The page was open too long or cookies are blocked. Reload the page and send the form again."
 msgstr "Страница была открыта слишком долго или заблокированы cookie. Обновите страницу и отправьте форму ещё раз."
+
+msgid "The panel accepts no changes until the move is confirmed or cancelled"
+msgstr "Панель не принимает изменений, пока перенос не подтверждён или не отменён"
 
 msgid "The panel cannot be reached. Check the internet connection and try again."
 msgstr "Панель недоступна. Проверьте подключение к интернету и попробуйте ещё раз."
@@ -3121,6 +3298,21 @@ msgstr "Панель не смогла прочитать там счётчик�
 msgid "The panel has no backup of this protocol yet. It copies the container files before removing it; if the copy fails, the keys cannot work again, even if the protocol is installed anew."
 msgstr "В панели пока нет бэкапа этого протокола. Перед удалением она скопирует файлы контейнера; если копия не получится, ключи больше не заработают, даже если установить протокол заново."
 
+msgid "The panel installer supports Debian and Ubuntu only. Choose another machine."
+msgstr "Установщик панели поддерживает только Debian и Ubuntu. Выберите другую машину."
+
+msgid "The panel is moving"
+msgstr "Панель переезжает"
+
+msgid "The panel is moving to another machine and accepts no changes."
+msgstr "Панель переезжает на другую машину и не принимает изменений."
+
+msgid "The panel is moving to another machine and accepts no changes. Try again when the move is over."
+msgstr "Панель переезжает на другую машину и не принимает изменений. Повторите, когда перенос закончится."
+
+msgid "The panel is moving to another machine: changes are paused."
+msgstr "Панель переезжает на другую машину: изменения приостановлены."
+
 msgid "The panel is reading the key's settings from the server. Refresh the page in a few seconds to show the key."
 msgstr "Панель читает настройки ключа с сервера. Обновите страницу через несколько секунд, чтобы показать ключ."
 
@@ -3130,6 +3322,17 @@ msgstr "Панель хранит %(keep)s последних архива. Ск
 
 msgid "The panel keeps the server keys and a copy of the protocol files. If the VPS is lost, change the address and login of this server to a new VPS and restore: clients keep their keys and need nothing new while the server address stays the same."
 msgstr "Панель хранит ключи сервера и копию файлов протокола. Если VPS потерян, укажите у этого сервера адрес и логин нового VPS и восстановите: клиенты сохранят свои ключи, и им ничего не нужно менять, пока адрес сервера прежний."
+
+#, python-format
+msgid "The panel moved to %(host)s. This copy is read-only and accepts no changes."
+msgstr "Панель переехала на %(host)s. Эта копия только для чтения и не принимает изменений."
+
+#, python-format
+msgid "The panel moved to %(host)s. This copy is read-only."
+msgstr "Панель переехала на %(host)s. Эта копия только для чтения."
+
+msgid "The panel needs these ports for its web server. Free them, or install nginx on the machine: then the panel adds a site to it."
+msgstr "Эти порты нужны веб-серверу панели. Освободите их или установите на машину nginx: тогда панель добавит в него свой сайт."
 
 msgid "The panel prepares the server and installs the container the same way the Amnezia app does, so the app keeps working with it."
 msgstr "Панель готовит сервер и устанавливает контейнер так же, как приложение Amnezia, поэтому приложение продолжает с ним работать."
@@ -3192,6 +3395,9 @@ msgstr "Контейнер ретранслятора запущен."
 msgid "The relay container is still on the server."
 msgstr "Контейнер ретранслятора всё ещё на сервере."
 
+msgid "The relay container stopped; it is started again."
+msgstr "Контейнер ретранслятора остановился; он запускается снова."
+
 msgid "The relay did not answer the switch request."
 msgstr "Ретранслятор не ответил на запрос переключения."
 
@@ -3204,11 +3410,17 @@ msgstr "Ретранслятор не отправляет клиентов на
 msgid "The relay forwards to an IPv4 address: check the DNS name of the server."
 msgstr "Ретранслятор пересылает на IPv4-адрес: проверьте DNS-имя сервера."
 
+msgid "The relay on the new machine does not run with its ports after the install."
+msgstr "После установки ретранслятор на новой машине не работает со своими портами."
+
 msgid "The relay or the member is gone: nothing to do."
 msgstr "Ретранслятора или участника больше нет: делать нечего."
 
 msgid "The relay publishes the port of the group, which every member listens on, so they cannot share a machine. Pick a relay on another server for the group, or let the member on this server leave the group."
 msgstr "Ретранслятор публикует порт группы, а его же слушает каждый участник, поэтому на одной машине они не уживутся. Выберите для группы ретранслятор на другом сервере или выведите участника на этом сервере из группы."
+
+msgid "The relay runs with its ports."
+msgstr "Ретранслятор работает со своими портами."
 
 msgid "The relay sends the clients of the group to this server now."
 msgstr "Сейчас ретранслятор отправляет клиентов группы на этот сервер."
@@ -3656,6 +3868,9 @@ msgstr "Дождаться ответа ретранслятора"
 msgid "Wait for the catch-up or let the server leave and join again, then try again."
 msgstr "Дождитесь догона или выведите сервер из группы и введите снова, затем повторите."
 
+msgid "Wait for the changes already under way"
+msgstr "Дождаться уже начатых изменений"
+
 msgid "Wait until that operation finishes."
 msgstr "Дождитесь окончания этой операции."
 
@@ -3664,6 +3879,9 @@ msgstr "Дождитесь окончания операций с ключами
 
 msgid "Wait until the server joins or catches up with the group, then try again."
 msgstr "Дождитесь, пока сервер вступит в группу или догонит её, и попробуйте снова."
+
+msgid "Wait until they end (Operations), then start the move again."
+msgstr "Дождитесь их окончания (раздел «Операции»), затем начните перенос снова."
 
 msgid "Waiting"
 msgstr "Ждёт ответа"
@@ -3845,6 +4063,9 @@ msgstr "активен"
 msgid "address"
 msgstr "адрес"
 
+msgid "address of the new machine"
+msgstr "адрес новой машины"
+
 msgid "an FAQ article"
 msgstr "статья FAQ"
 
@@ -3875,6 +4096,9 @@ msgstr "байт в секунду к клиентам"
 msgid "can be installed"
 msgstr "можно установить"
 
+msgid "cancelled"
+msgstr "отменён"
+
 msgid "check error"
 msgstr "ошибка проверки"
 
@@ -3891,6 +4115,9 @@ msgstr "закрыт %(at)s"
 
 msgid "comment"
 msgstr "комментарий"
+
+msgid "confirmation started"
+msgstr "подтверждение начато"
 
 msgid "container removed"
 msgstr "контейнер удалён"
@@ -3924,6 +4151,9 @@ msgstr "сегодня"
 
 msgid "expires soon"
 msgstr "скоро истекает"
+
+msgid "failed"
+msgstr "с ошибкой"
 
 msgid "failures before a switch"
 msgstr "неудач до переключения"
@@ -4073,6 +4303,12 @@ msgstr "указать меня автором"
 msgid "new"
 msgstr "новый"
 
+msgid "new machine"
+msgstr "новая машина"
+
+msgid "nginx is installed: the panel adds a site to it."
+msgstr "nginx установлен: панель добавит в него свой сайт."
+
 msgid "no data"
 msgstr "нет данных"
 
@@ -4163,6 +4399,9 @@ msgstr "онлайн"
 msgid "open"
 msgstr "открыт"
 
+msgid "operation"
+msgstr "операция"
+
 msgid "optional"
 msgstr "необязательно"
 
@@ -4175,6 +4414,12 @@ msgid_plural "overdue by %(days)s days"
 msgstr[0] "просрочено на %(days)s день"
 msgstr[1] "просрочено на %(days)s дня"
 msgstr[2] "просрочено на %(days)s дней"
+
+msgid "panel move"
+msgstr "перенос панели"
+
+msgid "panel moves"
+msgstr "переносы панели"
 
 msgid "part of an incident"
 msgstr "входит в инцидент"
@@ -4207,6 +4452,9 @@ msgstr[2] "порт %(port)s, %(clients)s клиентов"
 
 msgid "position"
 msgstr "порядок"
+
+msgid "preparing the new machine"
+msgstr "подготовка новой машины"
 
 msgid "priority"
 msgstr "приоритет"
@@ -4340,6 +4588,12 @@ msgstr "с %(date)s"
 msgid "source"
 msgstr "источник"
 
+msgid "started at"
+msgstr "начат"
+
+msgid "started by"
+msgstr "кто начал"
+
 msgid "state"
 msgstr "состояние"
 
@@ -4380,8 +4634,17 @@ msgstr "текст (английский)"
 msgid "text (Russian)"
 msgstr "текст (русский)"
 
+msgid "the copy on the new machine is ready"
+msgstr "копия на новой машине готова"
+
 msgid "the name of a member does not resolve"
 msgstr "имя сервера участника не резолвится"
+
+msgid "the panel moved away from here"
+msgstr "панель переехала отсюда"
+
+msgid "the panel moved here"
+msgstr "панель переехала сюда"
 
 msgid "this one"
 msgstr "этот"

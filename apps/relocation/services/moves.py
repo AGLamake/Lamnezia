@@ -1,0 +1,68 @@
+"""Starting, confirming and cancelling a panel move from the panel: checks, operations, journal."""
+
+from django.db import transaction
+
+from apps.accounts.models import User
+from apps.audit.services import journal as audit
+from apps.core.models import SiteSettings
+from apps.operations.models import Operation, OperationStatus
+from apps.operations.services.launcher import launch
+from apps.relocation.errors import MoveError, MoveErrorCode
+from apps.relocation.models import PanelMove
+from apps.relocation.services.freeze import frozen_move
+from apps.servers.models import Server
+
+PREPARE_KIND = "relocation.prepare"
+CONFIRM_KIND = "relocation.confirm"
+CANCEL_KIND = "relocation.cancel"
+MOVE_PARAM = "move_id"
+_ACTIVE = (OperationStatus.PENDING, OperationStatus.RUNNING)
+
+
+def start_move(target: Server, user: User, ip: str | None) -> PanelMove:
+    """Freeze the panel and queue the preparation of the copy on `target`."""
+    with transaction.atomic():
+        # The settings row is the panel-wide lock: two admins never start two moves.
+        SiteSettings.load()
+        SiteSettings.objects.select_for_update().get(pk=1)
+        if frozen_move() is not None:
+            raise MoveError(MoveErrorCode.WRONG_STATE)
+        if Operation.objects.filter(status__in=_ACTIVE).exists():
+            raise MoveError(MoveErrorCode.BUSY)
+        move = PanelMove.objects.create(target=target, target_host=target.host, created_by=user)
+        _launch(move, PREPARE_KIND, user)
+        audit.log(PREPARE_KIND, actor=user, target=target, data={"host": target.host}, ip=ip)
+    return move
+
+
+def confirm_move(move_id: int, user: User, ip: str | None) -> PanelMove:
+    """Queue the hand-over to the copy; after it this panel stays read-only."""
+    with transaction.atomic():
+        move = _locked(move_id)
+        if not move.can_confirm:
+            raise MoveError(MoveErrorCode.WRONG_STATE, move.state)
+        move.confirm_started = True
+        _launch(move, CONFIRM_KIND, user)
+        audit.log(CONFIRM_KIND, actor=user, target=move.target, ip=ip)
+    return move
+
+
+def cancel_move(move_id: int, user: User, ip: str | None) -> PanelMove:
+    """Queue the removal of the copy; this panel accepts changes again."""
+    with transaction.atomic():
+        move = _locked(move_id)
+        if not move.can_cancel:
+            raise MoveError(MoveErrorCode.WRONG_STATE, move.state)
+        _launch(move, CANCEL_KIND, user)
+        audit.log(CANCEL_KIND, actor=user, target=move.target, ip=ip)
+    return move
+
+
+def _locked(move_id: int) -> PanelMove:
+    moves = PanelMove.objects.select_for_update(of=("self",)).select_related("operation")
+    return moves.get(pk=move_id)
+
+
+def _launch(move: PanelMove, kind: str, user: User) -> None:
+    move.operation = launch(kind, {MOVE_PARAM: move.pk}, user=user)
+    move.save(update_fields=["operation", "confirm_started", "updated_at"])

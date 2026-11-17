@@ -101,6 +101,9 @@ rsync -a root@panel.example.com:/opt/lamnezia/backups/ /srv/lamnezia-backups/
 
 ### From a panel archive
 
+To move a running panel to another machine, use [Panel move](Panel-move.md): it does the steps
+below by itself.
+
 On a new server (Debian or Ubuntu) where the panel was never installed, copy the archive and run
 the installer with `--restore`:
 

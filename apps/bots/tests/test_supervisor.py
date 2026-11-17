@@ -17,6 +17,7 @@ from apps.bots.services.control import BotControl
 from apps.bots.services.supervisor import Supervisor
 from apps.core.models import SiteSettings
 from apps.core.services.site_settings import cached_settings
+from apps.relocation.models import PanelMove
 
 # The service reads the database from a worker thread: it must see committed rows.
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.asyncio]
@@ -200,3 +201,13 @@ async def test_a_bot_reads_a_new_token_even_without_a_shared_cache(
     await SiteSettings.objects.filter(pk=1).aupdate(**{field: "456:new"})  # saved elsewhere
 
     assert await sync_to_async(adapter.token)() == "456:new"
+
+
+async def test_a_moving_panel_keeps_its_bots_stopped(
+    service: Supervisor, bot: type[ScriptedBot]
+) -> None:
+    await PanelMove.objects.acreate(target_host="203.0.113.9")
+
+    await tick(service)
+
+    assert bot.runs == []

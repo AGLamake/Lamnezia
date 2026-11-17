@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "apps.billing",
     "apps.groups",
     "apps.relays",
+    "apps.relocation",
     # Django apps that extend the panel, such as payment providers (docs/wiki Billing-plugins).
     *env.list("PLUGINS", default=[]),
 ]
@@ -89,6 +90,8 @@ MIDDLEWARE = [
     "apps.accounts.middleware.HtmxSignInMiddleware",
     "apps.accounts.middleware.TwoFactorMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # While the panel moves to another machine it answers changes with 503 (apps/relocation).
+    "apps.relocation.middleware.PanelFreezeMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Last, as django-axes requires: it turns a refused login into the lockout page.
     "axes.middleware.AxesMiddleware",
@@ -109,6 +112,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.site",
+                "apps.relocation.context_processors.panel_move",
             ],
         },
     },
@@ -265,6 +269,12 @@ PROTOCOL_BACKUP_INTERVAL = env.int("PROTOCOL_BACKUP_INTERVAL", default=3600)
 # Encrypted panel archives (database, .env, uploaded files); the newest PANEL_ARCHIVE_KEEP stay.
 PANEL_ARCHIVE_DIR = BASE_DIR / "archives"
 PANEL_ARCHIVE_KEEP = env.int("PANEL_ARCHIVE_KEEP", default=3)
+# Moving the panel to another machine (System -> Panel move): the installer may build the image.
+RELOCATION_INSTALL_TIMEOUT = 45 * 60
+# Free disk the new machine needs: images, the database and the uploaded files.
+RELOCATION_MIN_FREE_MB = 3 * 1024
+# Requests that passed before the freeze finish before the archive is taken.
+RELOCATION_SETTLE_SECONDS = 5
 # Seconds between server health readings; a server is offline after two intervals without an answer.
 MONITOR_INTERVAL = env.int("MONITOR_INTERVAL", default=60)
 # Days of server readings and relay load readings; readings older than MONITOR_DETAIL_DAYS keep
