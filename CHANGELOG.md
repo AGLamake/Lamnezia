@@ -203,6 +203,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Image built from tracked files only**: `.dockerignore` is a whitelist of what git tracks, so a
+  local build of a working copy no longer takes in its untracked files, notes or scripts; compiled
+  translations and caches in subfolders stay out too. The CI and release builds are unchanged.
 - **Tests in a random order on all cores**: pytest-randomly and pytest-xdist are development
   dependencies; `make test` and CI run `pytest -n auto`.
 - **WebSockets closed during a panel move**: while the panel is read-only, a new WebSocket is

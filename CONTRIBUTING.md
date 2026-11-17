@@ -25,6 +25,8 @@ Lamnezia is an independent project and is not affiliated with the Amnezia VPN te
 - User interface strings go through gettext (RU and EN). Write the source string in English, run
   `make messages` and add the Russian translation to the updated `django.po`; `make messages-check`
   (CI does the same) fails on untranslated strings. GNU gettext is required.
+- The image takes files by the whitelist in `.dockerignore`: a new top-level file or folder, or a
+  new script in `scripts/`, goes there too (a test checks it against `git ls-files`).
 - Before pushing, run `ruff check`, `ruff format --check`, `mypy` and `pytest`.
 
 ### Documentation
@@ -85,6 +87,8 @@ Lamnezia — независимый проект и официально не с
 - Строки интерфейса — через gettext (RU и EN). Исходная строка — на английском; выполните
   `make messages` и впишите русский перевод в обновлённый `django.po`. `make messages-check`
   (то же делает CI) падает на непереведённых строках. Нужен GNU gettext.
+- В образ файлы попадают по белому списку `.dockerignore`: новый файл или папку в корне и новый
+  скрипт в `scripts/` впишите и туда (тест сверяет его с `git ls-files`).
 - Перед push: `ruff check`, `ruff format --check`, `mypy`, `pytest`.
 
 ### Документация
