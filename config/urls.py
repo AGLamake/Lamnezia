@@ -4,7 +4,7 @@ from django.views.generic import RedirectView
 
 from apps.accounts.views import home, set_language
 from apps.core.views_pwa import ManifestView, OfflineView, ServiceWorkerView
-from apps.keys.views_subscription import SubscriptionFeedView
+from apps.portal.views_subscription import SubscriptionFeedView
 from apps.traffic.views import metrics
 from config.health import healthz
 
