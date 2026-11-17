@@ -30,17 +30,43 @@ To check a particular provider, compare a low and a high port on the same server
 port** is a button in the **Protocols and services** section of the server card and a link under
 the port field of the install and settings forms (administrators only).
 
-1. Enter up to four ports separated by commas. The form suggests one free port up to 9999 and one
-   above it. Ports taken by Amnezia containers or SSH are refused.
-2. Choose for how many minutes the test runs (30 by default, at most 180) and press **Start**.
-3. The panel builds a small `lamnezia-iperf3` image (Alpine with `iperf3`) on the server and starts
-   the `lamnezia-iperf` container. It listens on every port for TCP and UDP, runs without root and
-   without logs, and removes itself when the time is up. **Stop now** removes it at once.
-4. If the hosting provider has its own firewall, open these ports there for TCP and UDP.
+1. Choose **how to measure**: **In the browser** (the default) or **iperf3 on a device**.
+2. Enter up to four ports separated by commas. The form suggests one free port up to 9999 and one
+   above it. Ports taken by Amnezia containers are refused, and for iperf3 the SSH port too.
+3. Choose for how many minutes the test runs (30 by default, at most 180) and press **Start**.
+4. The panel builds a small image on the server and starts the `lamnezia-iperf` container. It runs
+   without root and without logs, and removes itself when the time is up. **Stop now** removes it
+   at once.
+5. If the hosting provider has its own firewall, open these ports there: UDP for the browser, TCP
+   and UDP for iperf3.
+
+### In the browser
+
+The container (the `lamnezia-webtransport` image, Python with `aioquic`) listens on the ports over
+UDP as a WebTransport server. That is HTTP/3, the same UDP an AmneziaWG client uses. It makes a
+temporary certificate itself, and the private key never leaves the container; the panel learns
+only the certificate fingerprint and passes it to the page. Strangers cannot connect: the address
+holds a random key only the test page knows.
+
+Open the test page on a device in the network you want to check (a phone over mobile data, a
+laptop connected to the phone), **with the VPN off**, and press **Measure**. For every port the page
+downloads for 8 seconds, then uploads for 8 seconds and shows the speed in Mbit/s. The result stays
+on the page; nothing is sent to the panel.
+
+- The browser needs WebTransport: Chrome or Edge 100+, Firefox 125+. In Safari and older browsers
+  the page suggests iperf3.
+- A server at an IPv6 address cannot be measured in the browser; choose iperf3.
+- "No answer" means the browser could not connect over UDP to this port: most likely UDP is
+  blocked there (or the hosting firewall keeps the port closed).
+- The test server is written in Python and gives about 100–200 Mbit/s on one core. That is enough
+  to compare ports; to push a fast channel to its limit use iperf3.
+
+### With iperf3
 
 On a device in the network you want to check (a phone over mobile data with Termux, a laptop
 connected to the phone), **with the VPN off**, install `iperf3` and run for every port the commands
-shown on the page:
+shown on the page (the container on the `lamnezia-iperf3` image listens on the ports for TCP and
+UDP):
 
 ```sh
 iperf3 -c vpn.example.com -p 5542 -u -b 200M -t 10 -R   # download over UDP
@@ -53,6 +79,8 @@ server is busy, wait for the previous run to end.
 
 ### Reading the results
 
+- In the browser compare the download and upload between the ports: if one port is much slower or
+  shows "no answer" instead of a speed, the provider throttles or blocks UDP on that port.
 - For UDP look at the receiver line at the end: the bitrate and **Lost/Total Datagrams**. A loss
   of a few percent at `-b 200M` is normal when the channel is slower than 200 Mbit/s; compare the
   ports with each other, not with zero.

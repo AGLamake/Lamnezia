@@ -146,8 +146,8 @@ msgstr "Сборка образа"
 msgid "Build the image with AmneziaWG 3.1"
 msgstr "Сборка образа с AmneziaWG 3.1"
 
-msgid "Build the iperf3 image"
-msgstr "Сборка образа iperf3"
+msgid "Build the speed test image"
+msgstr "Собрать образ замера скорости"
 
 #, python-format
 msgid "Certificates with names the panel cannot manage are skipped: %(count)d."
@@ -392,6 +392,9 @@ msgstr "H1-H4 должны различаться, а их диапазоны �
 msgid "Hash"
 msgstr "Хеш"
 
+msgid "How to measure"
+msgstr "Как замерять"
+
 msgid "I understand that every client must import the key again"
 msgstr "Я понимаю, что каждому клиенту нужно заново импортировать ключ"
 
@@ -414,6 +417,12 @@ msgstr "Выполните импорт с сервера и запустите 
 #, python-format
 msgid "Imported client %(number)d"
 msgstr "Импортированный клиент %(number)d"
+
+msgid "In the browser"
+msgstr "В браузере"
+
+msgid "In the browser: this page measures UDP to every port over WebTransport (Chrome, Edge, Firefox). iperf3: run the client on a device by hand."
+msgstr "В браузере: эта страница замеряет UDP до каждого порта через WebTransport (Chrome, Edge, Firefox). iperf3: клиент запускается на устройстве вручную."
 
 msgid "Install Docker"
 msgstr "Установка Docker"
@@ -675,9 +684,6 @@ msgstr "Удалить контейнер"
 msgid "Remove the container of the unfinished restore"
 msgstr "Удалить контейнер незавершённого восстановления"
 
-msgid "Remove the iperf3 container"
-msgstr "Удаление контейнера iperf3"
-
 msgid "Remove the old container"
 msgstr "Удаление старого контейнера"
 
@@ -686,6 +692,9 @@ msgstr "Удаление старого образа"
 
 msgid "Remove the service"
 msgstr "Удаление сервиса"
+
+msgid "Remove the speed test container"
+msgstr "Удалить контейнер замера скорости"
 
 msgid "Remove the workaround and turn TSO/GSO back on"
 msgstr "Удаление обхода и включение TSO/GSO"
@@ -814,9 +823,6 @@ msgstr "Запуск %(title)s"
 msgid "Start Docker"
 msgstr "Запуск Docker"
 
-msgid "Start iperf3"
-msgstr "Запуск iperf3"
-
 msgid "Start the container"
 msgstr "Запуск контейнера"
 
@@ -831,6 +837,9 @@ msgstr "Запуск нового контейнера"
 
 msgid "Start the port speed test"
 msgstr "Запуск замера скорости по портам"
+
+msgid "Start the speed test"
+msgstr "Запустить замер скорости"
 
 msgid "Stop the container"
 msgstr "Остановить контейнер"
@@ -911,6 +920,9 @@ msgstr "Порт VPN на сервере уже занят другой прог
 
 msgid "The account of the proxy is kept."
 msgstr "Учётная запись прокси сохранена."
+
+msgid "The browser cannot measure a server at an IPv6 address: use iperf3."
+msgstr "Браузер не может замерить сервер по IPv6-адресу: используйте iperf3."
 
 msgid "The certificate authority and the clients passed to the new container."
 msgstr "Центр сертификации и клиенты перенесены в новый контейнер."
@@ -1148,6 +1160,10 @@ msgstr "Ожидание других операций на сервере"
 msgid "Wait for the VPN interface"
 msgstr "Дождаться запуска VPN-интерфейса"
 
+#, python-format
+msgid "WebTransport listens on UDP ports %(ports)s for %(minutes)d minutes."
+msgstr "WebTransport слушает UDP-порты %(ports)s, минут: %(minutes)d."
+
 msgid "Website in Tor network"
 msgstr "Сайт в сети Tor"
 
@@ -1245,6 +1261,9 @@ msgstr "установлен панелью"
 #, python-format
 msgid "iperf3 listens on ports %(ports)s (TCP and UDP) for %(minutes)d minutes."
 msgstr "iperf3 слушает порты %(ports)s (TCP и UDP) %(minutes)d мин."
+
+msgid "iperf3 on a device"
+msgstr "iperf3 на устройстве"
 
 msgid "keep the container log"
 msgstr "вести лог контейнера"

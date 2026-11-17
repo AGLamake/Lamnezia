@@ -21,10 +21,12 @@ from apps.protocols.services.speed_test import (
     DEFAULT_MINUTES,
     MAX_MINUTES,
     MAX_PORTS,
+    SERVERS,
+    SpeedTestMode,
     SpeedTestPlan,
+    browser_reachable,
     default_ports,
 )
-from apps.protocols.services.speed_test import TRANSPORTS as SPEED_TEST_TRANSPORTS
 from apps.protocols.settings_forms import SettingsForm, port_field
 from apps.servers.models import Server
 
@@ -261,8 +263,18 @@ class AwgMigrationForm(forms.Form):
 
 
 class SpeedTestForm(forms.Form):
-    """The ports of the iperf3 speed test, each free on the server for TCP and UDP."""
+    """The ports and the kind of the speed test; each port free on the server for its transports."""
 
+    mode = forms.ChoiceField(
+        label=_("How to measure"),
+        choices=SpeedTestMode.choices,
+        initial=SpeedTestMode.BROWSER,
+        widget=forms.RadioSelect,
+        help_text=_(
+            "In the browser: this page measures UDP to every port over WebTransport "
+            "(Chrome, Edge, Firefox). iperf3: run the client on a device by hand."
+        ),
+    )
     ports = forms.CharField(
         label=_("Ports"),
         max_length=100,
@@ -281,6 +293,16 @@ class SpeedTestForm(forms.Form):
         self.server = server
         super().__init__(*args, **kwargs)
         self.fields["ports"].initial = ", ".join(map(str, default_ports(server)))
+        if not browser_reachable(server.host):
+            self.fields["mode"].initial = SpeedTestMode.IPERF3
+
+    def clean_mode(self) -> str:
+        mode: str = self.cleaned_data["mode"]
+        if mode == SpeedTestMode.BROWSER and not browser_reachable(self.server.host):
+            raise forms.ValidationError(
+                _("The browser cannot measure a server at an IPv6 address: use iperf3.")
+            )
+        return mode
 
     def clean_ports(self) -> tuple[int, ...]:
         parts = [part for part in self.cleaned_data["ports"].replace(" ", "").split(",") if part]
@@ -289,17 +311,24 @@ class SpeedTestForm(forms.Form):
         ports = tuple(dict.fromkeys(int(part) for part in parts))
         if not 1 <= len(ports) <= MAX_PORTS:
             raise forms.ValidationError(_("Enter from one to four ports."))
-        taken = used_ports(self.server) | {(self.server.port, "tcp")}
-        busy = [port for port in ports if any((port, t) in taken for t in SPEED_TEST_TRANSPORTS)]
-        if busy:
-            raise forms.ValidationError(
-                _("Already used on the server: %(ports)s.") % {"ports": ", ".join(map(str, busy))}
-            )
         return ports
+
+    def clean(self) -> dict[str, Any] | None:
+        cleaned = super().clean()
+        ports, mode = self.cleaned_data.get("ports"), self.cleaned_data.get("mode")
+        if ports and mode:
+            transports = SERVERS[mode].transports
+            taken = used_ports(self.server) | {(self.server.port, "tcp")}
+            busy = [port for port in ports if any((port, t) in taken for t in transports)]
+            if busy:
+                message = _("Already used on the server: %(ports)s.")
+                self.add_error("ports", message % {"ports": ", ".join(map(str, busy))})
+        return cleaned
 
     @property
     def plan(self) -> SpeedTestPlan:
-        return SpeedTestPlan(self.cleaned_data["ports"], self.cleaned_data["minutes"])
+        data = self.cleaned_data
+        return SpeedTestPlan.new(data["ports"], data["minutes"], data["mode"])
 
 
 def _param_field(name: str) -> forms.Field:

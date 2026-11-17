@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Telegram straight from the offer card**: **Link Telegram** on the card that offers to link a
   messenger opens the bot by its `t.me` link with a link code in a new tab, without the profile;
   the card waits for the confirmation in the bot and goes away once the account is linked.
+- **Speed test by port in the browser**: the speed test can now run right on its page. The
+  temporary container serves WebTransport (HTTP/3 over UDP) with its own short-lived certificate,
+  and the page, opened on a device in the network to check, measures download and upload to every
+  port with no `iperf3` on the device. Needs Chrome, Edge or Firefox and a server with an IPv4
+  address or a domain; *iperf3 on a device* stays as the other way to measure.
 - **Messenger offer in letters**: the letters about the end of access and the limit tell a user
   without linked messengers that notifications can come to Telegram or Discord, with a link to the
   profile, when the administrator has set up a bot.

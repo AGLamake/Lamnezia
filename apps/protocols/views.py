@@ -72,6 +72,7 @@ from apps.protocols.services.settings_info import SettingsInfo
 from apps.protocols.services.speed_test import RunningTest
 from apps.protocols.settings_forms import OpenVpnSettingsForm, SettingsForm, XraySettingsForm
 from apps.servers.models import Server
+from config.security import policy_allowing
 
 # The settings form of each container that has a settings page.
 SETTINGS_FORMS: dict[str, type[SettingsForm]] = {
@@ -150,7 +151,11 @@ class OffloadView(AdminRequiredMixin, View):
 
 
 class SpeedTestView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
-    """The iperf3 speed test by port: the running test with client commands, or a new one."""
+    """The speed test by port: the running test (measured here or with iperf3), or a new one.
+
+    A browser test lets this page's scripts reach exactly its ports (CSP `connect-src`); the
+    page holds the session's secret path, so it is never cached.
+    """
 
     template_name = "protocols/speed_test.html"
     form_class = SpeedTestForm
@@ -162,9 +167,20 @@ class SpeedTestView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
     def get_form_kwargs(self) -> dict[str, Any]:
         return {**super().get_form_kwargs(), "server": self.server}
 
+    @cached_property
+    def running(self) -> RunningTest | None:
+        return RunningTest.of(self.server, timezone.now())
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        running = RunningTest.of(self.server, timezone.now())
-        return super().get_context_data(server=self.server, running=running, **kwargs)
+        return super().get_context_data(server=self.server, running=self.running, **kwargs)
+
+    def render_to_response(self, context: dict[str, Any], **kwargs: Any) -> HttpResponse:
+        response = super().render_to_response(context, **kwargs)
+        if self.running and (targets := self.running.targets):
+            origins = [target.origin for target in targets]
+            response.headers["Content-Security-Policy"] = policy_allowing(origins)
+            add_never_cache_headers(response)
+        return response
 
     def form_valid(self, form: SpeedTestForm) -> HttpResponse:
         operation = speed_test.start(self.server, form.plan, self.member, ip=self.client_ip)

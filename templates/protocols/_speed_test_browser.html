@@ -1,0 +1,33 @@
+{% load i18n static %}{# The ports of a running browser speed test, measured by static/js/speed-test.js. #}
+{% if running.targets %}
+  <div data-speed-test data-hash="{{ running.certificate_hash }}"
+       data-text-measuring="{% translate 'measuring…' %}"
+       data-text-blocked="{% translate 'no answer: UDP to this port may be blocked' %}"
+       data-text-failed="{% translate 'interrupted' %}"
+       data-text-unit="{% translate 'Mbit/s' %}" class="space-y-3">
+    <p class="help-text">{% translate "Open this page on a device in the network of the provider, without the VPN, and press Measure: for every port the page downloads and then uploads for 8 seconds over UDP. Nothing is sent to the panel." %}</p>
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead><tr><th>{% translate "Port" %}</th><th>{% translate "Download speed" %}</th><th>{% translate "Upload speed" %}</th></tr></thead>
+        <tbody>
+          {% for target in running.targets %}
+            <tr data-speed-url="{{ target.url }}">
+              <td data-label="{% translate 'Port' %}">{{ target.port }}</td>
+              <td data-label="{% translate 'Download speed' %}" data-download></td>
+              <td data-label="{% translate 'Upload speed' %}" data-upload></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div data-speed-unsupported hidden>
+      {% translate "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox, or start the test again with iperf3." as text %}
+      {% include "components/alert.html" with level="warning" text=text %}
+    </div>
+    <button type="button" class="btn btn-primary" data-speed-run>{% translate "Measure" %}</button>
+  </div>
+  <script src="{% static 'js/speed-test.js' %}" defer></script>
+{% else %}
+  {% translate "The server has not reported its certificate: start the test again." as text %}
+  {% include "components/alert.html" with level="warning" text=text %}
+{% endif %}

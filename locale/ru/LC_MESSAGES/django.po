@@ -1053,6 +1053,9 @@ msgstr "Готово"
 msgid "Download"
 msgstr "Скачать"
 
+msgid "Download speed"
+msgstr "Загрузка"
+
 msgid "Downloaded"
 msgstr "Скачано"
 
@@ -1413,6 +1416,9 @@ msgstr "В <a href=\"%(profile)s\">профиле</a> можно привяза�
 
 msgid "In the app press «Add» («Let's get started» on the first launch), paste the vpn:// link or scan the QR code, and connect."
 msgstr "В приложении нажмите «Добавить» («Приступим» при первом запуске), вставьте ссылку vpn:// или отсканируйте QR-код и подключитесь."
+
+msgid "In the browser the ports are opened for UDP, for iperf3 for TCP and UDP. Open them in the firewall of the hosting provider if it has one."
+msgstr "В браузере порты открываются для UDP, для iperf3 — для TCP и UDP. Если у хостинга есть свой файрвол, откройте их и в нём."
 
 msgid "In the plan"
 msgstr "В тарифе"
@@ -1803,6 +1809,12 @@ msgstr "Сделать сервер ведущим"
 
 msgid "Markdown."
 msgstr "Markdown."
+
+msgid "Mbit/s"
+msgstr "Мбит/с"
+
+msgid "Measure"
+msgstr "Замерить"
 
 #, python-format
 msgid "Members written %(when)s."
@@ -2212,6 +2224,9 @@ msgstr "Открыть повтор"
 
 msgid "Open the server"
 msgstr "Открыть сервер"
+
+msgid "Open this page on a device in the network of the provider, without the VPN, and press Measure: for every port the page downloads and then uploads for 8 seconds over UDP. Nothing is sent to the panel."
+msgstr "Откройте эту страницу на устройстве в сети провайдера, без VPN, и нажмите «Замерить»: для каждого порта страница 8 секунд скачивает, затем 8 секунд отдаёт данные по UDP. В панель ничего не отправляется."
 
 msgid "Opened at"
 msgstr "Открыто"
@@ -2910,8 +2925,8 @@ msgstr "Часть ваших ключей на серверах, трафик �
 msgid "Some providers block or throttle UDP on ports above 9999, so the panel suggests a port up to 10000."
 msgstr "Часть провайдеров блокирует или режет UDP на портах выше 9999, поэтому панель предлагает порт до 10000."
 
-msgid "Some providers block or throttle UDP on ports above 9999. The panel starts a temporary iperf3 server on several ports; run the iperf3 client on a device in the network of that provider, without the VPN, and compare the ports."
-msgstr "Часть провайдеров блокирует или режет UDP на портах выше 9999. Панель запускает временный сервер iperf3 на нескольких портах; запустите клиент iperf3 на устройстве в сети этого провайдера, без VPN, и сравните порты."
+msgid "Some providers block or throttle UDP on ports above 9999. The panel starts a temporary server on several ports; measure them from a device in the network of that provider, without the VPN, and compare the ports: right on this page or with the iperf3 client."
+msgstr "Некоторые провайдеры блокируют или режут UDP на портах выше 9999. Панель запускает временный сервер на нескольких портах; замерьте их с устройства в сети этого провайдера, без VPN, и сравните порты: прямо на этой странице или клиентом iperf3."
 
 #, python-format
 msgid "Someone asked to reset the password of account %(username)s on %(domain)s."
@@ -3465,9 +3480,6 @@ msgstr "Порт группы занят AmneziaWG на сервере ретр�
 msgid "The port of the group is taken on the server."
 msgstr "Порт группы на сервере занят."
 
-msgid "The ports are opened for TCP and UDP. Open them in the firewall of the hosting provider if it has one."
-msgstr "Порты открываются для TCP и UDP. Если у хостинга есть свой файрвол, откройте их и там."
-
 msgid "The ports of the groups are published on the server as UDP; a port another program uses is refused before the installation. Ports 80 and 443 belong to the panel."
 msgstr "Порты групп публикуются на сервере как UDP; порт, занятый другой программой, отклоняется до установки. Порты 80 и 443 принадлежат панели."
 
@@ -3588,6 +3600,9 @@ msgstr "У сервера нет клиентов: снимок не нужен.
 msgid "The server has not answered yet."
 msgstr "Сервер ещё ни разу не ответил."
 
+msgid "The server has not reported its certificate: start the test again."
+msgstr "Сервер не сообщил свой сертификат: запустите замер заново."
+
 msgid "The server has older files of the group: they are replaced."
 msgstr "На сервере старые файлы группы: они заменяются."
 
@@ -3684,6 +3699,9 @@ msgstr "Тема"
 
 msgid "This account is already linked to another user of the panel."
 msgstr "Этот аккаунт уже привязан к другому пользователю панели."
+
+msgid "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox, or start the test again with iperf3."
+msgstr "В этом браузере нет WebTransport. Откройте страницу в Chrome, Edge или Firefox либо запустите замер заново через iperf3."
 
 #, python-format
 msgid "This copy asked its host to stop at %(at)s. The host stops it within a minute; if it keeps running, stop it with docker compose down."
@@ -3894,6 +3912,9 @@ msgstr "Обновить агент ретранслятора"
 
 msgid "Update the relay on the server card, then switch again."
 msgstr "Обновите ретранслятор в карточке сервера и переключите ещё раз."
+
+msgid "Upload speed"
+msgstr "Отдача"
 
 msgid "Upload speed through the VPN (TSO/GSO)"
 msgstr "Скорость отдачи через VPN (TSO/GSO)"
@@ -4324,6 +4345,9 @@ msgstr "установлен"
 msgid "internal note"
 msgstr "внутренняя заметка"
 
+msgid "interrupted"
+msgstr "прервано"
+
 msgid "invite"
 msgstr "инвайт"
 
@@ -4399,6 +4423,9 @@ msgstr "привязан"
 msgid "maintenance"
 msgstr "обслуживание"
 
+msgid "measuring…"
+msgstr "замер…"
+
 msgid "member"
 msgstr "участник"
 
@@ -4431,6 +4458,9 @@ msgstr "новая машина"
 
 msgid "nginx is installed: the panel adds a site to it."
 msgstr "nginx установлен: панель добавит в него свой сайт."
+
+msgid "no answer: UDP to this port may be blocked"
+msgstr "нет ответа: UDP на этот порт, возможно, заблокирован"
 
 msgid "no data"
 msgstr "нет данных"

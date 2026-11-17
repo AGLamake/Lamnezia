@@ -26,6 +26,11 @@ class OperationContext:
     def params(self) -> dict[str, Any]:
         return dict(self._operation.params)
 
+    def remember(self, name: str, value: Any) -> None:
+        """Keep a parameter the operation learnt, e.g. for the page that shows its result."""
+        self._operation.params[name] = value
+        self._operation.save(update_fields=["params"])
+
     def forget(self, name: str) -> None:
         """Remove a parameter for good, e.g. a secret the operation needs only once."""
         self._operation.params.pop(name, None)

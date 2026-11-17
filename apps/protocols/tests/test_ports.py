@@ -1,6 +1,8 @@
 """Ports of new containers: the free low port of AmneziaWG and the iperf3 speed test by port."""
 
+import io
 import shlex
+import tarfile
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -26,7 +28,13 @@ from apps.protocols.services.awg_installer import (
 from apps.protocols.services.installation import used_ports
 from apps.protocols.services.openvpn_installer import OpenVpnInstaller
 from apps.protocols.services.ports import LOW_PORTS, free_ports, is_high, ports_page_url
-from apps.protocols.services.speed_test import RunningTest, SpeedTestPlan
+from apps.protocols.services.speed_test import (
+    RunningTest,
+    SpeedTestMode,
+    SpeedTestPlan,
+    WebTransportServer,
+    browser_reachable,
+)
 from apps.protocols.services.xray_installer import XrayInstaller
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
@@ -111,11 +119,15 @@ def test_speed_test_container_is_unprivileged_and_temporary() -> None:
     assert arguments[-3:] == ["300", "5542", "55424"]
 
 
+HASH = "ab" * 32
+
+
 @dataclass
 class FakeDockerHost(CommandRunner):
     """Answers the docker commands of the speed test; `run_error` makes `docker run` fail."""
 
     run_error: bytes = b""
+    certificate_hash: bytes = HASH.encode() + b"\n"
     commands: list[str] = field(default_factory=list)
     dockerfile: bytes = b""
     locks: int = 0
@@ -134,6 +146,8 @@ class FakeDockerHost(CommandRunner):
             self.dockerfile = stdin
         if script.startswith("docker run") and self.run_error:
             return result(125, stderr=self.run_error)
+        if "docker exec" in script:
+            return result(0 if self.certificate_hash else 1, stdout=self.certificate_hash)
         return result()
 
     def start(self, command: str) -> RemoteProcess:
@@ -170,11 +184,16 @@ def test_speed_test_starts_iperf3_and_shows_the_client_commands(
     url = f"/protocols/speed-test/{server.pk}/"
 
     with django_capture_on_commit_callbacks(execute=True):
-        admin_client.post(url, {"ports": "5542, 55424", "minutes": "10"})
+        admin_client.post(url, {"mode": "iperf3", "ports": "5542, 55424", "minutes": "10"})
 
     operation = Operation.objects.get()
     assert operation.status == OperationStatus.SUCCEEDED
-    assert operation.params == {"server_id": server.pk, "ports": [5542, 55424], "minutes": 10}
+    assert operation.params == {
+        "server_id": server.pk,
+        "ports": [5542, 55424],
+        "minutes": 10,
+        "mode": "iperf3",
+    }
     assert b"iperf3" in docker.dockerfile
     assert docker.commands[-1].startswith("docker run")
     assert docker.locks == 1
@@ -190,7 +209,10 @@ def test_speed_test_stop_removes_the_container(
     server = ServerFactory()
 
     with django_capture_on_commit_callbacks(execute=True):
-        admin_client.post(f"/protocols/speed-test/{server.pk}/", {"ports": "5542", "minutes": "5"})
+        admin_client.post(
+            f"/protocols/speed-test/{server.pk}/",
+            {"mode": "iperf3", "ports": "5542", "minutes": "5"},
+        )
         admin_client.post(f"/protocols/speed-test/{server.pk}/stop/")
 
     assert docker.commands[-1] == f"docker rm -f {speed_test.CONTAINER}"
@@ -246,7 +268,7 @@ def test_speed_test_refuses_bad_or_taken_ports(
     )
 
     response = admin_client.post(
-        f"/protocols/speed-test/{server.pk}/", {"ports": ports, "minutes": "10"}
+        f"/protocols/speed-test/{server.pk}/", {"mode": "iperf3", "ports": ports, "minutes": "10"}
     )
 
     assert error in response.content.decode()
@@ -260,3 +282,115 @@ def test_speed_test_is_for_admins_only(client: Client) -> None:
 
     assert client.get(f"/protocols/speed-test/{server.pk}/").status_code == 403
     assert client.post(f"/protocols/speed-test/{server.pk}/stop/").status_code == 403
+
+
+def test_browser_test_opens_only_udp_and_passes_its_token() -> None:
+    plan = SpeedTestPlan.new((5542, 55424), 5, SpeedTestMode.BROWSER)
+
+    arguments = plan.run_arguments()
+
+    published = [arguments[i + 1] for i, value in enumerate(arguments) if value == "-p"]
+    assert published == ["5542:5542/udp", "55424:55424/udp"]
+    assert arguments[-5:] == [WebTransportServer.image, "300", plan.token, "5542", "55424"]
+    assert len(plan.token) >= 20
+    assert plan.token not in repr(plan)
+
+
+def test_iperf3_plan_has_no_token_and_old_params_mean_iperf3() -> None:
+    assert SpeedTestPlan.new((5542,), 5, SpeedTestMode.IPERF3).token == ""
+    assert not SpeedTestPlan.from_params({"ports": [5542], "minutes": 5}).in_browser
+
+
+def test_browser_image_context_holds_the_server() -> None:
+    with tarfile.open(fileobj=io.BytesIO(WebTransportServer().context())) as tar:
+        names = tar.getnames()
+        dockerfile = tar.extractfile("Dockerfile")
+        assert dockerfile
+        assert b"aioquic==" in dockerfile.read()
+    assert names == ["Dockerfile", "server.py"]
+
+
+@pytest.mark.django_db
+def test_browser_test_lets_the_page_measure_its_ports(
+    admin_client: Client, docker: FakeDockerHost, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    server = ServerFactory(host="203.0.113.5")
+    url = f"/protocols/speed-test/{server.pk}/"
+
+    with django_capture_on_commit_callbacks(execute=True):
+        admin_client.post(url, {"mode": "browser", "ports": "5542, 55424", "minutes": "10"})
+
+    operation = Operation.objects.get()
+    assert operation.status == OperationStatus.SUCCEEDED
+    assert operation.params[speed_test.CERTIFICATE_HASH] == HASH
+    token = operation.params["token"]
+    assert token not in str(AuditEvent.objects.get(action=speed_test.START_KIND).data)
+    page = admin_client.get(url)
+    html = page.content.decode()
+    assert f'data-hash="{HASH}"' in html
+    assert f"https://203.0.113.5:55424/{token}" in html
+    policy = page.headers["Content-Security-Policy"]
+    assert "connect-src 'self' https://203.0.113.5:5542 https://203.0.113.5:55424" in policy
+    assert token not in policy
+    assert "no-store" in page.headers["Cache-Control"]
+
+
+@pytest.mark.django_db
+def test_browser_test_without_a_certificate_fails_and_removes_the_container(
+    docker: FakeDockerHost, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    server = ServerFactory()
+    docker.certificate_hash = b""
+    plan = SpeedTestPlan.new((5542,), 5, SpeedTestMode.BROWSER)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        operation = speed_test.start(server, plan, UserFactory(role=Role.ADMIN))
+
+    operation.refresh_from_db()
+    assert operation.status == OperationStatus.FAILED
+    assert operation.error_code == SetupErrorCode.SPEED_TEST_FAILED
+    assert docker.commands[-1] == f"docker rm -f {speed_test.CONTAINER}"
+    assert RunningTest.of(server, timezone.now()) is None
+
+
+@pytest.mark.django_db
+def test_iperf3_page_keeps_the_default_policy(admin_client: Client) -> None:
+    server = ServerFactory()
+    Operation.objects.create(
+        kind=speed_test.START_KIND,
+        params={"server_id": server.pk, "ports": [5542], "minutes": 10, "mode": "iperf3"},
+        status=OperationStatus.SUCCEEDED,
+        finished_at=timezone.now(),
+    )
+
+    page = admin_client.get(f"/protocols/speed-test/{server.pk}/")
+
+    assert "connect-src" not in page.headers.get("Content-Security-Policy", "")
+    assert "data-speed-test" not in page.content.decode()
+
+
+@pytest.mark.django_db
+def test_browser_test_needs_a_port_free_only_for_udp(admin_client: Client) -> None:
+    server = ServerFactory(
+        port=22, containers=[{"name": "amnezia-awg2", "port": 55424, "transport": "udp"}]
+    )
+    url = f"/protocols/speed-test/{server.pk}/"
+
+    taken = admin_client.post(url, {"mode": "browser", "ports": "55424", "minutes": "10"})
+    ssh_port = admin_client.post(url, {"mode": "browser", "ports": "22", "minutes": "10"})
+
+    assert "Already used" in taken.content.decode()
+    assert ssh_port.status_code == 302
+
+
+@pytest.mark.django_db
+def test_server_at_an_ipv6_address_is_measured_with_iperf3(admin_client: Client) -> None:
+    server = ServerFactory(host="2001:db8::1")
+    url = f"/protocols/speed-test/{server.pk}/"
+
+    response = admin_client.post(url, {"mode": "browser", "ports": "5542", "minutes": "10"})
+
+    assert "IPv6" in response.content.decode()
+    assert not Operation.objects.exists()
+    assert browser_reachable("vpn.example.com")
+    assert browser_reachable("203.0.113.5")

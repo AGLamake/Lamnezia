@@ -69,7 +69,8 @@ max-complexity = 10
 python_version = "3.12"
 strict = true
 plugins = ["mypy_django_plugin.main"]
-exclude = ["/migrations/"]
+# Container images run their own Python with their own packages (aioquic).
+exclude = ["/migrations/", "^apps/protocols/images/"]
 
 [[tool.mypy.overrides]]
 module = ["environ.*", "django_otp.*"]
