@@ -171,11 +171,14 @@ class SupportCommands(CommandSet):
 
 
 def _image(command: Command) -> Upload | None:
-    """The picture of the message as an upload; the support checks it is an image."""
+    """The picture of the message as an upload; the support checks its size and that it is an
+    image."""
     picture = command.picture
     if picture is None:
         return None
-    return SimpleUploadedFile(picture.name, picture.content, picture.mime_type)
+    upload = SimpleUploadedFile(picture.name, picture.content, picture.mime_type)
+    upload.size = picture.size
+    return upload
 
 
 def _topic(conversation: Conversation) -> str:

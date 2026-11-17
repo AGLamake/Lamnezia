@@ -19,7 +19,7 @@ from aiogram.methods import (
     SetMyCommands,
     TelegramMethod,
 )
-from aiogram.types import CallbackQuery, Chat, File, Message, PhotoSize, Update, User
+from aiogram.types import CallbackQuery, Chat, Document, File, Message, PhotoSize, Update, User
 from aiohttp.test_utils import TestClient, TestServer
 from django.utils import translation
 from django.utils.translation import gettext
@@ -33,6 +33,7 @@ from apps.bots.tests.conftest import SITE, link
 from apps.keys.models import AccessKey
 from apps.keys.tests.conftest import SOURCE
 from apps.portal.tests.test_portal import subscriber
+from apps.support.services.images import MAX_IMAGE_SIZE
 
 ANNA = User(id=501, is_bot=False, first_name="Anna", username="anna", language_code="ru")
 
@@ -354,6 +355,57 @@ async def test_a_photo_goes_to_the_core_with_its_caption(
     assert incoming.picture == Attachment("p1280.jpg", PHOTO, "image/jpeg")
     (asked,) = session.sent(GetFile)
     assert asked.file_id == "f1280"  # the largest size
+
+
+def _file(mime_type: str, size: int | None = None) -> Update:
+    document = Document(
+        file_id="d1",
+        file_unique_id="du1",
+        file_name="shot.png",
+        mime_type=mime_type,
+        file_size=size,
+    )
+    message = Message(
+        message_id=8,
+        date=_now(),
+        chat=Chat(id=ANNA.id, type="private"),
+        from_user=ANNA,
+        document=document,
+    )
+    return Update(update_id=4, message=message)
+
+
+@pytest.mark.asyncio
+async def test_an_image_sent_as_a_file_goes_to_the_core(
+    bot: Bot, session: RecordingSession
+) -> None:
+    core = await _feed(Reply("Sent."), bot, _file("image/png"))
+
+    (incoming,) = core.received
+    assert incoming.picture == Attachment("shot.png", PHOTO, "image/png")
+    (asked,) = session.sent(GetFile)
+    assert asked.file_id == "d1"
+
+
+@pytest.mark.asyncio
+async def test_a_file_that_is_not_an_image_is_ignored(bot: Bot, session: RecordingSession) -> None:
+    core = await _feed(Reply("Sent."), bot, _file("application/pdf"))
+
+    assert core.received == []
+    assert session.sent(GetFile) == []
+
+
+@pytest.mark.asyncio
+async def test_an_image_too_big_for_the_support_is_not_downloaded(
+    bot: Bot, session: RecordingSession
+) -> None:
+    core = await _feed(Reply("Sent."), bot, _file("image/png", MAX_IMAGE_SIZE + 1))
+
+    (incoming,) = core.received
+    assert incoming.picture == Attachment.not_downloaded(
+        "shot.png", "image/png", MAX_IMAGE_SIZE + 1
+    )
+    assert session.sent(GetFile) == []
 
 
 @pytest.mark.asyncio

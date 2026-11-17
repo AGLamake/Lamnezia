@@ -30,6 +30,7 @@ from apps.bots.services.replies import (
     Reply,
 )
 from apps.core.models import SiteSettings
+from apps.support.services.images import MAX_IMAGE_SIZE
 
 # Discord limits: message text, buttons on one message, button label, custom_id.
 TEXT_LIMIT = 2000
@@ -207,10 +208,16 @@ class DiscordAdapter(BotAdapter):
 
 
 async def _picture(message: discord.Message) -> Attachment | None:
-    """The first image attached to the message; other files are not taken."""
+    """The first image attached to the message; other files are not taken. One bigger than the
+    support takes is not downloaded.
+    """
     for item in message.attachments:
-        if (item.content_type or "").startswith("image/"):
-            return Attachment(item.filename, await item.read(), item.content_type or "")
+        kind = item.content_type or ""
+        if not kind.startswith("image/"):
+            continue
+        if item.size > MAX_IMAGE_SIZE:
+            return Attachment.not_downloaded(item.filename, kind, item.size)
+        return Attachment(item.filename, await item.read(), kind)
     return None
 
 

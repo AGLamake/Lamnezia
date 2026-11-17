@@ -3,7 +3,7 @@
 It receives updates by long polling, or by a webhook when LAMNEZIA_TELEGRAM_WEBHOOK is on:
 Telegram posts them to SITE_URL/bots/telegram/, and Caddy or nginx passes them to this process.
 It answers only in private chats, so a reply with a key never shows up in a group. A photo the
-user sends goes to the core with its caption as the text.
+user sends, or an image sent as a file, goes to the core with its caption as the text.
 """
 
 import asyncio
@@ -18,9 +18,11 @@ from aiogram.types import (
     BotCommand,
     BufferedInputFile,
     CallbackQuery,
+    Document,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
+    PhotoSize,
 )
 from aiogram.types import User as TelegramUser
 from aiogram.utils.formatting import Bold, Code, Text
@@ -41,6 +43,10 @@ from apps.bots.services.replies import (
     split_text,
 )
 from apps.core.models import SiteSettings
+from apps.support.services.images import MAX_IMAGE_SIZE
+
+# An image sent as a file rather than as a photo, to keep it uncompressed.
+_IMAGE_FILE = F.document.mime_type.startswith("image/")
 
 # Telegram limits a message text to 4096 characters, counted in UTF-16 code units.
 TEXT_LIMIT = 4096
@@ -73,7 +79,9 @@ class TelegramAdapter(BotAdapter):
 
     def dispatcher(self) -> Dispatcher:
         router = Router()
-        router.message.register(self.on_message, F.chat.type == ChatType.PRIVATE, F.text | F.photo)
+        router.message.register(
+            self.on_message, F.chat.type == ChatType.PRIVATE, F.text | F.photo | _IMAGE_FILE
+        )
         router.callback_query.register(
             self.on_button, F.message.chat.type == ChatType.PRIVATE, F.data
         )
@@ -125,14 +133,28 @@ class TelegramAdapter(BotAdapter):
 
 
 async def _picture(message: Message, bot: Bot) -> Attachment | None:
-    """The largest size of the photo in the message; Telegram sends photos as JPEG."""
-    if not message.photo:
+    """The photo of the message in its largest size (Telegram sends photos as JPEG), or an
+    image sent as a file. One bigger than the support takes is not downloaded.
+    """
+    file: PhotoSize | Document
+    if message.photo:
+        file = message.photo[-1]
+        name, kind = f"{file.file_unique_id}.jpg", "image/jpeg"
+    elif message.document is not None and _is_image(message.document):
+        file = message.document
+        name, kind = file.file_name or file.file_unique_id, file.mime_type or ""
+    else:
         return None
-    photo = message.photo[-1]
-    content = await bot.download(photo)
+    if file.file_size is not None and file.file_size > MAX_IMAGE_SIZE:
+        return Attachment.not_downloaded(name, kind, file.file_size)
+    content = await bot.download(file)
     if content is None:
         return None
-    return Attachment(f"{photo.file_unique_id}.jpg", content.read(), "image/jpeg")
+    return Attachment(name, content.read(), kind)
+
+
+def _is_image(document: Document) -> bool:
+    return (document.mime_type or "").startswith("image/")
 
 
 def _replied(message: Message) -> str:

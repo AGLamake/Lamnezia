@@ -28,6 +28,7 @@ from apps.bots.tests.conftest import SITE
 from apps.keys.models import AccessKey
 from apps.keys.tests.conftest import SOURCE
 from apps.portal.tests.test_portal import subscriber
+from apps.support.services.images import MAX_IMAGE_SIZE
 
 ANNA_ID = 501
 
@@ -415,8 +416,11 @@ class FakeAttachment:
     filename: str
     content_type: str | None
     content: bytes = b"\x89PNG"
+    size: int = 4
+    reads: int = 0
 
     async def read(self) -> bytes:
+        self.reads += 1
         return self.content
 
 
@@ -429,6 +433,18 @@ async def test_an_image_in_a_direct_message_goes_to_the_core() -> None:
 
     (incoming,) = core.received
     assert incoming.picture == Attachment("shot.png", b"\x89PNG", "image/png")
+
+
+@pytest.mark.asyncio
+async def test_an_image_too_big_for_the_support_is_not_downloaded() -> None:
+    core = StubCore(Reply("Sent."))
+    big = FakeAttachment("shot.png", "image/png", size=MAX_IMAGE_SIZE + 1)
+
+    await DiscordAdapter(core).on_message(cast(Any, FakeMessage("", FakeDm(), attachments=[big])))
+
+    (incoming,) = core.received
+    assert big.reads == 0
+    assert incoming.picture == Attachment.not_downloaded("shot.png", "image/png", big.size)
 
 
 @pytest.mark.asyncio

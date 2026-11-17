@@ -16,9 +16,22 @@ from apps.accounts.models import Messenger
 
 @dataclass(frozen=True)
 class Attachment:
+    """A file. A picture bigger than the support takes is not downloaded: it comes without
+    `content` and with the `reported_size` the messenger gave.
+    """
+
     name: str
     content: bytes
     mime_type: str
+    reported_size: int | None = None
+
+    @classmethod
+    def not_downloaded(cls, name: str, mime_type: str, size: int) -> Self:
+        return cls(name, b"", mime_type, size)
+
+    @property
+    def size(self) -> int:
+        return len(self.content) if self.reported_size is None else self.reported_size
 
 
 @dataclass(frozen=True)

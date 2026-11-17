@@ -13,6 +13,7 @@ from apps.notifications.models import Notification
 from apps.portal.tests.test_portal import subscriber
 from apps.support.models import Attachment as Image
 from apps.support.models import Conversation, Kind, TicketStatus, TicketType
+from apps.support.services.images import MAX_IMAGE_SIZE
 from apps.support.services.inbox import Inbox
 from apps.support.tests.test_inbox import admin
 
@@ -142,4 +143,12 @@ class TestPictures:
         reply = bot.send_picture(Attachment("shot.png", b"not an image", "image/png"))
 
         assert "PNG, JPEG, GIF or WebP" in reply.text
+        assert not Conversation.objects.filter(kind=Kind.CHAT, messages__isnull=False).exists()
+
+    def test_a_picture_too_big_to_download_is_refused(self, bot: FakeAdapter, user: User) -> None:
+        big = Attachment.not_downloaded("shot.png", "image/png", MAX_IMAGE_SIZE + 1)
+
+        reply = bot.send_picture(big)
+
+        assert "at most 5 MB" in reply.text
         assert not Conversation.objects.filter(kind=Kind.CHAT, messages__isnull=False).exists()
