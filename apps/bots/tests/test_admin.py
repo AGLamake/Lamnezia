@@ -181,6 +181,22 @@ class TestIncidents:
         request.refresh_from_db()
         assert request.assignee is None
         assert "None of its requests are from your users." in taken.text
+        assert Incident.objects.get().taken_by is None
+
+    def test_who_took_the_incident_stays_on_it_after_its_requests_close(
+        self, bot: FakeAdapter
+    ) -> None:
+        admin = staff()
+        request = report(ServerFactory())
+        incident = Incident.objects.get()
+        bot.press(f"take {incident.pk}")
+        request.status = TicketStatus.CLOSED
+        request.save(update_fields=["status"])
+
+        card = bot.press(f"incident {incident.pk}")
+
+        assert Incident.objects.get().taken_by == admin
+        assert f"Taken by: {admin.username}" in card.text
 
     def test_an_admin_closes_an_incident_after_confirming(self, bot: FakeAdapter) -> None:
         staff()

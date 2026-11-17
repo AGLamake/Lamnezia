@@ -63,6 +63,15 @@ class Incident(models.Model):
     opened_at = models.DateTimeField(_("opened at"), auto_now_add=True)
     last_report_at = models.DateTimeField(_("last report"), auto_now_add=True)
     closed_at = models.DateTimeField(_("closed at"), null=True, blank=True)
+    # The staff member who last took the incident up, even once its requests are closed.
+    taken_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("taken by"),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
     closed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name=_("closed by"),

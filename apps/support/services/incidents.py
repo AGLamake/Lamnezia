@@ -23,7 +23,7 @@ from apps.support.services.thread import post
 def incidents() -> QuerySet[Incident]:
     """Incidents with the number of reports in `reports`, open ones first."""
     return (
-        Incident.objects.select_related("server", "closed_by")
+        Incident.objects.select_related("server", "taken_by", "closed_by")
         .annotate(reports=Count("conversations"))
         .order_by(F("closed_at").desc(nulls_first=True), "-opened_at")
     )
@@ -66,7 +66,8 @@ def add_report(conversation: Conversation) -> Incident:
 
 def take_incident(incident: Incident, by: User) -> int:
     """The staff member takes the incident up: its open requests are assigned to them, and new
-    ones go into work, so each reporter hears that someone is on it. Returns how many.
+    ones go into work, so each reporter hears that someone is on it. Returns how many; with any
+    taken, the incident is marked as theirs.
 
     A moderator takes only the requests of their zone that nobody else has, as their inbox
     shows them.
@@ -87,16 +88,23 @@ def take_incident(incident: Incident, by: User) -> int:
             if started:
                 tell_of_status(conversation)
             taken += 1
+        if taken:
+            incident.taken_by = by
+            incident.save(update_fields=["taken_by"])
     return taken
 
 
 def takers(incident: Incident) -> list[str]:
-    """Who has the incident's open requests: the staff members who took it."""
-    names = (
+    """The staff members who took the incident: the one marked on it and those who have its open
+    requests.
+    """
+    names = set(
         incident.conversations.filter(status__in=OPEN_STATUSES, assignee__isnull=False)
         .values_list("assignee__username", flat=True)
         .distinct()
     )
+    if incident.taken_by is not None:
+        names.add(incident.taken_by.username)
     return sorted(names)
 
 
