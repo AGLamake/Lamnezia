@@ -15,6 +15,7 @@ from apps.relocation.errors import MoveError
 from apps.relocation.forms import MoveForm
 from apps.relocation.models import PanelMove
 from apps.relocation.services.moves import cancel_move, confirm_move, start_move
+from apps.relocation.services.panel_machine import PanelMachine
 
 
 class MoveView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
@@ -25,6 +26,9 @@ class MoveView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(move=PanelMove.latest(), **kwargs)
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        return {**super().get_form_kwargs(), "panel": PanelMachine.current(self.request.get_host())}
 
     def form_valid(self, form: MoveForm) -> HttpResponse:
         try:

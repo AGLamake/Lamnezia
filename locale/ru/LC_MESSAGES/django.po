@@ -3612,6 +3612,10 @@ msgstr "Ключ импортирован без приватной части: 
 msgid "This link is invalid or already used. Ask for a new one."
 msgstr "Ссылка неверна или уже использована. Запросите новую."
 
+#, python-format
+msgid "This panel already runs on %(host)s. Choose another machine: the move installs the panel there."
+msgstr "Эта панель уже работает на %(host)s. Выберите другую машину: перенос ставит панель на неё."
+
 msgid "This period"
 msgstr "Этот период"
 
