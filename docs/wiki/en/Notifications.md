@@ -1,7 +1,7 @@
 # Notifications
 
 **Admin → Notifications** (`/notifications/`, administrators only) sends panel events to email,
-Telegram, Discord and your own webhooks.
+Telegram, Discord, administrators' browsers and your own webhooks.
 
 ## Channels
 
@@ -14,6 +14,7 @@ A channel is one place messages go to. There can be several channels of each kin
 | Discord | Webhook URL of a Discord channel (**Channel settings → Integrations → Webhooks**). Messages come as an embed. |
 | Discord direct message | The Discord user ID (developer mode → right click → Copy User ID). Sent by the panel Discord bot; the user must share a server with it. |
 | Webhook | Your URL and a signing secret. The panel posts JSON (see below). |
+| Browser push | Nothing but a name: messages go to the browsers of administrators who turned notifications on in their profile (see [In the browser](#in-the-browser)). |
 
 Tokens, webhook URLs and secrets are stored encrypted and are not shown again: leave the field
 empty to keep the saved value. A disabled channel receives nothing but the test message.
@@ -67,7 +68,8 @@ the trouble apart from notifications, so the pair comes even when no channel is 
 trouble event. Deleting a server or a relay forgets its outage without a recovery notification.
 
 Notifications about the user go where they chose on their **Messengers** page: email by default,
-or their linked Telegram or Discord ([Telegram and Discord](Messengers.md)).
+or their linked Telegram or Discord ([Telegram and Discord](Messengers.md)), and also to the
+browsers where they turned notifications on ([In the browser](#in-the-browser)).
 Users themselves get an email about their reached limit and three days before their access ends,
 if they have an address. When an incident is closed, everyone who reported it gets an email
 that the server works again (`incident_resolved`; it goes only to the users, never to a channel).
@@ -102,6 +104,32 @@ says how many there are.
 
 A server that goes down is reported once; it is reported again only after it has come back and gone
 down again. When it answers again, `server_up` is sent.
+
+## In the browser
+
+A user turns on notifications in **Profile → Notifications → In the browser** with
+**Get notifications in this browser**: the browser asks for permission and then shows the panel's
+notifications even when the panel is closed. This works in desktop browsers, on Android, and on
+iPhone and iPad from iOS 16.4 when the panel is added to the Home Screen and opened from there.
+Each browser is turned on separately, up to 10 per user; **Send a test** checks this one,
+**Turn off in this browser** stops it. Signing out of the panel turns notifications off in that
+browser, so the next person to use it does not get them.
+
+A user gets in the browser the same events as by email or messenger: the end of access, the limit,
+a support answer and the rest that goes to them. A support answer that has already reached a
+messenger (`chat_answer`, `request_answer`) is not pushed. A click opens the page the
+notification is about: usage for the limit, the support chat for an answer, the request in the
+inbox for a new request.
+
+For administrators there is the **Browser push** channel: events routed to it reach the browsers
+of every active administrator who turned notifications on in their profile — for example a new
+request, a pending registration or an incident.
+
+The panel makes its own VAPID key pair on first use; the private key is stored encrypted, like the
+other secrets. Pushes go only from the background worker, through the browser's push service
+(Google, Mozilla, Apple), encrypted for that browser (RFC 8291): the service does not see the
+text. A subscription the push service reports as gone (HTTP 404 or 410) is deleted. The address
+of a push service is checked like a webhook address: only a public `https` one is accepted.
 
 ## Delivery and the log
 

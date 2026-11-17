@@ -10,11 +10,12 @@ import json
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, ClassVar, Self
+from typing import ClassVar, Self
 from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
+from django.db.models import QuerySet
 from django.urls import reverse
 from django.utils import timezone
 
@@ -113,7 +114,7 @@ class BrowserSubscriptions:
     def count(self) -> int:
         return self._mine().count()
 
-    def _mine(self) -> Any:
+    def _mine(self) -> QuerySet[PushSubscription]:
         return PushSubscription.objects.filter(user=self._user)
 
     @staticmethod

@@ -63,9 +63,7 @@ def emit(  # noqa: PLR0913 - the routing of one event is keyword-only
         if to_user:
             deliveries.append(Delivery(notification=notification, to_user=True, channel_name=""))
         if to_browser:
-            deliveries.append(
-                Delivery(notification=notification, to_browser=True, channel_name="")
-            )
+            deliveries.append(Delivery(notification=notification, to_browser=True, channel_name=""))
         wait = settings.NOTIFICATION_JOIN_WINDOW if kind.joined else None
         _queue(Delivery.objects.bulk_create(deliveries), wait)
     return notification

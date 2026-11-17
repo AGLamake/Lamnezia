@@ -45,6 +45,9 @@ msgstr "Предложенная статья опубликована"
 msgid "Bot token"
 msgstr "Токен бота"
 
+msgid "Browser push"
+msgstr "Уведомления в браузере"
+
 msgid "Channel settings → Integrations → Webhooks → Copy Webhook URL."
 msgstr "Настройки канала → Интеграция → Вебхуки → Копировать URL вебхука."
 
@@ -414,6 +417,15 @@ msgstr "адрес"
 msgid "attempts"
 msgstr "попытки"
 
+msgid "browser"
+msgstr "браузер"
+
+msgid "browser subscription"
+msgstr "подписка браузера"
+
+msgid "browser subscriptions"
+msgstr "подписки браузеров"
+
 msgid "channel"
 msgstr "канал"
 
@@ -462,11 +474,17 @@ msgstr "отправлено"
 msgid "status"
 msgstr "статус"
 
+msgid "subscribed at"
+msgstr "подписан"
+
 msgid "time"
 msgstr "время"
 
 msgid "to the user"
 msgstr "пользователю"
+
+msgid "to the user's browsers"
+msgstr "в браузеры пользователя"
 
 msgid "user"
 msgstr "пользователь"

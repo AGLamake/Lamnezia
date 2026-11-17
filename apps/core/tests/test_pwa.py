@@ -38,6 +38,14 @@ def test_worker_caches_only_the_offline_page_and_its_files(client: Client) -> No
     assert "lamnezia-" in text
 
 
+def test_worker_shows_pushes_and_opens_their_page(client: Client) -> None:
+    text = client.get("/sw.js").content.decode()
+
+    assert 'addEventListener("push"' in text
+    assert 'addEventListener("notificationclick"' in text
+    assert "/static/brand/icon" in text
+
+
 def test_offline_page_offers_to_try_again(client: Client) -> None:
     response = client.get("/offline/")
 

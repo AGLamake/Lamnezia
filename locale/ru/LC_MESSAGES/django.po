@@ -158,6 +158,10 @@ msgid "%(name)s by email"
 msgstr "%(name)s на почту"
 
 #, python-format
+msgid "%(name)s in the browser"
+msgstr "%(name)s в браузере"
+
+#, python-format
 msgid "%(removed)s row removed"
 msgid_plural "%(removed)s rows removed"
 msgstr[0] "удалена %(removed)s строка"
@@ -293,6 +297,9 @@ msgstr "Одиночный сервер AmneziaWG 3.1. Его ключи, нас
 msgid "A switch of this group is already running."
 msgstr "Переключение этой группы уже идёт."
 
+msgid "A test notification is on its way."
+msgstr "Тестовое уведомление отправлено."
+
 msgid "A user cannot be their own moderator."
 msgstr "Пользователь не может быть своим же модератором."
 
@@ -385,6 +392,9 @@ msgstr "Макет админки"
 
 msgid "Administrator"
 msgstr "Администратор"
+
+msgid "Administrators get these in the browsers and installed apps where they turned notifications on in their profile."
+msgstr "Администраторы получают их в браузерах и установленных приложениях, где включили уведомления в профиле."
 
 msgid "Administrators sign in with a code from a phone app. Set it up to continue."
 msgstr "Администраторы входят с кодом из приложения на телефоне. Настройте его, чтобы продолжить."
@@ -622,6 +632,10 @@ msgstr "Навигационная цепочка"
 
 msgid "Browsers signed in to your account. Only the browser, the system and the sign-in time are kept."
 msgstr "Браузеры, в которых выполнен вход в ваш аккаунт. Хранятся только браузер, система и время входа."
+
+#, python-format
+msgid "Browsers with notifications on: <span data-push-count>%(count)s</span>."
+msgstr "Браузеров с уведомлениями: <span data-push-count>%(count)s</span>."
 
 msgid "Build the relay image"
 msgstr "Собрать образ ретранслятора"
@@ -1276,6 +1290,9 @@ msgstr "Получить ключ"
 msgid "Get new codes"
 msgstr "Получить новые коды"
 
+msgid "Get notifications in this browser"
+msgstr "Получать уведомления в браузере"
+
 msgid "Ghost"
 msgstr "Прозрачная"
 
@@ -1419,6 +1436,9 @@ msgstr "В приложении нажмите «Добавить» («Прис�
 
 msgid "In the browser the ports are opened for UDP, for iperf3 for TCP and UDP. Open them in the firewall of the hosting provider if it has one."
 msgstr "В браузере порты открываются для UDP, для iperf3 — для TCP и UDP. Если у хостинга есть свой файрвол, откройте их и в нём."
+
+msgid "In the browser"
+msgstr "В браузере"
 
 msgid "In the plan"
 msgstr "В тарифе"
@@ -2131,15 +2151,27 @@ msgstr "Пока ничего не отправлялось."
 msgid "Notifications"
 msgstr "Уведомления"
 
+msgid "Notifications are off in this browser."
+msgstr "В этом браузере уведомления выключены."
+
+msgid "Notifications are on in this browser."
+msgstr "В этом браузере уведомления включены."
+
 #, python-format
 msgid "Notifications can also come to %(messengers)s. Link it in your profile: %(url)s"
 msgstr "Уведомления можно получать и в %(messengers)s. Привяжите мессенджер в профиле: %(url)s"
+
+msgid "Notifications from the panel are blocked in the browser settings for this site. Allow them there, then reload the page."
+msgstr "Уведомления от панели запрещены в настройках браузера для этого сайта. Разрешите их там и обновите страницу."
 
 msgid "Numbers and trends"
 msgstr "Числа и динамика"
 
 msgid "Object"
 msgstr "Объект"
+
+msgid "On iPhone and iPad (iOS 16.4 or later), add the panel to the Home Screen first: Share → Add to Home Screen. Then open it from there and turn notifications on."
+msgstr "На iPhone и iPad (iOS 16.4 и новее) сначала добавьте панель на экран «Домой»: «Поделиться» → «На экран „Домой“». Затем откройте её оттуда и включите уведомления."
 
 msgid "On some VPS upload through the VPN drops several times: the network interface of the AmneziaWG or WireGuard container glues TCP packets together (TSO/GSO) and the glued packets are lost on the way. The workaround turns TSO/GSO off on that interface and a systemd timer on the server keeps it off after container restarts and reboots. Configs and keys do not change."
 msgstr "На некоторых VPS отдача через VPN падает в разы: сетевой интерфейс контейнера AmneziaWG или WireGuard склеивает TCP-пакеты (TSO/GSO), и склеенные пакеты теряются по дороге. Обход выключает TSO/GSO на этом интерфейсе, а таймер systemd на сервере держит их выключенными после перезапуска контейнеров и сервера. Конфиги и ключи не меняются."
@@ -3144,6 +3176,9 @@ msgstr "Автоостановка этой копии включена."
 msgid "The bots service last reported %(ago)s ago. Is the bots container running?"
 msgstr "Сервис ботов последний раз присылал отчёт %(ago)s назад. Запущен ли контейнер bots?"
 
+msgid "The browser did not turn notifications on. Try again or reload the page."
+msgstr "Браузер не включил уведомления. Попробуйте ещё раз или обновите страницу."
+
 msgid "The check did not finish. We will look at the server ourselves."
 msgstr "Проверка не завершилась. Мы посмотрим сервер сами."
 
@@ -3559,6 +3594,9 @@ msgstr "Обращение закрыто. Если проблема вернё�
 msgid "The request is closed: only internal notes can be added."
 msgstr "Обращение закрыто: можно добавить только внутреннюю заметку."
 
+msgid "The same notifications in this browser or the installed app, even when the panel is closed. A click opens the page they are about."
+msgstr "Те же уведомления в этом браузере или установленном приложении, даже когда панель закрыта. Нажатие открывает страницу, о которой уведомление."
+
 #, python-format
 msgid "The server address is now <strong>%(host)s</strong>. The vpn:// link of every key carries the address, so the clients must import their keys again."
 msgstr "Теперь адрес сервера — <strong>%(host)s</strong>. Адрес входит в ссылку vpn:// каждого ключа, поэтому клиентам нужно заново импортировать ключи."
@@ -3709,6 +3747,9 @@ msgstr "Этот аккаунт уже привязан к другому пол
 msgid "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox, or start the test again with iperf3."
 msgstr "В этом браузере нет WebTransport. Откройте страницу в Chrome, Edge или Firefox либо запустите замер заново через iperf3."
 
+msgid "This browser cannot show notifications from the panel."
+msgstr "Этот браузер не умеет показывать уведомления панели."
+
 #, python-format
 msgid "This copy asked its host to stop at %(at)s. The host stops it within a minute; if it keeps running, stop it with docker compose down."
 msgstr "Эта копия попросила сервер остановить её в %(at)s. Сервер остановит её в течение минуты; если она продолжит работать, остановите её командой docker compose down."
@@ -3848,6 +3889,9 @@ msgstr[2] "Попробуйте снова через %(minutes)s минут."
 
 msgid "Turn off"
 msgstr "Выключить"
+
+msgid "Turn off in this browser"
+msgstr "Выключить в этом браузере"
 
 msgid "Turn off two-factor authentication"
 msgstr "Выключить двухфакторную аутентификацию"

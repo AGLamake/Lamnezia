@@ -112,10 +112,10 @@ class BrowserKeys:
         sender_public = public_bytes(sender.public_key())
         shared = sender.exchange(ec.ECDH(), receiver)
         info = b"WebPush: info\x00" + public_bytes(receiver) + sender_public
-        ikm = _hkdf(secret, shared, info, 32)
+        ikm = hkdf(secret, shared, info, 32)
         salt = salt or os.urandom(16)
-        key = _hkdf(salt, ikm, b"Content-Encoding: aes128gcm\x00", 16)
-        nonce = _hkdf(salt, ikm, b"Content-Encoding: nonce\x00", 12)
+        key = hkdf(salt, ikm, b"Content-Encoding: aes128gcm\x00", 16)
+        nonce = hkdf(salt, ikm, b"Content-Encoding: nonce\x00", 12)
         sealed = AESGCM(key).encrypt(nonce, payload + _LAST_RECORD, None)
         header = salt + struct.pack("!IB", _RECORD_SIZE, len(sender_public)) + sender_public
         return header + sealed
@@ -129,7 +129,7 @@ def public_key(text: str) -> ec.EllipticCurvePublicKey:
         raise ValueError("not a P-256 public key") from error
 
 
-def _hkdf(salt: bytes, ikm: bytes, info: bytes, length: int) -> bytes:
+def hkdf(salt: bytes, ikm: bytes, info: bytes, length: int) -> bytes:
     """HKDF-SHA256 for one block of output, all RFC 8291 needs."""
     extract = HMAC(salt, hashes.SHA256())
     extract.update(ikm)

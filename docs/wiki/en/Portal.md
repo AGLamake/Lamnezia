@@ -169,7 +169,8 @@ these sections:
 - **Password** — a new password signs out every other session.
 - **Two-factor** — turning it on, backup codes, turning it off.
 - **Messengers** — linking Telegram and Discord, see [Messengers](Messengers.md).
-- **Notifications** — where notifications go and in which language.
+- **Notifications** — where notifications go and in which language; turning notifications on in
+  this browser or the installed app ([In the browser](Notifications.md#in-the-browser)).
 - **Sessions** — browsers signed in to the account: the browser, the system and the sign-in time
   (no IP address and no page addresses). One of them, or all but the current one, can be signed
   out; this goes to the audit log.

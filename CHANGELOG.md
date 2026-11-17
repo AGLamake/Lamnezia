@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the page, opened on a device in the network to check, measures download and upload to every
   port with no `iperf3` on the device. Needs Chrome, Edge or Firefox and a server with an IPv4
   address or a domain; *iperf3 on a device* stays as the other way to measure.
+- **Notifications in the browser (Web Push)**: in **Profile → Notifications** a user turns on
+  notifications in this browser or the installed app (Android; iPhone and iPad from iOS 16.4 when
+  added to the Home Screen) and gets there the same events as by email or messenger; a click opens
+  the page they are about. Administrators get routed events through the new **Browser push**
+  channel. The panel makes its own VAPID keys and keeps the private one encrypted; pushes go only
+  from the background worker, and subscriptions the push service reports as gone are deleted.
+  Signing out turns notifications off in that browser.
 - **Messenger offer in letters**: the letters about the end of access and the limit tell a user
   without linked messengers that notifications can come to Telegram or Discord, with a link to the
   profile, when the administrator has set up a bot.
