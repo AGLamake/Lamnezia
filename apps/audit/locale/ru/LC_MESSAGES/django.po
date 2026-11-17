@@ -147,11 +147,14 @@ msgstr "Отклонение регистрации"
 msgid "Restart bot"
 msgstr "Перезапуск бота"
 
-msgid "Show SFTP password"
-msgstr "Показ пароля SFTP"
+msgid "Show Telegram proxy links"
+msgstr "Показ ссылок прокси Telegram"
 
 msgid "Show key"
 msgstr "Показ ключа"
+
+msgid "Show service password"
+msgstr "Показ пароля сервиса"
 
 msgid "Sign in from a messenger"
 msgstr "Вход из мессенджера"

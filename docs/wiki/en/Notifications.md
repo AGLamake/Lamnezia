@@ -21,7 +21,9 @@ empty to keep the saved value. A disabled channel receives nothing but the test 
 Webhook and Discord URLs must lead to a public address. An address in a private network
 (`127.0.0.1`, `10.0.0.0/8`, `192.168.0.0/16`, `169.254.169.254` and the like, also behind a host
 name) is refused when the channel is saved and checked again on every send; redirects are not
-followed. For a receiver in your own network turn on **Settings → Integrations → Notifications to
+followed. A send connects to exactly the address that passed the check, so a name that changes its
+address right after the check (DNS rebinding) cannot lead the request into a private network. A
+name that does not resolve gets the message later, on a retry. For a receiver in your own network turn on **Settings → Integrations → Notifications to
 private networks**.
 
 **Send test** delivers a test message to the channel at once; the result is in the log.

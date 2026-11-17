@@ -260,7 +260,7 @@ The services of the app are installed from the same list, with its scripts (`ser
 
 The server card shows the SFTP user name and password (behind **Show**) and the onion address. The
 password is not in the page: **Show** asks the panel for it, and every look is written to the audit
-log as *Show SFTP password*. The password and the address are stored encrypted and never written to the operation log. Server
+log as *Show service password*. The password and the address are stored encrypted and never written to the operation log. Server
 import reads them from containers set up in the app. **Remove** deletes the container and its
 image; files uploaded to SFTP and the site go with them. **Restart** (or **Start**), **Stop** and
 **Log** work for services as for protocols (see below); a service installed without the container
@@ -298,9 +298,11 @@ and with the defaults of the app, so the app sees them and shows the same creden
 The Telegram proxies keep their secret in the `<container>-data` volume: installing again over
 the volume keeps the secret, so links already given out keep working. Their `configure_container.sh`
 downloads files from `core.telegram.org` (Telemt also downloads its binary from GitHub); if the
-secret is not made, the installation stops and the container is kept: try again. The card shows the
-`tg://` and `https://t.me/` links (behind **Show the links for Telegram**) that add the proxy in
-Telegram. Passwords and secrets are stored encrypted and never written to the operation log;
+secret is not made, the installation stops and the container is kept: try again. Behind **Show the
+links for Telegram** the card shows the `tg://` and `https://t.me/` links that add the proxy in
+Telegram. The SOCKS5 password (behind **Show**) and the links, which carry the secret, are not in
+the page: the button asks the panel for them, and every look is written to the audit log as *Show
+service password* or *Show Telegram proxy links*. Passwords and secrets are stored encrypted and never written to the operation log;
 server import reads them from proxies set up in the app. **Remove** deletes the container, its
 image and the data volume.
 

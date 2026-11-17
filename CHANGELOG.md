@@ -220,6 +220,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   internal error: the service peer of that group is left for the next sync, and the operation log
   says why.
 
+### Security
+
+- **Service secrets on request**: the SOCKS5 password and the `tg://`/`t.me` links of Telegram
+  proxies are no longer in the server card page. **Show** asks the panel for them (`no-store`), and
+  every look is written to the audit log (*Show service password*, *Show Telegram proxy links*),
+  as for SFTP.
+- **Webhooks and DNS rebinding**: webhook and Discord sends connect to the address the private
+  network check passed, with the Host header and the TLS certificate checked by name, so a name
+  that changes its address after the check gets no request. A name that does not resolve is tried
+  again later.
+
 ## [1.0.0] - 2026-11-13
 
 The first release: a self-hosted web panel for Amnezia VPN servers, compatible with the Amnezia
