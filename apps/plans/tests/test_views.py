@@ -35,6 +35,15 @@ def test_plans_are_for_admins_only(client: Client, role: Role) -> None:
     assert client.get(reverse("plans:list")).status_code == 403
 
 
+@pytest.mark.parametrize(("role", "shown"), [(Role.ADMIN, True), (Role.MODERATOR, False)])
+def test_the_nav_links_plans_only_for_admins(client: Client, role: Role, shown: bool) -> None:
+    client.force_login(UserFactory(role=role))
+
+    page = client.get(reverse("dashboard:index")).content.decode()
+
+    assert (reverse("plans:list") in page) is shown
+
+
 def test_list_shows_plans_with_their_users(admin_client: Client) -> None:
     plan = PlanFactory(name="Friends", traffic_limit=100 * GB, max_keys=3)
     UserLimitsFactory(plan=plan)

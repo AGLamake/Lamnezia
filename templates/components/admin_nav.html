@@ -12,7 +12,7 @@
 <a href="{% url 'dashboard:users' %}" class="nav-link"{% if active == 'users' %} aria-current="page"{% endif %}>{% icon "users" %}<span class="nav-text">{% translate "Users" %}</span></a>
 <a href="{% url 'keys:list' %}" class="nav-link"{% if active == 'keys' %} aria-current="page"{% endif %}>{% icon "key" %}<span class="nav-text">{% translate "Keys" %}</span></a>
 <a href="{% url 'accounts:registrations' %}" class="nav-link"{% if active == 'registrations' %} aria-current="page"{% endif %}>{% icon "user-plus" %}<span class="nav-text">{% translate "Registration" %}</span>{% if todo.applications %}<span class="nav-count" title="{% translate 'Waiting for approval' %}">{{ todo.applications }}</span>{% endif %}</a>
-<a href="{% url 'plans:list' %}" class="nav-link"{% if active == 'plans' %} aria-current="page"{% endif %}>{% icon "tag" %}<span class="nav-text">{% translate "Plans" %}</span></a>
+{% if user.is_admin %}<a href="{% url 'plans:list' %}" class="nav-link"{% if active == 'plans' %} aria-current="page"{% endif %}>{% icon "tag" %}<span class="nav-text">{% translate "Plans" %}</span></a>{% endif %}
 {% if user.is_admin %}{% billing_enabled as payments %}{% if payments %}<a href="{% url 'billing:orders' %}" class="nav-link"{% if active == 'orders' %} aria-current="page"{% endif %}>{% icon "receipt" %}<span class="nav-text">{% translate "Orders" %}</span></a>{% endif %}{% endif %}
 
 <p class="nav-group">{% translate "Support" %}</p>
