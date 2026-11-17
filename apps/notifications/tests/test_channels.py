@@ -1,10 +1,12 @@
 import io
 import json
+import socket
 import urllib.error
 import urllib.request
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
+from typing import Any
 
 import pytest
 
@@ -226,3 +228,107 @@ def test_a_guarded_client_does_not_follow_redirects() -> None:
 
     server.server_close()
     assert str(error.value).startswith("HTTP 302")
+
+
+class TestDnsRebinding:
+    """The name is checked once; the request goes to that address even if the name moves."""
+
+    PUBLIC = "8.8.8.8"
+
+    @pytest.fixture
+    def receiver(self) -> Any:
+        """A private receiver that remembers the Host of every request it got."""
+        hosts: list[str] = []
+
+        class Receiver(BaseHTTPRequestHandler):
+            def do_POST(self) -> None:
+                hosts.append(self.headers["Host"])
+                self.send_response(204)
+                self.end_headers()
+
+            def log_message(self, *args: object) -> None:
+                pass
+
+        server = HTTPServer(("127.0.0.1", 0), Receiver)
+        server.timeout = 1
+        thread = Thread(target=server.handle_request, daemon=True)
+        thread.start()
+        yield server, hosts
+        thread.join()
+        server.server_close()
+
+    @pytest.fixture
+    def rebinding(self, monkeypatch: pytest.MonkeyPatch) -> list[int]:
+        """The name answers a public address once, then the loopback; counts the lookups."""
+        lookups: list[int] = []
+
+        def resolve(host: str, port: Any, *args: Any, **kwargs: Any) -> list[tuple[Any, ...]]:
+            lookups.append(1)
+            address = self.PUBLIC if len(lookups) == 1 else "127.0.0.1"
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (address, port or 80))]
+
+        monkeypatch.setattr(socket, "getaddrinfo", resolve)
+        return lookups
+
+    def connecting(
+        self, monkeypatch: pytest.MonkeyPatch, public_to: tuple[str, int] | None
+    ) -> list[tuple[str, int]]:
+        """Record connections; the public address goes to `public_to`, or is refused."""
+        tried: list[tuple[str, int]] = []
+        create_connection = socket.create_connection
+
+        def connect(address: tuple[str, int], *args: Any, **kwargs: Any) -> socket.socket:
+            tried.append(address)
+            if address[0] != self.PUBLIC:
+                return create_connection(address, *args, **kwargs)
+            if public_to is None:
+                raise ConnectionRefusedError("refused")
+            return create_connection(public_to, *args, **kwargs)
+
+        monkeypatch.setattr(socket, "create_connection", connect)
+        return tried
+
+    def test_a_name_that_moved_after_the_check_gets_no_request(
+        self, monkeypatch: pytest.MonkeyPatch, receiver: Any, rebinding: list[int]
+    ) -> None:
+        server, hosts = receiver
+        port = server.server_port
+        tried = self.connecting(monkeypatch, public_to=None)
+
+        with pytest.raises(DeliveryError) as error:
+            HttpClient(1, AddressGuard(allow_private=False)).post(
+                f"http://hooks.example.com:{port}/hook", b"{}"
+            )
+
+        assert error.value.retryable
+        assert tried == [(self.PUBLIC, port)]
+        assert len(rebinding) == 1
+        assert hosts == []
+
+    def test_the_request_goes_to_the_checked_address_by_name(
+        self, monkeypatch: pytest.MonkeyPatch, receiver: Any, rebinding: list[int]
+    ) -> None:
+        server, hosts = receiver
+        port = server.server_port
+        tried = self.connecting(monkeypatch, public_to=("127.0.0.1", port))
+
+        HttpClient(1, AddressGuard(allow_private=False)).post(
+            f"http://hooks.example.com:{port}/hook", b"{}"
+        )
+
+        assert tried == [(self.PUBLIC, port)]
+        assert hosts == [f"hooks.example.com:{port}"]
+
+    def test_a_name_that_does_not_resolve_is_tried_again_later(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def unresolvable(*args: Any, **kwargs: Any) -> Any:
+            raise socket.gaierror("no such name")
+
+        monkeypatch.setattr(socket, "getaddrinfo", unresolvable)
+        monkeypatch.setattr(socket, "create_connection", pytest.fail)
+
+        with pytest.raises(DeliveryError) as error:
+            HttpClient(1, AddressGuard(allow_private=False)).post("https://nowhere.invalid/", b"{}")
+
+        assert error.value.retryable

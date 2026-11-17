@@ -21,7 +21,11 @@ from django.core.mail import send_mail
 
 from apps.core.services.site_settings import cached_settings
 from apps.notifications.models import Channel, ChannelKind
-from apps.notifications.services.addresses import AddressGuard, BlockedAddressError
+from apps.notifications.services.addresses import (
+    AddressGuard,
+    BlockedAddressError,
+    UnresolvedHostError,
+)
 
 SIGNATURE_HEADER = "X-Lamnezia-Signature"
 # Answers worth another try later: timeout, rate limit and any server error.
@@ -85,13 +89,13 @@ class _RefuseRedirects(urllib.request.HTTPRedirectHandler):
 class HttpClient:
     """POSTs JSON. Errors never carry the URL: for Telegram and Discord it holds the token.
 
-    With a guard, addresses in private networks are refused and redirects are not followed.
+    With a guard, addresses in private networks are refused, the connection goes only to the
+    addresses the guard checked, and redirects are not followed.
     """
 
     def __init__(self, timeout: float, guard: AddressGuard | None = None) -> None:
         self._timeout = timeout
         self._guard = guard
-        self._opener = urllib.request.build_opener(_RefuseRedirects) if guard else None
 
     @classmethod
     def from_settings(cls) -> Self:
@@ -101,15 +105,7 @@ class HttpClient:
         """The answer body."""
         if urlsplit(url).scheme not in ("http", "https"):
             raise DeliveryError("only http and https addresses are allowed", retryable=False)
-        if self._guard is not None:
-            try:
-                self._guard.check(url)
-            except BlockedAddressError as error:
-                raise DeliveryError(
-                    f"{error.address} is not a public address; private networks are off "
-                    "in the panel settings",
-                    retryable=False,
-                ) from None
+        open_url = self._opener(url)
         request = urllib.request.Request(
             url,
             data=body,
@@ -121,7 +117,6 @@ class HttpClient:
             },
         )
         try:
-            open_url = self._opener.open if self._opener else urllib.request.urlopen
             with open_url(request, timeout=self._timeout) as response:
                 answer: bytes = response.read()
         except urllib.error.HTTPError as error:
@@ -134,6 +129,26 @@ class HttpClient:
             reason = getattr(error, "reason", error)
             raise DeliveryError(f"connection failed: {reason}", retryable=True) from None
         return answer
+
+    def _opener(self, url: str) -> Callable[..., Any]:
+        """How to open the URL: with a guard, only to its checked addresses, without redirects."""
+        if self._guard is None:
+            return urllib.request.urlopen
+        try:
+            pinned = self._guard.pin(url)
+        except BlockedAddressError as error:
+            raise DeliveryError(
+                f"{error.address} is not a public address; private networks are off "
+                "in the panel settings",
+                retryable=False,
+            ) from None
+        except UnresolvedHostError:
+            raise DeliveryError(
+                "connection failed: the name does not resolve", retryable=True
+            ) from None
+        if pinned is None:
+            return urllib.request.build_opener(_RefuseRedirects).open
+        return pinned.opener(_RefuseRedirects()).open
 
 
 def _json(data: dict[str, Any]) -> bytes:

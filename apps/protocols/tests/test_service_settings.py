@@ -403,7 +403,10 @@ class TestProxySecrets:
         assert "socks-password" in response.content.decode()
         assert "no-store" in response["Cache-Control"]
         event = AuditEvent.objects.get()
-        assert (event.action, event.target_id) == ("protocols.service_password_view", str(socks5.pk))
+        assert (event.action, event.target_id) == (
+            "protocols.service_password_view",
+            str(socks5.pk),
+        )
 
     def test_showing_the_links_is_written_to_the_journal(
         self, admin_client: Client, mtproxy: ServiceInstance

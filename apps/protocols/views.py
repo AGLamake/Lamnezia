@@ -351,7 +351,7 @@ class ServiceSecretView(AdminRequiredMixin, View):
 
 
 class _ServiceRevealView(AdminRequiredMixin, View):
-    """A secret of a service, sent only on request and not cached; every look goes to the journal."""
+    """A secret of a service, sent only on request, not cached; every look goes to the journal."""
 
     action: str
     template_name: str

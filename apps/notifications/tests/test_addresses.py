@@ -3,7 +3,11 @@ from typing import Any
 
 import pytest
 
-from apps.notifications.services.addresses import AddressGuard, BlockedAddressError
+from apps.notifications.services.addresses import (
+    AddressGuard,
+    BlockedAddressError,
+    UnresolvedHostError,
+)
 
 
 def resolving_to(*addresses: str) -> Any:
@@ -58,3 +62,28 @@ def test_a_name_that_does_not_resolve_passes() -> None:
 
 def test_private_networks_pass_when_allowed() -> None:
     AddressGuard(allow_private=True).check("http://10.0.0.5/hook")
+
+
+class TestPin:
+    def test_a_send_is_pinned_to_the_checked_addresses(self) -> None:
+        guard = AddressGuard(allow_private=False, resolve=resolving_to("8.8.8.8", "::ffff:1.1.1.1"))
+
+        pinned = guard.pin("https://hooks.example.org/x")
+
+        assert pinned is not None
+        assert pinned.addresses == ("8.8.8.8", "1.1.1.1")
+
+    def test_a_private_address_is_not_pinned(self) -> None:
+        guard = AddressGuard(allow_private=False, resolve=resolving_to("8.8.8.8", "10.0.0.1"))
+
+        with pytest.raises(BlockedAddressError):
+            guard.pin("https://hooks.example.org/x")
+
+    def test_a_name_that_does_not_resolve_cannot_be_sent_to(self) -> None:
+        guard = AddressGuard(allow_private=False, resolve=unresolvable)
+
+        with pytest.raises(UnresolvedHostError):
+            guard.pin("https://nowhere.invalid/")
+
+    def test_nothing_is_pinned_when_private_networks_are_allowed(self) -> None:
+        assert AddressGuard(allow_private=True).pin("http://10.0.0.5/hook") is None
