@@ -24,6 +24,7 @@ class Operation(models.Model):
     `params` are the job inputs, enough to run it again; they hold ids, not secrets. A secret the
     job cannot do without goes in encrypted (SecretCipher), under a key from SECRET_PARAMS, so
     `rotate_encryption_key` re-encrypts it too and a retry after the rotation still reads it.
+    Params go into the audit journal only through `without_secrets`.
     """
 
     SECRET_PARAMS = ("password_token", "header_protection_key_token")
@@ -71,7 +72,11 @@ class Operation(models.Model):
 
     @classmethod
     def without_secrets(cls, params: dict[str, Any]) -> dict[str, Any]:
-        """The params fit for the audit journal: the encrypted secrets left out."""
+        """The params fit for the audit journal: the encrypted secrets left out.
+
+        The one filter for every kind of operation: a new secret goes into SECRET_PARAMS, not
+        into a filter of its own.
+        """
         return {key: value for key, value in params.items() if key not in cls.SECRET_PARAMS}
 
     @property

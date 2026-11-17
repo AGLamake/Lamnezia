@@ -80,12 +80,8 @@ def _switch(user: User, status: KeyStatus, kind: str, **params: str) -> list[Ope
 
 def _launch(kind: str, key: AccessKey, params: dict[str, str]) -> Operation:
     operation = launch(kind, {"key_id": key.pk, **params}, subject=key_subject(key))
-    audit.log(
-        kind,
-        actor=None,
-        target=key,
-        data={"owner_id": key.user_id, "source": key.source, "operation": operation.pk, **params},
-    )
+    data = {"owner_id": key.user_id, "source": key.source, "operation": operation.pk}
+    audit.log(kind, actor=None, target=key, data={**data, **Operation.without_secrets(params)})
     return operation
 
 

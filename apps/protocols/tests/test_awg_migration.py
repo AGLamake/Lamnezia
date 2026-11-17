@@ -17,6 +17,7 @@ from apps.keys.services.profile import ServerProfile
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
+from apps.operations.tests.secrets import secrets_written
 from apps.protocols.errors import SetupErrorCode
 from apps.protocols.models import (
     AwgMigration,
@@ -32,7 +33,7 @@ from apps.protocols.services.awg_migration import (
     start_finish,
     start_migration,
 )
-from apps.protocols.tests.awg_case import APP_CONFIG, PSK, Start, issued_key, secrets_written
+from apps.protocols.tests.awg_case import APP_CONFIG, PSK, Start, issued_key
 from apps.protocols.tests.fake_awg import START_SCRIPT, FakeAwgServer
 from apps.protocols.tests.fake_offload_host import FakeOffloadHost, Interface
 from apps.servers.models import Server

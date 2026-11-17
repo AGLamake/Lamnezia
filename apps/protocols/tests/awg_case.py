@@ -1,6 +1,5 @@
 """The amnezia-awg2 server of the Amnezia app the AmneziaWG tests start from, and their helpers."""
 
-import json
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 from pathlib import Path
@@ -9,10 +8,9 @@ from typing import Any
 from amnezia_core.awg import AWG_CONFIG_PATH, AwgServerConfig
 from amnezia_core.keys import KeyPair
 from apps.accounts.models import User
-from apps.audit.models import AuditEvent
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.profile import ServerProfile
-from apps.operations.models import Operation, OperationStep
+from apps.operations.models import Operation
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.fake_awg import FakeAwgServer
 
@@ -55,16 +53,3 @@ def issued_key(instance: ProtocolInstance, owner: User | None = None) -> AccessK
 
 def server_config(awg: FakeAwgServer) -> AwgServerConfig:
     return AwgServerConfig.parse(awg.container_files[AWG_CONFIG_PATH].decode())
-
-
-def secrets_written(operation: Operation, key: str) -> list[str]:
-    """Where the operation, its steps or the audit carry `key`."""
-    places = {
-        "params": json.dumps(operation.params),
-        "error": operation.error_message + operation.error_hint,
-        "steps": "".join(
-            OperationStep.objects.filter(operation=operation).values_list("log", flat=True)
-        ),
-        "audit": json.dumps(list(AuditEvent.objects.values_list("data", flat=True))),
-    }
-    return [place for place, text in places.items() if key in text]

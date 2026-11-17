@@ -26,11 +26,12 @@ from apps.keys.services.profile import ServerProfile
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
+from apps.operations.tests.secrets import secrets_written
 from apps.protocols.errors import SetupErrorCode
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.services.awg_settings import AwgSettings
 from apps.protocols.services.settings_change import start_settings_change
-from apps.protocols.tests.awg_case import OnCommit, Start, issued_key, secrets_written
+from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
 
 pytestmark = pytest.mark.django_db
 

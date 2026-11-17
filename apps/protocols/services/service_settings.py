@@ -118,7 +118,7 @@ def start_service_settings_change(
 ) -> Operation:
     params = {"service_id": service.pk, **settings.to_params()}
     operation = launch(SERVICE_SETTINGS_KIND, params, user=user, subject=str(service))
-    data = {"container": service.container, "port": settings.port, "options": settings.options}
+    data = {"container": service.container, **Operation.without_secrets(params)}
     audit.log(SERVICE_SETTINGS_KIND, actor=user, target=service.server, data=data, ip=ip)
     return operation
 

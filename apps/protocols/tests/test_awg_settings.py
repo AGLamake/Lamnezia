@@ -16,6 +16,7 @@ from apps.keys.services.profile import ServerProfile
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
+from apps.operations.tests.secrets import secrets_written
 from apps.protocols.errors import SetupErrorCode
 from apps.protocols.models import InstanceOrigin, ProtocolInstance
 from apps.protocols.services.awg_settings import AwgSettings
@@ -26,7 +27,6 @@ from apps.protocols.tests.awg_case import (
     Start,
     fixture,
     issued_key,
-    secrets_written,
     server_config,
 )
 from apps.protocols.tests.fake_awg import PREVIOUS, START_SCRIPT, FakeAwgServer

@@ -311,6 +311,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   network check passed, with the Host header and the TLS certificate checked by name, so a name
   that changes its address after the check gets no request. A name that does not resolve is tried
   again later.
+- **Secrets of operations, one filter**: every operation that is given a secret (the SOCKS5
+  password, the AmneziaWG HeaderProtectionKey, the panel archive password) keeps it out of the
+  audit log, the step log and the operation page, also in its encrypted form; the parameters reach
+  the audit log through one filter only.
 
 ## [1.0.0] - 2026-11-13
 

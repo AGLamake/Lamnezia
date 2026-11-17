@@ -155,13 +155,8 @@ class DriftActions:
             raise ValueError(f"{action} does not apply to {drift.kind}")
         params = {"source": drift.source, "public_key": drift.public_key, "action": str(action)}
         operation = launch(RESOLVE, params, user=self._actor, subject=str(drift))
-        audit.log(
-            RESOLVE,
-            actor=self._actor,
-            target=drift.key,
-            data={**params, "kind": drift.kind, "operation": operation.pk},
-            ip=self._ip,
-        )
+        data = {**Operation.without_secrets(params), "kind": drift.kind, "operation": operation.pk}
+        audit.log(RESOLVE, actor=self._actor, target=drift.key, data=data, ip=self._ip)
         return operation
 
 
