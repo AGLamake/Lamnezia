@@ -35,7 +35,9 @@ def test_the_archive_reads_back_with_its_password() -> None:
     assert decrypted("correct horse ✓", raw) == DATA
 
 
-def test_a_wrong_password_does_not_open_it() -> None:
+def test_a_wrong_password_does_not_open_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Only the padding catches a wrong password: ~1 random salt in 256 slips by, this one does not.
+    monkeypatch.setattr("apps.backups.services.archive_cipher.os.urandom", bytes)
     with pytest.raises(ArchiveDecryptionError):
         decrypted("wrong password", encrypted("correct horse"))
 
