@@ -96,7 +96,10 @@ works as well; it is sent by the panel Discord bot. A Telegram chat works the sa
 
 ## 6. Commands for administrators and moderators
 
-A linked administrator or moderator sees **Administration** in the bot menu (or types `/admin`):
+A linked administrator or moderator sees **Administration** in the bot menu (or types `/admin`).
+In Telegram, their own chat with the bot also lists `/admin`, `/overview`, `/today` and
+`/incidents` in the command menu; the bot sets it at its start, so a new staff member sees them
+after the bots restart. Users never see these commands.
 
 - **Server summary**: each server online or not, CPU, memory and disk load, maintenance and open
   incidents.
@@ -105,7 +108,8 @@ A linked administrator or moderator sees **Administration** in the bot menu (or 
   requests to you and puts new ones in work, so the users hear someone is on it. **Close** closes
   the incident and its requests and tells the users; as on the incidents page, only an
   administrator closes, after a confirmation. For a moderator, **Take** assigns only the requests
-  of their users that nobody else has.
+  of their users that nobody else has. The incident card names who took it, even after its
+  requests are closed.
 
 To answer a user, reply (the messenger's **Reply**) to the bot notification about a new request
 or chat message: the text goes to that request or chat as the staff's answer. The notification

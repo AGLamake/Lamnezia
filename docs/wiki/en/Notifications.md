@@ -84,7 +84,8 @@ not count. Several answers in a row make one reminder until the user writes. Whe
 channel does not work (the messenger is not linked, the bot has no token, the bot is blocked,
 Discord refuses direct messages, the email did not go), the reminder tries the others in turn —
 Telegram, Discord, email — leaving out the channel the answer reached, and stops at the first that
-takes it; the delivery log shows the errors of every one tried. See [Support requests](Support-and-incidents.md).
+takes it; the delivery log shows the errors of every one tried. When the user has no channel but
+the one the answer reached, there is no reminder at all. See [Support requests](Support-and-incidents.md).
  When a request waits for the user, is resolved or closed, the user hears of it where they chose (`request_status`; to the messenger of their last message in it, if any). These events go only to the user. So do the decisions on a user's article suggestion: `suggestion_accepted` (with a link to the published page) and `suggestion_rejected` (with the reason), see [Guides](Guides-and-releases.md).
 
 Every message is written in the language of whoever reads it. A user picks the language of

@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Messenger offer in letters**: the letters about the end of access and the limit tell a user
   without linked messengers that notifications can come to Telegram or Discord, with a link to the
   profile, when the administrator has set up a bot.
+- **Pictures sent as files in Telegram**: an image sent to the bot as a file, not as a photo, goes to
+  support like a photo does.
+- **Who took an incident**: an incident remembers the staff member who took it, and its card in the
+  bot names them even after its requests are closed.
+- **Staff commands in the Telegram menu**: a staff member's own chat with the bot lists
+  `/admin`, `/overview`, `/today` and `/incidents`; users do not see them.
 - **Automatic stop of the old panel after a move**: once a confirmed move's domain points to the new
   machine and the copy there answers, the old read-only copy asks its host to stop it; the
   *stop the old copy* operation marks it in the journal, and the new `lamnezia-stop.timer` of
@@ -172,6 +178,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **WebSockets closed during a panel move**: while the panel is read-only, a new WebSocket is
   refused and a message on one opened before closes it unread, so no consumer can change data
   behind the move; the support pages fall back to polling. `/ws/ping` keeps answering.
+- **No useless reminder**: an answer reminder is not created when the only channel the user has
+  left is the one the answer already reached.
+- **Big pictures not downloaded**: a picture over 5 MB sent to a bot is refused by its size before
+  it is downloaded, in Telegram and in Discord.
 - **No Plans link for moderators**: the admin menu of a moderator no longer links the plans page,
   which only administrators may open.
 - **Subscription address in the portal app**: the `/sub/<token>` handler moved from `apps/keys`

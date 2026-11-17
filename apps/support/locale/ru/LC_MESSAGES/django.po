@@ -276,6 +276,9 @@ msgstr "статус"
 msgid "support answered"
 msgstr "ответ поддержки"
 
+msgid "taken by"
+msgstr "взял"
+
 msgid "text"
 msgstr "текст"
 
