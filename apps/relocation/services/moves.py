@@ -9,7 +9,7 @@ from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
 from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.models import PanelMove
-from apps.relocation.services.freeze import frozen_move
+from apps.relocation.services.freeze import MOVE_KIND_PREFIX, frozen_move
 from apps.servers.models import Server
 
 PREPARE_KIND = "relocation.prepare"
@@ -56,6 +56,14 @@ def cancel_move(move_id: int, user: User, ip: str | None) -> PanelMove:
         _launch(move, CANCEL_KIND, user)
         audit.log(CANCEL_KIND, actor=user, target=move.target, ip=ip)
     return move
+
+
+def move_operations(move: PanelMove) -> list[Operation]:
+    """The operations of a move in order, retries included, each with its steps."""
+    operations = Operation.objects.filter(
+        kind__startswith=MOVE_KIND_PREFIX, params__move_id=move.pk
+    )
+    return list(operations.order_by("pk").prefetch_related("steps"))
 
 
 def _locked(move_id: int) -> PanelMove:

@@ -143,7 +143,7 @@ def test_the_page_starts_a_move_only_when_understood(client: Client) -> None:
 
     started = client.post("/backups/move/", {"target": server.pk, "understood": "on"})
     move = PanelMove.objects.get()
-    assert started["Location"] == f"/operations/{move.operation_id}/"
+    assert started["Location"] == f"/backups/move/{move.pk}/"
     page = client.get("/backups/move/").content.decode()
     assert "Cancel the move" not in page
     assert server.host in page

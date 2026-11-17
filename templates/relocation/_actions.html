@@ -1,0 +1,14 @@
+{% load i18n ui %}<div class="flex flex-wrap gap-2">
+  {% if move.can_confirm %}
+  <form method="post" action="{% url 'relocation:confirm' move.pk %}" data-confirm="{% translate "Hand the panel over to the new machine? This copy becomes read-only." %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">{% icon "check" %}{% translate "Confirm the move" %}</button>
+  </form>
+  {% endif %}
+  {% if move.can_cancel %}
+  <form method="post" action="{% url 'relocation:cancel' move.pk %}" data-confirm="{% translate "Cancel the move and remove the copy from the new machine?" %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-ghost">{% icon "trash" %}{% translate "Cancel the move" %}</button>
+  </form>
+  {% endif %}
+</div>

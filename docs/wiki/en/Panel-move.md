@@ -38,6 +38,26 @@ step is pointing the panel domain to the new machine.
 6. When the domain points to the new machine, stop the old panel: `cd /opt/lamnezia && docker
    compose down`.
 
+## Move progress screen
+
+Starting, confirming or cancelling a move opens the **move progress** screen (also the *Progress*
+link on the move page). It lists the steps of every operation of the move with their status and
+reloads itself while an operation runs.
+
+After the confirmation the screen shows a **Panel domain** block: the time since the hand-over and
+where the A record of the domain from `SITE_URL` points:
+
+- *not checked yet* — the background check has not run yet;
+- *has no A record* — the domain does not resolve to an IPv4 address;
+- *points to another machine* — at least one A record leads elsewhere (for example, still to the
+  old machine);
+- *points to the new machine* — every A record leads to the new machine's address; on the old
+  panel the screen suggests stopping it once DNS caches have expired.
+
+A background job checks the domain once a minute (on the old panel it runs while the panel is
+read-only too); the page itself never looks up DNS. The checks stop once the domain has switched.
+A panel opened by an IP address (no domain in `SITE_URL`) has nothing to check.
+
 ## Cancel and failures
 
 - **Cancel the move** (before the confirmation, or after a failure) removes the copy from the new

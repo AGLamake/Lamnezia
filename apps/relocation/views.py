@@ -1,20 +1,27 @@
-"""Pages of the panel move: start it, then confirm or cancel it."""
+"""Pages of the panel move: start it, follow its steps and the domain, confirm or cancel it."""
 
 from collections.abc import Callable
 from typing import Any
 
+from django.conf import settings
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.views import View
-from django.views.generic import FormView
+from django.views.generic import DetailView, FormView
 
 from apps.accounts.models import User
 from apps.accounts.permissions import AdminRequiredMixin
 from apps.relocation.errors import MoveError
 from apps.relocation.forms import MoveForm
 from apps.relocation.models import PanelMove
-from apps.relocation.services.moves import cancel_move, confirm_move, start_move
+from apps.relocation.services.domain import panel_domain
+from apps.relocation.services.moves import (
+    cancel_move,
+    confirm_move,
+    move_operations,
+    start_move,
+)
 from apps.relocation.services.panel_machine import PanelMachine
 
 
@@ -36,7 +43,32 @@ class MoveView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
         except MoveError as exc:
             form.add_error(None, f"{exc.message} {exc.hint}")
             return self.form_invalid(form)
-        return redirect("operations:detail", pk=move.operation_id)
+        return redirect("relocation:progress", pk=move.pk)
+
+
+class MoveProgressView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
+    """The steps of a move, then the wait for the domain; reloads itself over HTMX meanwhile."""
+
+    template_name = "relocation/progress.html"
+    context_object_name = "move"
+    model = PanelMove
+    # The domain is checked once a minute: the page needs no faster reload while it waits.
+    DOMAIN_POLL_SECONDS = 15
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        move: PanelMove = self.object
+        poll_seconds = settings.PROGRESS_POLL_SECONDS if move.busy else self.DOMAIN_POLL_SECONDS
+        return super().get_context_data(
+            operations=move_operations(move),
+            domain=panel_domain(),
+            polling=move.busy or move.awaits_domain,
+            poll_seconds=poll_seconds,
+            **kwargs,
+        )
+
+
+class MoveProgressPartView(MoveProgressView):
+    template_name = "relocation/_progress.html"
 
 
 class _MoveActionView(AdminRequiredMixin, View):
@@ -49,7 +81,7 @@ class _MoveActionView(AdminRequiredMixin, View):
             text = f"{exc.message} {exc.hint}" if isinstance(exc, MoveError) else str(exc)
             messages.error(request, text)
             return redirect("relocation:move")
-        return redirect("operations:detail", pk=move.operation_id)
+        return redirect("relocation:progress", pk=move.pk)
 
 
 class MoveConfirmView(_MoveActionView):

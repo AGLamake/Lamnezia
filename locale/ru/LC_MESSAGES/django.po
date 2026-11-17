@@ -263,6 +263,10 @@ msgstr "Новый пользователь ждёт подтверждения"
 msgid "A plan sets the servers, protocols and limits of its users."
 msgstr "Тариф задаёт серверы, протоколы и лимиты своих пользователей."
 
+#, python-format
+msgid "A records: %(found)s. Checked at %(checked)s; the panel checks once a minute."
+msgstr "A-записи: %(found)s. Проверено в %(checked)s; панель проверяет раз в минуту."
+
 msgid "A relay on the new machine keeps working: the panel checks its ports before the install and after it. Servers that allow SSH only from the panel address must allow the new address too."
 msgstr "Ретранслятор на новой машине продолжает работать: панель проверяет его порты до установки и после неё. Серверы, которые пускают по SSH только с адреса панели, должны пускать и с нового адреса."
 
@@ -1029,6 +1033,9 @@ msgstr "Docker с compose не установлен: установщик пос
 msgid "Does not work"
 msgstr "Не работает"
 
+msgid "Domain"
+msgstr "Домен"
+
 msgid "Done"
 msgstr "Готово"
 
@@ -1301,6 +1308,10 @@ msgstr "Инструкции"
 
 msgid "Hand the panel over to the new machine? This copy becomes read-only."
 msgstr "Передать панель новой машине? Эта копия станет только для чтения."
+
+#, python-format
+msgid "Handed over %(since)s ago."
+msgstr "Передано %(since)s назад."
 
 msgid "Help text under fields."
 msgstr "Подсказка под полем."
@@ -1801,6 +1812,9 @@ msgstr "Зона модератора"
 msgid "Most phones need arm64-v8a. Your Android version is in Settings → About phone."
 msgstr "Большинству телефонов подходит arm64-v8a. Версия Android — в Настройках → О телефоне."
 
+msgid "Move progress"
+msgstr "Ход переноса"
+
 msgid "Move the AmneziaWG 2.0 server to 3.1 on its card first."
 msgstr "Сначала переведите сервер AmneziaWG 2.0 на 3.1 в его карточке."
 
@@ -2242,6 +2256,9 @@ msgstr "Панель"
 msgid "Panel archive"
 msgstr "Архив панели"
 
+msgid "Panel domain"
+msgstr "Домен панели"
+
 msgid "Panel move"
 msgstr "Перенос панели"
 
@@ -2306,6 +2323,10 @@ msgstr "Тариф пользователя"
 
 msgid "Plans"
 msgstr "Тарифы"
+
+#, python-format
+msgid "Point the A record of the domain to %(host)s. Until it switches, users reach the read-only copy on the old machine."
+msgstr "Направьте A-запись домена на %(host)s. Пока она не переключится, пользователи попадают в копию только для чтения на старой машине."
 
 #, python-format
 msgid "Point the panel domain to %(host)s."
@@ -2926,6 +2947,9 @@ msgstr "Бейджи статусов"
 msgid "Step «%(step)s» failed."
 msgstr "Ошибка на шаге «%(step)s»."
 
+msgid "Steps"
+msgstr "Шаги"
+
 msgid "Stop"
 msgstr "Остановить"
 
@@ -3122,6 +3146,12 @@ msgstr "Устройство сразу потеряет доступ. Это н
 msgid "The device name"
 msgstr "Название устройства"
 
+msgid "The domain points to the new machine. When your DNS caches have expired, stop this copy with docker compose down."
+msgstr "Домен указывает на новую машину. Когда истечёт кэш DNS, остановите эту копию командой docker compose down."
+
+msgid "The domain points to this machine: the move is over."
+msgstr "Домен указывает на эту машину: перенос завершён."
+
 #, python-format
 msgid "The files of %(server)s are read."
 msgstr "Файлы %(server)s прочитаны."
@@ -3313,6 +3343,9 @@ msgstr "Панель не смогла прочитать там счётчик�
 
 msgid "The panel has no backup of this protocol yet. It copies the container files before removing it; if the copy fails, the keys cannot work again, even if the protocol is installed anew."
 msgstr "В панели пока нет бэкапа этого протокола. Перед удалением она скопирует файлы контейнера; если копия не получится, ключи больше не заработают, даже если установить протокол заново."
+
+msgid "The panel has no domain in SITE_URL: there is no A record to check. Open the panel by the address of the new machine."
+msgstr "У панели нет домена в SITE_URL: проверять нечего. Открывайте панель по адресу новой машины."
 
 msgid "The panel installer supports Debian and Ubuntu only. Choose another machine."
 msgstr "Установщик панели поддерживает только Debian и Ubuntu. Выберите другую машину."
@@ -4086,6 +4119,9 @@ msgstr "адрес"
 msgid "address of the new machine"
 msgstr "адрес новой машины"
 
+msgid "addresses of the domain"
+msgstr "адреса домена"
+
 msgid "an FAQ article"
 msgstr "статья FAQ"
 
@@ -4166,6 +4202,9 @@ msgstr "отключён"
 msgid "domain"
 msgstr "домен"
 
+msgid "domain checked at"
+msgstr "домен проверен"
+
 msgid "due today"
 msgstr "сегодня"
 
@@ -4192,6 +4231,12 @@ msgstr "участник группы"
 
 msgid "group members"
 msgstr "участники группы"
+
+msgid "handed over at"
+msgstr "передано"
+
+msgid "has no A record"
+msgstr "нет A-записи"
 
 msgid "health"
 msgstr "состояние"
@@ -4350,6 +4395,9 @@ msgstr "без ограничения"
 msgid "no server reachable"
 msgstr "ни один сервер не доступен"
 
+msgid "not checked yet"
+msgstr "ещё не проверялся"
+
 msgid "not finished"
 msgstr "не завершена"
 
@@ -4455,6 +4503,12 @@ msgstr "простой"
 
 msgid "plan"
 msgstr "тариф"
+
+msgid "points to another machine"
+msgstr "указывает на другую машину"
+
+msgid "points to the new machine"
+msgstr "указывает на новую машину"
 
 msgid "port"
 msgstr "порт"

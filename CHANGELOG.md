@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   app no longer connect and must be imported again.
 - **Prepare all imported XRay keys**: a button on the XRay row of the server card builds the
   profiles of every imported key in one background operation.
+- **Move progress screen**: starting, confirming or cancelling a panel move opens a screen with the
+  steps of the move's operations; after the hand-over it shows the time since the confirmation and
+  whether the A record of the panel domain points to the new machine. A background job checks the
+  domain once a minute, also on the read-only old panel, until it has switched.
 - **App versions for AmneziaWG 3.1 keys**: the portal key page and the bot key card (and the key
   itself in the bot) list the minimum Amnezia VPN and AmneziaWG versions per platform for a key of
   an AmneziaWG 3.1 server; other keys show no hint.

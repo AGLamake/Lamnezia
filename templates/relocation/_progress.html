@@ -1,0 +1,61 @@
+{% load i18n operations %}{# Polls itself while an operation runs or the domain is not switched yet. #}
+<div id="move-progress" class="min-w-0 space-y-6" aria-live="polite"
+     {% if polling %}hx-get="{% url 'relocation:progress-part' move.pk %}" hx-trigger="every {{ poll_seconds }}s" hx-swap="outerHTML"{% endif %}>
+  <section class="form-section">
+    <h2 class="section-title">{% translate "Steps" %}</h2>
+    <div class="form-section-body">
+      <p>{% translate "State" %}: <strong>{{ move.get_state_display }}</strong></p>
+      {% for operation in operations %}
+      <div class="card space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <a href="{% url 'operations:detail' operation.pk %}" class="font-medium hover:underline">{{ operation.kind|operation_title }}</a>
+          <span class="badge {{ operation.status|status_badge }}">{{ operation.get_status_display }}</span>
+        </div>
+        {% if operation.error_message %}<p class="text-sm text-danger">{{ operation.error_message }} {{ operation.error_hint }}</p>{% endif %}
+        <ol class="space-y-1">
+          {% for step in operation.steps.all %}
+          <li class="flex items-center justify-between gap-2 text-sm">
+            <span>{{ step.position }}. {{ step.title }}</span>
+            <span class="badge {{ step.status|status_badge }}">{{ step.get_status_display }}</span>
+          </li>
+          {% empty %}
+          {% if not operation.is_finished %}<li class="help-text">{% translate "Waiting for a background worker…" %}</li>{% endif %}
+          {% endfor %}
+        </ol>
+      </div>
+      {% endfor %}
+      {% include "relocation/_actions.html" %}
+    </div>
+  </section>
+
+  {% if move.handed_over_at %}
+  <section class="form-section">
+    <h2 class="section-title">{% translate "Panel domain" %}</h2>
+    <div class="form-section-body">
+      <p>{% blocktranslate with since=move.handed_over_at|timesince %}Handed over {{ since }} ago.{% endblocktranslate %}</p>
+      {% if not domain %}
+      {% translate "The panel has no domain in SITE_URL: there is no A record to check. Open the panel by the address of the new machine." as text %}
+      {% include "components/alert.html" with level="info" text=text %}
+      {% else %}
+      <p>{% translate "Domain" %}: <span class="font-mono">{{ domain }}</span> →
+        <span class="badge {% if move.domain_status == 'pointed' %}badge-success{% elif move.domain_status == 'unchecked' %}badge-muted{% else %}badge-warning{% endif %}">{{ move.get_domain_status_display }}</span>
+      </p>
+      {% if move.domain_checked_at %}
+      <p class="help-text">{% blocktranslate with found=move.domain_addresses|default:"—" checked=move.domain_checked_at|time:"TIME_FORMAT" %}A records: {{ found }}. Checked at {{ checked }}; the panel checks once a minute.{% endblocktranslate %}</p>
+      {% endif %}
+      {% if move.domain_status == "pointed" %}
+      {% if move.state == "left" %}
+      {% translate "The domain points to the new machine. When your DNS caches have expired, stop this copy with docker compose down." as text %}
+      {% else %}
+      {% translate "The domain points to this machine: the move is over." as text %}
+      {% endif %}
+      {% include "components/alert.html" with level="success" text=text %}
+      {% else %}
+      {% blocktranslate asvar text with host=move.target_host %}Point the A record of the domain to {{ host }}. Until it switches, users reach the read-only copy on the old machine.{% endblocktranslate %}
+      {% include "components/alert.html" with level="info" text=text %}
+      {% endif %}
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+</div>

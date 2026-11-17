@@ -12,13 +12,15 @@ from django.utils.translation import gettext as _
 
 from apps.operations.models import Operation, OperationStatus
 from apps.relocation.models import PanelMove
+from apps.relocation.tasks import CHECK_DOMAIN_TASK
 
 logger = logging.getLogger(__name__)
 
 MOVE_KIND_PREFIX = "relocation."
 RUN_OPERATION_TASK = "operations.run"
-# Jobs that only keep the operation journal truthful: a stuck move operation must end.
-ALWAYS_ALLOWED_TASKS = frozenset({"operations.fail_stale"})
+# Jobs that only keep the journal truthful: a stuck move operation must end, and the old panel
+# reports where the domain points while it waits read-only for the switch.
+ALWAYS_ALLOWED_TASKS = frozenset({"operations.fail_stale", CHECK_DOMAIN_TASK})
 MOVING_ERROR = "panel_moving"
 
 

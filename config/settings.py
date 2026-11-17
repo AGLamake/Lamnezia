@@ -288,6 +288,12 @@ NOTIFICATION_RETENTION_DAYS = env.int("NOTIFICATION_RETENTION_DAYS", default=90)
 TRAFFIC_HOURLY_DAYS = env.int("TRAFFIC_HOURLY_DAYS", default=35)
 CELERY_BEAT_SCHEDULE = {
     "operations-fail-stale": {"task": "operations.fail_stale", "schedule": 10 * 60},
+    # Only works after a panel move is handed over, until the domain points to the new machine.
+    "relocation-check-domain": {
+        "task": "relocation.check_domain",
+        "schedule": 60,
+        "options": {"expires": 60},
+    },
     "traffic-collect": {"task": "traffic.collect", "schedule": TRAFFIC_INTERVAL},
     # Limits are applied as often as traffic is read: newer numbers would not come sooner.
     "traffic-enforce-limits": {"task": "traffic.enforce_limits", "schedule": TRAFFIC_INTERVAL},

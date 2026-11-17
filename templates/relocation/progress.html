@@ -1,0 +1,17 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{% translate "Move progress" %} · {{ site_name }}{% endblock %}
+
+{% block nav %}{% include "components/admin_nav.html" with active="panel-move" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'relocation:move' %}">{% translate "Panel move" %}</a></li><li aria-current="page">{% translate "Move progress" %}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="min-w-0">
+    <h1 class="page-title">{% translate "Move progress" %}</h1>
+    <p class="page-lead">{% translate "New machine" %}: <span class="font-mono">{{ move.target_host }}</span> · {{ move.created_at|date:"SHORT_DATETIME_FORMAT" }}</p>
+  </div>
+</div>
+{% include "relocation/_progress.html" %}
+{% endblock %}

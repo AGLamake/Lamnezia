@@ -4,6 +4,7 @@ from typing import ClassVar
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.operations.models import OperationStatus
@@ -18,6 +19,15 @@ class MoveState(models.TextChoices):
     FAILED = "failed", _("failed")
 
 
+class DomainStatus(models.TextChoices):
+    """Where the A record of the panel domain points after the hand-over."""
+
+    UNCHECKED = "unchecked", _("not checked yet")
+    UNRESOLVED = "unresolved", _("has no A record")
+    ELSEWHERE = "elsewhere", _("points to another machine")
+    POINTED = "pointed", _("points to the new machine")
+
+
 class PanelMove(models.Model):
     """One move; the latest move decides whether the panel accepts changes.
 
@@ -28,6 +38,8 @@ class PanelMove(models.Model):
     FROZEN: ClassVar[frozenset[str]] = frozenset(
         {MoveState.PREPARING, MoveState.READY, MoveState.LEFT}
     )
+    # After these states only the domain is left to switch to the new machine.
+    HANDED_OVER: ClassVar[frozenset[str]] = frozenset({MoveState.LEFT, MoveState.ARRIVED})
 
     target = models.ForeignKey(
         "servers.Server",
@@ -53,6 +65,13 @@ class PanelMove(models.Model):
     # Set once a confirmation started: the copy may already accept changes, so it is not
     # removed blindly any more.
     confirm_started = models.BooleanField(_("confirmation started"), default=False)
+    handed_over_at = models.DateTimeField(_("handed over at"), null=True, blank=True)
+    # Filled by the background check of the domain (services/domain.py), never by a request.
+    domain_status = models.CharField(
+        _("domain"), max_length=16, choices=DomainStatus, default=DomainStatus.UNCHECKED
+    )
+    domain_addresses = models.CharField(_("addresses of the domain"), max_length=255, blank=True)
+    domain_checked_at = models.DateTimeField(_("domain checked at"), null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name=_("started by"),
@@ -94,6 +113,15 @@ class PanelMove(models.Model):
         cancellable = (MoveState.PREPARING, MoveState.READY, MoveState.FAILED)
         return self.state in cancellable and not self.busy
 
+    @property
+    def awaits_domain(self) -> bool:
+        """Handed over, and the domain does not point to the new machine yet."""
+        return self.state in self.HANDED_OVER and self.domain_status != DomainStatus.POINTED
+
     def mark(self, state: MoveState) -> None:
         self.state = state
-        self.save(update_fields=["state", "updated_at"])
+        fields = ["state", "updated_at"]
+        if state in self.HANDED_OVER and self.handed_over_at is None:
+            self.handed_over_at = timezone.now()
+            fields.append("handed_over_at")
+        self.save(update_fields=fields)
