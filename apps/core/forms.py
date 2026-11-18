@@ -43,6 +43,7 @@ class SiteSettingsForm(forms.ModelForm):  # type: ignore[type-arg]
             "key_reveal_policy",
             "bot_key_delivery",
             "guide_suggestions",
+            "traffic_warning_percent",
             "smtp_host",
             "smtp_port",
             "smtp_security",

@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `awg3_dropped` notification telling them to update or remove the module on the host and restart
   amnezia-awg2, and one `awg3_restored` when the settings are back. Both are ticked per channel like
   the other monitor events.
+- **Traffic runs out soon**: a user with a traffic limit hears once per period of that limit that
+  they have used a share of it (`traffic_low`, 80% by default, **Settings → Traffic warning**,
+  0 turns it off), before the keys go off. The plan, the user's own limits and the traffic of group
+  servers count; a new period, another plan or a changed limit warns again. When the traffic of
+  some keys is not counted now, the message says the real share may be higher. It links to the
+  usage page of the portal and can be routed to channels like the other events.
 - **Hosting and payment link of a server**: the server form takes an optional link to the hosting
   provider or its billing page (`http://` and `https://` only). The server card shows it under
   *VPS paid until* and opens it in a new tab, and the VPS payment reminder on the dashboard has a

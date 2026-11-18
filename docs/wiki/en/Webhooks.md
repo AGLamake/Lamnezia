@@ -37,6 +37,7 @@ zone), `data` depends on the event.
 | `awg3_restored` | amnezia-awg2 takes the 3.1 settings again after `awg3_dropped`. Once, even when no channel heard of `awg3_dropped`. | `server` name, `host`, `since` — the reading the settings were dropped since |
 | `limit_reached` | A user's keys are turned off by a limit. | `user`, `reason`: `traffic`, `total_traffic` or `expired` |
 | `access_expiring` | The access term of a user ends within three days. Once per term. | `user`, `until` — date `YYYY-MM-DD` |
+| `traffic_low` | A user has used the share of a traffic limit set in **Settings** (80% by default). Once per period of that limit; not sent once the limit is reached. Also sent to the user. | `user`, `percent` — share used, `used`, `limit_bytes` — bytes, `limit` (`of the period`, `of the plan`), `incomplete` — traffic of some keys is not counted now, `note`, `url` — usage page of the portal |
 | `keys_changed` | The protocol settings of a server changed; the user must import their keys again. Also sent to the user. | `user`, `server` — server name |
 | `keys_revoked` | The protocol was removed from a server with its backups; the user's keys on it are revoked. Also sent to the user. | `user`, `server` — server name |
 | `keys_moved` | The clients of legacy AmneziaWG on a server got new keys on AmneziaWG 3.1; the user must import them. Also sent to the user. | `user`, `server` — server name |
@@ -90,6 +91,8 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/access_expiring"}}}},
+    {"if": {"properties": {"event": {"const": "traffic_low"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/traffic_low"}}}},
     {"if": {"properties": {"event": {"const": "keys_changed"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/keys_changed"}}}},
     {"if": {"properties": {"event": {"const": "keys_revoked"}}},
@@ -184,6 +187,16 @@ may be added: ignore what you do not know.
       "type": "object",
       "required": ["user", "until"],
       "properties": {"user": {"type": "string"}, "until": {"type": "string", "format": "date"}}
+    },
+    "traffic_low": {
+      "type": "object",
+      "required": ["user", "percent", "used", "limit_bytes", "limit", "incomplete", "url"],
+      "properties": {
+        "user": {"type": "string"}, "percent": {"type": "integer"},
+        "used": {"type": "integer"}, "limit_bytes": {"type": "integer"},
+        "limit": {"enum": ["of the period", "of the plan"]}, "incomplete": {"type": "boolean"},
+        "note": {"type": "string"}, "url": {"type": "string", "format": "uri"}
+      }
     },
     "keys_changed": {
       "type": "object",

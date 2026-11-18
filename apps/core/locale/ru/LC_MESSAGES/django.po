@@ -13,6 +13,9 @@ msgstr "%(size)s/с"
 msgid "A bot username: 5 to 32 Latin letters, digits and _."
 msgstr "Имя бота: от 5 до 32 латинских букв, цифр и _."
 
+msgid "A user hears once a period that this share of their traffic limit is used. 0 turns the warning off."
+msgstr "Пользователь один раз за период узнаёт, что израсходовал эту долю лимита трафика. 0 — не предупреждать."
+
 msgid "Any time"
 msgstr "В любое время"
 
@@ -186,6 +189,9 @@ msgstr "вход через Telegram"
 
 msgid "task"
 msgstr "задача"
+
+msgid "traffic warning, %"
+msgstr "предупреждение о трафике, %"
 
 msgid "users suggest articles"
 msgstr "пользователи предлагают статьи"

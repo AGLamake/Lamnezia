@@ -96,6 +96,7 @@ class TestPage:
             "key_reveal_policy": "always",
             "bot_key_delivery": "allowed",
             "guide_suggestions": "on",
+            "traffic_warning_percent": "80",
             "smtp_host": "",
             "smtp_port": "587",
             "smtp_security": "starttls",
@@ -113,6 +114,15 @@ class TestPage:
         assert response["Location"] == PAGE
         site = SiteSettings.load()
         assert (site.site_name, site.registration_mode) == ("My VPN", "open_auto")
+
+    def test_the_traffic_warning_is_a_share_below_the_limit(self, admin: Client) -> None:
+        admin.post(PAGE, self.form(traffic_warning_percent="0"))
+        assert SiteSettings.load().traffic_warning_percent == 0
+
+        response = admin.post(PAGE, self.form(traffic_warning_percent="100"))
+
+        assert response.status_code == 200
+        assert SiteSettings.load().traffic_warning_percent == 0
 
     def test_telegram_sign_in_tells_to_set_the_panel_domain_in_botfather(
         self, admin: Client, settings: Any

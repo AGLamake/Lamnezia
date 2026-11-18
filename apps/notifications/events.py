@@ -27,6 +27,7 @@ class Event(StrEnum):
     AWG3_RESTORED = "awg3_restored"
     LIMIT_REACHED = "limit_reached"
     ACCESS_EXPIRING = "access_expiring"
+    TRAFFIC_LOW = "traffic_low"
     KEYS_CHANGED = "keys_changed"
     KEYS_REVOKED = "keys_revoked"
     KEYS_MOVED = "keys_moved"
@@ -88,14 +89,15 @@ class EventType:
         reads as a dash.
         """
         values = defaultdict(lambda: "—", {key: self._value(key, v) for key, v in data.items()})
-        text = str(self.text).format_map(values)
+        text = str(self.text).format_map(values).rstrip()
         if data.get("url"):
             text = f"{text}\n{data['url']}"
         return str(self.title).format_map(values), text
 
     def _value(self, key: str, value: Any) -> str:
         if key in self.translated:
-            return gettext(str(value))
+            # An empty detail stays empty: gettext("") is the header of the catalog.
+            return gettext(str(value)) if value else ""
         if key in self.coded:
             return self._label(self.coded[key], str(value))
         return str(value)
@@ -156,6 +158,16 @@ EVENTS: dict[Event, EventType] = {
         _("Access ends soon"),
         _("The VPN access of {user} ends on {until}."),
         to_user=True,
+        link_offer=True,
+    ),
+    # `limit` names which limit: of the period or of the whole plan. `note` is empty, or says
+    # that traffic of some keys is not counted now and the real share may be higher.
+    Event.TRAFFIC_LOW: EventType(
+        _("Traffic runs out soon"),
+        _("{percent}% of the traffic is used"),
+        _("{user} has used {percent}% of the traffic limit {limit}.\n{note}"),
+        to_user=True,
+        translated=("limit", "note"),
         link_offer=True,
     ),
     Event.KEYS_CHANGED: EventType(

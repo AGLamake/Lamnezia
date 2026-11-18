@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -74,6 +75,15 @@ class SiteSettings(models.Model):
         _("users suggest articles"),
         default=True,
         help_text=_("Signed-in users send links and texts for the guides; the staff review them."),
+    )
+    traffic_warning_percent = models.PositiveSmallIntegerField(
+        _("traffic warning, %"),
+        default=80,
+        validators=[MaxValueValidator(99)],
+        help_text=_(
+            "A user hears once a period that this share of their traffic limit is used. "
+            "0 turns the warning off."
+        ),
     )
     smtp_host = models.CharField(_("SMTP server"), max_length=255, blank=True)
     smtp_port = models.PositiveIntegerField(_("SMTP port"), default=587)

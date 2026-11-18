@@ -37,6 +37,7 @@
 | `awg3_restored` | amnezia-awg2 снова принимает параметры 3.1 после `awg3_dropped`. Один раз, даже если `awg3_dropped` не получил ни один канал. | `server` — имя, `host`, `since` — с какого замера параметры были отброшены |
 | `limit_reached` | Ключи пользователя отключены по лимиту. | `user`, `reason`: `traffic`, `total_traffic` или `expired` |
 | `access_expiring` | Срок доступа пользователя кончается в ближайшие три дня. Один раз на срок. | `user`, `until` — дата `YYYY-MM-DD` |
+| `traffic_low` | Пользователь израсходовал долю лимита трафика, заданную в **Настройках** (по умолчанию 80%). Один раз за период этого лимита; после достижения лимита не приходит. Приходит и самому пользователю. | `user`, `percent` — израсходованная доля, `used`, `limit_bytes` — байты, `limit` (`of the period`, `of the plan`), `incomplete` — трафик части ключей сейчас не считается, `note`, `url` — страница расхода в портале |
 | `keys_changed` | Изменились настройки протокола на сервере; пользователю нужно заново импортировать ключи. Приходит и самому пользователю. | `user`, `server` — имя сервера |
 | `keys_revoked` | Протокол удалён с сервера вместе с бэкапами; ключи пользователя на нём отозваны. Приходит и самому пользователю. | `user`, `server` — имя сервера |
 | `keys_moved` | Клиенты старого AmneziaWG на сервере получили новые ключи на AmneziaWG 3.1; пользователю нужно их импортировать. Приходит и самому пользователю. | `user`, `server` — имя сервера |
@@ -90,6 +91,8 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/access_expiring"}}}},
+    {"if": {"properties": {"event": {"const": "traffic_low"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/traffic_low"}}}},
     {"if": {"properties": {"event": {"const": "keys_changed"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/keys_changed"}}}},
     {"if": {"properties": {"event": {"const": "keys_revoked"}}},
@@ -184,6 +187,16 @@
       "type": "object",
       "required": ["user", "until"],
       "properties": {"user": {"type": "string"}, "until": {"type": "string", "format": "date"}}
+    },
+    "traffic_low": {
+      "type": "object",
+      "required": ["user", "percent", "used", "limit_bytes", "limit", "incomplete", "url"],
+      "properties": {
+        "user": {"type": "string"}, "percent": {"type": "integer"},
+        "used": {"type": "integer"}, "limit_bytes": {"type": "integer"},
+        "limit": {"enum": ["of the period", "of the plan"]}, "incomplete": {"type": "boolean"},
+        "note": {"type": "string"}, "url": {"type": "string", "format": "uri"}
+      }
     },
     "keys_changed": {
       "type": "object",

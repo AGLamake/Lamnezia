@@ -147,6 +147,7 @@ class PushMessage:
     # The page a click opens, by event: a URL name and the detail that gives its argument.
     PAGES: ClassVar[dict[Event, tuple[str, str | None]]] = {
         Event.LIMIT_REACHED: ("portal:usage", None),
+        Event.TRAFFIC_LOW: ("portal:usage", None),
         Event.TICKET_CREATED: ("support:inbox-conversation", "number"),
         Event.CHAT_MESSAGE: ("support:inbox-conversation", "number"),
         Event.INCIDENT_OPENED: ("support:incidents", None),

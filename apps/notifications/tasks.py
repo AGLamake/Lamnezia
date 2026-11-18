@@ -23,6 +23,11 @@ def warn_expiring() -> None:
     reminders.warn_expiring(timezone.now(), settings.ACCESS_EXPIRY_NOTICE)
 
 
+@shared_task(name="notifications.warn_traffic")
+def warn_traffic() -> None:
+    reminders.TrafficWarnings.from_settings(timezone.now()).warn_all()
+
+
 @shared_task(name="notifications.recover_stuck")
 def recover_stuck() -> None:
     stuck = StuckDeliveries(max_attempts=settings.NOTIFICATION_MAX_ATTEMPTS)

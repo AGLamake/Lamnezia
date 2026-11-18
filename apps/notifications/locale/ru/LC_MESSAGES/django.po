@@ -383,6 +383,12 @@ msgstr "На ваше обращение пришёл новый ответ: {to
 msgid "There is a new message in your support chat."
 msgstr "В чате поддержки новое сообщение."
 
+msgid "Traffic of some of your keys is not counted now: the real share may be higher."
+msgstr "Трафик части ваших ключей сейчас не считается: настоящая доля может быть больше."
+
+msgid "Traffic runs out soon"
+msgstr "Трафик скоро закончится"
+
 msgid "URL"
 msgstr "URL"
 
@@ -487,6 +493,12 @@ msgstr "каналы уведомлений"
 msgid "notifications"
 msgstr "уведомления"
 
+msgid "of the period"
+msgstr "на период"
+
+msgid "of the plan"
+msgstr "тарифа"
+
 msgid "secret"
 msgstr "секрет"
 
@@ -522,6 +534,10 @@ msgstr "{group}: ни один сервер не доступен"
 #, python-brace-format
 msgid "{group}: traffic moved to {to}"
 msgstr "{group}: трафик переведён на {to}"
+
+#, python-brace-format
+msgid "{percent}% of the traffic is used"
+msgstr "Израсходовано {percent}% трафика"
 
 #, python-brace-format
 msgid "{server} caught up with the group {group}"
@@ -570,6 +586,14 @@ msgstr ""
 #, python-brace-format
 msgid "{user} ({email}) waits for approval."
 msgstr "{user} ({email}) ждёт одобрения."
+
+#, python-brace-format
+msgid ""
+"{user} has used {percent}% of the traffic limit {limit}.\n"
+"{note}"
+msgstr ""
+"{user}: израсходовано {percent}% лимита трафика {limit}.\n"
+"{note}"
 
 #, python-brace-format
 msgid "{user} opened a request ({type}): {subject}"

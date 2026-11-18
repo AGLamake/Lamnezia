@@ -335,6 +335,11 @@ CELERY_BEAT_SCHEDULE = {
         "options": {"expires": MONITOR_INTERVAL},
     },
     "notifications-warn-expiring": {"task": "notifications.warn_expiring", "schedule": 60 * 60},
+    # As often as the limits: a user hears before the keys go off, not after.
+    "notifications-warn-traffic": {
+        "task": "notifications.warn_traffic",
+        "schedule": TRAFFIC_INTERVAL,
+    },
     "notifications-recover-stuck": {"task": "notifications.recover_stuck", "schedule": 10 * 60},
     "servers-thin-history": {"task": "servers.thin_history", "schedule": 60 * 60},
     "relays-thin-history": {"task": "relays.thin_history", "schedule": 60 * 60},

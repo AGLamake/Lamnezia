@@ -52,6 +52,9 @@ new period starts, access is extended ("Access until"), a plan is assigned or a 
 Keys an administrator disabled by hand are never turned on by the panel. A key enabled by hand
 for a user who is still over a limit is turned off again on the next check.
 
+Before that, the user is warned once a period when most of a traffic limit is used (80% by
+default, **Settings → Traffic warning**): see [Notifications](Notifications.md).
+
 Users without a plan and keys without an owner are not checked. Keys are turned off and on by
 background operations (shown in the operation journal) and written to the [audit log](Audit.md)
 without an author.

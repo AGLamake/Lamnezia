@@ -42,6 +42,7 @@ channels hear each event.
 | AmneziaWG runs with the 3.1 settings again | `awg3_restored` | `server`, `host`, `since` |
 | Limit reached | `limit_reached` | `user`, `reason` (`traffic`, `total_traffic`, `expired`) |
 | Access ends soon | `access_expiring` | `user`, `until` (date) |
+| Traffic runs out soon | `traffic_low` | `user`, `percent`, `used`, `limit_bytes`, `limit`, `incomplete`, `note`, `url` |
 | Keys must be imported again | `keys_changed` | `user`, `server` |
 | Keys revoked | `keys_revoked` | `user`, `server` |
 | Keys moved to AmneziaWG 3.1 | `keys_moved` | `user`, `server` |
@@ -72,9 +73,19 @@ trouble event. Deleting a server or a relay forgets its outage without a recover
 Notifications about the user go where they chose on their **Messengers** page: email by default,
 or their linked Telegram or Discord ([Telegram and Discord](Messengers.md)), and also to the
 browsers where they turned notifications on ([In the browser](#in-the-browser)).
-Users themselves get an email about their reached limit and three days before their access ends,
-if they have an address. When an incident is closed, everyone who reported it gets an email
+Users themselves get an email about their reached limit, when most of their traffic limit is
+used (see below) and three days before their access ends, if they have an address. When an incident is closed, everyone who reported it gets an email
 that the server works again (`incident_resolved`; it goes only to the users, never to a channel).
+
+**Traffic runs out soon** (`traffic_low`): a user with a traffic limit hears once per period
+of that limit that they have used the share set in **Settings → Users and keys → Traffic
+warning** (80% by default; 0 turns it off). The limit of the plan and the user's own limits
+count, and the traffic of group servers too. Each limit warns on its own: per period and in
+total. A new period, another plan or a changed limit lets the panel warn again; an extension
+of the same plan keeps the period and does not. A reached limit is not warned of: the user
+hears of `limit_reached`. When the traffic of some of the user's keys is not counted now (a
+server does not answer), the message says that the real share may be higher. The message
+links to the usage page of the portal and is written in the user's language.
 
 A letter to a user, like one to an email channel, is plain text with an HTML version in the
 panel's style: the event's title, its text and the link to its page as an **Open in the panel**
