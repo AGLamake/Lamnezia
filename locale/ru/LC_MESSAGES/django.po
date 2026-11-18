@@ -3739,6 +3739,9 @@ msgstr "На сервере уже файлы группы."
 msgid "The server already leads the group: nothing to do."
 msgstr "Сервер уже ведущий в группе: делать нечего."
 
+msgid "The server answers the relay, but none of the clients gets an answer. Switch the group to another server."
+msgstr "Сервер отвечает ретранслятору, но ни один клиент не получает ответа. Переключите группу на другой сервер."
+
 msgid "The server answers."
 msgstr "Сервер отвечает."
 
@@ -4458,6 +4461,9 @@ msgstr "интервал проверки, секунды"
 msgid "checked %(when)s ago"
 msgstr "проверено %(when)s назад"
 
+msgid "clients get no answer"
+msgstr "клиенты без ответа"
+
 #, python-format
 msgid "closed at %(at)s"
 msgstr "закрыт %(at)s"
@@ -5030,6 +5036,9 @@ msgstr "текст (английский)"
 
 msgid "text (Russian)"
 msgstr "текст (русский)"
+
+msgid "the clients get no answer from it"
+msgstr "клиенты не получают от него ответа"
 
 msgid "the copy on the new machine is ready"
 msgstr "копия на новой машине готова"

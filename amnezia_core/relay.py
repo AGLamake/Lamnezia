@@ -193,7 +193,11 @@ class BackendState:
 
 @dataclass(frozen=True)
 class GroupState:
-    """State of one group: the active backend, the last switch and the forwarded bytes."""
+    """State of one group: the active backend, the last switch and the forwarded bytes.
+
+    `unanswered`: clients reach the active backend and none gets an answer; an agent of an
+    older release does not tell it.
+    """
 
     port: int
     active: Backend | None
@@ -201,6 +205,7 @@ class GroupState:
     backends: tuple[BackendState, ...]
     bytes_from_clients: int
     bytes_to_clients: int
+    unanswered: bool = False
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "GroupState":
@@ -208,6 +213,7 @@ class GroupState:
         if active is not None and not isinstance(active, dict):
             raise RelayFormatError("Group state active must be a backend or null.")
         return cls(
+            unanswered=data.get("unanswered") is True,
             port=_integer(data, "port"),
             active=Backend.from_dict(active) if active is not None else None,
             switched_at=_moment(data, "switched_at"),

@@ -18,7 +18,16 @@ from amnezia_core.relay import (
     SwitchOutcome,
     SwitchRequest,
 )
-from apps.relays.agent.relay_agent import Agent, Backend, Group, parse_counters, ruleset
+from apps.relays.agent.relay_agent import (
+    Agent,
+    Backend,
+    Flow,
+    Group,
+    Shell,
+    parse_counters,
+    parse_flows,
+    ruleset,
+)
 
 A = Backend("203.0.113.10", 55424)
 B = Backend("203.0.113.20", 55424)
@@ -34,6 +43,7 @@ class FakeNetwork:
     calls: list[tuple[str, object]] = field(default_factory=list)
     rules: str = ""
     bytes: dict[int, tuple[int, int]] = field(default_factory=dict)
+    clients: dict[int, list[Flow]] = field(default_factory=dict)
 
     def prepare(self, group: Group) -> None:
         self.calls.append(("prepare", group.port))
@@ -55,6 +65,9 @@ class FakeNetwork:
 
     def counters(self) -> dict[int, tuple[int, int]]:
         return dict(self.bytes)
+
+    def flows(self, port: int) -> list[Flow]:
+        return list(self.clients.get(port, ()))
 
     def since(self, mark: int) -> list[tuple[str, object]]:
         return self.calls[mark:]
@@ -390,6 +403,110 @@ def test_after_a_planned_switch_the_agent_still_fails_over_on_its_own(
         agent.tick()
 
     assert active(folder) == core(A)
+
+
+def unanswered(folder: Path) -> bool:
+    group = state(folder).group(PORT)
+    assert group is not None
+    return group.unanswered
+
+
+def waiting(*clients: str, member: Backend = A) -> list[Flow]:
+    return [Flow(client, member.host, answered=False) for client in clients]
+
+
+def test_clients_without_an_answer_round_after_round_are_told(
+    network: FakeNetwork, folder: Path
+) -> None:
+    agent = agent_for(network, folder)
+    agent.tick()
+    network.clients = {PORT: waiting("198.51.100.1", "198.51.100.2")}
+
+    agent.tick()
+    agent.tick()
+    assert not unanswered(folder), "two rounds are not enough"
+    agent.tick()
+
+    assert unanswered(folder)
+    assert active(folder) == core(A), "the agent does not switch on it"
+
+
+@pytest.mark.parametrize(
+    "flows",
+    [
+        waiting("198.51.100.1"),
+        waiting("198.51.100.1", "198.51.100.1"),
+        [*waiting("198.51.100.1", "198.51.100.2"), Flow("198.51.100.3", A.host, answered=True)],
+        waiting("198.51.100.1", "198.51.100.2", member=B),
+    ],
+    ids=["one client", "one client twice", "another client answered", "an old member"],
+)
+def test_waiting_clients_are_not_enough_alone(
+    network: FakeNetwork, folder: Path, flows: list[Flow]
+) -> None:
+    agent = agent_for(network, folder)
+    agent.tick()
+    network.clients = {PORT: flows}
+
+    for _ in range(5):
+        agent.tick()
+
+    assert not unanswered(folder)
+
+
+def test_a_switch_starts_counting_again(network: FakeNetwork, folder: Path) -> None:
+    agent = agent_for(network, folder)
+    agent.tick()
+    network.clients = {PORT: waiting("198.51.100.1", "198.51.100.2")}
+    for _ in range(3):
+        agent.tick()
+    assert unanswered(folder)
+
+    ask(folder, B)
+    agent.tick()
+
+    assert active(folder) == core(B)
+    assert not unanswered(folder)
+
+
+def test_parse_flows_keeps_the_clients_and_leaves_out_the_probes() -> None:
+    text = "\n".join(
+        [
+            "udp      17 119 src=172.17.0.2 dst=203.0.113.20 sport=45506 dport=55424 "
+            "src=203.0.113.20 dst=172.17.0.2 sport=55424 dport=45506 [ASSURED] mark=0 use=1",
+            "udp      17 29 src=198.51.100.1 dst=172.17.0.2 sport=40001 dport=55424 [UNREPLIED] "
+            "src=203.0.113.20 dst=172.17.0.2 sport=55424 dport=40001 mark=0 use=1",
+            "udp      17 170 src=198.51.100.2 dst=172.17.0.2 sport=40002 dport=55424 "
+            "src=203.0.113.10 dst=172.17.0.2 sport=55424 dport=40002 [ASSURED] mark=0 use=1",
+            "conntrack v1.4.7 (conntrack-tools): 3 flow entries have been shown.",
+        ]
+    )
+
+    assert parse_flows(text) == [
+        Flow("198.51.100.1", "203.0.113.20", answered=False),
+        Flow("198.51.100.2", "203.0.113.10", answered=True),
+    ]
+
+
+def test_a_probe_binds_a_new_source_port(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """A filter may pass a flow it knows and drop new ones: each probe is a new flow."""
+    commands: list[list[str]] = []
+
+    class Done:
+        returncode = 0
+        stdout = "key\t1700000000\n"
+
+    def run(command: list[str], **_kwargs: object) -> Done:
+        commands.append(list(command))
+        return Done()
+
+    monkeypatch.setattr("subprocess.run", run)
+    group = Group(PORT, (A,), {"server_public_key": "key"})
+
+    assert Shell(tmp_path).probe(group, A)
+
+    added = next(command for command in commands if "endpoint" in command)
+    assert added[added.index("listen-port") + 1] == "0"
 
 
 def test_ruleset_replaces_the_table_in_one_transaction() -> None:

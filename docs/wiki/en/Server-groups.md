@@ -117,7 +117,9 @@ periodic sync does not retry such a relay. The container runs in its own network
 `network_mode: host`, and publishes only the ports of the groups.
 
 The agent inside the container probes the members in order every few seconds with a new handshake
-through the service peer and sends clients to the first live one. A switch takes the first member
+through the service peer and sends clients to the first live one. Each probe goes from a new random
+port: a filter on the way that lets a known flow through and drops new ones does not hide a member
+the clients cannot reach. A switch takes the first member
 that answered in the same round, the `nftables` rules change in one transaction, and old
 connections are dropped. The
 agent does not need the panel: switching works even while the panel is down. Its choice lives in
@@ -166,6 +168,13 @@ cannot reach, a group with no member left, a relay whose state is not read for t
 a member lagging longer than `LAMNEZIA_GROUP_LAG_ALERT` come as notifications
 ([Notifications](Notifications.md)). Clients of a group are seen by the members at the relay's
 address; the panel shows no client addresses.
+
+The agent also watches whether the active member answers the clients themselves. When several
+different clients send to it for a few rounds in a row and none of them gets an answer, with no
+answered client either, the group page marks the member **clients get no answer** and the relay card
+notes it at the group. The agent does not switch on it: no member answers a key deleted from the
+server. Move the group to another server with **Switch to this server**. The mark appears once the
+relay is updated (**Update** on the card).
 
 On every reading the panel compares the groups and members the agent forwards with what the panel
 wrote. When the config on the server was replaced (a group the panel does not have, a group of the

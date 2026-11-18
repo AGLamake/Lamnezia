@@ -39,7 +39,7 @@
         {% relay_load relay %}
         <ul class="space-y-1">
           {% for health in relay.groups_health %}
-            <li>UDP {{ health.port }}: {% if health.active %}{% blocktranslate with server=health.active.name %}traffic goes to {{ server }}{% endblocktranslate %}{% else %}{% translate "no server reachable" %}{% endif %}{% if health.down %} · {% translate "unreachable:" %} {% for member in health.down %}{{ member.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</li>
+            <li>UDP {{ health.port }}: {% if health.active %}{% blocktranslate with server=health.active.name %}traffic goes to {{ server }}{% endblocktranslate %}{% else %}{% translate "no server reachable" %}{% endif %}{% if health.down %} · {% translate "unreachable:" %} {% for member in health.down %}{{ member.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% if health.unanswered %} · <span class="text-danger">{% translate "the clients get no answer from it" %}</span>{% endif %}</li>
           {% endfor %}
         </ul>
       {% endif %}

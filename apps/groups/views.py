@@ -179,12 +179,15 @@ def _may_lead(member: GroupMember) -> bool:
     return not member.leading and member.joined and not member.lagging
 
 
-def _seen_by_relay(member: GroupMember, health: GroupHealth | None) -> tuple[bool | None, bool]:
-    """Whether the relay reaches the member (None: unknown) and whether it is the active one."""
+def _seen_by_relay(
+    member: GroupMember, health: GroupHealth | None
+) -> tuple[bool | None, bool, bool]:
+    """Whether the relay reaches the member (None: unknown), whether it is the active one and
+    whether, being active, it answers none of the clients."""
     if health is None:
-        return None, False
+        return None, False, False
     active = health.active is not None and health.active.id == member.pk
-    return health.reachable(member.pk), active
+    return health.reachable(member.pk), active, active and health.unanswered
 
 
 class GroupJoinView(AdminRequiredMixin, View):

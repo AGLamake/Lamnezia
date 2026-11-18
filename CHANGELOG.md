@@ -274,6 +274,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A relay member that answers the relay but not the clients**: the agent probed a member through
+  one long-lived flow, so a filter on the way that dropped new UDP flows let the probe through while
+  the clients got nothing, and the panel showed the member as reachable and active. Each probe now
+  goes from a new random port. The agent also counts clients that send to the active member without
+  an answer: when several do for a few rounds in a row, the group page marks the member **clients get
+  no answer** and the relay card notes it. The agent does not switch on it. Press **Update** on the
+  relay card to get the new agent.
 - **A relay with replaced settings is noticed and repaired**: the panel compared a relay only with
   what it had written itself, so a relay whose config.json someone replaced (another group, other
   members) went unnoticed, and its card showed the foreign group with an empty server list. Every

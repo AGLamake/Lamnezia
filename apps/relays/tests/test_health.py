@@ -42,6 +42,7 @@ def reading(  # noqa: PLR0913 - one argument per field of the state file
     backends: list[dict[str, Any]] | None = None,
     sent: int = 0,
     received: int = 0,
+    unanswered: bool | None = None,
 ) -> RelayHealth:
     group = {
         "port": PORT,
@@ -51,6 +52,8 @@ def reading(  # noqa: PLR0913 - one argument per field of the state file
         "bytes_from_clients": sent,
         "bytes_to_clients": received,
     }
+    if unanswered is not None:
+        group["unanswered"] = unanswered
     text = json.dumps({"version": 1, "updated_at": at, "groups": [group]})
     return RelayHealth.of(RelayState.parse(text), MEMBERS)
 
@@ -87,6 +90,17 @@ def test_the_health_survives_storing() -> None:
     health = reading(switched_at=AT - 30, sent=10, received=20)
 
     assert RelayHealth.load(json.loads(json.dumps(health.to_dict()))) == health
+
+
+def test_clients_without_an_answer_are_kept() -> None:
+    health = reading(unanswered=True)
+
+    assert health.groups[PORT].unanswered
+    assert RelayHealth.load(json.loads(json.dumps(health.to_dict()))) == health
+
+
+def test_an_older_agent_says_nothing_about_the_clients() -> None:
+    assert not reading().groups[PORT].unanswered
 
 
 def test_stored_health_of_an_unknown_form_is_none() -> None:

@@ -23,7 +23,10 @@ class Member:
 
 @dataclass(frozen=True)
 class GroupHealth:
-    """One group: its active member, when it last switched, who answers and who does not."""
+    """One group: its active member, when it last switched, who answers and who does not.
+
+    `unanswered`: the active member answers the relay but none of the clients.
+    """
 
     port: int
     active: Member | None
@@ -32,6 +35,7 @@ class GroupHealth:
     down: tuple[Member, ...]
     bytes_from_clients: int
     bytes_to_clients: int
+    unanswered: bool = False
 
     @classmethod
     def of(cls, state: GroupState, members: Mapping[Backend, Member]) -> "GroupHealth":
@@ -49,6 +53,7 @@ class GroupHealth:
             down=tuple(down),
             bytes_from_clients=state.bytes_from_clients,
             bytes_to_clients=state.bytes_to_clients,
+            unanswered=state.unanswered,
         )
 
     @property
@@ -72,6 +77,7 @@ class GroupHealth:
             "down": [vars(member) for member in self.down],
             "bytes_from_clients": self.bytes_from_clients,
             "bytes_to_clients": self.bytes_to_clients,
+            "unanswered": self.unanswered,
         }
 
     @classmethod
@@ -85,6 +91,7 @@ class GroupHealth:
             down=tuple(Member(**item) for item in data.get("down", ())),
             bytes_from_clients=int(data.get("bytes_from_clients", 0)),
             bytes_to_clients=int(data.get("bytes_to_clients", 0)),
+            unanswered=bool(data.get("unanswered", False)),
         )
 
 

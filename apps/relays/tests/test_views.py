@@ -119,6 +119,19 @@ def test_the_relay_card_shows_the_load_and_the_active_member(
     assert f"traffic goes to {joiner.instance.server.name}" in page
 
 
+def test_clients_without_an_answer_are_shown_on_both_pages(browser: Client, watched: Relay) -> None:
+    group = watched.server.relayed_groups.get()
+    detail = reverse("groups:detail", args=[group.pk])
+    card = reverse("servers:detail", args=[watched.server.pk])
+    assert "clients get no answer" not in browser.get(detail).content.decode()
+
+    watched.health["groups"][0]["unanswered"] = True
+    watched.save(update_fields=["health"])
+
+    assert "clients get no answer" in browser.get(detail).content.decode()
+    assert "the clients get no answer from it" in browser.get(card).content.decode()
+
+
 def test_the_card_tells_why_the_sync_skips_the_relay(browser: Client, watched: Relay) -> None:
     watched.sync_skipped = SyncSkip.MEMBER_ON_RELAY
     watched.sync_skipped_detail = "Europe: AmneziaWG"

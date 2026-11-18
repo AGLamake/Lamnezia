@@ -7,10 +7,16 @@ panel may put `switch.json` next to them: the agent takes it once, moves the gro
 member only if it answers a probe and writes the answer into the state. The file formats are
 those of `amnezia_core.relay`.
 
-Each group has one service interface `lr<port>`; a probe re-adds the server peer with the
-member's address and waits for a new handshake. Forwarding is nftables DNAT plus masquerade,
-replaced in one `nft -f` transaction; the conntrack entries of the group port are dropped right
-after a switch, or the clients would stay on the old member.
+Each group has one service interface `lr<port>`; a probe moves it to a new random source port,
+re-adds the server peer with the member's address and waits for a new handshake. The new port
+makes each probe a new flow, like a client that connects: a filter on the way may pass a flow
+it already knows and drop every new one. Forwarding is nftables DNAT plus masquerade, replaced
+in one `nft -f` transaction; the conntrack entries of the group port are dropped right after a
+switch, or the clients would stay on the old member.
+
+The agent also reads the conntrack entries of the clients: when several clients reach the
+active member and none gets an answer, round after round, the state says so. It does not switch
+on that: clients with keys the servers no longer know go unanswered by every member.
 """
 
 import functools
@@ -30,6 +36,9 @@ TABLE = "lamnezia_relay"
 # A live member answers in 0.1-0.3 s, a blocked one not in 3 s (docs/research/relay-fallback.md).
 PROBE_TIMEOUT = 1.0
 _PROBE_POLL = 0.1
+# Unanswered clients needed to call the active member silent: one is likely a deleted key.
+SILENT_CLIENTS = 2
+DIRECTIONS = 2  # a conntrack entry lists the original and the reply direction
 
 # Answers to a switch request of the panel (`amnezia_core.relay.SwitchOutcome`).
 SWITCHED = "switched"
@@ -96,6 +105,15 @@ class Settings:
             raise ValueError(f"bad config: {error!r}") from error
 
 
+@dataclass(frozen=True)
+class Flow:
+    """A conntrack entry of a client: the member it was sent to and whether that one answered."""
+
+    client: str
+    member: str
+    answered: bool
+
+
 @dataclass
 class Health:
     alive: bool = False
@@ -123,6 +141,8 @@ class Watch:
         self.active = active
         self.switched_at: int | None = None
         self.health: dict[Backend, Health] = {}
+        # Rounds in a row in which clients reached the active member and none got an answer.
+        self.silent = 0
         self.update(group, limit)
 
     def update(self, group: Group, limit: int) -> None:
@@ -138,9 +158,21 @@ class Watch:
             return False
         for candidate in self.group.backends:
             if candidate != self.active and self.health[candidate].alive:
-                self.active, self.switched_at = candidate, now
+                self._move(candidate, now)
                 return True
         return False
+
+    def observe(self, flows: Iterable[Flow]) -> None:
+        """Count the round as silent when `SILENT_CLIENTS` clients wait for the active member
+        and it answers none of its clients."""
+        if self.active is None:
+            self.silent = 0
+            return
+        to_active = [flow for flow in flows if flow.member == self.active.host]
+        waiting = {flow.client for flow in to_active if not flow.answered}
+        answered = any(flow.answered for flow in to_active)
+        silent = len(waiting) >= SILENT_CLIENTS and not answered
+        self.silent = self.silent + 1 if silent else 0
 
     def switch_to(self, backend: Backend, probe: Callable[[Backend], bool], now: int) -> str:
         """A switch the panel asked for: taken only if the member answers a probe right now."""
@@ -152,7 +184,7 @@ class Watch:
         self.health[backend].record(alive, now)
         if not alive:
             return UNREACHABLE
-        self.active, self.switched_at = backend, now
+        self._move(backend, now)
         return SWITCHED
 
     def state(self, traffic: tuple[int, int]) -> dict[str, Any]:
@@ -160,12 +192,16 @@ class Watch:
             "port": self.group.port,
             "active": self.active.to_dict() if self.active else None,
             "switched_at": self.switched_at,
+            "unanswered": self.silent >= self.limit,
             "backends": [
                 {**backend.to_dict(), **vars(health)} for backend, health in self.health.items()
             ],
             "bytes_from_clients": traffic[0],
             "bytes_to_clients": traffic[1],
         }
+
+    def _move(self, backend: Backend, now: int) -> None:
+        self.active, self.switched_at, self.silent = backend, now, 0
 
 
 def ruleset(routes: Mapping[int, Backend | None]) -> str:
@@ -221,7 +257,11 @@ class Network(Protocol):
         """Remove the service interface of a group that left the config."""
 
     def probe(self, group: Group, backend: Backend) -> bool:
-        """A new handshake of the service peer with the member."""
+        """A new handshake of the service peer with the member, from a new source port."""
+        ...
+
+    def flows(self, port: int) -> list[Flow]:
+        """The conntrack entries of the clients of a group port."""
         ...
 
     def forward(self, rules: str) -> None:
@@ -293,6 +333,8 @@ class Agent:
                 self._log(f"group {port}: {before or 'none'} -> {watch.active}")
                 if port not in moved:
                     moved.append(port)
+            elif port not in moved:
+                watch.observe(self._network.flows(port))
         if moved or self._dirty:
             self._traffic.keep(self._network.counters())
             self._network.forward(ruleset({p: w.active for p, w in self._watches.items()}))
@@ -428,8 +470,9 @@ class Shell:
         name, key = group.interface, str(group.service["server_public_key"])
         self._ok("awg", "set", name, "peer", key, "remove")
         psk = str(self._folder / f"{name}.psk")
+        # Listen port 0 binds a new random port, so the handshake is a new flow.
         self._run(
-            "awg", "set", name, "peer", key, "preshared-key", psk,
+            "awg", "set", name, "listen-port", "0", "peer", key, "preshared-key", psk,
             "endpoint", str(backend), "persistent-keepalive", "25",
         )  # fmt: skip
         deadline = time.monotonic() + self._timeout
@@ -445,6 +488,13 @@ class Shell:
     def forget(self, port: int) -> None:
         # conntrack exits 1 when there was nothing to delete.
         self._ok("conntrack", "-D", "-p", "udp", "--orig-port-dst", str(port))
+
+    def flows(self, port: int) -> list[Flow]:
+        found = subprocess.run(
+            ["conntrack", "-L", "-p", "udp", "--orig-port-dst", str(port)],
+            capture_output=True, text=True, check=False,
+        )  # fmt: skip
+        return parse_flows(found.stdout)
 
     def counters(self) -> dict[int, tuple[int, int]]:
         found = subprocess.run(
@@ -471,6 +521,25 @@ class Shell:
 def _handshaken(output: str) -> bool:
     """`awg show <if> latest-handshakes` has a peer with a handshake time other than 0."""
     return any(line.split()[-1:] not in ([], ["0"]) for line in output.splitlines())
+
+
+def parse_flows(text: str) -> list[Flow]:
+    """Client entries from `conntrack -L` text; the probes of the agent are left out.
+
+    A client entry went through DNAT: its answer comes from another address than the one it was
+    sent to. A probe goes from the relay straight to the member.
+    """
+    flows = []
+    for line in text.splitlines():
+        pairs = [token.split("=", 1) for token in line.split() if "=" in token]
+        sources = [value for key, value in pairs if key == "src"]
+        targets = [value for key, value in pairs if key == "dst"]
+        if len(sources) != len(targets) or len(sources) < DIRECTIONS:
+            continue
+        (client, member), (sent_to, _) = sources[:2], targets[:2]
+        if sent_to != member:
+            flows.append(Flow(client, member, "[UNREPLIED]" not in line))
+    return flows
 
 
 def parse_counters(text: str) -> dict[int, tuple[int, int]]:
