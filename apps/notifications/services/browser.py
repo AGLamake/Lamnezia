@@ -155,6 +155,8 @@ class PushMessage:
         Event.PAYMENT_RECEIVED: ("billing:orders", None),
         Event.SERVER_DOWN: ("servers:list", None),
         Event.SERVER_UP: ("servers:list", None),
+        Event.AWG3_DROPPED: ("servers:list", None),
+        Event.AWG3_RESTORED: ("servers:list", None),
     }
 
     @classmethod

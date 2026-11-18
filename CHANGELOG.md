@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Notification about dropped AmneziaWG 3.1 settings**: when the amneziawg kernel module on a
+  server is older than 3.1 and amnezia-awg2 runs without the 3.1 settings, administrators get one
+  `awg3_dropped` notification telling them to update or remove the module on the host and restart
+  amnezia-awg2, and one `awg3_restored` when the settings are back. Both are ticked per channel like
+  the other monitor events.
 - **Hosting and payment link of a server**: the server form takes an optional link to the hosting
   provider or its billing page (`http://` and `https://` only). The server card shows it under
   *VPS paid until* and opens it in a new tab, and the VPS payment reminder on the dashboard has a

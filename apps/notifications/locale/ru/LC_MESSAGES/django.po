@@ -22,6 +22,20 @@ msgstr "Доступ скоро закончится"
 msgid "Addresses"
 msgstr "Адреса"
 
+#, python-brace-format
+msgid "AmneziaWG on {server} runs with the 3.1 settings again"
+msgstr "AmneziaWG на {server} снова работает с настройками 3.1"
+
+#, python-brace-format
+msgid "AmneziaWG on {server} runs without the 3.1 settings"
+msgstr "AmneziaWG на {server} работает без настроек 3.1"
+
+msgid "AmneziaWG runs with the 3.1 settings again"
+msgstr "AmneziaWG снова работает с настройками 3.1"
+
+msgid "AmneziaWG runs without the 3.1 settings"
+msgstr "AmneziaWG работает без настроек 3.1"
+
 msgid "Answer from support"
 msgstr "Ответ поддержки"
 
@@ -280,6 +294,10 @@ msgstr "VPN-протокол удалён с сервера {server}, и ваш�
 msgid "The XRay settings of {server} have changed. Open your keys in the personal account and import them into the Amnezia app again: the ones added before no longer connect. A subscription link picks the change up by itself."
 msgstr "Настройки XRay на сервере {server} изменились. Откройте свои ключи в личном кабинете и заново импортируйте их в приложение Amnezia: добавленные раньше больше не подключаются. Ключи по ссылке-подписке обновятся сами."
 
+#, python-brace-format
+msgid "The amneziawg kernel module on {server} ({host}) is older than 3.1 and dropped the AmneziaWG 3.1 settings: clients with them do not connect. Update or remove the amneziawg module on the host and restart amnezia-awg2."
+msgstr "Модуль ядра amneziawg на сервере {server} ({host}) старше 3.1 и отбросил настройки AmneziaWG 3.1: клиенты с ними не подключаются. Обновите или удалите модуль amneziawg на хосте и перезапустите amnezia-awg2."
+
 msgid "The body is signed with it in the X-Lamnezia-Signature header."
 msgstr "Им подписывается тело запроса в заголовке X-Lamnezia-Signature."
 
@@ -413,6 +431,10 @@ msgstr "добавлен"
 
 msgid "address"
 msgstr "адрес"
+
+#, python-brace-format
+msgid "amnezia-awg2 on {server} ({host}) takes the AmneziaWG 3.1 settings again. Dropped since {since}."
+msgstr "amnezia-awg2 на сервере {server} ({host}) снова принимает настройки AmneziaWG 3.1. Они были отброшены с {since}."
 
 msgid "attempts"
 msgstr "попытки"

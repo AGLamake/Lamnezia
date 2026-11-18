@@ -38,6 +38,8 @@ channels hear each event.
 |---|---|---|
 | Server is down | `server_down` | `server`, `host`, `last_seen` |
 | Server answers again | `server_up` | `server`, `host`, `last_seen` |
+| AmneziaWG runs without the 3.1 settings | `awg3_dropped` | `server`, `host`, `since` |
+| AmneziaWG runs with the 3.1 settings again | `awg3_restored` | `server`, `host`, `since` |
 | Limit reached | `limit_reached` | `user`, `reason` (`traffic`, `total_traffic`, `expired`) |
 | Access ends soon | `access_expiring` | `user`, `until` (date) |
 | Keys must be imported again | `keys_changed` | `user`, `server` |
@@ -111,6 +113,12 @@ says how many there are.
 
 A server that goes down is reported once; it is reported again only after it has come back and gone
 down again. When it answers again, `server_up` is sent.
+
+When the amneziawg kernel module on a server is older than 3.1, amnezia-awg2 runs without the
+AmneziaWG 3.1 settings and clients with them do not connect. The monitor reports it once with
+`awg3_dropped`, saying what to do: update or remove the amneziawg module on the host and restart
+amnezia-awg2. When the settings are back, `awg3_restored` comes once. A drop on a server whose
+amnezia-awg2 is removed is forgotten without a notification.
 
 ## In the browser
 

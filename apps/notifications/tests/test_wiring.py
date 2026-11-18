@@ -14,12 +14,13 @@ from apps.accounts.tests.factories import UserFactory
 from apps.accounts.tests.registration import configure
 from apps.core.models import RegistrationMode
 from apps.notifications.events import EVENTS, Event
-from apps.notifications.models import Notification
+from apps.notifications.models import Notification, Trouble
 from apps.notifications.services.reminders import warn_expiring
 from apps.notifications.tests.conftest import FakeHttp
 from apps.notifications.tests.factories import ChannelFactory
 from apps.plans.tests.factories import UserLimitsFactory
 from apps.servers.tests.factories import ServerFactory
+from apps.servers.tests.test_metrics import OUTPUT
 from apps.servers.tests.test_monitor import INTERVAL, FakeServers, poll
 from apps.traffic.signals import LimitReason, limit_reached
 
@@ -102,6 +103,63 @@ def test_a_server_that_never_went_down_is_not_reported_up(http: FakeHttp) -> Non
     poll(servers, server, now)
 
     assert not http.posts
+
+
+DROPPED = OUTPUT + "@@lamnezia-awg3\ndropped\n"
+
+
+def test_dropped_awg3_settings_are_reported_once_and_their_return_once(http: FakeHttp) -> None:
+    ChannelFactory(events=[Event.AWG3_DROPPED, Event.AWG3_RESTORED])
+    server, servers = ServerFactory(name="Germany"), FakeServers()
+    now = timezone.now()
+    poll(servers, server, now - INTERVAL * 5)
+    servers.output = DROPPED
+    for step in (4, 3):
+        poll(servers, server, now - INTERVAL * step)
+    servers.output = OUTPUT
+    for step in (2, 1):
+        poll(servers, server, now - INTERVAL * step)
+
+    assert events_posted(http) == ["awg3_dropped", "awg3_restored"]
+    restored = json.loads(http.posts[1].body)["data"]
+    assert restored["server"] == "Germany"
+    assert restored["since"] == (now - INTERVAL * 4).isoformat()
+
+
+def test_awg3_settings_dropped_again_are_reported_again(http: FakeHttp) -> None:
+    ChannelFactory(events=[Event.AWG3_DROPPED])
+    server, servers = ServerFactory(), FakeServers()
+    now = timezone.now()
+    for step, output in enumerate((DROPPED, OUTPUT, DROPPED)):
+        servers.output = output
+        poll(servers, server, now - INTERVAL * (3 - step))
+
+    assert events_posted(http) == ["awg3_dropped", "awg3_dropped"]
+
+
+def test_awg3_settings_return_is_told_with_nobody_told_of_the_drop(http: FakeHttp) -> None:
+    ChannelFactory(events=[Event.AWG3_RESTORED])
+    server, servers = ServerFactory(), FakeServers(DROPPED)
+    now = timezone.now()
+    poll(servers, server, now - INTERVAL)
+    servers.output = OUTPUT
+    poll(servers, server, now)
+
+    assert events_posted(http) == ["awg3_restored"]
+
+
+def test_a_removed_amnezia_awg2_forgets_the_drop_untold(http: FakeHttp) -> None:
+    ChannelFactory(events=[Event.AWG3_RESTORED])
+    server, servers = ServerFactory(), FakeServers(DROPPED)
+    now = timezone.now()
+    poll(servers, server, now - INTERVAL * 2)
+    servers.output = OUTPUT.replace("amnezia-awg2 running\n", "")
+    poll(servers, server, now - INTERVAL)
+    servers.output = OUTPUT
+    poll(servers, server, now)
+
+    assert not http.posts
+    assert not Trouble.objects.exists()
 
 
 def test_a_registration_request_is_reported(http: FakeHttp) -> None:

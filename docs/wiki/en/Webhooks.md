@@ -33,6 +33,8 @@ zone), `data` depends on the event.
 |---|---|---|
 | `server_down` | A server has not answered for two monitoring intervals. Sent once until the server comes back. | `server` name, `host`, `last_seen` — time of the last answer or an empty string if it never answered |
 | `server_up` | A server answers again after an outage (`server_down`). Once per outage, even when no channel heard of `server_down`. | `server` name, `host`, `last_seen` — time of the last answer before the outage or an empty string |
+| `awg3_dropped` | The amneziawg kernel module on a server is older than 3.1 and dropped the AmneziaWG 3.1 settings of amnezia-awg2. Once, until the settings are back. | `server` name, `host`, `since` — time of the reading that found it |
+| `awg3_restored` | amnezia-awg2 takes the 3.1 settings again after `awg3_dropped`. Once, even when no channel heard of `awg3_dropped`. | `server` name, `host`, `since` — the reading the settings were dropped since |
 | `limit_reached` | A user's keys are turned off by a limit. | `user`, `reason`: `traffic`, `total_traffic` or `expired` |
 | `access_expiring` | The access term of a user ends within three days. Once per term. | `user`, `until` — date `YYYY-MM-DD` |
 | `keys_changed` | The protocol settings of a server changed; the user must import their keys again. Also sent to the user. | `user`, `server` — server name |
@@ -80,6 +82,10 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/server_down"}}}},
     {"if": {"properties": {"event": {"const": "server_up"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/server_up"}}}},
+    {"if": {"properties": {"event": {"const": "awg3_dropped"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/awg3_dropped"}}}},
+    {"if": {"properties": {"event": {"const": "awg3_restored"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/awg3_restored"}}}},
     {"if": {"properties": {"event": {"const": "limit_reached"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
@@ -146,6 +152,24 @@ may be added: ignore what you do not know.
         "server": {"type": "string"},
         "host": {"type": "string"},
         "last_seen": {"anyOf": [{"type": "string", "format": "date-time"}, {"const": ""}]}
+      }
+    },
+    "awg3_dropped": {
+      "type": "object",
+      "required": ["server", "host", "since"],
+      "properties": {
+        "server": {"type": "string"},
+        "host": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"}
+      }
+    },
+    "awg3_restored": {
+      "type": "object",
+      "required": ["server", "host", "since"],
+      "properties": {
+        "server": {"type": "string"},
+        "host": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"}
       }
     },
     "limit_reached": {

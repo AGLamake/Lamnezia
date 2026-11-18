@@ -13,7 +13,12 @@ from django.utils import timezone
 
 from amnezia_core.containers import AWG2
 from apps.notifications.events import Event
-from apps.notifications.services.trouble import report_recovery, report_trouble
+from apps.notifications.services.trouble import (
+    forget_trouble,
+    open_troubles,
+    report_recovery,
+    report_trouble,
+)
 from apps.servers.models import Server, ServerSample
 from apps.servers.services.connection import connect
 from apps.servers.services.metrics import (
@@ -60,6 +65,7 @@ class ServerMonitor:
         sample.save()
         if sample.answered:
             _report_up(server)
+            _report_awg3(server, sample)
         server.record_sample(sample)
         if server.online is False:
             _report_down(server)
@@ -86,6 +92,34 @@ def _report_up(server: Server) -> None:
         {"server": server.name, "host": server.host, "last_seen": last_seen},
         key=f"server_up:{occurrence}",
     )
+
+
+def _report_awg3(server: Server, sample: ServerSample) -> None:
+    """Once when amnezia-awg2 drops the 3.1 settings and once when it takes them again.
+
+    The key of a drop names the server and the reading it was first seen in:
+    `awg3_dropped:<id>:<moment>`. Without amnezia-awg2 the drop is forgotten untold.
+    """
+    prefix = f"{Event.AWG3_DROPPED}:{server.pk}:"
+    dropped = open_troubles(prefix)
+    data = {"server": server.name, "host": server.host}
+    if sample.awg3_dropped:
+        if not dropped:
+            moment = sample.at.isoformat()
+            report_trouble(Event.AWG3_DROPPED, {**data, "since": moment}, key=prefix + moment)
+        return
+    has_awg2 = any(c["name"] == AWG2.name for c in sample.containers)
+    for key in dropped:
+        if not has_awg2:
+            forget_trouble(key)
+            continue
+        moment = key.removeprefix(prefix)
+        report_recovery(
+            key,
+            Event.AWG3_RESTORED,
+            {**data, "since": moment},
+            key=f"{Event.AWG3_RESTORED}:{server.pk}:{moment}",
+        )
 
 
 def _last_seen(server: Server) -> str:

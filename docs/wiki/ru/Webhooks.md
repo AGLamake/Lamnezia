@@ -33,6 +33,8 @@
 |---|---|---|
 | `server_down` | Сервер не отвечает два интервала мониторинга. Один раз, пока сервер не вернётся. | `server` — имя, `host`, `last_seen` — время последнего ответа или пустая строка, если ответов не было |
 | `server_up` | Сервер после сбоя (`server_down`) снова отвечает. Один раз за сбой, даже если `server_down` не получил ни один канал. | `server` — имя, `host`, `last_seen` — время последнего ответа до сбоя или пустая строка |
+| `awg3_dropped` | Модуль ядра amneziawg на сервере старше 3.1 и отбросил параметры AmneziaWG 3.1 у amnezia-awg2. Один раз, пока параметры не вернутся. | `server` — имя, `host`, `since` — время замера, в котором это замечено |
+| `awg3_restored` | amnezia-awg2 снова принимает параметры 3.1 после `awg3_dropped`. Один раз, даже если `awg3_dropped` не получил ни один канал. | `server` — имя, `host`, `since` — с какого замера параметры были отброшены |
 | `limit_reached` | Ключи пользователя отключены по лимиту. | `user`, `reason`: `traffic`, `total_traffic` или `expired` |
 | `access_expiring` | Срок доступа пользователя кончается в ближайшие три дня. Один раз на срок. | `user`, `until` — дата `YYYY-MM-DD` |
 | `keys_changed` | Изменились настройки протокола на сервере; пользователю нужно заново импортировать ключи. Приходит и самому пользователю. | `user`, `server` — имя сервера |
@@ -80,6 +82,10 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/server_down"}}}},
     {"if": {"properties": {"event": {"const": "server_up"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/server_up"}}}},
+    {"if": {"properties": {"event": {"const": "awg3_dropped"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/awg3_dropped"}}}},
+    {"if": {"properties": {"event": {"const": "awg3_restored"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/awg3_restored"}}}},
     {"if": {"properties": {"event": {"const": "limit_reached"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
@@ -146,6 +152,24 @@
         "server": {"type": "string"},
         "host": {"type": "string"},
         "last_seen": {"anyOf": [{"type": "string", "format": "date-time"}, {"const": ""}]}
+      }
+    },
+    "awg3_dropped": {
+      "type": "object",
+      "required": ["server", "host", "since"],
+      "properties": {
+        "server": {"type": "string"},
+        "host": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"}
+      }
+    },
+    "awg3_restored": {
+      "type": "object",
+      "required": ["server", "host", "since"],
+      "properties": {
+        "server": {"type": "string"},
+        "host": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"}
       }
     },
     "limit_reached": {

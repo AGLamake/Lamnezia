@@ -37,8 +37,8 @@ def on_short_id_changed(sender: object, user: User, server: str, **kwargs: Any) 
 
 
 def on_server_deleted(sender: object, instance: Server, **kwargs: Any) -> None:
-    """A deleted server or relay leaves no outage behind in the list of troubles."""
-    for event in (Event.SERVER_DOWN, Event.RELAY_DOWN):
+    """A deleted server or relay leaves no trouble behind in the list of troubles."""
+    for event in (Event.SERVER_DOWN, Event.RELAY_DOWN, Event.AWG3_DROPPED):
         forget_troubles(f"{event}:{instance.pk}:")
 
 

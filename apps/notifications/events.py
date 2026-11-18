@@ -23,6 +23,8 @@ from apps.traffic.signals import LimitReason
 class Event(StrEnum):
     SERVER_DOWN = "server_down"
     SERVER_UP = "server_up"
+    AWG3_DROPPED = "awg3_dropped"
+    AWG3_RESTORED = "awg3_restored"
     LIMIT_REACHED = "limit_reached"
     ACCESS_EXPIRING = "access_expiring"
     KEYS_CHANGED = "keys_changed"
@@ -123,6 +125,23 @@ EVENTS: dict[Event, EventType] = {
         _("Server answers again"),
         _("Server {server} answers again"),
         _("The server {server} ({host}) answers again. Answer before the outage: {last_seen}."),
+    ),
+    Event.AWG3_DROPPED: EventType(
+        _("AmneziaWG runs without the 3.1 settings"),
+        _("AmneziaWG on {server} runs without the 3.1 settings"),
+        _(
+            "The amneziawg kernel module on {server} ({host}) is older than 3.1 and dropped the "
+            "AmneziaWG 3.1 settings: clients with them do not connect. Update or remove the "
+            "amneziawg module on the host and restart amnezia-awg2."
+        ),
+    ),
+    Event.AWG3_RESTORED: EventType(
+        _("AmneziaWG runs with the 3.1 settings again"),
+        _("AmneziaWG on {server} runs with the 3.1 settings again"),
+        _(
+            "amnezia-awg2 on {server} ({host}) takes the AmneziaWG 3.1 settings again. "
+            "Dropped since {since}."
+        ),
     ),
     Event.LIMIT_REACHED: EventType(
         _("Limit reached"),
