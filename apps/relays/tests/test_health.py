@@ -6,12 +6,14 @@ from typing import Any
 
 from amnezia_core.relay import Backend, RelayState
 from apps.relays.services.health import (
+    STEADY_SECONDS,
     AllDown,
     GroupHealth,
     GroupUp,
     Member,
     MemberDown,
     MemberUp,
+    Outage,
     RelayHealth,
     Switched,
 )
@@ -43,6 +45,7 @@ def reading(  # noqa: PLR0913 - one argument per field of the state file
     sent: int = 0,
     received: int = 0,
     unanswered: bool | None = None,
+    previous: RelayHealth | None = None,
 ) -> RelayHealth:
     group = {
         "port": PORT,
@@ -55,7 +58,7 @@ def reading(  # noqa: PLR0913 - one argument per field of the state file
     if unanswered is not None:
         group["unanswered"] = unanswered
     text = json.dumps({"version": 1, "updated_at": at, "groups": [group]})
-    return RelayHealth.of(RelayState.parse(text), MEMBERS)
+    return RelayHealth.of(RelayState.parse(text), MEMBERS, previous)
 
 
 def test_members_are_matched_by_address() -> None:
@@ -140,12 +143,56 @@ def test_all_members_down_is_told_once() -> None:
     assert list(reading(at=AT + 60, active=None, backends=down).changes(first)) == []
 
 
-def test_a_member_that_answers_again_is_told_once() -> None:
-    down = reading(backends=[backend(FIRST), backend(SECOND, alive=False, failures=3)])
-    up = reading(at=AT + 60)
+def test_a_member_that_answers_steadily_again_is_told_once() -> None:
+    health = reading(backends=[backend(FIRST), backend(SECOND, alive=False, failures=3)])
+    told = []
+    for at in range(AT + 60, AT + STEADY_SECONDS + 120, 60):
+        health, before = reading(at=at, previous=health), health
+        told += [(at, change) for change in health.changes(before)]
 
-    assert list(up.changes(down)) == [MemberUp(PORT, JOINER)]
-    assert list(reading(at=AT + 120).changes(up)) == []
+    assert told == [(AT + STEADY_SECONDS, MemberUp(PORT, JOINER))]
+
+
+def test_a_member_that_answers_now_and_then_is_told_down_once() -> None:
+    down = [backend(FIRST), backend(SECOND, alive=False, failures=3)]
+    shaky = [backend(FIRST), backend(SECOND, alive=False, failures=1)]
+    health = reading(backends=down)
+    told = list(health.changes(reading()))
+    for step in range(1, 30):
+        backends = [backend(FIRST), backend(SECOND)] if step % 4 == 0 else [down, shaky][step % 2]
+        health, before = reading(at=AT + step * 60, backends=backends, previous=health), health
+        told += health.changes(before)
+
+    assert told == [MemberDown(PORT, JOINER)]
+    assert health.groups[PORT].lost() == {JOINER.id}
+
+
+def test_an_outage_survives_storing() -> None:
+    down = [backend(FIRST), backend(SECOND, alive=False, failures=3)]
+    health = reading(at=AT + 60, previous=reading(backends=down))
+
+    assert health.groups[PORT].outages == (Outage(JOINER, AT, AT),)
+    assert RelayHealth.load(json.loads(json.dumps(health.to_dict()))) == health
+
+
+def test_a_member_down_in_a_reading_stored_before_outages_has_one() -> None:
+    down = [backend(FIRST), backend(SECOND, alive=False, failures=3)]
+    stored = reading(backends=down).to_dict()
+    for group in stored["groups"]:
+        del group["outages"]
+
+    before = RelayHealth.load(stored)
+    assert before is not None
+    assert list(reading(at=AT + 60, backends=down, previous=before).changes(before)) == []
+
+
+def test_an_outage_of_a_member_that_left_ends_untold() -> None:
+    down = [backend(FIRST), backend(SECOND, alive=False, failures=3)]
+    before = reading(backends=down)
+    after = reading(at=AT + 60, backends=[backend(FIRST)], previous=before)
+
+    assert list(after.changes(before)) == []
+    assert after.groups[PORT].outages == ()
 
 
 def test_a_member_that_was_never_down_is_not_told_up() -> None:
@@ -156,10 +203,11 @@ def test_a_member_that_was_never_down_is_not_told_up() -> None:
 def test_a_group_that_has_a_member_again_is_told_once() -> None:
     down = [backend(FIRST, alive=False, failures=3), backend(SECOND, alive=False, failures=5)]
     gone = reading(active=None, backends=down)
-    back = reading(at=AT + 60, backends=[backend(FIRST), down[1]])
+    back = reading(at=AT + 60, backends=[backend(FIRST), down[1]], previous=gone)
+    later = reading(at=AT + 120, backends=[backend(FIRST), down[1]], previous=back)
 
-    assert list(back.changes(gone)) == [MemberUp(PORT, LEADER), GroupUp(PORT)]
-    assert list(reading(at=AT + 120, backends=[backend(FIRST), down[1]]).changes(back)) == []
+    assert list(back.changes(gone)) == [GroupUp(PORT)]
+    assert list(later.changes(back)) == []
 
 
 def test_rates_come_from_the_counters_of_two_readings() -> None:

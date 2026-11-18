@@ -72,6 +72,10 @@ channels hear each event.
 the trouble apart from notifications, so the pair comes even when no channel is subscribed to the
 trouble event. Deleting a server or a relay forgets its outage without a recovery notification.
 
+`member_unreachable` comes once per outage of a member. The outage ends, and `member_reachable`
+comes, only after the member has answered every probe the panel saw for 5 minutes, so a member
+that answers the relay now and then does not repeat the pair every few minutes.
+
 Notifications about the user go where they chose on their **Messengers** page: email by default,
 or their linked Telegram or Discord ([Telegram and Discord](Messengers.md)), and also to the
 browsers where they turned notifications on ([In the browser](#in-the-browser)).

@@ -2,11 +2,12 @@
 
 docs/FALLBACK.md section 7. A reading matches the members the agent names by address to the
 group members and notifies of a switch, a member the relay cannot reach and a group with no
-member left. A relay whose state the panel cannot read for two intervals is reported once per
-outage, as a server that is down. Members that lag behind their group too long are reported too.
-Each of these but a switch has a pair told once when it is over; an outage and a lag are
-remembered apart from notifications (notifications/services/trouble.py), so the pair comes even
-when nobody hears of the trouble itself.
+member left; a member is told once per outage, which ends only when it answers steadily
+(services/health.py). A relay whose state the panel cannot read for two intervals is reported
+once per outage, as a server that is down. Members that lag behind their group too long are
+reported too. Each of these but a switch has a pair told once when it is over; an outage and
+a lag are remembered apart from notifications (notifications/services/trouble.py), so the pair
+comes even when nobody hears of the trouble itself.
 Every reading with a known load is kept for the load chart (services/load.py).
 A reading is also compared with the groups the panel wrote (services/mismatch.py): a new
 mismatch drops the synced digest, so the next sync writes the relay again.
@@ -108,7 +109,7 @@ class RelayMonitor:
     def _record(self, relay: Relay, state: RelayState) -> None:
         previous = RelayHealth.load(relay.health)
         _report_up(relay)
-        health = RelayHealth.of(state, _members(relay.server))
+        health = RelayHealth.of(state, _members(relay.server), previous)
         rates = health.rates(previous)
         relay.health = health.to_dict()
         relay.read_at, relay.read_error = self._clock(), ""

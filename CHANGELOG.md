@@ -291,6 +291,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **"Unreachable from the relay" every few minutes**: a group member that answered the relay
+  only now and then was told unreachable after each run of failed probes and reachable after each
+  answer. Now `member_unreachable` comes once per outage, and the outage ends with
+  `member_reachable` only after the member has answered every probe seen for 5 minutes.
 - **A panel move stuck after a partial confirmation**: when the new machine went down in the middle
   of the confirmation, the cancel refused and only a retry was left. The move screen now names the
   state and offers **Retry the confirmation** and **Cancel without the new machine**: the latter

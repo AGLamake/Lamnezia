@@ -15,6 +15,7 @@ from apps.notifications.events import Event
 from apps.notifications.models import Notification, Route
 from apps.notifications.tests.factories import ChannelFactory
 from apps.relays.models import Relay
+from apps.relays.services.health import STEADY_SECONDS
 from apps.relays.services.monitor import (
     BAD_STATE,
     STALE,
@@ -306,19 +307,20 @@ def test_a_member_and_a_group_reachable_again_are_told_once(
     write_state(relay_fake, active=None, backends=down)
     watch.poll(relay)
 
-    write_state(relay_fake, at=AT + 60, backends=[backend(LEADER_HOST), down[1]])
-    clock.now = NOW + timedelta(seconds=60)
-    watch.poll(relay)
-    write_state(relay_fake, at=AT + 120, backends=[backend(LEADER_HOST), down[1]])
-    clock.now = NOW + timedelta(seconds=120)
-    watch.poll(relay)
+    group = relay.server.relayed_groups.get().name
+    for seconds in range(60, STEADY_SECONDS + 120, 60):
+        write_state(relay_fake, at=AT + seconds, backends=[backend(LEADER_HOST), down[1]])
+        clock.now = NOW + timedelta(seconds=seconds)
+        watch.poll(relay)
+        if seconds == 60:
+            assert told(Event.GROUP_REACHABLE) == [{"group": group, "relay": relay.server.name}]
+            assert told(Event.MEMBER_REACHABLE) == []
 
     leader = GroupMember.objects.get(leading=True).instance.server.name
-    group = relay.server.relayed_groups.get().name
     assert told(Event.MEMBER_REACHABLE) == [
         {"group": group, "relay": relay.server.name, "server": leader}
     ]
-    assert told(Event.GROUP_REACHABLE) == [{"group": group, "relay": relay.server.name}]
+    assert len(told(Event.GROUP_REACHABLE)) == 1
 
 
 def test_a_relay_answering_again_is_told_once_after_its_outage(
