@@ -1,4 +1,5 @@
 import base64
+import json
 from collections.abc import Iterator
 from contextlib import nullcontext
 from datetime import timedelta
@@ -18,7 +19,7 @@ from apps.core.models import KeyRevealPolicy, SiteSettings
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.instances import Instance, instances
 from apps.keys.services.profile import XrayKeyProfile
-from apps.keys.services.subscription import MySubscription, SubscriptionFeed
+from apps.keys.services.subscription import FeedFormat, MySubscription, SubscriptionFeed
 from apps.keys.services.xray_profiles import BUILD_PROFILES
 from apps.keys.tests.conftest import HOST
 from apps.keys.tests.test_views import issued_key
@@ -96,6 +97,44 @@ class TestFeed:
         assert response["profile-update-interval"] == "12"
         assert base64.b64decode(response["profile-title"].removeprefix("base64:")) == b"Lamnezia"
         assert response["Cache-Control"] == "no-store"
+
+    def test_clients_get_the_portal_pages(self, client: Client, user: User) -> None:
+        response = client.get(f"/sub/{MySubscription(user).renew()}")
+
+        assert response["profile-web-page-url"] == "http://testserver/portal/"
+        assert response["support-url"] == "http://testserver/support/"
+
+    def test_the_links_stay_the_default(self, client: Client, user: User) -> None:
+        xray_key(user, "phone")
+        token = MySubscription(user).renew()
+
+        response = client.get(f"/sub/{token}", headers={"User-Agent": "v2rayNG/1.9"})
+
+        assert response["Content-Type"] == "text/plain; charset=utf-8"
+        assert base64.b64decode(response.content).decode().startswith("vless://phone-uuid@")
+
+    def test_clash_clients_get_a_yaml_profile(self, client: Client, user: User) -> None:
+        xray_key(user, "phone")
+        token = MySubscription(user).renew()
+
+        response = client.get(f"/sub/{token}", headers={"User-Agent": "clash.meta/1.19"})
+
+        assert response["Content-Type"] == "text/yaml; charset=utf-8"
+        assert "attachment" in response["Content-Disposition"]
+        assert '- name: "phone"' in response.content.decode()
+        assert '  uuid: "phone-uuid"' in response.content.decode()
+
+    def test_the_format_parameter_picks_sing_box(self, client: Client, user: User) -> None:
+        xray_key(user, "phone")
+        token = MySubscription(user).renew()
+
+        response = client.get(f"/sub/{token}?format=sing-box")
+
+        assert response["Content-Type"] == "application/json; charset=utf-8"
+        [vless] = [
+            out for out in json.loads(response.content)["outbounds"] if out["type"] == "vless"
+        ]
+        assert (vless["tag"], vless["uuid"], vless["server"]) == ("phone", "phone-uuid", HOST)
 
     def test_an_ipv6_host_is_in_brackets(self, client: Client, user: User) -> None:
         xray_key(user, "phone", host="2001:db8::1")
@@ -328,3 +367,25 @@ class TestAdmin:
         client.post(reverse("dashboard:user-subscription", args=[user.pk]))
 
         assert MySubscription(user).token() is None
+
+
+@pytest.mark.parametrize(
+    ("requested", "user_agent", "kind"),
+    [
+        ("", "", FeedFormat.RAW),
+        ("", "v2rayN/7.0", FeedFormat.RAW),
+        ("", "HiddifyNext/2.5 (android) like ClashMeta v2ray sing-box", FeedFormat.RAW),
+        ("", "ClashMetaForAndroid/2.11", FeedFormat.CLASH),
+        ("", "mihomo/1.19", FeedFormat.CLASH),
+        ("", "SFA/1.11.0 (Android 14; sing-box 1.11.0)", FeedFormat.SINGBOX),
+        ("", "sing-box 1.12", FeedFormat.SINGBOX),
+        ("clash", "SFI/1.11", FeedFormat.CLASH),
+        ("RAW", "clash-verge/2.0", FeedFormat.RAW),
+        ("singbox", "", FeedFormat.SINGBOX),
+        ("unknown", "", FeedFormat.RAW),
+    ],
+)
+def test_the_format_comes_from_the_parameter_then_the_client(
+    requested: str, user_agent: str, kind: FeedFormat
+) -> None:
+    assert FeedFormat.choose(requested, user_agent) is kind

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Subscription link for Clash/Mihomo and sing-box**: the XRay subscription link gives
+  Clash/Mihomo clients a Mihomo profile in YAML and sing-box clients a sing-box profile in JSON,
+  chosen by the client's `User-Agent` or by `?format=clash|singbox|raw`. Other clients get the
+  `vless://` links as before. The response also carries the portal keys page
+  (`profile-web-page-url`) and support (`support-url`).
 - **Telegram forum topics for notifications**: a Telegram channel takes `chat_id:topic_id`, e.g.
   `-1001234567890:42`, and posts to that topic of a supergroup, so servers and support can go to
   different topics. A plain chat ID works as before and posts to General.

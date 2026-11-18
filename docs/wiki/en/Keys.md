@@ -39,6 +39,9 @@ stored profiles, so the keys shown afterwards carry the new one. The keys alread
 keep the old shortId and no longer connect: their owners get the **XRay keys must be imported
 again** notification (`short_id_changed`). A subscription link picks the change up by itself.
 
+The subscription link gives the XRay keys as `vless://` links or, for Clash/Mihomo and sing-box
+clients, as a profile of their own format; see [Subscription link](Portal.md#subscription-link).
+
 ## Other actions
 
 - **Disable / Enable** — the peer is taken out of the server config and put back with the same

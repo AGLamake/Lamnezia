@@ -2,19 +2,24 @@
 
 XRay clients (v2rayN, v2RayTun, Hiddify, Streisand) take a subscription URL and fetch it again
 on their own, so a re-issued key or a changed server reaches them without a new link. The body
-is the de facto standard: the links one per line, in base64. The Amnezia app has no such
+is the de facto standard: the links one per line, in base64. Clash/Mihomo and sing-box clients
+get a whole profile of their own format instead (`FeedFormat`). The Amnezia app has no such
 mechanism for self-hosted servers, see docs/DESIGN.md, 3.9.
 """
 
 import base64
 import hashlib
+import re
 import secrets
 from dataclasses import dataclass
+from enum import StrEnum
+from urllib.parse import quote
 
 from django.conf import settings
 from django.core.cache import cache
 
-from amnezia_core.xray import XRAY_CONTAINER
+from amnezia_core.xray import XRAY_CONTAINER, XrayClientProfile
+from amnezia_core.xray_formats import XrayProxyList
 from apps.accounts.models import User
 from apps.core.models import KeyRevealPolicy
 from apps.core.services.site_settings import cached_settings
@@ -84,13 +89,57 @@ class SubscriptionThrottle:
         return count <= self._limit
 
 
+class FeedFormat(StrEnum):
+    """How the feed is written: the `format` parameter, else guessed from the User-Agent."""
+
+    RAW = "raw"
+    CLASH = "clash"
+    SINGBOX = "singbox"
+
+    @classmethod
+    def choose(cls, requested: str, user_agent: str) -> "FeedFormat":
+        """An unknown parameter and an unknown client get the links: every client reads them."""
+        named = _FORMAT_NAMES.get(requested.strip().lower())
+        if named is not None:
+            return named
+        for pattern, kind in _USER_AGENTS:
+            if pattern.search(user_agent):
+                return kind
+        return cls.RAW
+
+    @property
+    def content_type(self) -> str:
+        return _CONTENT_TYPES[self]
+
+
+_FORMAT_NAMES = {
+    "raw": FeedFormat.RAW,
+    "base64": FeedFormat.RAW,
+    "clash": FeedFormat.CLASH,
+    "mihomo": FeedFormat.CLASH,
+    "singbox": FeedFormat.SINGBOX,
+    "sing-box": FeedFormat.SINGBOX,
+}
+# Order matters: Hiddify names Clash and sing-box in its User-Agent but reads the links best.
+_USER_AGENTS = (
+    (re.compile(r"hiddify|v2ray|xray|streisand|happ", re.IGNORECASE), FeedFormat.RAW),
+    (re.compile(r"sing-?box|^SF[AIMT]/", re.IGNORECASE), FeedFormat.SINGBOX),
+    (re.compile(r"clash|mihomo|stash", re.IGNORECASE), FeedFormat.CLASH),
+)
+_CONTENT_TYPES = {
+    FeedFormat.RAW: "text/plain; charset=utf-8",
+    FeedFormat.CLASH: "text/yaml; charset=utf-8",
+    FeedFormat.SINGBOX: "application/json; charset=utf-8",
+}
+
+
 @dataclass(frozen=True, repr=False)
 class SubscriptionFeed:
-    """What a client gets by the link: the user's active XRay keys. The links hold secrets."""
+    """What a client gets by the link: the user's active XRay keys. The profiles hold secrets."""
 
     owner: User
     title: str
-    links: tuple[str, ...]
+    profiles: tuple[tuple[str, XrayClientProfile], ...]
 
     @classmethod
     def find(cls, token: str) -> "SubscriptionFeed | None":
@@ -105,19 +154,33 @@ class SubscriptionFeed:
             return None
         keys = list(user.access_keys.filter(status=KeyStatus.ACTIVE).order_by("created_at"))
         request_profiles(keys)  # imported keys join the feed on one of the next refreshes
-        links = tuple(_vless_link(key) for key in keys if _is_xray(key))
-        return cls(user, cached_settings.get().site_name, links)
+        profiles = tuple((key.name, _client_profile(key)) for key in keys if _is_xray(key))
+        return cls(user, cached_settings.get().site_name, profiles)
 
-    def body(self) -> bytes:
+    @property
+    def links(self) -> tuple[str, ...]:
+        return tuple(profile.vless_link(name) for name, profile in self.profiles)
+
+    def body(self, kind: FeedFormat = FeedFormat.RAW) -> bytes:
+        if kind is FeedFormat.CLASH:
+            return XrayProxyList.of(self.title, self.profiles).clash().encode()
+        if kind is FeedFormat.SINGBOX:
+            return XrayProxyList.of(self.title, self.profiles).singbox().encode()
         return base64.b64encode("\n".join(self.links).encode())
 
-    def headers(self) -> dict[str, str]:
-        """Headers the common clients read: the name of the list and how often to refresh it."""
+    def headers(self, kind: FeedFormat = FeedFormat.RAW) -> dict[str, str]:
+        """Headers the common clients read: the name of the list and how often to refresh it.
+
+        Clash clients name a profile after the file of `Content-Disposition`.
+        """
         title = base64.b64encode(self.title.encode()).decode()
-        return {
+        headers = {
             "profile-title": f"base64:{title}",
             "profile-update-interval": str(UPDATE_INTERVAL_HOURS),
         }
+        if kind is FeedFormat.CLASH:
+            headers["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote(self.title)}"
+        return headers
 
 
 def _digest(token: str) -> str:
@@ -128,5 +191,5 @@ def _is_xray(key: AccessKey) -> bool:
     return key.can_export and profile_container(key.profile) == XRAY_CONTAINER
 
 
-def _vless_link(key: AccessKey) -> str:
-    return XrayKeyProfile.from_json(key.profile).client(key.private_key).vless_link(key.name)
+def _client_profile(key: AccessKey) -> XrayClientProfile:
+    return XrayKeyProfile.from_json(key.profile).client(key.private_key)

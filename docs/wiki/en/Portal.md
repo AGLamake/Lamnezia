@@ -80,6 +80,17 @@ current period against the period limit, or since the plan was assigned against 
 whichever has less left. Without a traffic limit the client shows it as unlimited, and without an
 access end there is no date.
 
+By default the link gives the `vless://` links, one per line in base64, which every XRay client
+reads. Clash/Mihomo clients (Clash Verge, FlClash, Clash Meta for Android, Stash) get a ready
+Mihomo profile in YAML instead, and sing-box clients (SFA, SFI, SFM) a sing-box 1.11+ profile in
+JSON: the same keys under one selector named after the panel, with private networks going
+direct. The panel tells the client by its `User-Agent`; Hiddify keeps the links, it reads them
+best. To choose by hand, add `?format=clash`, `?format=singbox` or `?format=raw` to the link.
+The server settings do not change for this.
+
+With the keys the clients also get the portal links: the keys page (`profile-web-page-url`) and
+support (`support-url`); clients that read them show the buttons to open these pages.
+
 One address may fetch subscription links at most `LAMNEZIA_SUBSCRIPTION_RATE_LIMIT` times a minute
 (30 by default); more get `429 Too Many Requests`. Clients refresh every 12 hours, so the limit
 only stops someone trying tokens.
