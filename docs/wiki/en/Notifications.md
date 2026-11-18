@@ -10,7 +10,7 @@ A channel is one place messages go to. There can be several channels of each kin
 | Kind | What to fill in |
 |---|---|
 | Email | One or more addresses separated by commas. Letters go through the panel's mail server ([Configuration](Configuration.md)): plain text with an HTML version in the panel's style, where the event's link is an **Open in the panel** button. |
-| Telegram | Chat ID of a user, group or channel the bot can write to. Bot token: the channel's own, or empty to use the one from the panel settings. |
+| Telegram | Chat ID of a user, group or channel the bot can write to. In a supergroup with topics add the topic number after a colon, `-1001234567890:42`: it ends the topic link (**Copy link** → `t.me/c/1234567890/42`); without a number the message goes to General. Bot token: the channel's own, or empty to use the one from the panel settings. |
 | Discord | Webhook URL of a Discord channel (**Channel settings → Integrations → Webhooks**). Messages come as an embed. |
 | Discord direct message | The Discord user ID (developer mode → right click → Copy User ID). Sent by the panel Discord bot; the user must share a server with it. |
 | Webhook | Your URL and a signing secret. The panel posts JSON (see below). |

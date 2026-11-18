@@ -22,6 +22,7 @@ from apps.notifications.services.channels import (
     HttpClient,
     Message,
     TelegramChannel,
+    TelegramChat,
     build_channel,
 )
 from apps.notifications.tests.conftest import FakeHttp
@@ -48,13 +49,62 @@ class Response(io.BytesIO):
 def test_telegram_sends_the_title_and_text_to_the_chat() -> None:
     http = FakeHttp()
 
-    TelegramChannel("123:abc", "-100500", http).send(MESSAGE)  # type: ignore[arg-type]
+    TelegramChannel("123:abc", TelegramChat("-100500"), http).send(MESSAGE)  # type: ignore[arg-type]
 
     [post] = http.posts
     assert post.url == "https://api.telegram.org/bot123:abc/sendMessage"
     body = json.loads(post.body)
     assert body["chat_id"] == "-100500"
     assert body["text"] == "Server Germany is down\n\nNo answer."
+
+
+@pytest.mark.parametrize(
+    ("target", "chat"),
+    [
+        ("-100500", TelegramChat("-100500")),
+        ("@news", TelegramChat("@news")),
+        (" -100500:42 ", TelegramChat("-100500", 42)),
+        ("@news:7", TelegramChat("@news", 7)),
+    ],
+)
+def test_telegram_chat_address_may_name_a_forum_topic(target: str, chat: TelegramChat) -> None:
+    assert TelegramChat.parse(target) == chat
+
+
+@pytest.mark.parametrize("target", ["", "  ", ":42", "-100500:", "-100500:0", "-100500:x"])
+def test_telegram_chat_address_refuses_a_bad_topic(target: str) -> None:
+    with pytest.raises(ValueError, match="Telegram chat"):
+        TelegramChat.parse(target)
+
+
+@pytest.mark.django_db
+def test_telegram_sends_to_the_forum_topic_of_the_address() -> None:
+    http = FakeHttp()
+    channel = ChannelFactory.build(kind=ChannelKind.TELEGRAM, target="-100500:42", secret="1:a")
+
+    build_channel(channel, http).send(MESSAGE)  # type: ignore[arg-type]
+
+    body = json.loads(http.posts[0].body)
+    assert body["chat_id"] == "-100500"
+    assert body["message_thread_id"] == 42
+
+
+def test_telegram_without_a_topic_sends_to_the_chat_itself() -> None:
+    http = FakeHttp()
+
+    TelegramChannel("123:abc", TelegramChat("-100500"), http).send(MESSAGE)  # type: ignore[arg-type]
+
+    assert "message_thread_id" not in json.loads(http.posts[0].body)
+
+
+@pytest.mark.django_db
+def test_telegram_with_a_broken_address_fails_without_retries() -> None:
+    channel = ChannelFactory.build(kind=ChannelKind.TELEGRAM, target="-100500:x", secret="1:a")
+
+    with pytest.raises(DeliveryError) as error:
+        build_channel(channel, FakeHttp())  # type: ignore[arg-type]
+
+    assert not error.value.retryable
 
 
 @pytest.mark.django_db

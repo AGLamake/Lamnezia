@@ -16,6 +16,7 @@ from apps.notifications.services.channels import (
     HttpClient,
     NotificationChannel,
     TelegramChannel,
+    TelegramChat,
 )
 
 
@@ -75,7 +76,9 @@ class PersonalChannels:
         menu = _("Menu")
         if via == NotifyVia.TELEGRAM:
             # A private chat with the bot has the user's id as its chat id.
-            return Destination(TelegramChannel(token, chat.external_id, self._http, menu), chat)
+            return Destination(
+                TelegramChannel(token, TelegramChat(chat.external_id), self._http, menu), chat
+            )
         return Destination(DiscordDmChannel(token, chat.external_id, self._http, menu), chat)
 
     def _chat(self, via: str) -> tuple[str, LinkedAccount] | None:

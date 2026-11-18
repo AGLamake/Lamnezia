@@ -260,6 +260,29 @@ def parse_addresses(text: str) -> list[str]:
     return [address for address in re.split(r"[\s,;]+", text) if address]
 
 
+@dataclass(frozen=True)
+class TelegramChat:
+    """A chat address `chat_id` or `chat_id:topic_id`: the topic is a forum thread of a supergroup.
+
+    Without a topic the message goes to the chat itself (in a forum — to General).
+    """
+
+    chat_id: str
+    topic: int | None = None
+
+    @classmethod
+    def parse(cls, target: str) -> Self:
+        """Split the address; `ValueError` when the chat is empty or the topic is not a number."""
+        text = target.strip()
+        chat_id, colon, topic = text.rpartition(":")
+        if not colon:
+            chat_id, topic = text, ""
+        valid_topic = not colon or (topic.isdigit() and int(topic) > 0)
+        if not chat_id or not valid_topic:
+            raise ValueError("bad Telegram chat address")
+        return cls(chat_id, int(topic) if topic else None)
+
+
 @register
 class TelegramChannel(NotificationChannel):
     """A message from a bot to a chat; without its own token the channel uses the panel bot.
@@ -274,13 +297,13 @@ class TelegramChannel(NotificationChannel):
     def __init__(
         self,
         token: str,
-        chat_id: str,
+        chat: TelegramChat,
         http: HttpClient,
         menu: str = "",
         api: TelegramApi | None = None,
     ) -> None:
         self._token = token
-        self._chat_id = chat_id
+        self._chat = chat
         self._http = http
         self._menu = menu
         self._api = api or TelegramApi.from_settings()
@@ -288,16 +311,22 @@ class TelegramChannel(NotificationChannel):
     @classmethod
     def from_model(cls, channel: Channel, http: HttpClient) -> Self:
         token = channel.secret or cached_settings.get().telegram_bot_token
-        return cls(token, channel.target, http)
+        try:
+            chat = TelegramChat.parse(channel.target)
+        except ValueError as error:
+            raise DeliveryError(str(error), retryable=False) from error
+        return cls(token, chat, http)
 
     def send(self, message: Message) -> None:
         if not self._token:
             raise DeliveryError("no Telegram bot token", retryable=False)
         body: dict[str, object] = {
-            "chat_id": self._chat_id,
+            "chat_id": self._chat.chat_id,
             "text": f"{message.title}\n\n{message.text}"[:_TELEGRAM_TEXT_LIMIT],
             "disable_web_page_preview": True,
         }
+        if self._chat.topic is not None:
+            body["message_thread_id"] = self._chat.topic
         if self._menu:
             button = {"text": self._menu, "callback_data": _MENU_ACTION}
             body["reply_markup"] = {"inline_keyboard": [[button]]}

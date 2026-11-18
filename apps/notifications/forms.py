@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.notifications.events import routable_events
 from apps.notifications.models import Channel, ChannelKind, DeliveryStatus
 from apps.notifications.services.addresses import AddressGuard, BlockedAddressError
-from apps.notifications.services.channels import parse_addresses
+from apps.notifications.services.channels import TelegramChat, parse_addresses
 from apps.notifications.services.delivery import set_routes
 
 if TYPE_CHECKING:
@@ -89,13 +89,25 @@ class TelegramChannelForm(ChannelForm):
 
     class Meta(ChannelForm.Meta):
         labels: ClassVar = {"target": _("Chat ID")}
-        help_texts: ClassVar = {"target": _("A number, e.g. -1001234567890, or @channel_name.")}
+        help_texts: ClassVar = {
+            "target": _(
+                "A number, e.g. -1001234567890, or @channel_name. For a forum topic add its "
+                "number after a colon: -1001234567890:42. The number ends the topic link "
+                "(Copy link: t.me/c/1234567890/42); General — without a number."
+            )
+        }
 
     def clean_target(self) -> str:
-        chat_id: str = self.cleaned_data["target"].strip()
-        if not chat_id:
+        target: str = self.cleaned_data["target"].strip()
+        if not target:
             raise ValidationError(_("Enter the chat ID."))
-        return chat_id
+        try:
+            TelegramChat.parse(target)
+        except ValueError:
+            raise ValidationError(
+                _("Enter the chat ID, optionally with a topic number: -1001234567890:42.")
+            ) from None
+        return target
 
 
 class DiscordChannelForm(ChannelForm):

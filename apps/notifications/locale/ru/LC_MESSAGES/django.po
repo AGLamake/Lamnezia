@@ -10,8 +10,8 @@ msgstr ""
 msgid "%(address)s is an address in a private network. Allow such addresses in the panel settings if the receiver is in your own network."
 msgstr "%(address)s — адрес в частной сети. Разрешите такие адреса в настройках панели, если получатель в вашей собственной сети."
 
-msgid "A number, e.g. -1001234567890, or @channel_name."
-msgstr "Число, например -1001234567890, или @имя_канала."
+msgid "A number, e.g. -1001234567890, or @channel_name. For a forum topic add its number after a colon: -1001234567890:42. The number ends the topic link (Copy link: t.me/c/1234567890/42); General — without a number."
+msgstr "Число, например -1001234567890, или @имя_канала. Для темы форума добавьте её номер через двоеточие: -1001234567890:42. Номер — последняя часть ссылки на тему («Копировать ссылку»: t.me/c/1234567890/42); General — без номера."
 
 msgid "A test message is on its way. The result is in the log."
 msgstr "Тестовое сообщение отправляется. Результат — в журнале."
@@ -89,6 +89,9 @@ msgstr "Пусто — бот из настроек панели. Бот дол�
 
 msgid "Enter at least one address."
 msgstr "Укажите хотя бы один адрес."
+
+msgid "Enter the chat ID, optionally with a topic number: -1001234567890:42."
+msgstr "Укажите chat ID, при необходимости с номером темы: -1001234567890:42."
 
 msgid "Enter the chat ID."
 msgstr "Укажите chat ID."

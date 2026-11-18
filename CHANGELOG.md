@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Telegram forum topics for notifications**: a Telegram channel takes `chat_id:topic_id`, e.g.
+  `-1001234567890:42`, and posts to that topic of a supergroup, so servers and support can go to
+  different topics. A plain chat ID works as before and posts to General.
 - **Proxy for outgoing requests**: where Telegram or GitHub is blocked, `LAMNEZIA_TELEGRAM_PROXY`
   sends the bot and the Telegram notifications through an `http://` or `socks5://` proxy, and
   `LAMNEZIA_TELEGRAM_API_SERVER` points them to a self-hosted Bot API server;

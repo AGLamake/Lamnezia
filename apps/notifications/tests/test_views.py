@@ -133,6 +133,18 @@ def test_email_channel_checks_the_addresses(admin_client: Client) -> None:
     assert Channel.objects.get().target == "a@example.com, b@example.com"
 
 
+def test_telegram_channel_takes_a_forum_topic_after_a_colon(admin_client: Client) -> None:
+    url = reverse("notifications:add", args=["telegram"])
+    data = {"name": "Servers", "events": [Event.SERVER_DOWN], "enabled": "on", "secret": ""}
+
+    bad = admin_client.post(url, {**data, "target": "-1001234567890:general"})
+    good = admin_client.post(url, {**data, "target": " -1001234567890:42 "})
+
+    assert "target" in bad.context["form"].errors
+    assert good.status_code == 302
+    assert Channel.objects.get().target == "-1001234567890:42"
+
+
 def test_the_test_button_sends_a_message_and_opens_the_log(
     admin_client: Client, http: FakeHttp, commit: None
 ) -> None:
