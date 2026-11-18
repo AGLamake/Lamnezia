@@ -20,6 +20,7 @@ urlpatterns = [
     path("sw.js", ServiceWorkerView.as_view(), name="pwa-worker"),
     path("offline/", OfflineView.as_view(), name="pwa-offline"),
     path("metrics", metrics),
+    path("api/v1/", include("apps.api.urls")),
     path("accounts/", include("apps.accounts.urls")),
     path("guides/", include("apps.guides.urls")),
     path("audit/", include("apps.audit.urls")),

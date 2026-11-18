@@ -26,9 +26,7 @@ class ApiToken(models.Model):
         on_delete=models.CASCADE,
         related_name="api_tokens",
     )
-    scope = models.CharField(
-        _("scope"), max_length=16, choices=TokenScope, default=TokenScope.READ
-    )
+    scope = models.CharField(_("scope"), max_length=16, choices=TokenScope, default=TokenScope.READ)
     digest = models.CharField(_("token digest"), max_length=64, unique=True)
     prefix = models.CharField(_("starts with"), max_length=16)
     expires_at = models.DateTimeField(_("expires at"), null=True, blank=True)

@@ -30,7 +30,12 @@ class Usage:
 
     @classmethod
     def of(cls, user: User, limits: EffectiveLimits, now: datetime) -> Self:
-        period, total = LimitEnforcer(now).usage(user, limits)
+        return cls.counted(limits, LimitEnforcer(now).usage(user, limits), now)
+
+    @classmethod
+    def counted(cls, limits: EffectiveLimits, used: tuple[int, int], now: datetime) -> Self:
+        """From bytes already counted in the period and in total, e.g. by `LimitEnforcer.usages`."""
+        period, total = used
         start = limits.current_period_start(now)
         resets_at = start + timedelta(days=limits.period_days) if start else None
         return cls(

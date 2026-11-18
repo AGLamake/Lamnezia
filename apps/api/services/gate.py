@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils import timezone
 
 from apps.api.errors import (
     TokenInvalidError,
@@ -11,8 +12,10 @@ from apps.api.errors import (
 )
 from apps.api.models import ApiToken
 from apps.api.services.tokens import ApiTokens
+from apps.audit.services import journal as audit
 
 _SCHEME = "bearer"
+_PATH_LIMIT = 200
 
 
 class ApiThrottle:
@@ -76,3 +79,19 @@ class ApiGate:
         if not token.works:
             raise TokenRejectedError(token)
         return token
+
+
+def record_call(token: ApiToken, *, path: str, status: int, ip: str | None) -> None:
+    """Every call with a working token goes to the audit (DESIGN.md 5.7)."""
+    ApiToken.objects.filter(pk=token.pk).update(last_used_at=timezone.now())
+    _journal("api.call", token, path=path, status=status, ip=ip)
+
+
+def record_refusal(token: ApiToken, *, path: str, status: int, ip: str | None) -> None:
+    """A call with a disabled or expired token; unknown tokens are not journaled."""
+    _journal("api.denied", token, path=path, status=status, ip=ip)
+
+
+def _journal(action: str, token: ApiToken, *, path: str, status: int, ip: str | None) -> None:
+    data = {"token": token.prefix, "path": path[:_PATH_LIMIT], "status": status}
+    audit.log(action, actor=token.owner, target=token, data=data, ip=ip)
