@@ -28,6 +28,7 @@ the server files in the format of the Amnezia app, so the app keeps working with
 - [Traffic and stats](Traffic-and-stats.md): counting, statistics, Prometheus.
 - [Support and incidents](Support-and-incidents.md): requests, chat, inbox, incidents.
 - [Notifications](Notifications.md): channels, events, routing; [Webhooks](Webhooks.md).
+- [API](API.md): tokens and read endpoints for billing, bots and monitoring.
 - [Guides and releases](Guides-and-releases.md): install guides, Amnezia downloads, FAQ.
 - [Client portal](Portal.md) and [Audit log](Audit.md).
 - [Telegram and Discord](Messengers.md): linking and the bots; [Setting up the bots](Bots.md) from scratch.

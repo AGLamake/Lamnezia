@@ -23,6 +23,7 @@
 | [Support and incidents](en/Support-and-incidents.md) | [Поддержка и инциденты](ru/Support-and-incidents.md) |
 | [Notifications](en/Notifications.md) | [Уведомления](ru/Notifications.md) |
 | [Webhooks](en/Webhooks.md) | [Вебхуки](ru/Webhooks.md) |
+| [API](en/API.md) | [API](ru/API.md) |
 | [Guides and releases](en/Guides-and-releases.md) | [Инструкции и релизы](ru/Guides-and-releases.md) |
 | [Client portal](en/Portal.md) | [Клиентский портал](ru/Portal.md) |
 | [Telegram and Discord](en/Messengers.md) | [Telegram и Discord](ru/Messengers.md) |

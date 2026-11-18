@@ -6,7 +6,7 @@ Actions read as names in the interface language ("Issue key"); the code (`keys.i
 when you point at the name.
 
 Written now: issuing, disabling, enabling and revoking keys, giving a key to a user, every look at
-a key by an administrator and resetting its first view, every look at the SFTP password. Records keep the user and object names,
+a key by an administrator and resetting its first view, every look at the SFTP password, every [API](API.md) call, creating and disabling API tokens. Records keep the user and object names,
 so they stay readable after the user or the object is deleted. Secrets are never written.
 
 The IP address is the one nginx passes in `X-Forwarded-For`. A forged chain of addresses is not

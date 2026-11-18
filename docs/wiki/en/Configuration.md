@@ -56,6 +56,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_REGISTRATION_RATE_LIMIT` | `5` | Open registrations an hour from one address. `0` turns the limit off. |
 | `LAMNEZIA_MAGIC_LINK_MINUTES` | `15` | How long a sign-in link from a letter works. |
 | `LAMNEZIA_SUBSCRIPTION_RATE_LIMIT` | `30` | Subscription link fetches a minute from one address; more get `429`. `0` turns the limit off. |
+| `LAMNEZIA_API_RATE_LIMIT` | `120` | [API](API.md) calls a minute with one token, and as many calls with a wrong token from one address; more get `429`. `0` turns the limit off. |
 | `LAMNEZIA_SUPPORT_RATE_LIMIT` | `5` | New support requests an hour from one user. `0` turns the limit off. |
 | `LAMNEZIA_SUPPORT_MESSAGE_RATE_LIMIT` | `10` | Messages a minute from one user in the chat and requests. `0` turns the limit off. |
 | `LAMNEZIA_SUGGESTION_RATE_LIMIT` | `3` | Article suggestions a day from one user ([Guides](Guides-and-releases.md#suggestions-from-users)). `0` turns the limit off. |

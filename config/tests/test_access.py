@@ -62,8 +62,8 @@ STAFF_PREFIXES = (
     "support:inbox",
     "support:incident",
 )
-# The Django admin site, health and metrics have their own protection and tests.
-SKIPPED_ROUTES = ("admin/", "healthz", "metrics", "dev/")
+# The Django admin site, health, metrics and the token API have their own protection and tests.
+SKIPPED_ROUTES = ("admin/", "healthz", "metrics", "dev/", "api/v1/")
 _ARGUMENT = re.compile(r"<(?:(\w+):)?\w+>")
 _SAMPLES = {"int": "1", "uuid": "00000000-0000-0000-0000-000000000001"}
 

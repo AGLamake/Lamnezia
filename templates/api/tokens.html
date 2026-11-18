@@ -1,0 +1,79 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block nav %}{% include "components/admin_nav.html" with active="api-tokens" %}{% endblock %}
+{% block title %}{% translate "API tokens" %} · Lamnezia{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "API tokens" %}</h1>
+    <p class="page-lead">{% blocktranslate trimmed %}Tokens let monitoring, billing and other systems read the panel at <code>/api/v1/</code>. Every call goes to the audit log. The description of the API: <a href="/api/v1/openapi.json" class="hover:underline">openapi.json</a>.{% endblocktranslate %}</p>
+  </div>
+</div>
+
+{% if issued %}
+  <section class="card space-y-3" x-data="copy">
+    <h2 class="section-title">{% blocktranslate with name=issued.token.name %}Token «{{ name }}» is created{% endblocktranslate %}</h2>
+    <textarea x-ref="source" readonly rows="2" class="input font-mono text-xs" aria-label="{% translate 'Token' %}">{{ issued.value }}</textarea>
+    {% translate "Copy the token now: the panel keeps only its hash and will not show it again." as once_text %}
+    {% include "components/alert.html" with level="warning" text=once_text %}
+    <button type="button" class="btn btn-primary" @click="copy">
+      {% icon "copy" %}<span x-show="!copied">{% translate "Copy" %}</span><span x-show="copied" x-cloak>{% translate "Copied" %}</span>
+    </button>
+  </section>
+{% endif %}
+
+{% if tokens %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>{% translate "Token" %}</th><th>{% translate "Acts as" %}</th><th>{% translate "Scope" %}</th>
+          <th>{% translate "Expires" %}</th><th>{% translate "Last used" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for token in tokens %}
+          <tr>
+            <td class="cell-title">
+              <span class="font-medium">{{ token.name }}</span>
+              <span class="font-mono text-xs text-muted">{{ token.prefix }}…</span>
+              {% if not token.is_active %}<span class="badge badge-muted">{% translate "disabled" %}</span>
+              {% elif token.is_expired %}<span class="badge badge-warning">{% translate "expired" %}</span>
+              {% elif not token.works %}<span class="badge badge-danger">{% translate "owner blocked" %}</span>{% endif %}
+            </td>
+            <td data-label="{% translate 'Acts as' %}">{{ token.owner.username }} · {{ token.owner.get_role_display }}</td>
+            <td data-label="{% translate 'Scope' %}">{{ token.get_scope_display }}</td>
+            <td data-label="{% translate 'Expires' %}">{% if token.expires_at %}{{ token.expires_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% translate "no end" %}{% endif %}</td>
+            <td data-label="{% translate 'Last used' %}">{% if token.last_used_at %}{{ token.last_used_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}—{% endif %}</td>
+            <td class="text-right">
+              {% if token.is_active %}
+                <form method="post" action="{% url 'api-tokens:deactivate' token.pk %}" data-confirm="{% translate 'Disable this token? It stops working at once and cannot be enabled again.' %}" data-confirm-button="{% translate 'Disable' %}">
+                  {% csrf_token %}<button class="btn btn-secondary btn-sm">{% translate "Disable" %}</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% translate "No tokens yet." as empty_title %}
+  {% translate "Create a token below for a system that should read the panel." as empty_text %}
+  {% include "components/empty_state.html" with icon="key" title=empty_title text=empty_text %}
+{% endif %}
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  <h2 class="section-title">{% translate "New token" %}</h2>
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {{ form.name.as_field_group }}
+    {{ form.owner.as_field_group }}
+    {{ form.scope.as_field_group }}
+    {{ form.expires_at.as_field_group }}
+  </div>
+  <button type="submit" class="btn btn-primary">{% icon "plus" %}{% translate "Create token" %}</button>
+</form>
+{% endblock %}

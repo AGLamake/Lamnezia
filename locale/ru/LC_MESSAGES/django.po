@@ -309,6 +309,12 @@ msgstr "Тестовое уведомление отправлено."
 msgid "A user cannot be their own moderator."
 msgstr "Пользователь не может быть своим же модератором."
 
+msgid "API token"
+msgstr "Токен API"
+
+msgid "API tokens"
+msgstr "Токены API"
+
 msgid "Access"
 msgstr "Доступ"
 
@@ -346,6 +352,9 @@ msgstr "Активен"
 
 msgid "Active keys"
 msgstr "Активных ключей"
+
+msgid "Acts as"
+msgstr "Действует от имени"
 
 msgid "Add a channel"
 msgstr "Добавить канал"
@@ -904,8 +913,14 @@ msgstr "Скопируйте ссылку и вставьте её в Amnezia VP
 msgid "Copy the panel to the new machine"
 msgstr "Скопировать панель на новую машину"
 
+msgid "Copy the token now: the panel keeps only its hash and will not show it again."
+msgstr "Скопируйте токен сейчас: панель хранит только его хеш и больше его не покажет."
+
 msgid "Create"
 msgstr "Создать"
+
+msgid "Create a token below for a system that should read the panel."
+msgstr "Создайте токен ниже для системы, которой нужно читать данные панели."
 
 msgid "Create an account"
 msgstr "Зарегистрироваться"
@@ -918,6 +933,9 @@ msgstr "Создать ссылку"
 
 msgid "Create the group"
 msgstr "Создать группу"
+
+msgid "Create token"
+msgstr "Создать токен"
 
 msgid "Created"
 msgstr "Создан"
@@ -1058,6 +1076,9 @@ msgstr "Отличия от группы: %(kinds)s."
 msgid "Disable"
 msgstr "Отключить"
 
+msgid "Disable this token? It stops working at once and cannot be enabled again."
+msgstr "Отключить токен? Он сразу перестанет работать, включить его снова нельзя."
+
 msgid "Disabled"
 msgstr "Неактивная"
 
@@ -1137,6 +1158,9 @@ msgstr "Пусто — бессрочно."
 msgid "Empty: the language of the site."
 msgstr "Пусто — язык сайта."
 
+msgid "Empty: the token works until it is disabled."
+msgstr "Пусто: токен работает, пока его не отключат."
+
 msgid "Enable"
 msgstr "Включить"
 
@@ -1193,6 +1217,12 @@ msgstr "Всё, что панель умеет устанавливать, на 
 
 msgid "Everything the panel does on the servers in the background: progress, log and errors."
 msgstr "Всё, что панель делает на серверах в фоне: ход, журнал и ошибки."
+
+msgid "Expires"
+msgstr "Срок"
+
+msgid "Expires at"
+msgstr "Действует до"
 
 msgid "Export CSV"
 msgstr "Выгрузить CSV"
@@ -1694,6 +1724,9 @@ msgstr "Последнее переключение %(when)s."
 msgid "Last update"
 msgstr "Последнее обновление"
 
+msgid "Last used"
+msgstr "Последний вызов"
+
 msgid "Later"
 msgstr "Позже"
 
@@ -1956,6 +1989,9 @@ msgstr "Мои платежи"
 msgid "My suggestions"
 msgstr "Мои предложения"
 
+msgid "Name"
+msgstr "Название"
+
 msgid "Name in the messenger"
 msgstr "Имя в мессенджере"
 
@@ -1994,6 +2030,9 @@ msgstr "Новый релиз"
 
 msgid "New secret"
 msgstr "Новый секрет"
+
+msgid "New token"
+msgstr "Новый токен"
 
 msgid "New users come here in the open registration with approval by an administrator."
 msgstr "Сюда попадают новые пользователи при открытой регистрации с подтверждением администратором."
@@ -2145,6 +2184,9 @@ msgstr "Нет предложений, ждущих проверки."
 
 msgid "No templates yet."
 msgstr "Шаблонов пока нет."
+
+msgid "No tokens yet."
+msgstr "Токенов пока нет."
 
 msgid "No traffic in this period."
 msgstr "За этот период трафика не было."
@@ -2826,6 +2868,9 @@ msgstr "Отсканируйте все коды по очереди в прил
 
 msgid "Scan the QR code with the app or enter the key by hand."
 msgstr "Отсканируйте QR-код в приложении или введите ключ вручную."
+
+msgid "Scope"
+msgstr "Область"
 
 msgid "Screenshot"
 msgstr "Скриншот"
@@ -3901,6 +3946,15 @@ msgstr "Ссылка для входа неверна, уже использов
 msgid "The subscription link is deleted."
 msgstr "Ссылка-подписка удалена."
 
+msgid "The time is already past."
+msgstr "Это время уже прошло."
+
+msgid "The token is disabled."
+msgstr "Токен отключён."
+
+msgid "The token sees what this staff member sees: a moderator's token, their zone."
+msgstr "Токен видит то же, что этот сотрудник: токен модератора — только его зону."
+
 msgid "The traffic of some keys is unknown, so the panel cannot tell whether it lasts until the period resets."
 msgstr "Трафик части ключей неизвестен, поэтому панель не может сказать, хватит ли его до сброса периода."
 
@@ -4012,6 +4066,16 @@ msgstr "На главную"
 
 msgid "Today"
 msgstr "Сегодня"
+
+msgid "Token"
+msgstr "Токен"
+
+#, python-format
+msgid "Token «%(name)s» is created"
+msgstr "Токен «%(name)s» создан"
+
+msgid "Tokens let monitoring, billing and other systems read the panel at <code>/api/v1/</code>. Every call goes to the audit log. The description of the API: <a href=\"/api/v1/openapi.json\" class=\"hover:underline\">openapi.json</a>."
+msgstr "Токены дают мониторингу, биллингу и другим системам читать данные панели по адресу <code>/api/v1/</code>. Каждый вызов попадает в журнал аудита. Описание API: <a href=\"/api/v1/openapi.json\" class=\"hover:underline\">openapi.json</a>."
 
 msgid "Too many attempts"
 msgstr "Слишком много попыток"
@@ -4294,6 +4358,9 @@ msgstr "Что нового"
 msgid "What users get: servers, protocols, traffic and how long the access lasts."
 msgstr "Что получают пользователи: серверы, протоколы, трафик и срок доступа."
 
+msgid "What uses the token, e.g. monitoring or billing."
+msgstr "Кто пользуется токеном, например мониторинг или биллинг."
+
 msgid "When opened"
 msgstr "На момент обращения"
 
@@ -4448,6 +4515,9 @@ msgstr "ID аккаунта"
 msgid "active"
 msgstr "активен"
 
+msgid "acts as"
+msgstr "от имени"
+
 msgid "address"
 msgstr "адрес"
 
@@ -4553,6 +4623,12 @@ msgstr "готово"
 msgid "due today"
 msgstr "сегодня"
 
+msgid "expired"
+msgstr "истёк"
+
+msgid "expires at"
+msgstr "действует до"
+
 msgid "expires soon"
 msgstr "скоро истекает"
 
@@ -4654,6 +4730,9 @@ msgstr "последний раз в сети"
 #, python-format
 msgid "last sign-in %(date)s"
 msgstr "последний вход %(date)s"
+
+msgid "last used at"
+msgstr "последний вызов"
 
 msgid "leading"
 msgstr "ведущий"
@@ -4840,6 +4919,9 @@ msgstr[0] "просрочено на %(days)s день"
 msgstr[1] "просрочено на %(days)s дня"
 msgstr[2] "просрочено на %(days)s дней"
 
+msgid "owner blocked"
+msgstr "владелец заблокирован"
+
 msgid "panel move"
 msgstr "перенос панели"
 
@@ -4918,6 +5000,9 @@ msgstr "исчерпан"
 msgid "read at"
 msgstr "прочитано"
 
+msgid "read only"
+msgstr "только чтение"
+
 msgid "reading error"
 msgstr "ошибка чтения"
 
@@ -4984,6 +5069,9 @@ msgstr "откачено"
 msgid "running"
 msgstr "идёт"
 
+msgid "scope"
+msgstr "область"
+
 msgid "seen"
 msgstr "прочитано"
 
@@ -5036,6 +5124,9 @@ msgstr "начат"
 
 msgid "started by"
 msgstr "кто начал"
+
+msgid "starts with"
+msgstr "начало"
 
 msgid "state"
 msgstr "состояние"
@@ -5109,6 +5200,9 @@ msgstr "заголовок (английский)"
 
 msgid "title (Russian)"
 msgstr "заголовок (русский)"
+
+msgid "token digest"
+msgstr "хеш токена"
 
 msgid "topic"
 msgstr "тема"

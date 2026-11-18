@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `LAMNEZIA_GITHUB_PROXY` does the same for the Amnezia release links and the panel update check.
   Without them nothing changes. The VPN servers and webhooks are reached directly as before, and the
   proxy password is never logged.
+- **API for integrations**: billing, bots and monitoring read the panel at `/api/v1/` with a
+  token: servers and their state, users with plans, limits and usage, keys without key material,
+  and traffic by hour or day and per key. An administrator creates tokens in **System → API
+  tokens**; a token acts as an administrator or a moderator and sees what they see, the value is
+  shown once and only its hash is kept, a token can have an expiry and is disabled for good.
+  Every call goes to the audit log, the rate is limited by `LAMNEZIA_API_RATE_LIMIT` (120 a
+  minute), and the description is OpenAPI 3.1 at `/api/v1/openapi.json`. Version 1 only reads.
 - **Report to the staff**: in **Settings → Report to the staff** an administrator turns on a
   daily or weekly summary (off by default): servers and relays down, traffic of the period and
   the most active keys, access ending within a week, failed operations, the age of backups and

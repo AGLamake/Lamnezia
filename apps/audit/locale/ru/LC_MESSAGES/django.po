@@ -6,6 +6,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
+msgid "API call"
+msgstr "Вызов API"
+
+msgid "API call with a disabled token"
+msgstr "Вызов API отключённым токеном"
+
 msgid "Action"
 msgstr "Действие"
 
@@ -44,6 +50,9 @@ msgstr "Изменение настроек сайта"
 
 msgid "Change user limits"
 msgstr "Изменение лимитов пользователя"
+
+msgid "Create API token"
+msgstr "Создание токена API"
 
 msgid "Create invitation"
 msgstr "Создание приглашения"
@@ -86,6 +95,9 @@ msgstr "Удаление группы серверов"
 
 msgid "Delete subscription link"
 msgstr "Удалить ссылку-подписку"
+
+msgid "Disable API token"
+msgstr "Отключение токена API"
 
 msgid "Disable keys of users"
 msgstr "Отключение ключей пользователей"

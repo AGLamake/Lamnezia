@@ -34,6 +34,7 @@ urlpatterns = [
     path("servers/relays/", include("apps.relays.urls")),
     path("servers/", include("apps.servers.urls")),
     path("settings/bots/", include("apps.bots.urls")),
+    path("settings/api/", include("apps.api.urls_admin")),
     path("settings/", include("apps.core.urls")),
     path("protocols/", include("apps.protocols.urls")),
     path("backups/move/", include("apps.relocation.urls")),

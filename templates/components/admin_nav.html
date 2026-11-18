@@ -23,6 +23,7 @@
   <p class="nav-group">{% translate "System" %}</p>
   <a href="{% url 'notifications:channels' %}" class="nav-link"{% if active == 'notifications' %} aria-current="page"{% endif %}>{% icon "bell" %}<span class="nav-text">{% translate "Notifications" %}</span></a>
   <a href="{% url 'core:settings' %}" class="nav-link"{% if active == 'settings' %} aria-current="page"{% endif %}>{% icon "settings" %}<span class="nav-text">{% translate "Settings" %}</span></a>
+  <a href="{% url 'api-tokens:list' %}" class="nav-link"{% if active == 'api-tokens' %} aria-current="page"{% endif %}>{% icon "key" %}<span class="nav-text">{% translate "API tokens" %}</span></a>
   <a href="{% url 'backups:panel-archives' %}" class="nav-link"{% if active == 'panel-archives' %} aria-current="page"{% endif %}>{% icon "database" %}<span class="nav-text">{% translate "Panel archive" %}</span></a>
   <a href="{% url 'relocation:move' %}" class="nav-link"{% if active == 'panel-move' %} aria-current="page"{% endif %}>{% icon "switch" %}<span class="nav-text">{% translate "Panel move" %}</span></a>
   <a href="{% url 'updates:update' %}" class="nav-link"{% if active == 'panel-update' %} aria-current="page"{% endif %}>{% icon "arrow-up" %}<span class="nav-text">{% translate "Panel update" %}</span>{% if todo.panel_release %}<span class="nav-count" title="{% translate 'A new release is out' %}">1</span>{% endif %}</a>
