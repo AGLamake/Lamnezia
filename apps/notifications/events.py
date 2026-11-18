@@ -187,7 +187,9 @@ EVENTS: dict[Event, EventType] = {
     # that traffic of some keys is not counted now and the real share may be higher.
     Event.TRAFFIC_LOW: EventType(
         _("Traffic runs out soon"),
+        # xgettext:no-python-format
         _("{percent}% of the traffic is used"),
+        # xgettext:no-python-format
         _("{user} has used {percent}% of the traffic limit {limit}.\n{note}"),
         to_user=True,
         translated=("limit", "note"),

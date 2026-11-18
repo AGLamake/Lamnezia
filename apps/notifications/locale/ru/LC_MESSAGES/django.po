@@ -549,7 +549,7 @@ msgstr "{group}: ни один сервер не доступен"
 msgid "{group}: traffic moved to {to}"
 msgstr "{group}: трафик переведён на {to}"
 
-#, python-brace-format
+#, no-python-format, python-brace-format
 msgid "{percent}% of the traffic is used"
 msgstr "Израсходовано {percent}% трафика"
 
@@ -609,7 +609,7 @@ msgstr ""
 msgid "{user} ({email}) waits for approval."
 msgstr "{user} ({email}) ждёт одобрения."
 
-#, python-brace-format
+#, no-python-format, python-brace-format
 msgid ""
 "{user} has used {percent}% of the traffic limit {limit}.\n"
 "{note}"
