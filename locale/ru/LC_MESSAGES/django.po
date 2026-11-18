@@ -291,6 +291,9 @@ msgstr "Отозванный ключ сразу перестаёт работа
 msgid "A server is either standalone or a member of one group. Let it leave first."
 msgstr "Сервер либо одиночный, либо участник одной группы. Сначала выведите его из группы."
 
+msgid "A sign-in to your account from a new network or browser is always reported to you."
+msgstr "О входе в ваш аккаунт из новой сети или браузера вы узнаёте всегда."
+
 msgid "A small STUN responder on a UDP port. Users' browsers ask it and warn when the server cannot be reached from their network. It keeps no logs."
 msgstr "Маленький STUN-ответчик на UDP-порту. Браузеры пользователей обращаются к нему и предупреждают, если сервер недоступен из их сети. Журналов он не ведёт."
 
@@ -3175,6 +3178,9 @@ msgstr "Telegram и Discord: боты и ваши уведомления."
 msgid "Telegram did not confirm the account. Try again."
 msgstr "Telegram не подтвердил аккаунт. Попробуйте ещё раз."
 
+msgid "Tell me when my account is signed in from a new network or browser."
+msgstr "Сообщать, когда в мой аккаунт входят из новой сети или браузера."
+
 msgid "Tell the owners of the keys"
 msgstr "Уведомить владельцев ключей"
 
@@ -4998,6 +5004,9 @@ msgstr "служебные пиры"
 
 msgid "settings mismatch"
 msgstr "расхождение настроек"
+
+msgid "sign-in alerts"
+msgstr "уведомления о входе"
 
 #, python-format
 msgid "signed in %(when)s"

@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.db import transaction
 from django.test import Client
 
-from apps.accounts.models import User, UserSession
+from apps.accounts.models import Role, User, UserSession
 from apps.accounts.services.sessions import device_name
 from apps.accounts.tests.factories import UserFactory
 from apps.accounts.tests.registration import configure
@@ -56,6 +56,24 @@ def test_old_pages_lead_to_their_sections(user: User) -> None:
     assert client.get("/accounts/security/")["Location"] == f"{PROFILE}#two-factor"
     assert client.get("/accounts/messengers/")["Location"] == f"{PROFILE}#messengers"
     assert client.get("/accounts/password/")["Location"] == f"{PROFILE}#password"
+
+
+def test_a_portal_user_turns_sign_in_alerts_on(user: User) -> None:
+    client = signed_in(user)
+    assert 'name="sign_in_alerts"' in client.get(PROFILE).content.decode()
+
+    client.post(f"{PROFILE}notifications/", {"notify_via": "email", "sign_in_alerts": "on"})
+
+    user.refresh_from_db()
+    assert user.sign_in_alerts
+
+
+def test_the_staff_always_get_sign_in_alerts() -> None:
+    admin = UserFactory(role=Role.ADMIN)
+    page = signed_in(admin).get(PROFILE).content.decode()
+
+    assert 'name="sign_in_alerts"' not in page
+    assert admin.wants_sign_in_alerts
 
 
 @pytest.mark.parametrize(

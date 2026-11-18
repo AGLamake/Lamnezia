@@ -46,6 +46,7 @@ zone), `data` depends on the event.
 | `keys_updated` | A server joined a group behind a relay, or the relay of its group was installed: the user's keys now carry the relay address and must be imported again, once. Also sent to the user. | `user`, `server` — server name |
 | `short_id_changed` | The Reality shortId of XRay on a server changed (for example the protocol was set up anew in the Amnezia app); the keys the user added to the app no longer connect and must be imported again. Also sent to the user. | `user`, `server` — server name |
 | `registration_pending` | A new user waits for approval. | `user`, `email` |
+| `sign_in_locked` | Sign-in as one name from one address is locked after too many wrong passwords. Once per lockout. The password is never sent. | `user` — the name typed in (may not exist), `address`, `failures` — the limit, `minutes` — how long the lockout lasts |
 | `ticket_created` | A user opened a support request. | `user`, `number` — request number, `type`, `subject` |
 | `chat_message` | Messages in the support chat; those of one user within two minutes come as one. | `user`, `number` — chat number, `text` — the messages, one a line; `count` — how many, when more than one |
 | `incident_opened` | Users report that a server does not work. | `server`, `reports` — number of reports |
@@ -111,6 +112,8 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/short_id_changed"}}}},
     {"if": {"properties": {"event": {"const": "registration_pending"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/registration_pending"}}}},
+    {"if": {"properties": {"event": {"const": "sign_in_locked"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/sign_in_locked"}}}},
     {"if": {"properties": {"event": {"const": "ticket_created"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/ticket_created"}}}},
     {"if": {"properties": {"event": {"const": "chat_message"}}},
@@ -253,6 +256,14 @@ may be added: ignore what you do not know.
       "type": "object",
       "required": ["user", "email"],
       "properties": {"user": {"type": "string"}, "email": {"type": "string"}}
+    },
+    "sign_in_locked": {
+      "type": "object",
+      "required": ["user", "address", "failures", "minutes"],
+      "properties": {
+        "user": {"type": "string"}, "address": {"type": "string"},
+        "failures": {"type": "integer"}, "minutes": {"type": "integer"}
+      }
     },
     "ticket_created": {
       "type": "object",

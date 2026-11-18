@@ -2,7 +2,8 @@
 
 from typing import Any
 
-from django.contrib.auth.signals import user_logged_out
+from axes.signals import user_locked_out
+from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.db.models.signals import post_delete
 from django.http import HttpRequest
 
@@ -10,6 +11,7 @@ from apps.accounts.models import User
 from apps.notifications.events import Event
 from apps.notifications.services.browser import BrowserSubscriptions
 from apps.notifications.services.delivery import emit
+from apps.notifications.services.sign_in import SignInAlerts
 from apps.notifications.services.trouble import forget_troubles
 from apps.protocols.signals import keys_changed, keys_moved, keys_revoked, short_id_changed
 from apps.servers.models import Server
@@ -49,7 +51,20 @@ def on_logged_out(sender: object, request: HttpRequest, user: User | None, **kwa
         BrowserSubscriptions(user).remove(endpoint)
 
 
+def on_logged_in(sender: object, request: HttpRequest | None, user: User, **kwargs: Any) -> None:
+    if request is not None:
+        SignInAlerts().signed_in(user, request)
+
+
+def on_locked_out(
+    sender: object, username: str | None, ip_address: str | None, **kwargs: Any
+) -> None:
+    SignInAlerts().locked_out(username or "", ip_address)
+
+
 def connect() -> None:
+    user_logged_in.connect(on_logged_in, dispatch_uid="notifications.logged_in")
+    user_locked_out.connect(on_locked_out, dispatch_uid="notifications.locked_out")
     user_logged_out.connect(on_logged_out, dispatch_uid="notifications.logged_out")
     post_delete.connect(on_server_deleted, sender=Server, dispatch_uid="notifications.server")
     limit_reached.connect(on_limit_reached, dispatch_uid="notifications.limit_reached")

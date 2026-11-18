@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sign-in alerts**: a sign-in from a network or browser the account has not used before is
+  reported to its owner (`sign_in_new_place`) with the browser, the address and a link to the
+  sessions of the profile. Administrators and moderators always get it, a portal user turns it on
+  in **Profile → Notifications**. The panel keeps only a keyed hash of the network (/24 or /64)
+  and the browser name to compare with. A lockout after wrong passwords is reported to the
+  channels subscribed to `sign_in_locked`, once per lockout, with the name and the address and
+  never the password.
 - **Server load alerts**: the monitor tells administrators when the CPU, memory or disk of a
   server stays at or above a threshold (`server_load_high`) and when it is back to normal
   (`server_load_normal`). **Settings → Server load** sets the thresholds (90% each by default,

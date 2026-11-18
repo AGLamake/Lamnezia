@@ -37,6 +37,8 @@ class Event(StrEnum):
     SHORT_ID_CHANGED = "short_id_changed"
     KEYS_UPDATED = "keys_updated"
     REGISTRATION_PENDING = "registration_pending"
+    SIGN_IN_NEW_PLACE = "sign_in_new_place"
+    SIGN_IN_LOCKED = "sign_in_locked"
     TICKET_CREATED = "ticket_created"
     CHAT_MESSAGE = "chat_message"
     SUPPORT_ANSWER = "support_answer"
@@ -248,6 +250,28 @@ EVENTS: dict[Event, EventType] = {
         _("New registration request"),
         _("New registration request: {user}"),
         _("{user} ({email}) waits for approval."),
+    ),
+    # Only to the user: the panel was signed in to from a network or a browser it was not signed
+    # in to from before. `address` is left out when unknown, `url` leads to the sessions.
+    Event.SIGN_IN_NEW_PLACE: EventType(
+        _("Sign-in from a new place"),
+        _("New sign-in to your account"),
+        _(
+            "{user} has signed in to the panel from a new network or browser.\n"
+            "Browser: {device}\nAddress: {address}\n"
+            "Not you? Open the sessions, end the one you do not know and change the password."
+        ),
+        to_user=True,
+        routable=False,
+    ),
+    # The password is never among the details: only the name typed in and the address.
+    Event.SIGN_IN_LOCKED: EventType(
+        _("Sign-in locked after wrong passwords"),
+        _("Sign-in locked: {user}"),
+        _(
+            "After {failures} wrong passwords, sign-in as {user} from {address} is locked "
+            "for {minutes} minutes."
+        ),
     ),
     # `number` in the title lets the staff answer by replying to the message in a bot.
     Event.TICKET_CREATED: EventType(

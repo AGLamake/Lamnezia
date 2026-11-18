@@ -23,6 +23,10 @@ msgid "Addresses"
 msgstr "Адреса"
 
 #, python-brace-format
+msgid "After {failures} wrong passwords, sign-in as {user} from {address} is locked for {minutes} minutes."
+msgstr "После {failures} неверных паролей вход как {user} с адреса {address} заблокирован на {minutes} мин."
+
+#, python-brace-format
 msgid "AmneziaWG on {server} runs with the 3.1 settings again"
 msgstr "AmneziaWG на {server} снова работает с настройками 3.1"
 
@@ -193,6 +197,9 @@ msgstr "Новая заявка на регистрацию: {user}"
 msgid "New request #{number} from {user}: {subject}"
 msgstr "Новое обращение №{number} от {user}: {subject}"
 
+msgid "New sign-in to your account"
+msgstr "Новый вход в ваш аккаунт"
+
 msgid "New support request"
 msgstr "Новое обращение в поддержку"
 
@@ -267,6 +274,16 @@ msgstr "Сервер {server} снова отвечает"
 #, python-brace-format
 msgid "Server {server} is down"
 msgstr "Сервер {server} недоступен"
+
+msgid "Sign-in from a new place"
+msgstr "Вход из нового места"
+
+msgid "Sign-in locked after wrong passwords"
+msgstr "Вход заблокирован после неверных паролей"
+
+#, python-brace-format
+msgid "Sign-in locked: {user}"
+msgstr "Вход заблокирован: {user}"
 
 msgid "Signing secret"
 msgstr "Секрет подписи"
@@ -608,6 +625,18 @@ msgstr ""
 #, python-brace-format
 msgid "{user} ({email}) waits for approval."
 msgstr "{user} ({email}) ждёт одобрения."
+
+#, python-brace-format
+msgid ""
+"{user} has signed in to the panel from a new network or browser.\n"
+"Browser: {device}\n"
+"Address: {address}\n"
+"Not you? Open the sessions, end the one you do not know and change the password."
+msgstr ""
+"{user} вошёл в панель из новой сети или браузера.\n"
+"Браузер: {device}\n"
+"Адрес: {address}\n"
+"Это не вы? Откройте сеансы, завершите незнакомый и смените пароль."
 
 #, no-python-format, python-brace-format
 msgid ""

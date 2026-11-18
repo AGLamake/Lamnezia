@@ -101,6 +101,12 @@ class User(AbstractUser):
         blank=True,
         help_text=_("For a moderator: how many keys their users may hold. Empty: no limit."),
     )
+    # A portal user's choice; the staff always hear of a sign-in from a new place.
+    sign_in_alerts = models.BooleanField(
+        _("sign-in alerts"),
+        default=False,
+        help_text=_("Tell me when my account is signed in from a new network or browser."),
+    )
     # The offer to link a messenger on «My access»: how many times it was put off and until when.
     link_offer_dismissals = models.PositiveSmallIntegerField(default=0, editable=False)
     link_offer_hidden_until = models.DateTimeField(null=True, blank=True, editable=False)
@@ -146,6 +152,11 @@ class User(AbstractUser):
     def notification_language(self) -> str:
         """The language notifications to the user are written in: their own or the site's."""
         return self.language or settings.LANGUAGE_CODE
+
+    @property
+    def wants_sign_in_alerts(self) -> bool:
+        """The staff always hear of a sign-in from a new place; a portal user when they chose to."""
+        return self.is_staff_member or self.sign_in_alerts
 
     @property
     def can_have_keys(self) -> bool:
@@ -247,6 +258,29 @@ class UserSession(models.Model):
 
     class Meta:
         ordering = ("-signed_in_at",)
+
+    def __str__(self) -> str:
+        return f"{self.device} of {self.user_id}"
+
+
+class KnownSignIn(models.Model):
+    """A network and a browser the user has signed in from, to tell a sign-in from a new place.
+
+    The address is not kept: `network` is a keyed hash of its network (`SignInPlaces`), which
+    only says whether a later sign-in comes from the same one.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="known_sign_ins")
+    network = models.CharField(max_length=64, blank=True)
+    device = models.CharField(max_length=100, blank=True)
+    last_seen = models.DateTimeField()
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=["user", "network", "device"], name="accounts_known_sign_in_unique"
+            ),
+        )
 
     def __str__(self) -> str:
         return f"{self.device} of {self.user_id}"

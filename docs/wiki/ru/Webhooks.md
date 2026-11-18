@@ -46,6 +46,7 @@
 | `keys_updated` | Сервер вошёл в группу за ретранслятором или у его группы установлен ретранслятор: ключи пользователя теперь ведут на адрес ретранслятора, их нужно один раз импортировать заново. Приходит и самому пользователю. | `user`, `server` — имя сервера |
 | `short_id_changed` | Сменился shortId Reality у XRay на сервере (например, протокол заново настроили в приложении Amnezia); добавленные в приложение ключи пользователя больше не подключаются, их нужно импортировать заново. Приходит и самому пользователю. | `user`, `server` — имя сервера |
 | `registration_pending` | Новый пользователь ждёт одобрения. | `user`, `email` |
+| `sign_in_locked` | Вход под одним именем с одного адреса заблокирован после слишком многих неверных паролей. Один раз за блокировку. Пароль не передаётся. | `user` — введённое имя (может не существовать), `address`, `failures` — лимит, `minutes` — на сколько минут блокировка |
 | `ticket_created` | Пользователь открыл обращение в поддержку. | `user`, `number` — номер обращения, `type`, `subject` |
 | `chat_message` | Сообщения в чате поддержки; сообщения одного пользователя за две минуты приходят одним. | `user`, `number` — номер чата, `text` — сообщения, по одному на строку; `count` — сколько их, если больше одного |
 | `incident_opened` | Пользователи сообщают, что сервер не работает. | `server`, `reports` — число сообщений |
@@ -111,6 +112,8 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/short_id_changed"}}}},
     {"if": {"properties": {"event": {"const": "registration_pending"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/registration_pending"}}}},
+    {"if": {"properties": {"event": {"const": "sign_in_locked"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/sign_in_locked"}}}},
     {"if": {"properties": {"event": {"const": "ticket_created"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/ticket_created"}}}},
     {"if": {"properties": {"event": {"const": "chat_message"}}},
@@ -253,6 +256,14 @@
       "type": "object",
       "required": ["user", "email"],
       "properties": {"user": {"type": "string"}, "email": {"type": "string"}}
+    },
+    "sign_in_locked": {
+      "type": "object",
+      "required": ["user", "address", "failures", "minutes"],
+      "properties": {
+        "user": {"type": "string"}, "address": {"type": "string"},
+        "failures": {"type": "integer"}, "minutes": {"type": "integer"}
+      }
     },
     "ticket_created": {
       "type": "object",

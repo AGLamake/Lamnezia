@@ -105,6 +105,21 @@ the internet**: keep `LAMNEZIA_HTTP_BIND` on `127.0.0.1`.
 **Password reset** and sign-in links are sent by email, so set up mail first (**Settings** or
 `LAMNEZIA_EMAIL_URL`).
 
+### Sign-in alerts
+
+A sign-in from a network or a browser the account has not signed in from before is reported to
+its owner where they get notifications (`sign_in_new_place`): with the browser, the address and a
+link to the **Sessions** of the profile to end a session they do not know and change the password.
+A network is the /24 of an IPv4 address or the /64 of an IPv6 one, so a new address from the same
+provider is not news; the very first sign-in of an account is not reported. The panel keeps only a
+keyed hash of the network and the browser name to compare with, not the address, and forgets a
+place not seen for 180 days. Administrators and moderators always get these alerts; a portal user
+turns them on in **Profile → Notifications**.
+
+A lockout after wrong passwords is reported to the channels subscribed to `sign_in_locked`
+([Notifications](Notifications.md)), once per lockout, with the name typed in and the address.
+Neither the password nor a 2FA code ever gets into a notification or the audit log.
+
 ## Encryption of secrets
 
 SSH passwords and keys, client private keys, copies of the server files, SMTP passwords, bot tokens

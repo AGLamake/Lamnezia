@@ -51,6 +51,7 @@ channels hear each event.
 | Keys updated for a server group | `keys_updated` | `user`, `server` |
 | XRay keys must be imported again | `short_id_changed` | `user`, `server` |
 | Registration request | `registration_pending` | `user`, `email` |
+| Sign-in locked after wrong passwords | `sign_in_locked` | `user`, `address`, `failures`, `minutes` |
 | New support ticket | `ticket_created` | `user`, `type`, `subject` |
 | Chat message | `chat_message` | `user`, `text`, `count` |
 | Incident opened | `incident_opened` | `server`, `reports` |
@@ -115,6 +116,12 @@ Telegram, Discord, email — leaving out the channel the answer reached, and sto
 takes it; the delivery log shows the errors of every one tried. When the user has no channel but
 the one the answer reached, there is no reminder at all. See [Support requests](Support-and-incidents.md).
  When a request waits for the user, is resolved or closed, the user hears of it where they chose (`request_status`; to the messenger of their last message in it, if any). These events go only to the user. So do the decisions on a user's article suggestion: `suggestion_accepted` (with a link to the published page) and `suggestion_rejected` (with the reason), see [Guides](Guides-and-releases.md).
+
+**Sign-in alerts.** A sign-in from a new network or browser is told only to the account owner
+(`sign_in_new_place`, data `user`, `device`, `address`, `url` — the sessions of the profile):
+always to administrators and moderators, to a portal user when they turned it on in
+**Profile → Notifications**. A lockout after wrong passwords goes to the channels subscribed to
+`sign_in_locked`, once per lockout, without the password. See [Security](Security.md#sign-in-alerts).
 
 Every message is written in the language of whoever reads it. A user picks the language of
 their notifications on the **Messengers** page; until they do, they get the language of the

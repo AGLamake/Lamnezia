@@ -122,6 +122,7 @@
     {% csrf_token %}
     {{ notify_form.notify_via.as_field_group }}
     {{ notify_form.language.as_field_group }}
+    {% if "sign_in_alerts" in notify_form.fields %}{{ notify_form.sign_in_alerts.as_field_group }}{% else %}<p class="help-text">{% translate "A sign-in to your account from a new network or browser is always reported to you." %}</p>{% endif %}
     <button type="submit" class="btn btn-primary btn-sm">{% translate "Save" %}</button>
   </form>
   <div class="form-section-body space-y-3 border-t border-border pt-4" data-push

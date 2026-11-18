@@ -94,15 +94,19 @@ class ApproveForm(forms.Form):
 
 
 class NotifyViaForm(forms.ModelForm):  # type: ignore[type-arg]
-    """Where the user gets notifications (email or a linked messenger) and in what language."""
+    """Where the user gets notifications (email or a linked messenger), in what language and,
+    for a portal user, whether of a sign-in from a new place: the staff always get that one.
+    """
 
     class Meta:
         model = User
-        fields = ("notify_via", "language")
+        fields = ("notify_via", "language", "sign_in_alerts")
         widgets: ClassVar = {"notify_via": forms.RadioSelect}
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        if self.instance.is_staff_member:
+            del self.fields["sign_in_alerts"]
         linked = set(self.instance.linked_accounts.values_list("messenger", flat=True))
         self.fields["notify_via"].choices = [  # type: ignore[attr-defined]
             (value, label)
