@@ -174,6 +174,13 @@ class Server(models.Model):
             return False
         return not sample.probe_running
 
+    @property
+    def overloads(self) -> list["LoadAlert"]:
+        """Resources whose load is high now, in the order of `LoadResource`."""
+        order = list(LoadResource.values)
+        alerts = [alert for alert in self.load_alerts.all() if alert.high_since is not None]
+        return sorted(alerts, key=lambda alert: order.index(alert.resource))
+
     def record_sample(self, sample: "ServerSample") -> None:
         self.latest_sample = sample
         if sample.answered:
@@ -260,6 +267,46 @@ class ServerSample(models.Model):
         return any(
             c["name"] == PROBE_CONTAINER and c["state"] == "running" for c in self.containers
         )
+
+    def used_percent(self, resource: "LoadResource") -> float | None:
+        """How busy `resource` was in this reading; None when it was not read."""
+        if resource == LoadResource.CPU:
+            return self.cpu_percent
+        if resource == LoadResource.MEMORY:
+            return self.memory_percent
+        return self.disk_percent
+
+
+class LoadResource(models.TextChoices):
+    CPU = "cpu", _("CPU")
+    MEMORY = "memory", _("Memory")
+    DISK = "disk", _("Disk")
+
+
+class LoadAlert(models.Model):
+    """The high load of one resource of a server and when administrators last heard of it.
+
+    `high_since`: the first reading of the run above the threshold; None while the load is
+    normal. `told_at` outlives the run, so a load back above the threshold soon after is not
+    told again (apps/servers/services/load.py).
+    """
+
+    server = models.ForeignKey(Server, on_delete=models.CASCADE, related_name="load_alerts")
+    resource = models.CharField(_("resource"), max_length=8, choices=LoadResource)
+    high_since = models.DateTimeField(_("high since"), null=True, blank=True)
+    told_at = models.DateTimeField(_("told at"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("load alert")
+        verbose_name_plural = _("load alerts")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["server", "resource"], name="servers_loadalert_unique_resource"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.server_id} {self.resource}"
 
 
 def _used_percent(total: int | None, free: int | None) -> float | None:

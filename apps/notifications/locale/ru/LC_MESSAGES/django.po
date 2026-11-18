@@ -110,6 +110,10 @@ msgstr "Сервер группы снова доступен с ретранс�
 msgid "Group server unreachable from the relay"
 msgstr "Сервер группы недоступен с ретранслятора"
 
+#, python-brace-format
+msgid "High load on {server}: {resource} {percent}%"
+msgstr "Высокая нагрузка на {server}: {resource} {percent}%"
+
 msgid "Incident closed"
 msgstr "Инцидент закрыт"
 
@@ -142,6 +146,10 @@ msgstr "Достигнут лимит"
 #, python-brace-format
 msgid "Limit reached: {user}"
 msgstr "Достигнут лимит: {user}"
+
+#, python-brace-format
+msgid "Load on {server} is back to normal: {resource}"
+msgstr "Нагрузка на {server} в норме: {resource}"
 
 msgid "Menu"
 msgstr "Меню"
@@ -242,6 +250,12 @@ msgstr "Сервер снова отвечает"
 
 msgid "Server is down"
 msgstr "Сервер недоступен"
+
+msgid "Server load is back to normal"
+msgstr "Нагрузка на сервер в норме"
+
+msgid "Server load is high"
+msgstr "Высокая нагрузка на сервер"
 
 msgid "Server works again"
 msgstr "Сервер снова работает"
@@ -538,6 +552,14 @@ msgstr "{group}: трафик переведён на {to}"
 #, python-brace-format
 msgid "{percent}% of the traffic is used"
 msgstr "Израсходовано {percent}% трафика"
+
+#, python-brace-format
+msgid "{resource} of the server {server} ({host}) is at {percent}%, at or above the threshold of {threshold}%, since {since}."
+msgstr "{resource} сервера {server} ({host}) загружен на {percent}%, не ниже порога {threshold}%, с {since}."
+
+#, python-brace-format
+msgid "{resource} of the server {server} ({host}) is at {percent}%, below the threshold of {threshold}%. High since {since}."
+msgstr "{resource} сервера {server} ({host}) загружен на {percent}%, ниже порога {threshold}%. Нагрузка была высокой с {since}."
 
 #, python-brace-format
 msgid "{server} caught up with the group {group}"

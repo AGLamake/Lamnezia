@@ -133,6 +133,9 @@ background job of its own, so a server that does not answer does not delay the o
 - An Amnezia container that is not running (stopped, exited, restarting) is listed in red. The
   server card shows the state of every protocol and service container from the latest reading
   next to its buttons; a stopped container has **Start** instead of **Restart** and **Stop**.
+- **High load: CPU above the threshold since …** — a resource has stayed above its threshold in
+  **Settings → Server load** for several readings in a row; the server is also in **Needs
+  attention** until the load is back to normal ([Notifications](Notifications.md)).
 
 The servers are shown as cards on the **Overview** (moderators see the servers of their zone, without links to the
 server pages), the status is also in the server list. Above the cards the overview shows the key

@@ -162,6 +162,25 @@ def test_a_removed_amnezia_awg2_forgets_the_drop_untold(http: FakeHttp) -> None:
     assert not Trouble.objects.exists()
 
 
+FULL_MEMORY = OUTPUT.replace("MemAvailable:     500000 kB", "MemAvailable:     100000 kB")
+
+
+def test_the_monitor_tells_a_lasting_high_load_once_and_its_end_once(http: FakeHttp) -> None:
+    ChannelFactory(events=[Event.SERVER_LOAD_HIGH, Event.SERVER_LOAD_NORMAL])
+    server, servers = ServerFactory(name="Germany"), FakeServers(FULL_MEMORY)
+    now = timezone.now()
+    for step in (7, 6, 5, 4):
+        poll(servers, server, now - INTERVAL * step)
+    servers.output = OUTPUT
+    for step in (3, 2, 1):
+        poll(servers, server, now - INTERVAL * step)
+
+    assert events_posted(http) == ["server_load_high", "server_load_normal"]
+    high = json.loads(http.posts[0].body)["data"]
+    assert (high["resource"], high["percent"], high["threshold"]) == ("memory", 95, 90)
+    assert high["since"] == (now - INTERVAL * 7).isoformat()
+
+
 def test_a_registration_request_is_reported(http: FakeHttp) -> None:
     ChannelFactory(events=[Event.REGISTRATION_PENDING])
     site = configure(registration_mode=RegistrationMode.OPEN_MANUAL)

@@ -158,6 +158,8 @@ class PushMessage:
         Event.SERVER_UP: ("servers:list", None),
         Event.AWG3_DROPPED: ("servers:list", None),
         Event.AWG3_RESTORED: ("servers:list", None),
+        Event.SERVER_LOAD_HIGH: ("servers:list", None),
+        Event.SERVER_LOAD_NORMAL: ("servers:list", None),
     }
 
     @classmethod

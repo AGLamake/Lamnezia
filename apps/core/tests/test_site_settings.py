@@ -97,6 +97,11 @@ class TestPage:
             "bot_key_delivery": "allowed",
             "guide_suggestions": "on",
             "traffic_warning_percent": "80",
+            "load_cpu_percent": "90",
+            "load_memory_percent": "90",
+            "load_disk_percent": "90",
+            "load_readings": "3",
+            "load_repeat_hours": "6",
             "smtp_host": "",
             "smtp_port": "587",
             "smtp_security": "starttls",
@@ -123,6 +128,19 @@ class TestPage:
 
         assert response.status_code == 200
         assert SiteSettings.load().traffic_warning_percent == 0
+
+    def test_load_alerts_take_thresholds_up_to_a_full_resource(self, admin: Client) -> None:
+        admin.post(PAGE, self.form(load_cpu_percent="100", load_disk_percent="0"))
+        site = SiteSettings.load()
+        assert (site.load_cpu_percent, site.load_disk_percent) == (100, 0)
+
+        response = admin.post(PAGE, self.form(load_memory_percent="101", load_readings="0"))
+
+        assert response.status_code == 200
+        assert (SiteSettings.load().load_memory_percent, SiteSettings.load().load_readings) == (
+            90,
+            3,
+        )
 
     def test_telegram_sign_in_tells_to_set_the_panel_domain_in_botfather(
         self, admin: Client, settings: Any

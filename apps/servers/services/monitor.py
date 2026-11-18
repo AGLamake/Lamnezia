@@ -21,6 +21,7 @@ from apps.notifications.services.trouble import (
 )
 from apps.servers.models import Server, ServerSample
 from apps.servers.services.connection import connect
+from apps.servers.services.load import LoadRules, LoadWatch
 from apps.servers.services.metrics import (
     METRICS_SCRIPT,
     ContainerState,
@@ -67,6 +68,8 @@ class ServerMonitor:
             _report_up(server)
             _report_awg3(server, sample)
         server.record_sample(sample)
+        if sample.answered:
+            LoadWatch(LoadRules.from_site()).check(server, sample.at)
         if server.online is False:
             _report_down(server)
         return sample

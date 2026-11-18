@@ -1,6 +1,6 @@
 from typing import Any
 
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -83,6 +83,44 @@ class SiteSettings(models.Model):
         help_text=_(
             "A user hears once a period that this share of their traffic limit is used. "
             "0 turns the warning off."
+        ),
+    )
+    load_cpu_percent = models.PositiveSmallIntegerField(
+        _("CPU load alert, %"),
+        default=90,
+        validators=[MaxValueValidator(100)],
+        help_text=_(
+            "Administrators hear when the CPU of a server stays this busy. 0 turns it off."
+        ),
+    )
+    load_memory_percent = models.PositiveSmallIntegerField(
+        _("memory alert, %"),
+        default=90,
+        validators=[MaxValueValidator(100)],
+        help_text=_("The same for the memory used. 0 turns it off."),
+    )
+    load_disk_percent = models.PositiveSmallIntegerField(
+        _("disk alert, %"),
+        default=90,
+        validators=[MaxValueValidator(100)],
+        help_text=_("The same for the disk space used. 0 turns it off."),
+    )
+    load_readings = models.PositiveSmallIntegerField(
+        _("readings in a row"),
+        default=3,
+        validators=[MinValueValidator(1), MaxValueValidator(60)],
+        help_text=_(
+            "A load alert comes after this many monitor readings in a row above the threshold, "
+            "and the all-clear after as many below it, so a short spike wakes nobody."
+        ),
+    )
+    load_repeat_hours = models.PositiveSmallIntegerField(
+        _("repeat load alert, hours"),
+        default=6,
+        validators=[MinValueValidator(1), MaxValueValidator(168)],
+        help_text=_(
+            "While the load stays high, the alert is repeated no more often than this; "
+            "a load back above the threshold sooner is not told again."
         ),
     )
     smtp_host = models.CharField(_("SMTP server"), max_length=255, blank=True)

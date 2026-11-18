@@ -57,6 +57,10 @@ msgstr[1] "%(name)s: оплата VPS просрочена на %(days)d дня"
 msgstr[2] "%(name)s: оплата VPS просрочена на %(days)d дней"
 
 #, python-format
+msgid "%(name)s: high load — %(resources)s"
+msgstr "%(name)s: высокая нагрузка — %(resources)s"
+
+#, python-format
 msgid "%(name)s: pay for the VPS within %(days)d day"
 msgid_plural "%(name)s: pay for the VPS within %(days)d days"
 msgstr[0] "%(name)s: оплатите VPS в течение %(days)d дня"

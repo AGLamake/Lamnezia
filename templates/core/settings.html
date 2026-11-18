@@ -37,6 +37,21 @@
   </section>
 
   <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "cpu" "icon-sm text-muted" %}{% translate "Server load" %}</h2>
+    <div class="form-section-body">
+    <div class="grid gap-4 sm:grid-cols-3">
+      {{ form.load_cpu_percent.as_field_group }}
+      {{ form.load_memory_percent.as_field_group }}
+      {{ form.load_disk_percent.as_field_group }}
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {{ form.load_readings.as_field_group }}
+      {{ form.load_repeat_hours.as_field_group }}
+    </div>
+    </div>
+  </section>
+
+  <section class="form-section">
     <h2 class="section-title flex items-center gap-2">{% icon "message" "icon-sm text-muted" %}{% translate "Email" %}</h2>
     <div class="form-section-body">
     <p class="help-text">{% translate "Without an SMTP server the panel uses LAMNEZIA_EMAIL_URL from the server settings." %}</p>

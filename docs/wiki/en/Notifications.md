@@ -40,6 +40,8 @@ channels hear each event.
 | Server answers again | `server_up` | `server`, `host`, `last_seen` |
 | AmneziaWG runs without the 3.1 settings | `awg3_dropped` | `server`, `host`, `since` |
 | AmneziaWG runs with the 3.1 settings again | `awg3_restored` | `server`, `host`, `since` |
+| Server load is high | `server_load_high` | `server`, `host`, `resource` (`cpu`, `memory`, `disk`), `percent`, `threshold`, `since` |
+| Server load is back to normal | `server_load_normal` | `server`, `host`, `resource`, `percent`, `threshold`, `since` |
 | Limit reached | `limit_reached` | `user`, `reason` (`traffic`, `total_traffic`, `expired`) |
 | Access ends soon | `access_expiring` | `user`, `until` (date) |
 | Traffic runs out soon | `traffic_low` | `user`, `percent`, `used`, `limit_bytes`, `limit`, `incomplete`, `note`, `url` |
@@ -130,6 +132,15 @@ AmneziaWG 3.1 settings and clients with them do not connect. The monitor reports
 `awg3_dropped`, saying what to do: update or remove the amneziawg module on the host and restart
 amnezia-awg2. When the settings are back, `awg3_restored` comes once. A drop on a server whose
 amnezia-awg2 is removed is forgotten without a notification.
+
+The monitor also watches the CPU, memory and disk of every server against the thresholds in
+**Settings → Server load** (90% each by default, 0 turns a resource off). A short spike wakes
+nobody: `server_load_high` comes after several readings in a row at or above the threshold
+(3 by default), and `server_load_normal` after as many readings below it, so a load swinging
+around the threshold changes nothing. While the load stays high, `server_load_high` is repeated
+no more often than set (every 6 hours by default); a load that goes back above the threshold
+sooner is not told again. `server_load_normal` comes once per run, only when its start was told.
+Each resource is watched apart. Relays are not watched: the panel reads only their traffic.
 
 ## In the browser
 

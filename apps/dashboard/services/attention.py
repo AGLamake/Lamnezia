@@ -59,7 +59,11 @@ class Attention:
 
     @cached_property
     def servers(self) -> list[Server]:
-        servers: QuerySet[Server] = Server.objects.select_related("latest_sample").order_by("name")
+        servers: QuerySet[Server] = (
+            Server.objects.select_related("latest_sample")
+            .prefetch_related("load_alerts")
+            .order_by("name")
+        )
         return list(Zone(self._member).narrow(servers, server="pk"))
 
     @cached_property
@@ -141,6 +145,10 @@ class Attention:
     def offline(self) -> list[Server]:
         return [server for server in self.servers if server.online is False]
 
+    def overloaded(self) -> list[Server]:
+        """Answering servers with a resource above its load threshold for a while."""
+        return [server for server in self.servers if server.online and server.overloads]
+
     def payment_due(self) -> list[Server]:
         if not self._member.is_admin:
             return []
@@ -182,6 +190,7 @@ class Attention:
             )
             for relay in self.unread_relays()
         ]
+        notices += [self._overload(server) for server in self.overloaded()]
         notices += [self._payment(server) for server in self.payment_due()]
         if self.failed_operations:
             notices.append(
@@ -266,6 +275,17 @@ class Attention:
                 )
             )
         return notices
+
+    def _overload(self, server: Server) -> Notice:
+        resources = ", ".join(str(alert.get_resource_display()) for alert in server.overloads)
+        text = _("%(name)s: high load — %(resources)s")
+        return Notice(
+            "warning",
+            "cpu",
+            text % {"name": server.name, "resources": resources},
+            self._server_url(server),
+            f"overload:{server.pk}",
+        )
 
     def _payment(self, server: Server) -> Notice:
         overdue = server.days_overdue

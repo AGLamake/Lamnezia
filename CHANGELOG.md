@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Server load alerts**: the monitor tells administrators when the CPU, memory or disk of a
+  server stays at or above a threshold (`server_load_high`) and when it is back to normal
+  (`server_load_normal`). **Settings → Server load** sets the thresholds (90% each by default,
+  0 turns one off), how many readings in a row count (3) and how often a lasting high load is
+  repeated (6 hours), so a short spike or a load swinging around the threshold wakes nobody.
+  The server card and **Needs attention** show the high load too.
 - **Notification about dropped AmneziaWG 3.1 settings**: when the amneziawg kernel module on a
   server is older than 3.1 and amnezia-awg2 runs without the 3.1 settings, administrators get one
   `awg3_dropped` notification telling them to update or remove the module on the host and restart

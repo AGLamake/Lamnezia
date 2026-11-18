@@ -19,6 +19,9 @@ msgstr "контейнеры Amnezia"
 msgid "Any"
 msgstr "Любой"
 
+msgid "CPU"
+msgstr "Процессор"
+
 msgid "CPU, %"
 msgstr "процессор, %"
 
@@ -49,6 +52,9 @@ msgstr "Подключиться к серверу"
 msgid "Country or any label that tells servers apart, e.g. «Germany, Hetzner»."
 msgstr "Страна или любая метка, по которой серверы различать, например «Германия, Hetzner»."
 
+msgid "Disk"
+msgstr "Диск"
+
 msgid "Docker"
 msgstr "Docker"
 
@@ -75,6 +81,9 @@ msgstr "Оставьте пустым, чтобы сохранить прежн�
 
 msgid "Little free disk space: a protocol may fail to install."
 msgstr "Мало свободного места на диске: протокол может не установиться."
+
+msgid "Memory"
+msgstr "Память"
 
 msgid "Only if the key is protected by one."
 msgstr "Только если ключ им защищён."
@@ -185,6 +194,9 @@ msgstr "свободно на диске"
 msgid "free memory"
 msgstr "свободная память"
 
+msgid "high since"
+msgstr "высокая с"
+
 msgid "host"
 msgstr "хост"
 
@@ -196,6 +208,12 @@ msgstr "пароль ключа"
 
 msgid "last answered at"
 msgstr "последний ответ"
+
+msgid "load alert"
+msgstr "предупреждение о нагрузке"
+
+msgid "load alerts"
+msgstr "предупреждения о нагрузке"
 
 msgid "location"
 msgstr "расположение"
@@ -230,6 +248,9 @@ msgstr "время замера"
 msgid "ready"
 msgstr "готов"
 
+msgid "resource"
+msgstr "ресурс"
+
 msgid "server"
 msgstr "сервер"
 
@@ -244,6 +265,9 @@ msgstr "серверы"
 
 msgid "status"
 msgstr "статус"
+
+msgid "told at"
+msgstr "сообщено"
 
 msgid "under maintenance"
 msgstr "на обслуживании"

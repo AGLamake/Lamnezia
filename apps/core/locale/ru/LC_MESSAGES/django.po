@@ -13,8 +13,14 @@ msgstr "%(size)s/с"
 msgid "A bot username: 5 to 32 Latin letters, digits and _."
 msgstr "Имя бота: от 5 до 32 латинских букв, цифр и _."
 
+msgid "A load alert comes after this many monitor readings in a row above the threshold, and the all-clear after as many below it, so a short spike wakes nobody."
+msgstr "Предупреждение о нагрузке приходит после стольких замеров монитора подряд выше порога, а сообщение о норме — после стольких же ниже него, чтобы короткий всплеск никого не будил."
+
 msgid "A user hears once a period that this share of their traffic limit is used. 0 turns the warning off."
 msgstr "Пользователь один раз за период узнаёт, что израсходовал эту долю лимита трафика. 0 — не предупреждать."
+
+msgid "Administrators hear when the CPU of a server stays this busy. 0 turns it off."
+msgstr "Администраторы получают уведомление, когда процессор сервера долго загружен на столько. 0 — выключить."
 
 msgid "Any time"
 msgstr "В любое время"
@@ -24,6 +30,9 @@ msgstr "Страница Bot приложения Discord. Бот выдаёт �
 
 msgid "By invitation only"
 msgstr "Только по приглашению"
+
+msgid "CPU load alert, %"
+msgstr "предупреждение о процессоре, %"
 
 msgid "Discord application ID"
 msgstr "ID приложения Discord"
@@ -115,6 +124,12 @@ msgstr "Ключ не импортируется"
 msgid "The key itself"
 msgstr "Сам ключ"
 
+msgid "The same for the disk space used. 0 turns it off."
+msgstr "То же для занятого места на диске. 0 — выключить."
+
+msgid "The same for the memory used. 0 turns it off."
+msgstr "То же для занятой памяти. 0 — выключить."
+
 msgid "Update the app, please."
 msgstr "Обновите, пожалуйста, приложение."
 
@@ -129,6 +144,9 @@ msgstr "Пользователи с привязанным Telegram смогут
 
 msgid "Webhooks may go to addresses such as 127.0.0.1, 10.0.0.0/8 or 192.168.0.0/16. Turn on only for a receiver in your own network."
 msgstr "Вебхуки могут уходить на адреса вроде 127.0.0.1, 10.0.0.0/8 или 192.168.0.0/16. Включайте, только если получатель в вашей собственной сети."
+
+msgid "While the load stays high, the alert is repeated no more often than this; a load back above the threshold sooner is not told again."
+msgstr "Пока нагрузка высокая, предупреждение повторяется не чаще этого; если нагрузка снова превысила порог раньше, о ней не сообщается повторно."
 
 msgid "Without @. Users link their Telegram through this bot."
 msgstr "Без @. Через этого бота пользователи привязывают свой Telegram."
@@ -151,11 +169,17 @@ msgstr "подтверждать email при регистрации"
 msgid "default plan"
 msgstr "тариф по умолчанию"
 
+msgid "disk alert, %"
+msgstr "предупреждение о диске, %"
+
 msgid "encryption"
 msgstr "шифрование"
 
 msgid "keys in the bots"
 msgstr "ключи в ботах"
+
+msgid "memory alert, %"
+msgstr "предупреждение о памяти, %"
 
 msgid "notifications to private networks"
 msgstr "уведомления в частные сети"
@@ -169,8 +193,14 @@ msgstr "настройки панели"
 msgid "ran at"
 msgstr "время запуска"
 
+msgid "readings in a row"
+msgstr "замеров подряд"
+
 msgid "registration"
 msgstr "регистрация"
+
+msgid "repeat load alert, hours"
+msgstr "повтор предупреждения о нагрузке, ч"
 
 msgid "rows removed"
 msgstr "удалено строк"

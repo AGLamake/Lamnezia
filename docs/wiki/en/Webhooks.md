@@ -35,6 +35,8 @@ zone), `data` depends on the event.
 | `server_up` | A server answers again after an outage (`server_down`). Once per outage, even when no channel heard of `server_down`. | `server` name, `host`, `last_seen` — time of the last answer before the outage or an empty string |
 | `awg3_dropped` | The amneziawg kernel module on a server is older than 3.1 and dropped the AmneziaWG 3.1 settings of amnezia-awg2. Once, until the settings are back. | `server` name, `host`, `since` — time of the reading that found it |
 | `awg3_restored` | amnezia-awg2 takes the 3.1 settings again after `awg3_dropped`. Once, even when no channel heard of `awg3_dropped`. | `server` name, `host`, `since` — the reading the settings were dropped since |
+| `server_load_high` | CPU, memory or disk of a server stayed at or above the threshold in **Settings** for several readings in a row. Repeated while the load lasts, no more often than set. | `server` name, `host`, `resource` (`cpu`, `memory`, `disk`), `percent` — the latest reading, `threshold` — percent, `since` — the first reading above the threshold |
+| `server_load_normal` | The load of `server_load_high` stayed below the threshold for as many readings. Once, only when the start was told. | the same as `server_load_high` |
 | `limit_reached` | A user's keys are turned off by a limit. | `user`, `reason`: `traffic`, `total_traffic` or `expired` |
 | `access_expiring` | The access term of a user ends within three days. Once per term. | `user`, `until` — date `YYYY-MM-DD` |
 | `traffic_low` | A user has used the share of a traffic limit set in **Settings** (80% by default). Once per period of that limit; not sent once the limit is reached. Also sent to the user. | `user`, `percent` — share used, `used`, `limit_bytes` — bytes, `limit` (`of the period`, `of the plan`), `incomplete` — traffic of some keys is not counted now, `note`, `url` — usage page of the portal |
@@ -87,6 +89,10 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/awg3_dropped"}}}},
     {"if": {"properties": {"event": {"const": "awg3_restored"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/awg3_restored"}}}},
+    {"if": {"properties": {"event": {"const": "server_load_high"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/server_load_high"}}}},
+    {"if": {"properties": {"event": {"const": "server_load_normal"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/server_load_normal"}}}},
     {"if": {"properties": {"event": {"const": "limit_reached"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
@@ -172,6 +178,26 @@ may be added: ignore what you do not know.
       "properties": {
         "server": {"type": "string"},
         "host": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"}
+      }
+    },
+    "server_load_high": {
+      "type": "object",
+      "required": ["server", "host", "resource", "percent", "threshold", "since"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "resource": {"enum": ["cpu", "memory", "disk"]},
+        "percent": {"type": "integer"}, "threshold": {"type": "integer"},
+        "since": {"type": "string", "format": "date-time"}
+      }
+    },
+    "server_load_normal": {
+      "type": "object",
+      "required": ["server", "host", "resource", "percent", "threshold", "since"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "resource": {"enum": ["cpu", "memory", "disk"]},
+        "percent": {"type": "integer"}, "threshold": {"type": "integer"},
         "since": {"type": "string", "format": "date-time"}
       }
     },

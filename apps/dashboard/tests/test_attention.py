@@ -17,6 +17,7 @@ from apps.operations.models import Operation, OperationStatus
 from apps.operations.tests.factories import FailedOperationFactory
 from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay
+from apps.servers.models import LoadAlert, LoadResource, Server, ServerSample
 from apps.servers.tests.factories import ServerFactory
 
 pytestmark = pytest.mark.django_db
@@ -183,3 +184,35 @@ def test_the_menu_counts_groups_with_trouble(client: Client) -> None:
 
     assert reverse("groups:list") in page
     assert "Groups with a lagging or stuck server" in page
+
+
+def overloaded(name: str, *resources: LoadResource) -> Server:
+    server = ServerFactory(name=name)
+    server.record_sample(ServerSample.objects.create(server=server, at=timezone.now()))
+    for resource in resources:
+        LoadAlert.objects.create(server=server, resource=resource, high_since=timezone.now())
+    return server
+
+
+def test_a_server_under_high_load_needs_attention_and_shows_it_on_its_card(
+    client: Client,
+) -> None:
+    admin = UserFactory(role=Role.ADMIN)
+    server = overloaded("Germany", LoadResource.DISK, LoadResource.CPU)
+    calm = overloaded("Finland")
+    LoadAlert.objects.create(server=calm, resource=LoadResource.CPU, told_at=timezone.now())
+    client.force_login(admin)
+
+    [notice] = [n for n in Attention(admin).notices() if n.key.startswith("overload:")]
+    card = client.get(reverse("servers:detail", args=[server.pk])).content.decode()
+
+    assert (notice.text, notice.level) == ("Germany: high load — CPU, Disk", "warning")
+    assert "High load: CPU above the threshold since" in card
+    assert "High load: Disk above the threshold since" in card
+
+
+def test_a_server_that_does_not_answer_is_not_told_as_overloaded() -> None:
+    server = overloaded("Germany", LoadResource.CPU)
+    Server.objects.filter(pk=server.pk).update(last_seen_at=timezone.now() - timedelta(days=1))
+
+    assert Attention(UserFactory(role=Role.ADMIN)).overloaded() == []

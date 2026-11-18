@@ -17,6 +17,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from apps.groups.models import LagReason
+from apps.servers.models import LoadResource
 from apps.traffic.signals import LimitReason
 
 
@@ -25,6 +26,8 @@ class Event(StrEnum):
     SERVER_UP = "server_up"
     AWG3_DROPPED = "awg3_dropped"
     AWG3_RESTORED = "awg3_restored"
+    SERVER_LOAD_HIGH = "server_load_high"
+    SERVER_LOAD_NORMAL = "server_load_normal"
     LIMIT_REACHED = "limit_reached"
     ACCESS_EXPIRING = "access_expiring"
     TRAFFIC_LOW = "traffic_low"
@@ -144,6 +147,26 @@ EVENTS: dict[Event, EventType] = {
             "amnezia-awg2 on {server} ({host}) takes the AmneziaWG 3.1 settings again. "
             "Dropped since {since}."
         ),
+    ),
+    # `resource` is cpu, memory or disk; `percent` is the latest reading, `since` the first
+    # reading of the run above the threshold. While the load lasts, the alert is repeated.
+    Event.SERVER_LOAD_HIGH: EventType(
+        _("Server load is high"),
+        _("High load on {server}: {resource} {percent}%"),
+        _(
+            "{resource} of the server {server} ({host}) is at {percent}%, at or above the "
+            "threshold of {threshold}%, since {since}."
+        ),
+        coded={"resource": LoadResource},
+    ),
+    Event.SERVER_LOAD_NORMAL: EventType(
+        _("Server load is back to normal"),
+        _("Load on {server} is back to normal: {resource}"),
+        _(
+            "{resource} of the server {server} ({host}) is at {percent}%, below the threshold "
+            "of {threshold}%. High since {since}."
+        ),
+        coded={"resource": LoadResource},
     ),
     Event.LIMIT_REACHED: EventType(
         _("Limit reached"),
