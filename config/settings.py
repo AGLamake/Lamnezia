@@ -205,6 +205,11 @@ BOT_DIALOG_MINUTES = 10
 # Telegram: updates come by a webhook at SITE_URL/bots/telegram/ instead of long polling; Caddy or
 # nginx passes it to the bots service on BOTS_WEBHOOK_PORT. The panel needs a public HTTPS domain.
 TELEGRAM_WEBHOOK = env.bool("TELEGRAM_WEBHOOK", default=False)
+# Where the bot and the Telegram notifications reach the Bot API: a self-hosted server instead of
+# api.telegram.org, and a proxy (http:// or socks5://, maybe with user:password@) for a panel
+# where Telegram is blocked. The proxy holds a password: it is never logged.
+TELEGRAM_API_SERVER = env.str("TELEGRAM_API_SERVER", default="")
+TELEGRAM_PROXY = env.str("TELEGRAM_PROXY", default="")
 BOTS_WEBHOOK_PORT = 8081
 # The bots service checks the panel for "turn on/off/restart" and reports the bots' state every
 # BOT_SUPERVISOR_SECONDS; a report older than BOT_SUPERVISOR_STALE means the service does not run.
@@ -378,6 +383,9 @@ OPERATION_TIMEOUT = env.int("OPERATION_TIMEOUT", default=3600)
 # Amnezia app downloads (guides). The token is optional and only raises the GitHub API limit.
 GITHUB_TOKEN = env.str("GITHUB_TOKEN", default="")
 GITHUB_TIMEOUT = 10
+# A proxy for the requests to api.github.com (the app release and the panel update check), like
+# TELEGRAM_PROXY.
+GITHUB_PROXY = env.str("GITHUB_PROXY", default="")
 # Beat asks GitHub every 6 hours (guides-refresh-release); pages read the cache or the database.
 RELEASES_CACHE_TIMEOUT = 6 * 60 * 60
 # Seconds to wait for a useful material link in the weekly check (guides-check-materials).

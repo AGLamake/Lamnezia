@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from django.db import transaction
 
+from apps.core.services.outbound import TelegramApi
 from apps.notifications.services.channels import DeliveryError, HttpClient
 
 
@@ -14,6 +15,7 @@ class Post:
     url: str
     body: bytes
     headers: dict[str, str]
+    api: TelegramApi | None = None
 
 
 @dataclass
@@ -25,10 +27,17 @@ class FakeHttp:
 
     answers: dict[str, bytes] = field(default_factory=dict)
 
-    def post(self, url: str, body: bytes, headers: dict[str, str] | None = None) -> bytes:
+    def post(
+        self,
+        url: str,
+        body: bytes,
+        headers: dict[str, str] | None = None,
+        *,
+        api: TelegramApi | None = None,
+    ) -> bytes:
         if url in self.failing:
             raise self.failing[url]
-        self.posts.append(Post(url, body, headers or {}))
+        self.posts.append(Post(url, body, headers or {}, api))
         return self.answers.get(url, b"")
 
     def to(self, url: str) -> list[Post]:

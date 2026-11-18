@@ -1,3 +1,4 @@
+import io
 import json
 import urllib.error
 import urllib.request
@@ -7,7 +8,9 @@ from typing import Any
 import pytest
 from django.core.cache.backends.locmem import LocMemCache
 
+from apps.core.services.outbound import OutboundProxy
 from apps.guides.models import Release
+from apps.guides.services import releases
 from apps.guides.services.releases import (
     AMNEZIA_REPOSITORY,
     GitHubReleaseClient,
@@ -172,6 +175,32 @@ def test_network_error_becomes_fetch_error(monkeypatch: pytest.MonkeyPatch) -> N
 
     with pytest.raises(ReleaseFetchError):
         GitHubReleaseClient().fetch_latest(AMNEZIA_REPOSITORY)
+
+
+@pytest.mark.django_db
+def test_the_client_asks_github_through_the_proxy_of_the_settings(
+    settings: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings.GITHUB_PROXY = "socks5://user:pw@proxy:1080"
+    used: list[OutboundProxy | None] = []
+
+    def opener(proxy: OutboundProxy | None) -> Any:
+        used.append(proxy)
+        return lambda request, timeout: io.BytesIO(FIXTURE.read_bytes())
+
+    monkeypatch.setattr(releases, "url_opener", opener)
+
+    payload = GitHubReleaseClient.from_settings().fetch_latest(AMNEZIA_REPOSITORY)
+
+    assert payload["tag_name"] == "5.0.3.0"
+    assert used == [OutboundProxy("socks5://user:pw@proxy:1080")]
+
+
+@pytest.mark.django_db
+def test_without_a_proxy_the_client_asks_github_directly(settings: Any) -> None:
+    settings.GITHUB_PROXY = ""
+
+    assert GitHubReleaseClient.from_settings()._proxy is None
 
 
 def test_store_links_come_from_settings(settings: Any) -> None:

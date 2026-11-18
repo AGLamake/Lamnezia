@@ -3,7 +3,8 @@
 It receives updates by long polling, or by a webhook when LAMNEZIA_TELEGRAM_WEBHOOK is on:
 Telegram posts them to SITE_URL/bots/telegram/, and Caddy or nginx passes them to this process.
 It answers only in private chats, so a reply with a key never shows up in a group. A photo the
-user sends, or an image sent as a file, goes to the core with its caption as the text.
+user sends, or an image sent as a file, goes to the core with its caption as the text. The bot
+calls the Bot API server and the proxy of the settings (apps/core/services/outbound.py).
 """
 
 import asyncio
@@ -13,6 +14,8 @@ from collections.abc import Iterable
 from contextlib import suppress
 
 from aiogram import Bot, Dispatcher, F, Router
+from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.client.telegram import TelegramAPIServer
 from aiogram.enums import ChatType
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.types import (
@@ -46,6 +49,7 @@ from apps.bots.services.replies import (
     split_text,
 )
 from apps.core.models import SiteSettings
+from apps.core.services.outbound import TelegramApi
 from apps.support.services.images import MAX_IMAGE_SIZE
 
 # An image sent as a file rather than as a photo, to keep it uncompressed.
@@ -53,6 +57,12 @@ _IMAGE_FILE = F.document.mime_type.startswith("image/")
 
 # Telegram limits a message text to 4096 characters, counted in UTF-16 code units.
 TEXT_LIMIT = 4096
+
+
+def api_session(api: TelegramApi) -> AiohttpSession:
+    """The bot's HTTP session: to the Bot API server of the settings, through their proxy."""
+    proxy = api.proxy.url if api.proxy else None
+    return AiohttpSession(proxy=proxy, api=TelegramAPIServer.from_base(api.server))
 
 
 @adapters.register
@@ -66,7 +76,7 @@ class TelegramAdapter(BotAdapter):
         return token
 
     async def run(self, token: str) -> None:
-        bot = Bot(token)
+        bot = Bot(token, session=api_session(TelegramApi.from_settings()))
         try:
             me = await bot.get_me()  # fails at once on a wrong token
             await set_menu(bot)

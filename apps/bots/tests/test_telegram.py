@@ -37,11 +37,18 @@ from django.utils.translation import gettext
 
 from apps.accounts.models import Messenger, Role
 from apps.accounts.tests.factories import UserFactory
-from apps.bots.adapters.telegram import TEXT_LIMIT, TelegramAdapter, TelegramWebhook, set_menu
+from apps.bots.adapters.telegram import (
+    TEXT_LIMIT,
+    TelegramAdapter,
+    TelegramWebhook,
+    api_session,
+    set_menu,
+)
 from apps.bots.services.core import BotCore
 from apps.bots.services.replies import Attachment, Button, Incoming, Placement, Reply
 from apps.bots.services.session import SiteLinks
 from apps.bots.tests.conftest import SITE, link
+from apps.core.services.outbound import OutboundProxy, TelegramApi
 from apps.keys.models import AccessKey
 from apps.keys.tests.conftest import SOURCE
 from apps.portal.tests.test_portal import subscriber
@@ -483,3 +490,20 @@ async def test_a_panel_over_the_limit_goes_in_several_messages(
     assert all(len(call.text.encode("utf-16-le")) // 2 <= TEXT_LIMIT for call in sent)
     assert sent[0].text.startswith("Keys\n\n🔑")
     assert [call.reply_markup is not None for call in sent] == [False, True]
+
+
+def test_the_bot_session_uses_the_bot_api_server_and_the_proxy() -> None:
+    proxy = OutboundProxy("socks5://user:pw@proxy:1080")
+
+    bot_session = api_session(TelegramApi("http://bot-api:8081", proxy))
+
+    assert bot_session.api.api_url("1:a", "getMe") == "http://bot-api:8081/bot1:a/getMe"
+    assert bot_session.api.file_url("1:a", "p.jpg") == "http://bot-api:8081/file/bot1:a/p.jpg"
+    assert bot_session.proxy == "socks5://user:pw@proxy:1080"
+
+
+def test_without_settings_the_bot_talks_to_telegram_directly() -> None:
+    bot_session = api_session(TelegramApi())
+
+    assert bot_session.api.api_url("1:a", "getMe") == "https://api.telegram.org/bot1:a/getMe"
+    assert bot_session.proxy is None

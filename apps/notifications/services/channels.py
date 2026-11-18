@@ -21,6 +21,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 from apps.accounts.services.link_offer import LetterOffer
+from apps.core.services.outbound import TelegramApi
 from apps.core.services.site_settings import cached_settings
 from apps.notifications.models import Channel, ChannelKind
 from apps.notifications.services.addresses import (
@@ -109,7 +110,8 @@ class HttpClient:
     """POSTs JSON. Errors never carry the URL: for Telegram and Discord it holds the token.
 
     With a guard, addresses in private networks are refused, the connection goes only to the
-    addresses the guard checked, and redirects are not followed.
+    addresses the guard checked, and redirects are not followed. A request to the Bot API (`api`)
+    goes to the panel's own setting, through its proxy, without the guard.
     """
 
     def __init__(self, timeout: float, guard: AddressGuard | None = None) -> None:
@@ -120,11 +122,18 @@ class HttpClient:
     def from_settings(cls) -> Self:
         return cls(settings.NOTIFICATION_TIMEOUT, AddressGuard.from_settings())
 
-    def post(self, url: str, body: bytes, headers: dict[str, str] | None = None) -> bytes:
+    def post(
+        self,
+        url: str,
+        body: bytes,
+        headers: dict[str, str] | None = None,
+        *,
+        api: TelegramApi | None = None,
+    ) -> bytes:
         """The answer body."""
         if urlsplit(url).scheme not in ("http", "https"):
             raise DeliveryError("only http and https addresses are allowed", retryable=False)
-        open_url = self._opener(url)
+        open_url = self._opener(url) if api is None else api.opener(_RefuseRedirects())
         request = urllib.request.Request(
             url,
             data=body,
@@ -256,17 +265,25 @@ class TelegramChannel(NotificationChannel):
     """A message from a bot to a chat; without its own token the channel uses the panel bot.
 
     With a `menu` label the message has the bot's «Menu» button: a user's chat with the panel
-    bot opens the menu from the notification.
+    bot opens the menu from the notification. `api`: the Bot API server and proxy, by default
+    from the settings.
     """
 
     kind = ChannelKind.TELEGRAM
-    API_URL = "https://api.telegram.org/bot{token}/sendMessage"
 
-    def __init__(self, token: str, chat_id: str, http: HttpClient, menu: str = "") -> None:
+    def __init__(
+        self,
+        token: str,
+        chat_id: str,
+        http: HttpClient,
+        menu: str = "",
+        api: TelegramApi | None = None,
+    ) -> None:
         self._token = token
         self._chat_id = chat_id
         self._http = http
         self._menu = menu
+        self._api = api or TelegramApi.from_settings()
 
     @classmethod
     def from_model(cls, channel: Channel, http: HttpClient) -> Self:
@@ -284,7 +301,8 @@ class TelegramChannel(NotificationChannel):
         if self._menu:
             button = {"text": self._menu, "callback_data": _MENU_ACTION}
             body["reply_markup"] = {"inline_keyboard": [[button]]}
-        self._http.post(self.API_URL.format(token=self._token), _json(body))
+        url = self._api.method_url(self._token, "sendMessage")
+        self._http.post(url, _json(body), api=self._api)
 
 
 @register

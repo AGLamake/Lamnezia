@@ -26,6 +26,7 @@ dependencies = [
     "django-axes[ipware]>=8.0",
     "aiogram>=3.20",
     "discord-py>=2.5",
+    "aiohttp-socks>=0.10",
 ]
 
 [dependency-groups]

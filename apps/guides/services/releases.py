@@ -14,6 +14,7 @@ from django.db import transaction
 
 from amnezia_core.errors import ReleaseFormatError
 from amnezia_core.releases import AmneziaRelease, parse_release
+from apps.core.services.outbound import OutboundProxy, url_opener
 from apps.core.services.site_settings import cached_settings
 from apps.guides.models import Release
 
@@ -41,23 +42,32 @@ class StoreLinks:
 
 
 class GitHubReleaseClient:
-    """Reads `releases/latest`; the token raises the API limit from 60 to 5000 requests an hour."""
+    """Reads `releases/latest`; the token raises the API limit from 60 to 5000 requests an hour.
+    With a proxy (`GITHUB_PROXY`) the request goes through it.
+    """
 
-    def __init__(self, token: str = "", timeout: float = 10) -> None:
+    def __init__(
+        self, token: str = "", timeout: float = 10, proxy: OutboundProxy | None = None
+    ) -> None:
         self._token = token
         self._timeout = timeout
+        self._proxy = proxy
 
     @classmethod
     def from_settings(cls) -> Self:
         token = cached_settings.get().github_token or settings.GITHUB_TOKEN
-        return cls(token=token, timeout=settings.GITHUB_TIMEOUT)
+        return cls(
+            token=token,
+            timeout=settings.GITHUB_TIMEOUT,
+            proxy=OutboundProxy.parse(settings.GITHUB_PROXY),
+        )
 
     def fetch_latest(self, repository: str) -> dict[str, Any]:
         request = urllib.request.Request(
             _API_URL.format(repository=repository), headers=self._headers()
         )
         try:
-            with urllib.request.urlopen(request, timeout=self._timeout) as response:
+            with url_opener(self._proxy)(request, timeout=self._timeout) as response:
                 payload = json.load(response)
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
             raise ReleaseFetchError(f"{repository}: {exc}") from exc

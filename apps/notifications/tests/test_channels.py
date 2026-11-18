@@ -11,6 +11,8 @@ from typing import Any
 import pytest
 
 from apps.accounts.tests.registration import configure as configure_site
+from apps.core.services.outbound import OutboundProxy, TelegramApi
+from apps.core.tests.proxies import web_server
 from apps.notifications.models import ChannelKind
 from apps.notifications.services.addresses import AddressGuard
 from apps.notifications.services.channels import (
@@ -64,6 +66,21 @@ def test_telegram_without_its_own_token_uses_the_panel_bot() -> None:
     build_channel(channel, http).send(MESSAGE)  # type: ignore[arg-type]
 
     assert http.posts[0].url == "https://api.telegram.org/bot999:panel/sendMessage"
+
+
+@pytest.mark.django_db
+def test_telegram_calls_the_bot_api_server_of_the_settings(settings: Any) -> None:
+    settings.TELEGRAM_API_SERVER = "http://bot-api:8081"
+    settings.TELEGRAM_PROXY = "socks5://proxy:1080"
+    configure_site(telegram_bot_token="999:panel")
+    http = FakeHttp()
+    channel = ChannelFactory.build(kind=ChannelKind.TELEGRAM, target="42", secret="")
+
+    build_channel(channel, http).send(MESSAGE)  # type: ignore[arg-type]
+
+    [post] = http.posts
+    assert post.url == "http://bot-api:8081/bot999:panel/sendMessage"
+    assert post.api == TelegramApi("http://bot-api:8081", OutboundProxy("socks5://proxy:1080"))
 
 
 @pytest.mark.django_db
@@ -332,3 +349,28 @@ class TestDnsRebinding:
             HttpClient(1, AddressGuard(allow_private=False)).post("https://nowhere.invalid/", b"{}")
 
         assert error.value.retryable
+
+
+def test_the_bot_api_is_reached_without_the_webhook_guard() -> None:
+    with web_server() as (port, seen):
+        api = TelegramApi(f"http://127.0.0.1:{port}")
+        client = HttpClient(5, AddressGuard(allow_private=False))
+
+        answer = client.post(api.method_url("1:a", "sendMessage"), b"{}", api=api)
+
+    assert json.loads(answer) == {"ok": True}
+    assert seen.paths == ["/bot1:a/sendMessage"]
+
+
+def test_a_failed_proxy_does_not_show_its_password() -> None:
+    with socket.socket() as closed:
+        closed.bind(("127.0.0.1", 0))
+        port = closed.getsockname()[1]
+    api = TelegramApi(proxy=OutboundProxy(f"socks5://user:s3cret@127.0.0.1:{port}"))
+
+    with pytest.raises(DeliveryError) as error:
+        HttpClient(2).post(api.method_url("SECRET", "sendMessage"), b"{}", api=api)
+
+    assert error.value.retryable
+    assert "s3cret" not in str(error.value)
+    assert "SECRET" not in str(error.value)

@@ -79,6 +79,24 @@ link it; link it on the **Messengers** page of your profile.
 Telegram updates come by long polling by default, which works behind NAT and without a domain.
 Webhook mode for a public HTTPS domain: see [The Telegram bot](Messengers.md#the-telegram-bot).
 
+### Telegram through a proxy
+
+Where api.telegram.org is blocked, set a proxy in `.env` and restart the panel
+(`docker compose up -d`):
+
+```sh
+LAMNEZIA_TELEGRAM_PROXY=socks5://user:password@proxy.example.com:1080
+```
+
+`http://` and `socks5://` proxies are taken; a SOCKS5 proxy also resolves the names, so a blocked
+DNS answer does not matter. The bot and the Telegram notification channels go through it; the
+Telegram login on the sign-in page is opened by the visitor's browser and needs no proxy. Instead
+of a proxy, or with it, the panel can call a self-hosted
+[Bot API server](https://github.com/tdlib/telegram-bot-api) placed where Telegram is reachable:
+`LAMNEZIA_TELEGRAM_API_SERVER=http://telegram-bot-api:8081` (without `--local`). The connections to
+the VPN servers and the webhooks never go through these proxies. The proxy password is a secret:
+the panel does not log it, and errors show the proxy without it.
+
 ## 5. Discord channel for the administrators' notifications
 
 Notifications to a Discord channel go through a channel webhook and need no bot.

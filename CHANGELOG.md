@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Proxy for outgoing requests**: where Telegram or GitHub is blocked, `LAMNEZIA_TELEGRAM_PROXY`
+  sends the bot and the Telegram notifications through an `http://` or `socks5://` proxy, and
+  `LAMNEZIA_TELEGRAM_API_SERVER` points them to a self-hosted Bot API server;
+  `LAMNEZIA_GITHUB_PROXY` does the same for the Amnezia release links and the panel update check.
+  Without them nothing changes. The VPN servers and webhooks are reached directly as before, and the
+  proxy password is never logged.
 - **Report to the staff**: in **Settings → Report to the staff** an administrator turns on a
   daily or weekly summary (off by default): servers and relays down, traffic of the period and
   the most active keys, access ending within a week, failed operations, the age of backups and
