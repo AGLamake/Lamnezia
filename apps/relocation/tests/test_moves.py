@@ -12,9 +12,11 @@ from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.models import MoveState, PanelMove
 from apps.relocation.services.completion import arrive_here
 from apps.relocation.services.moves import (
+    ABANDON_ACTION,
     CANCEL_KIND,
     CONFIRM_KIND,
     PREPARE_KIND,
+    abandon_move,
     cancel_move,
     confirm_move,
     start_move,
@@ -176,3 +178,48 @@ def test_only_admins_open_the_page(client: Client) -> None:
     client.force_login(UserFactory(role=Role.USER))
 
     assert client.get("/backups/move/").status_code in (302, 403)
+
+
+def test_a_partly_confirmed_move_ends_without_the_new_machine() -> None:
+    move = make_move(MoveState.READY, OperationStatus.FAILED, confirm_started=True)
+
+    abandoned = abandon_move(move.pk, UserFactory(role=Role.ADMIN), None)
+
+    assert abandoned.state == MoveState.CANCELLED
+    assert not abandoned.frozen
+    assert AuditEvent.objects.filter(action=ABANDON_ACTION).exists()
+
+
+@pytest.mark.parametrize(
+    ("state", "status", "confirm_started"),
+    [
+        (MoveState.READY, OperationStatus.SUCCEEDED, False),
+        (MoveState.READY, OperationStatus.RUNNING, True),
+        (MoveState.LEFT, OperationStatus.SUCCEEDED, True),
+    ],
+)
+def test_only_a_partly_confirmed_idle_move_is_abandoned(
+    state: MoveState, status: OperationStatus, confirm_started: bool
+) -> None:
+    move = make_move(state, status, confirm_started=confirm_started)
+
+    with pytest.raises(MoveError) as error:
+        abandon_move(move.pk, UserFactory(role=Role.ADMIN), None)
+    assert error.value.code == MoveErrorCode.WRONG_STATE
+
+
+def test_the_page_offers_a_retry_and_a_cancel_without_the_new_machine(client: Client) -> None:
+    admin_client(client)
+    move = make_move(MoveState.READY, OperationStatus.FAILED, confirm_started=True)
+    page = client.get(f"/backups/move/{move.pk}/").content.decode()
+    assert "Retry the confirmation" in page
+    assert "Cancel without the new machine" in page
+
+    response = client.post(f"/backups/move/{move.pk}/abandon/")
+
+    assert response["Location"] == f"/backups/move/{move.pk}/"
+    move.refresh_from_db()
+    assert move.state == MoveState.CANCELLED
+    page = client.get(f"/backups/move/{move.pk}/").content.decode()
+    assert "remove it there by hand" in page
+    assert "Cancel without the new machine" not in page

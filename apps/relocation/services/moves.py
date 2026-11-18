@@ -8,13 +8,14 @@ from apps.core.models import SiteSettings
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
 from apps.relocation.errors import MoveError, MoveErrorCode
-from apps.relocation.models import PanelMove
+from apps.relocation.models import MoveState, PanelMove
 from apps.relocation.services.freeze import MOVE_KIND_PREFIX, frozen_move
 from apps.servers.models import Server
 
 PREPARE_KIND = "relocation.prepare"
 CONFIRM_KIND = "relocation.confirm"
 CANCEL_KIND = "relocation.cancel"
+ABANDON_ACTION = "relocation.abandon"
 MOVE_PARAM = "move_id"
 _ACTIVE = (OperationStatus.PENDING, OperationStatus.RUNNING)
 
@@ -61,6 +62,20 @@ def cancel_move(move_id: int, user: User, ip: str | None) -> PanelMove:
             raise MoveError(MoveErrorCode.WRONG_STATE, move.state)
         _launch(move, CANCEL_KIND, user)
         audit.log(CANCEL_KIND, actor=user, target=move.target, ip=ip)
+    return move
+
+
+def abandon_move(move_id: int, user: User, ip: str | None) -> PanelMove:
+    """End a partly confirmed move without the new machine; this panel accepts changes again.
+
+    Nothing is run there: the copy may already accept changes, so the admin removes it by hand.
+    """
+    with transaction.atomic():
+        move = _locked(move_id)
+        if not move.can_abandon:
+            raise MoveError(MoveErrorCode.WRONG_STATE, move.state)
+        move.mark(MoveState.CANCELLED)
+        audit.log(ABANDON_ACTION, actor=user, target=move.target, ip=ip)
     return move
 
 

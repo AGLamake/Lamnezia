@@ -10,6 +10,7 @@ from apps.relocation.models import MoveState, PanelMove
 from apps.relocation.services.completion import MoveCancellation, MoveConfirmation
 from apps.relocation.services.preparation import MovePreparation
 from apps.relocation.tests.helpers import PASSWORD_LENGTH, FakeMachine, fake_connect, make_move
+from apps.ssh.errors import ErrorCode, SshError
 
 pytestmark = pytest.mark.django_db
 
@@ -114,6 +115,10 @@ def finish(
 ) -> PanelMove:
     fake_connect(monkeypatch, COMPLETION)
     monkeypatch.setattr(f"{COMPLETION}.TargetMachine", fake)
+    return run(runner, move)
+
+
+def run(runner: type, move: PanelMove) -> PanelMove:
     try:
         runner(move, OperationContext(OperationFactory())).run()
     finally:
@@ -175,7 +180,44 @@ def test_after_a_started_confirmation_a_failed_cancel_keeps_the_freeze(
     fake = FakeMachine(fail_at="discard")
     move = make_move(MoveState.READY, confirm_started=True)
 
-    with pytest.raises(MoveError):
+    with pytest.raises(MoveError) as error:
         finish(monkeypatch, MoveCancellation, fake, move)
 
     assert PanelMove.objects.get().state == MoveState.READY
+    assert error.value.code == MoveErrorCode.PARTLY_CONFIRMED
+
+
+def unreachable(monkeypatch: pytest.MonkeyPatch) -> None:
+    def connect(server: object) -> None:
+        raise SshError(ErrorCode.HOST_UNREACHABLE)
+
+    monkeypatch.setattr(f"{COMPLETION}.connect", connect)
+
+
+def test_a_partly_confirmed_move_keeps_both_ways_out_while_the_target_is_down(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    unreachable(monkeypatch)
+    move = make_move(MoveState.READY, confirm_started=True)
+
+    with pytest.raises(MoveError) as error:
+        run(MoveCancellation, move)
+    assert error.value.code == MoveErrorCode.PARTLY_CONFIRMED
+
+    with pytest.raises(SshError):
+        run(MoveConfirmation, move)
+
+    assert move.state == MoveState.READY
+    assert (move.can_confirm, move.can_abandon) == (True, True)
+
+
+def test_a_retried_confirmation_takes_over_once_the_target_answers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake = FakeMachine(copy=MoveState.ARRIVED)
+    move = make_move(MoveState.READY, confirm_started=True)
+
+    move = finish(monkeypatch, MoveConfirmation, fake, move)
+
+    assert move.state == MoveState.LEFT
+    assert fake.calls == ["copy_state", "arrive"]

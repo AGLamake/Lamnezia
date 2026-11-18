@@ -279,6 +279,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A panel move stuck after a partial confirmation**: when the new machine went down in the middle
+  of the confirmation, the cancel refused and only a retry was left. The move screen now names the
+  state and offers **Retry the confirmation** and **Cancel without the new machine**: the latter
+  lets this panel accept changes again without touching the new machine and warns that the copy
+  there may run as a second panel until it is removed by hand.
 - **A relay member that answers the relay but not the clients**: the agent probed a member through
   one long-lived flow, so a filter on the way that dropped new UDP flows let the probe through while
   the clients got nothing, and the panel showed the member as reachable and active. Each probe now

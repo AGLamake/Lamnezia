@@ -21,6 +21,7 @@ class MoveErrorCode(StrEnum):
     RELAY_BROKEN = "relay_broken"
     ARRIVED = "arrived"
     NOT_DISCARDED = "not_discarded"
+    PARTLY_CONFIRMED = "partly_confirmed"
 
 
 MOVE_ERRORS: dict[MoveErrorCode, ErrorDescription] = {
@@ -89,6 +90,13 @@ MOVE_ERRORS: dict[MoveErrorCode, ErrorDescription] = {
         _(
             "Remove it on the new machine by hand: cd /opt/lamnezia && docker compose down -v, "
             "then delete /opt/lamnezia and the nginx site lamnezia, if there is one."
+        ),
+    ),
+    MoveErrorCode.PARTLY_CONFIRMED: ErrorDescription(
+        _("The confirmation has started, and the copy on the new machine could not be removed."),
+        _(
+            "Retry the confirmation once the new machine answers, or cancel the move without the "
+            "new machine on System → Panel move."
         ),
     ),
 }

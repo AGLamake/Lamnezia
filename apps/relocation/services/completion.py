@@ -47,7 +47,8 @@ class MoveCancellation:
     """The copy on the new machine is removed and this panel accepts changes again.
 
     When the copy cannot be reached, this panel still unfreezes, unless a confirmation has
-    started: then the copy may be the live panel already and the move stays as it is.
+    started: then the copy may be the live panel already and the move stays as it is, waiting
+    for a retried confirmation or `abandon_move`.
     """
 
     def __init__(self, move: PanelMove, ctx: OperationContext) -> None:
@@ -61,9 +62,11 @@ class MoveCancellation:
             try:
                 self._discard()
             except (MoveError, SshError) as exc:
-                if self._move.confirm_started or exc.code == MoveErrorCode.ARRIVED:
+                if exc.code == MoveErrorCode.ARRIVED:
                     raise
                 self._ctx.log(exc.message)
+                if self._move.confirm_started:
+                    raise MoveError(MoveErrorCode.PARTLY_CONFIRMED) from exc
                 self._move.mark(MoveState.CANCELLED)
                 raise MoveError(MoveErrorCode.NOT_DISCARDED) from exc
         self._move.mark(MoveState.CANCELLED)

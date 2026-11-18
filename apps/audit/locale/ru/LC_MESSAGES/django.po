@@ -24,6 +24,9 @@ msgstr "Команда бота"
 msgid "Bot leaves server"
 msgstr "Выход бота с сервера"
 
+msgid "Cancel the panel move without the new machine"
+msgstr "Отмена переноса панели без новой машины"
+
 msgid "Change email"
 msgstr "Смена почты"
 

@@ -1,14 +1,27 @@
-{% load i18n ui %}<div class="flex flex-wrap gap-2">
+{% load i18n ui %}{% if move.partly_confirmed %}
+{% translate "The confirmation did not finish: the copy on the new machine may already accept changes. Retry the confirmation once the new machine answers. If it cannot be reached, cancel the move without it: this panel accepts changes again, and the copy there is left as it is." as text %}
+{% include "components/alert.html" with level="warning" text=text %}
+{% elif move.state == "cancelled" and move.confirm_started %}
+{% translate "The move is cancelled after a started confirmation. The copy on the new machine may accept changes too: do not point the domain to it, and remove it there by hand — cd /opt/lamnezia && docker compose down -v, then delete /opt/lamnezia and the nginx site lamnezia, if there is one." as text %}
+{% include "components/alert.html" with level="warning" text=text %}
+{% endif %}
+<div class="flex flex-wrap gap-2">
   {% if move.can_confirm %}
   <form method="post" action="{% url 'relocation:confirm' move.pk %}" data-confirm="{% translate "Hand the panel over to the new machine? This copy becomes read-only." %}">
     {% csrf_token %}
-    <button type="submit" class="btn btn-primary">{% icon "check" %}{% translate "Confirm the move" %}</button>
+    <button type="submit" class="btn btn-primary">{% if move.confirm_started %}{% icon "refresh" %}{% translate "Retry the confirmation" %}{% else %}{% icon "check" %}{% translate "Confirm the move" %}{% endif %}</button>
   </form>
   {% endif %}
   {% if move.can_cancel %}
   <form method="post" action="{% url 'relocation:cancel' move.pk %}" data-confirm="{% translate "Cancel the move and remove the copy from the new machine?" %}">
     {% csrf_token %}
     <button type="submit" class="btn btn-ghost">{% icon "trash" %}{% translate "Cancel the move" %}</button>
+  </form>
+  {% endif %}
+  {% if move.can_abandon %}
+  <form method="post" action="{% url 'relocation:abandon' move.pk %}" data-confirm="{% translate "Cancel the move without the new machine? This panel accepts changes again, while the copy there may accept them too: then there are two panels until you remove it by hand." %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">{% icon "close" %}{% translate "Cancel without the new machine" %}</button>
   </form>
   {% endif %}
 </div>

@@ -18,6 +18,7 @@ ALLOWED_VIEWS = frozenset(
         "set_language",
         "relocation:confirm",
         "relocation:cancel",
+        "relocation:abandon",
         "relocation:auto-stop",
     }
 )

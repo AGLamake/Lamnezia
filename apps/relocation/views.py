@@ -17,6 +17,7 @@ from apps.relocation.forms import MoveForm
 from apps.relocation.models import PanelMove
 from apps.relocation.services.domain import panel_domain
 from apps.relocation.services.moves import (
+    abandon_move,
     cancel_move,
     confirm_move,
     move_operations,
@@ -94,6 +95,10 @@ class MoveConfirmView(_MoveActionView):
 
 class MoveCancelView(_MoveActionView):
     action = staticmethod(cancel_move)
+
+
+class MoveAbandonView(_MoveActionView):
+    action = staticmethod(abandon_move)
 
 
 class MoveAutoStopView(AdminRequiredMixin, View):

@@ -92,5 +92,12 @@ hand.
 - A failed preparation removes what it installed. If the new machine cannot be reached, the cancel
   still unfreezes the panel and says how to remove the copy by hand.
 - A copy that already accepts changes is never removed; confirm the move again instead.
+- **A confirmation that did not finish** (the new machine went down halfway) leaves the panel
+  read-only: the copy may already accept changes. The screen then offers **Retry the confirmation**
+  for when the new machine answers again, and **Cancel without the new machine** for when it
+  cannot be reached. The latter runs nothing there: this panel accepts changes again, and the copy
+  stays as it is. Do not point the domain to it and remove it by hand
+  (`cd /opt/lamnezia && docker compose down -v`, then delete `/opt/lamnezia` and the nginx site
+  `lamnezia`, if there is one); until then there may be two panels.
 - Changes made in the old panel during the move do not reach the new one, which is why the old
   panel is frozen for the whole time.

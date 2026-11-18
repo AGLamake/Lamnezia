@@ -676,6 +676,12 @@ msgstr "Отменить перенос"
 msgid "Cancel the move and remove the copy from the new machine?"
 msgstr "Отменить перенос и удалить копию с новой машины?"
 
+msgid "Cancel the move without the new machine? This panel accepts changes again, while the copy there may accept them too: then there are two panels until you remove it by hand."
+msgstr "Отменить перенос без новой машины? Эта панель снова примет изменения, а копия там тоже может их принимать: тогда панелей будет две, пока вы не удалите её вручную."
+
+msgid "Cancel without the new machine"
+msgstr "Отменить без новой машины"
+
 msgid "Careful"
 msgstr "Осторожно"
 
@@ -2719,6 +2725,12 @@ msgstr "Повторить вступление"
 msgid "Retry leaving"
 msgstr "Повторить выход"
 
+msgid "Retry the confirmation"
+msgstr "Повторить подтверждение"
+
+msgid "Retry the confirmation once the new machine answers, or cancel the move without the new machine on System → Panel move."
+msgstr "Повторите подтверждение, когда новая машина ответит, или отмените перенос без новой машины в разделе «Система → Перенос панели»."
+
 msgid "Return the money of this order? The plan of the user stays as it is."
 msgstr "Вернуть деньги за этот заказ? Тариф пользователя останется как есть."
 
@@ -3253,6 +3265,12 @@ msgstr "Код неверный или устарел. Получите новы
 msgid "The codes are shown only now. Save them in a password manager or print them; the previous codes no longer work."
 msgstr "Коды показываются только сейчас. Сохраните их в менеджере паролей или распечатайте; прежние коды больше не действуют."
 
+msgid "The confirmation did not finish: the copy on the new machine may already accept changes. Retry the confirmation once the new machine answers. If it cannot be reached, cancel the move without it: this panel accepts changes again, and the copy there is left as it is."
+msgstr "Подтверждение не завершилось: копия на новой машине, возможно, уже принимает изменения. Повторите подтверждение, когда новая машина ответит. Если до неё не достучаться, отмените перенос без неё: эта панель снова примет изменения, а копия там останется как есть."
+
+msgid "The confirmation has started, and the copy on the new machine could not be removed."
+msgstr "Подтверждение уже началось, а копию на новой машине удалить не удалось."
+
 msgid "The confirmation link is wrong or has expired."
 msgstr "Ссылка для подтверждения неверна или устарела."
 
@@ -3471,6 +3489,9 @@ msgstr "Монитор не нашёл запущенный пробник. По
 
 msgid "The move installs the panel only on a machine without one. Remove /opt/lamnezia and /etc/nginx/sites-available/lamnezia there, or choose another machine."
 msgstr "Перенос ставит панель только на машину без неё. Удалите там /opt/lamnezia и /etc/nginx/sites-available/lamnezia или выберите другую машину."
+
+msgid "The move is cancelled after a started confirmation. The copy on the new machine may accept changes too: do not point the domain to it, and remove it there by hand — cd /opt/lamnezia && docker compose down -v, then delete /opt/lamnezia and the nginx site lamnezia, if there is one."
+msgstr "Перенос отменён после начатого подтверждения. Копия на новой машине тоже может принимать изменения: не направляйте на неё домен и удалите её там вручную — cd /opt/lamnezia && docker compose down -v, затем удалите /opt/lamnezia и сайт nginx lamnezia, если он есть."
 
 msgid "The move is not in the state this step needs."
 msgstr "Перенос не в том состоянии, которое нужно для этого шага."

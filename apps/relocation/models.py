@@ -117,6 +117,16 @@ class PanelMove(models.Model):
         return self.state in cancellable and not self.busy
 
     @property
+    def partly_confirmed(self) -> bool:
+        """A confirmation started and did not finish: the copy may already accept changes."""
+        return self.state == MoveState.READY and self.confirm_started and not self.busy
+
+    @property
+    def can_abandon(self) -> bool:
+        """The move can end without the new machine: only this panel's freeze is lifted."""
+        return self.partly_confirmed
+
+    @property
     def awaits_domain(self) -> bool:
         """Handed over, and the domain does not point to the new machine yet."""
         return self.state in self.HANDED_OVER and self.domain_status != DomainStatus.POINTED
