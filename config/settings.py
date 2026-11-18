@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "apps.relays",
     "apps.relocation",
     "apps.updates",
+    "apps.api",
     # Django apps that extend the panel, such as payment providers (docs/wiki Billing-plugins).
     *env.list("PLUGINS", default=[]),
 ]
@@ -184,6 +185,9 @@ MESSENGER_LOGIN_MAX_AGE = timedelta(minutes=10)
 # Subscription links: at most SUBSCRIPTION_RATE_LIMIT fetches a minute from one address
 # (0: no limit); more get 429.
 SUBSCRIPTION_RATE_LIMIT = env.int("SUBSCRIPTION_RATE_LIMIT", default=30)
+# API (DESIGN.md 5.7): at most API_RATE_LIMIT calls a minute with one token, and as many calls
+# with a wrong token from one address (0: no limit); more get 429.
+API_RATE_LIMIT = env.int("API_RATE_LIMIT", default=120)
 # Support: at most SUPPORT_RATE_LIMIT new requests an hour from one user (0: no limit).
 SUPPORT_RATE_LIMIT = env.int("SUPPORT_RATE_LIMIT", default=5)
 # ... and at most SUPPORT_MESSAGE_RATE_LIMIT messages a minute in chats and requests (0: no limit).
