@@ -2682,6 +2682,9 @@ msgstr "Шаблоны ответов"
 msgid "Report a problem"
 msgstr "Сообщить о проблеме"
 
+msgid "Report to the staff"
+msgstr "Отчёт персоналу"
+
 msgid "Reports of the server"
 msgstr "Обращения по серверу"
 
@@ -2850,6 +2853,9 @@ msgstr "Пришлите ссылку на хорошую статью или н
 
 msgid "Send a test"
 msgstr "Отправить тест"
+
+msgid "Send now"
+msgstr "Прислать сейчас"
 
 msgid "Send the link"
 msgstr "Отправить ссылку"
@@ -3259,6 +3265,9 @@ msgstr "Сервис ботов последний раз присылал от�
 
 msgid "The browser did not turn notifications on. Try again or reload the page."
 msgstr "Браузер не включил уведомления. Попробуйте ещё раз или обновите страницу."
+
+msgid "The channels get it when the “Report to the staff” event is routed to them in Notifications."
+msgstr "Каналы получают его, если в «Уведомлениях» им назначено событие «Отчёт персоналу»."
 
 msgid "The check did not finish. We will look at the server ourselves."
 msgstr "Проверка не завершилась. Мы посмотрим сервер сами."

@@ -213,6 +213,10 @@ msgstr "Уведомления Lamnezia доходят до канала {channe
 msgid "One or more, separated by commas."
 msgstr "Один или несколько через запятую."
 
+#, python-brace-format
+msgid "Panel report since {since}"
+msgstr "Отчёт панели с {since}"
+
 msgid "Payment received"
 msgstr "Оплата получена"
 
@@ -236,6 +240,16 @@ msgstr "Ретранслятор {relay} снова отвечает"
 #, python-brace-format
 msgid "Relay {relay} does not answer"
 msgstr "Ретранслятор {relay} не отвечает"
+
+#, python-brace-format
+msgid "Report on your zone since {since}"
+msgstr "Отчёт по вашей зоне с {since}"
+
+msgid "Report to a moderator"
+msgstr "Отчёт модератору"
+
+msgid "Report to the staff"
+msgstr "Отчёт персоналу"
 
 msgid "Request answered in a messenger"
 msgstr "Ответ на обращение в мессенджер"
@@ -274,6 +288,50 @@ msgstr "Сервер {server} снова отвечает"
 #, python-brace-format
 msgid "Server {server} is down"
 msgstr "Сервер {server} недоступен"
+
+#, python-brace-format
+msgid ""
+"Servers down: {servers_down}\n"
+"Relays not read: {relays_down}\n"
+"Groups with no member answering: {groups_down}\n"
+"Traffic: {traffic}\n"
+"Most active keys: {top_keys}\n"
+"Access ends within a week: {access_ending}\n"
+"Failed operations: {failed_operations}\n"
+"Oldest protocol backup: {backups_oldest}\n"
+"Latest panel archive: {archive_at}\n"
+"Applications waiting: {applications}\n"
+"New support requests: {new_requests}"
+msgstr ""
+"Не отвечают серверы: {servers_down}\n"
+"Релеи без данных: {relays_down}\n"
+"Группы, где не отвечает ни один участник: {groups_down}\n"
+"Трафик: {traffic}\n"
+"Самые активные ключи: {top_keys}\n"
+"Доступ заканчивается в течение недели: {access_ending}\n"
+"Ошибки операций: {failed_operations}\n"
+"Самый старый бэкап протокола: {backups_oldest}\n"
+"Последний архив панели: {archive_at}\n"
+"Ждут одобрения заявок: {applications}\n"
+"Новые обращения в поддержку: {new_requests}"
+
+#, python-brace-format
+msgid ""
+"Servers down: {servers_down}\n"
+"Traffic: {traffic}\n"
+"Most active keys: {top_keys}\n"
+"Access ends within a week: {access_ending}\n"
+"Failed operations: {failed_operations}\n"
+"Oldest protocol backup: {backups_oldest}\n"
+"New support requests: {new_requests}"
+msgstr ""
+"Не отвечают серверы: {servers_down}\n"
+"Трафик: {traffic}\n"
+"Самые активные ключи: {top_keys}\n"
+"Доступ заканчивается в течение недели: {access_ending}\n"
+"Ошибки операций: {failed_operations}\n"
+"Самый старый бэкап протокола: {backups_oldest}\n"
+"Новые обращения в поддержку: {new_requests}"
 
 msgid "Sign-in from a new place"
 msgstr "Вход из нового места"

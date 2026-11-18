@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Report to the staff**: in **Settings → Report to the staff** an administrator turns on a
+  daily or weekly summary (off by default): servers and relays down, traffic of the period and
+  the most active keys, access ending within a week, failed operations, the age of backups and
+  of the panel archive, applications and new support requests. It is built from what the panel
+  already knows, with no request to the servers. The channels subscribed to `staff_report` get
+  the whole panel, each moderator gets their own zone (`zone_report`) by email or in their
+  messenger. **Send now** sends it at once for a check.
 - **Sign-in alerts**: a sign-in from a network or browser the account has not used before is
   reported to its owner (`sign_in_new_place`) with the browser, the address and a link to the
   sessions of the profile. Administrators and moderators always get it, a portal user turns it on

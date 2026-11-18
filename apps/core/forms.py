@@ -49,6 +49,7 @@ class SiteSettingsForm(forms.ModelForm):  # type: ignore[type-arg]
             "load_disk_percent",
             "load_readings",
             "load_repeat_hours",
+            "report_frequency",
             "smtp_host",
             "smtp_port",
             "smtp_security",

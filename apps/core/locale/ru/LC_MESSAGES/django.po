@@ -16,6 +16,9 @@ msgstr "Имя бота: от 5 до 32 латинских букв, цифр и
 msgid "A load alert comes after this many monitor readings in a row above the threshold, and the all-clear after as many below it, so a short spike wakes nobody."
 msgstr "Предупреждение о нагрузке приходит после стольких замеров монитора подряд выше порога, а сообщение о норме — после стольких же ниже него, чтобы короткий всплеск никого не будил."
 
+msgid "A summary in the morning: servers down, traffic, access ending, failed operations, backups and new requests. The channels subscribed to the report get the whole panel, each moderator gets their own zone."
+msgstr "Сводка по утрам: упавшие серверы, трафик, заканчивающийся доступ, ошибки операций, бэкапы и новые обращения. Каналы, подписанные на отчёт, получают всю панель, каждый модератор — свою зону."
+
 msgid "A user hears once a period that this share of their traffic limit is used. 0 turns the warning off."
 msgstr "Пользователь один раз за период узнаёт, что израсходовал эту долю лимита трафика. 0 — не предупреждать."
 
@@ -43,6 +46,12 @@ msgstr "Токен Discord-бота"
 msgid "Discord client secret"
 msgstr "Секрет клиента Discord"
 
+msgid "Every day"
+msgstr "Каждый день"
+
+msgid "Every week"
+msgstr "Каждую неделю"
+
 msgid "From @BotFather."
 msgstr "Выдаёт @BotFather."
 
@@ -66,6 +75,9 @@ msgstr "Нет"
 
 msgid "OAuth2 page of the Discord application."
 msgstr "Страница OAuth2 приложения Discord."
+
+msgid "Off"
+msgstr "Выключен"
 
 msgid "Only a link to the portal"
 msgstr "Только ссылку на портал"
@@ -201,6 +213,9 @@ msgstr "регистрация"
 
 msgid "repeat load alert, hours"
 msgstr "повтор предупреждения о нагрузке, ч"
+
+msgid "report to the staff"
+msgstr "отчёт персоналу"
 
 msgid "rows removed"
 msgstr "удалено строк"

@@ -350,6 +350,8 @@ CELERY_BEAT_SCHEDULE = {
     "guides-check-materials": {"task": "guides.check_materials", "schedule": 7 * 24 * 60 * 60},
     "updates-check-release": {"task": "updates.check_release", "schedule": UPDATE_CHECK_INTERVAL},
     "billing-expire-orders": {"task": "billing.expire_orders", "schedule": 60 * 60},
+    # Hourly: the report goes in the first run after its hour, once a day or a week.
+    "dashboard-send-reports": {"task": "dashboard.send_reports", "schedule": 60 * 60},
 }
 # An order not paid this long after checkout is marked expired; a payment that still arrives
 # counts all the same.

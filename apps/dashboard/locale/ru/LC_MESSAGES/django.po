@@ -232,6 +232,9 @@ msgstr "Статус"
 msgid "The account ID is a number."
 msgstr "ID аккаунта — это число."
 
+msgid "The report is on its way. The result is in the log."
+msgstr "Отчёт отправляется. Результат — в журнале."
+
 msgid "The subscription link is deleted."
 msgstr "Ссылка-подписка удалена."
 

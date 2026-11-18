@@ -28,6 +28,12 @@ class BotKeyDelivery(models.TextChoices):
     LINK_ONLY = "link_only", _("Only a link to the portal")
 
 
+class ReportFrequency(models.TextChoices):
+    OFF = "off", _("Off")
+    DAILY = "daily", _("Every day")
+    WEEKLY = "weekly", _("Every week")
+
+
 class SmtpSecurity(models.TextChoices):
     STARTTLS = "starttls", "STARTTLS"
     SSL = "ssl", "SSL/TLS"
@@ -121,6 +127,17 @@ class SiteSettings(models.Model):
         help_text=_(
             "While the load stays high, the alert is repeated no more often than this; "
             "a load back above the threshold sooner is not told again."
+        ),
+    )
+    report_frequency = models.CharField(
+        _("report to the staff"),
+        max_length=8,
+        choices=ReportFrequency.choices,
+        default=ReportFrequency.OFF,
+        help_text=_(
+            "A summary in the morning: servers down, traffic, access ending, failed operations, "
+            "backups and new requests. The channels subscribed to the report get the whole "
+            "panel, each moderator gets their own zone."
         ),
     )
     smtp_host = models.CharField(_("SMTP server"), max_length=255, blank=True)

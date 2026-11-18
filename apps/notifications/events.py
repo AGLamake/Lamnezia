@@ -1,7 +1,8 @@
 """The events the panel notifies about and how each reads in a message.
 
 Event details (`data`) are flat JSON with the keys the texts use; a webhook gets them as they are,
-so a key, once released, is never renamed (docs/wiki: Notifications).
+so a key, once released, is never renamed (docs/wiki: Notifications). A list detail reads as its
+items joined, an empty list or null as a dash.
 """
 
 from collections import defaultdict
@@ -11,11 +12,13 @@ from enum import StrEnum
 from typing import Any
 
 from django.db import models
+from django.template.defaultfilters import filesizeformat
 from django.utils import translation
 from django.utils.functional import Promise
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.models import ReportFrequency
 from apps.groups.models import LagReason
 from apps.servers.models import LoadResource
 from apps.traffic.signals import LimitReason
@@ -62,6 +65,8 @@ class Event(StrEnum):
     GROUP_REACHABLE = "group_reachable"
     RELAY_UP = "relay_up"
     MEMBER_CAUGHT_UP = "member_caught_up"
+    STAFF_REPORT = "staff_report"
+    ZONE_REPORT = "zone_report"
     TEST = "test"
 
 
@@ -74,7 +79,8 @@ class EventType:
     message shows by its label. `joined`: occurrences about one user close in time make one
     notification. `fallback`: when the user's channel does not take it, their other channels
     are tried in turn. `link_offer`: a letter to the user offers to link a messenger.
-    `browser`: the browsers the user subscribed get it too (only with `to_user`).
+    `browser`: the browsers the user subscribed get it too (only with `to_user`). `sizes`:
+    details in bytes, shown as a size; a list of [name, bytes] pairs reads as "name (size)".
     """
 
     label: Promise
@@ -88,6 +94,7 @@ class EventType:
     fallback: bool = False
     link_offer: bool = False
     browser: bool = True
+    sizes: tuple[str, ...] = ()
 
     def render(self, data: dict[str, Any]) -> tuple[str, str]:
         """Title and text in the active language with the details filled in; a missing detail
@@ -100,12 +107,24 @@ class EventType:
         return str(self.title).format_map(values), text
 
     def _value(self, key: str, value: Any) -> str:
+        if value is None or value == []:
+            return "—"
+        if key in self.sizes:
+            return self._size(value)
+        if isinstance(value, list):
+            return ", ".join(map(str, value))
         if key in self.translated:
             # An empty detail stays empty: gettext("") is the header of the catalog.
             return gettext(str(value)) if value else ""
         if key in self.coded:
             return self._label(self.coded[key], str(value))
         return str(value)
+
+    @staticmethod
+    def _size(value: Any) -> str:
+        if isinstance(value, list):
+            return ", ".join(f"{name} ({filesizeformat(size)})" for name, size in value)
+        return str(filesizeformat(value))
 
     @staticmethod
     def _label(choices: type[models.TextChoices], value: str) -> str:
@@ -449,6 +468,49 @@ EVENTS: dict[Event, EventType] = {
             "The server {server} has the files of the group {group} again after lagging behind "
             "since {since}. The relay sends clients to it again."
         ),
+    ),
+    # The summary of `SiteSettings.report_frequency` for the channels: the whole panel since
+    # `since`. Lists name servers, relays, groups and keys, `access_ending` reads "user date";
+    # `backups_oldest` and `archive_at` are null when there is no copy. `url` leads to the
+    # dashboard.
+    Event.STAFF_REPORT: EventType(
+        _("Report to the staff"),
+        _("Panel report since {since}"),
+        _(
+            "Servers down: {servers_down}\n"
+            "Relays not read: {relays_down}\n"
+            "Groups with no member answering: {groups_down}\n"
+            "Traffic: {traffic}\n"
+            "Most active keys: {top_keys}\n"
+            "Access ends within a week: {access_ending}\n"
+            "Failed operations: {failed_operations}\n"
+            "Oldest protocol backup: {backups_oldest}\n"
+            "Latest panel archive: {archive_at}\n"
+            "Applications waiting: {applications}\n"
+            "New support requests: {new_requests}"
+        ),
+        coded={"period": ReportFrequency},
+        sizes=("traffic", "top_keys"),
+    ),
+    # Only to a moderator: the same summary within their zone, without what is an
+    # administrator's (relays, groups, the panel archive, applications).
+    Event.ZONE_REPORT: EventType(
+        _("Report to a moderator"),
+        _("Report on your zone since {since}"),
+        _(
+            "Servers down: {servers_down}\n"
+            "Traffic: {traffic}\n"
+            "Most active keys: {top_keys}\n"
+            "Access ends within a week: {access_ending}\n"
+            "Failed operations: {failed_operations}\n"
+            "Oldest protocol backup: {backups_oldest}\n"
+            "New support requests: {new_requests}"
+        ),
+        to_user=True,
+        routable=False,
+        browser=False,
+        coded={"period": ReportFrequency},
+        sizes=("traffic", "top_keys"),
     ),
     Event.TEST: EventType(
         _("Test"),

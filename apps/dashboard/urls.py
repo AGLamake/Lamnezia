@@ -7,6 +7,7 @@ from apps.dashboard.views import (
     NoticeHideView,
     NoticeShowView,
     QuickSearchView,
+    ReportSendView,
     ShowcaseModalView,
 )
 
@@ -17,6 +18,7 @@ urlpatterns = [
     path("dashboard/search/", QuickSearchView.as_view(), name="search"),
     path("dashboard/notices/hide/", NoticeHideView.as_view(), name="notice-hide"),
     path("dashboard/notices/show/", NoticeShowView.as_view(), name="notices-show"),
+    path("dashboard/report/send/", ReportSendView.as_view(), name="report-send"),
     path("stats/", views_stats.StatsView.as_view(), name="stats"),
     path("stats/export.csv", views_stats.StatsExportView.as_view(), name="stats-export"),
     path("users/", views_users.UserListView.as_view(), name="users"),

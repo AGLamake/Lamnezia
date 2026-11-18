@@ -102,6 +102,7 @@ class TestPage:
             "load_disk_percent": "90",
             "load_readings": "3",
             "load_repeat_hours": "6",
+            "report_frequency": "off",
             "smtp_host": "",
             "smtp_port": "587",
             "smtp_security": "starttls",

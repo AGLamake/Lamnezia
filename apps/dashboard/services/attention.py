@@ -80,9 +80,11 @@ class Attention:
 
     @cached_property
     def failed_operations(self) -> int:
-        failed = Operation.objects.filter(
-            status=OperationStatus.FAILED, created_at__gte=self._now - _FAILED_WITHIN
-        )
+        return self.failed_since(self._now - _FAILED_WITHIN)
+
+    def failed_since(self, start: datetime) -> int:
+        """Operations failed since `start`; a moderator counts only the ones they started."""
+        failed = Operation.objects.filter(status=OperationStatus.FAILED, created_at__gte=start)
         if not self._member.is_admin:
             failed = failed.filter(created_by=self._member)
         return failed.count()

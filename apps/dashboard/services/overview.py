@@ -54,9 +54,14 @@ class Overview:
 
     def access_ending(self) -> int:
         """Clients whose access ends within `ACCESS_ENDING_DAYS`: a moderator's next calls."""
+        return len(self.access_ending_rows())
+
+    def access_ending_rows(self) -> list[UserRow]:
+        """Those clients, the soonest end first."""
         soon = self._now + timedelta(days=ACCESS_ENDING_DAYS)
         rows = UserRow.rows(users_for_list().filter(pk__in=self._clients()))
-        return sum(1 for row in rows if row.access_until and self._now <= row.access_until <= soon)
+        ending = [row for row in rows if row.access_until and self._now <= row.access_until <= soon]
+        return sorted(ending, key=lambda row: (row.access_until, row.user.username))
 
     def _clients(self) -> QuerySet[User]:
         return Zone(self._member).users().filter(status=Status.ACTIVE, role=Role.USER)

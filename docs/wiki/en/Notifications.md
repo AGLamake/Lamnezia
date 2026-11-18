@@ -67,6 +67,7 @@ channels hear each event.
 | Group server reachable again | `group_reachable` | `group`, `relay` |
 | Relay answers again | `relay_up` | `relay`, `host`, `last_seen` |
 | Group server caught up | `member_caught_up` | `group`, `server`, `since` |
+| Report to the staff | `staff_report` | `period`, `since`, `servers_down`, `relays_down`, `groups_down`, `traffic`, `top_keys`, `access_ending`, `failed_operations`, `backups_oldest`, `archive_at`, `applications`, `new_requests`, `url` |
 
 `server_up` and the last four come once when the matching trouble is over (`server_down`,
 `member_unreachable`, `group_unreachable`, `relay_down`, `member_lagging`). The panel remembers
@@ -122,6 +123,21 @@ the one the answer reached, there is no reminder at all. See [Support requests](
 always to administrators and moderators, to a portal user when they turned it on in
 **Profile → Notifications**. A lockout after wrong passwords goes to the channels subscribed to
 `sign_in_locked`, once per lockout, without the password. See [Security](Security.md#sign-in-alerts).
+
+**Report to the staff.** In **Settings → Report to the staff** an administrator turns on a
+summary every day or every week (off by default). The daily one goes in the first hour after
+9:00 by the panel time, the weekly one on Monday at the same time (or on the day it is turned
+on). It says which servers do not answer, which relays the panel cannot read and which groups
+have no member answering the relay, the traffic of the period with the five most active keys,
+the clients whose access ends within a week, the operations that failed, the time of the
+oldest protocol backup and of the latest panel archive, the applications waiting for approval
+and the new support requests. It is made of what the panel already knows: no server is asked
+anything, and nothing in it names a site a user visited. The channels subscribed to
+`staff_report` get the whole panel. Each moderator gets a report of their own zone
+(`zone_report`, only to them, by email or their messenger, without relays, groups, the
+archive and applications): their servers, their clients' keys and requests, the operations they
+started. **Send now** under the setting sends the report at once to check how it reads, a daily
+one while reports are off; the result is in the delivery log.
 
 Every message is written in the language of whoever reads it. A user picks the language of
 their notifications on the **Messengers** page; until they do, they get the language of the

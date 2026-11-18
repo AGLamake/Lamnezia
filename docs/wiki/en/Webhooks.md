@@ -62,6 +62,7 @@ zone), `data` depends on the event.
 | `group_reachable` | The relay reaches again a member of a group that had none (`group_unreachable`): its clients have a connection. Once per outage. | `group`, `relay` |
 | `relay_up` | The panel reads the state of a relay again after an outage (`relay_down`). Once per outage, even when no channel heard of `relay_down`. | `relay`, `host`, `last_seen` — time of the last reading before the outage or an empty string |
 | `member_caught_up` | A lagging member (`member_lagging`) has the files of its group again. Once per lag, even when no channel heard of `member_lagging`. | `group`, `server`, `since` — when it started to lag |
+| `staff_report` | The scheduled report (**Settings → Report to the staff**), or **Send now**. The whole panel. | `period` — `daily` or `weekly`, `since` — start of the period (local `YYYY-MM-DD HH:MM`), `servers_down`, `relays_down`, `groups_down` — names, `traffic` — bytes, `top_keys` — up to five `[key name, bytes]`, `access_ending` — `"user YYYY-MM-DD"`, `failed_operations`, `backups_oldest` and `archive_at` — local time or `null` without a copy, `applications`, `new_requests`, `url` — the dashboard |
 | `test` | **Send test** on the channel page. | `channel` — channel name |
 
 Chat messages are sent once the support chat is available. New events and new `data` fields
@@ -144,6 +145,8 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/relay_up"}}}},
     {"if": {"properties": {"event": {"const": "member_caught_up"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/member_caught_up"}}}},
+    {"if": {"properties": {"event": {"const": "staff_report"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/staff_report"}}}},
     {"if": {"properties": {"event": {"const": "test"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/test"}}}}
   ],
@@ -359,6 +362,31 @@ may be added: ignore what you do not know.
       "type": "object",
       "required": ["group", "server", "since"],
       "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
+    },
+    "staff_report": {
+      "type": "object",
+      "required": ["period", "since", "servers_down", "relays_down", "groups_down", "traffic",
+                   "top_keys", "access_ending", "failed_operations", "backups_oldest",
+                   "archive_at", "applications", "new_requests", "url"],
+      "properties": {
+        "period": {"enum": ["daily", "weekly"]},
+        "since": {"type": "string"},
+        "servers_down": {"type": "array", "items": {"type": "string"}},
+        "relays_down": {"type": "array", "items": {"type": "string"}},
+        "groups_down": {"type": "array", "items": {"type": "string"}},
+        "traffic": {"type": "integer"},
+        "top_keys": {
+          "type": "array",
+          "items": {"type": "array", "prefixItems": [{"type": "string"}, {"type": "integer"}]}
+        },
+        "access_ending": {"type": "array", "items": {"type": "string"}},
+        "failed_operations": {"type": "integer"},
+        "backups_oldest": {"type": ["string", "null"]},
+        "archive_at": {"type": ["string", "null"]},
+        "applications": {"type": "integer"},
+        "new_requests": {"type": "integer"},
+        "url": {"type": "string"}
+      }
     },
     "test": {
       "type": "object",

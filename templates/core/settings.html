@@ -52,6 +52,17 @@
   </section>
 
   <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "activity" "icon-sm text-muted" %}{% translate "Report to the staff" %}</h2>
+    <div class="form-section-body">
+    {{ form.report_frequency.as_field_group }}
+    <p class="help-text">{% translate "The channels get it when the “Report to the staff” event is routed to them in Notifications." %}</p>
+    <div>
+      <button type="submit" form="report-send" class="btn btn-secondary">{% icon "send" %}{% translate "Send now" %}</button>
+    </div>
+    </div>
+  </section>
+
+  <section class="form-section">
     <h2 class="section-title flex items-center gap-2">{% icon "message" "icon-sm text-muted" %}{% translate "Email" %}</h2>
     <div class="form-section-body">
     <p class="help-text">{% translate "Without an SMTP server the panel uses LAMNEZIA_EMAIL_URL from the server settings." %}</p>
@@ -92,6 +103,9 @@
     <button type="submit" class="btn btn-primary">{% icon "check" %}{% translate "Save" %}</button>
   </div>
 </form>
+
+{# Outside the settings form, which forms may not nest; its button stands in the report section. #}
+<form id="report-send" method="post" action="{% url 'dashboard:report-send' %}">{% csrf_token %}</form>
 
 {# The bots app fills this in and keeps it current. #}
 <div hx-get="{% url 'bots:status' %}" hx-trigger="load" hx-swap="outerHTML"></div>
