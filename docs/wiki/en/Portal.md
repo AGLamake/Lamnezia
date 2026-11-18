@@ -95,6 +95,21 @@ One address may fetch subscription links at most `LAMNEZIA_SUBSCRIPTION_RATE_LIM
 (30 by default); more get `429 Too Many Requests`. Clients refresh every 12 hours, so the limit
 only stops someone trying tokens.
 
+### Devices
+
+Clients such as Happ send a device ID (`x-hwid`) and the device model with every fetch. The panel
+remembers each such device of the link: the subscription page of the portal and the user card in
+**Users** list them with the system, the app and the last fetch, and **Forget** removes one. The
+plan's **Subscription devices at most** limits how many devices may fetch the link: a new device
+over the limit gets `403` with an explanation instead of the keys, while the devices already known
+keep getting them. A forgotten device takes a free place on its next fetch. Only a hash of the
+device ID is kept, and no request addresses. The limit only gates the link: the keys on the XRay
+server are not changed, and a client that already has them keeps connecting.
+
+Clients that send no device ID get the link by default. To close this way around the limit, turn
+off **Settings → Subscription without a device ID**: such clients then get `403` too. Forgetting a
+device on the user card is written to the [audit log](Audit.md).
+
 The link works only with the "any time" policy: with "show once" there is none. Nor does it work
 for a blocked user. The Amnezia app does not read subscriptions: keys are added to it one by one. It updates
 configs only for Amnezia's own subscriptions, through a gateway built into the app, which a

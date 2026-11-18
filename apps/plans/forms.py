@@ -50,6 +50,7 @@ class PlanForm(forms.ModelForm):  # type: ignore[type-arg]
             "period_days",
             "total_traffic_limit",
             "max_keys",
+            "max_devices",
             "speed_limit",
             "access_days",
             "servers",
@@ -65,6 +66,9 @@ class PlanForm(forms.ModelForm):  # type: ignore[type-arg]
         }
         help_texts: ClassVar = {
             "max_keys": _("Empty: no limit."),
+            "max_devices": _(
+                "Devices that fetch the subscription link with x-hwid. Empty: no limit."
+            ),
             "speed_limit": _("Per key, each way. Empty: no limit."),
             "price": _("With a payment plugin, users can buy the plan at this price."),
         }
@@ -102,6 +106,7 @@ class UserLimitsForm(forms.ModelForm):  # type: ignore[type-arg]
             "period_days",
             "total_traffic_limit",
             "max_keys",
+            "max_devices",
             "speed_limit",
             "access_until",
         )
@@ -114,6 +119,7 @@ class UserLimitsForm(forms.ModelForm):  # type: ignore[type-arg]
             "plan": _("A new plan starts the access term again."),
             "period_days": _("Empty: as in the plan."),
             "max_keys": _("Empty: as in the plan."),
+            "max_devices": _("Empty: as in the plan."),
             "speed_limit": _("Per key, each way. Empty: as in the plan."),
             "access_until": _("Empty: the term of the plan."),
         }

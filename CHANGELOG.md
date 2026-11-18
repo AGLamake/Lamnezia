@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Device limit for the subscription link**: the panel remembers the devices that fetch the
+  subscription link with a device ID (`x-hwid`, sent by Happ and others) and shows them on the
+  portal and the user card, where each can be forgotten. A plan's **Subscription devices at most**
+  refuses a new device over the limit with `403` and an explanation; empty means no limit, as
+  before. **Settings → Subscription without a device ID** decides whether clients without the ID
+  get the link (yes by default). Only a hash of the ID is kept; the XRay server is not touched.
 - **Subscription link for Clash/Mihomo and sing-box**: the XRay subscription link gives
   Clash/Mihomo clients a Mihomo profile in YAML and sing-box clients a sing-box profile in JSON,
   chosen by the client's `User-Agent` or by `?format=clash|singbox|raw`. Other clients get the

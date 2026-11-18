@@ -23,6 +23,7 @@ from apps.guides.services.devices import DetectedDevice, Device
 from apps.keys.services.actions import KeyRevokingError, OwnerCannotHaveKeysError
 from apps.keys.services.instances import instances
 from apps.keys.services.subscription import MySubscription
+from apps.keys.services.subscription_devices import SubscriptionDevices
 from apps.keys.services.xray_profiles import request_profiles
 from apps.portal.forms import GetKeyForm, RenameKeyForm
 from apps.portal.services.app_versions import AWG3_APPS, needs_awg3_app
@@ -155,10 +156,18 @@ class SubscriptionView(_PortalView, TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         token = self.subscription.token()
         url = self.request.build_absolute_uri(reverse("subscription-feed", args=[token]))
-        return super().get_context_data(url=url if token else None, **kwargs)
+        return super().get_context_data(
+            url=url if token else None,
+            devices=SubscriptionDevices(self.user).all(),
+            max_devices=self.my_keys.limits.max_devices,
+            **kwargs,
+        )
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        if request.POST.get("action") == "delete":
+        if request.POST.get("action") == "forget":
+            if SubscriptionDevices(self.user).forget(request.POST.get("device", "")):
+                messages.success(request, _("The device is forgotten."))
+        elif request.POST.get("action") == "delete":
             self.subscription.delete()
             messages.success(request, _("The subscription link is deleted."))
         else:

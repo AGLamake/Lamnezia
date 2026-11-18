@@ -1,15 +1,18 @@
 """The subscription address XRay clients fetch without signing in: the token is the access.
 
-Besides the keys the clients get the links to the portal: the keys page and support.
+Besides the keys the clients get the links to the portal: the keys page and support. A device
+over the plan's limit, or a client without `x-hwid` when the settings say so, gets `403` with
+the reason in the owner's language.
 """
 
 from django.http import Http404, HttpRequest, HttpResponse
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.views import View
 
 from apps.audit.services.journal import client_ip
 from apps.keys.services.subscription import FeedFormat, SubscriptionFeed, SubscriptionThrottle
+from apps.keys.services.subscription_devices import DeviceSignature, SubscriptionDevices
 from apps.plans.services.limits import effective_limits
 from apps.portal.services.usage import SubscriptionUserinfo
 
@@ -23,6 +26,13 @@ class SubscriptionFeedView(View):
         feed = SubscriptionFeed.find(token)
         if feed is None:
             raise Http404
+        refusal = SubscriptionDevices(feed.owner).admit(DeviceSignature.of(request.headers))
+        if refusal is not None:
+            with translation.override(feed.owner.notification_language):
+                text = refusal.text
+            response = HttpResponse(text, status=403, content_type="text/plain; charset=utf-8")
+            response["Cache-Control"] = "no-store"
+            return response
         kind = FeedFormat.choose(
             request.GET.get("format", ""), request.headers.get("User-Agent", "")
         )

@@ -232,6 +232,9 @@ msgstr "Статус"
 msgid "The account ID is a number."
 msgstr "ID аккаунта — это число."
 
+msgid "The device is forgotten."
+msgstr "Устройство забыто."
+
 msgid "The report is on its way. The result is in the log."
 msgstr "Отчёт отправляется. Результат — в журнале."
 

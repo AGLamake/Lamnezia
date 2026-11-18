@@ -26,6 +26,7 @@ from apps.dashboard.models import BatchAction, UserBatch
 from apps.dashboard.services.batch import BatchReport, UserBatchActions
 from apps.dashboard.services.users import UserCard, UserRow, users_for_list
 from apps.keys.services.subscription import MySubscription
+from apps.keys.services.subscription_devices import SubscriptionDevices
 from apps.plans.models import Plan
 
 
@@ -63,6 +64,7 @@ class UserDetailView(ZoneUsersMixin, TemplateView):
         return super().get_context_data(
             card=UserCard.load(user, timezone.now()),
             offers_subscription=subscription.available,
+            subscription_devices=SubscriptionDevices(user).all() if token else [],
             subscription_url=self.request.build_absolute_uri(
                 reverse("subscription-feed", args=[token])
             )
@@ -73,14 +75,21 @@ class UserDetailView(ZoneUsersMixin, TemplateView):
 
 
 class UserSubscriptionView(ZoneUsersMixin, View):
-    """A new subscription link for the user, or none: the previous one stops working at once."""
+    """A new subscription link for the user, or none (the previous one stops working at once);
+    or a device of the link forgotten.
+    """
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         user = get_object_or_404(self.zone_users(), pk=pk)
         subscription = MySubscription(user)
         if not subscription.available:
             raise Http404
-        if request.POST.get("action") == "delete":
+        action = request.POST.get("action")
+        if action == "forget":
+            if SubscriptionDevices(user).forget(request.POST.get("device", "")):
+                audit.log_request(request, "keys.subscription_device_forget", user)
+                messages.success(request, _("The device is forgotten."))
+        elif action == "delete":
             subscription.delete()
             audit.log_request(request, "keys.subscription_delete", user)
             messages.success(request, _("The subscription link is deleted."))

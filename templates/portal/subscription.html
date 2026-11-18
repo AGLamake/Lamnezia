@@ -22,6 +22,8 @@
       <form method="post" data-confirm="{% translate 'Make a new link? The old one stops working, and the clients need the new one.' %}" data-confirm-button="{% translate 'New link' %}">{% csrf_token %}<button name="action" value="renew" class="btn btn-secondary">{% icon "refresh" %}{% translate "New link" %}</button></form>
       <form method="post" class="sm:ml-auto" data-confirm="{% translate 'Delete the link? The clients stop getting your keys by it.' %}" data-confirm-button="{% translate 'Delete link' %}">{% csrf_token %}<button name="action" value="delete" class="btn btn-danger">{% icon "trash" %}{% translate "Delete link" %}</button></form>
     </div>
+    {% url 'portal:subscription' as action %}
+    {% include "keys/_subscription_devices.html" with action=action %}
   {% else %}
     <form method="post">{% csrf_token %}<button name="action" value="renew" class="btn btn-primary">{% translate "Create link" %}</button></form>
   {% endif %}

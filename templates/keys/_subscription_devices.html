@@ -1,0 +1,23 @@
+{% load i18n %}
+{# Devices of a subscription link with «Forget». Takes `devices`, `max_devices` (None: no limit), `action`: the URL the form posts to. #}
+<div class="space-y-2">
+  <h3 class="font-medium">{% translate "Devices" %}{% if max_devices is not None %} <span class="help-text font-normal">{% blocktranslate with used=devices|length limit=max_devices %}{{ used }} of {{ limit }}{% endblocktranslate %}</span>{% endif %}</h3>
+  {% if devices %}
+    <ul class="rows">
+      {% for device in devices %}
+        <li class="flex items-center gap-3 py-2">
+          <span class="row-main">
+            <span class="row-title">{{ device }}</span>
+            <span class="row-sub">{% if device.system %}{{ device.system }} · {% endif %}{% if device.app and device.model %}{{ device.app }} · {% endif %}{% blocktranslate with date=device.last_seen|date:"SHORT_DATETIME_FORMAT" %}last fetch {{ date }}{% endblocktranslate %}</span>
+          </span>
+          <form method="post" action="{{ action }}" data-confirm="{% translate 'Forget the device? It gets the keys again only while there is a free place.' %}" data-confirm-button="{% translate 'Forget' %}">
+            {% csrf_token %}<input type="hidden" name="action" value="forget"><input type="hidden" name="device" value="{{ device.pk }}">
+            <button type="submit" class="btn btn-ghost-danger btn-sm">{% translate "Forget" %}</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="help-text">{% translate "No device has fetched the link with a device ID yet. Apps such as Happ send it; the plan may limit the number of devices." %}</p>
+  {% endif %}
+</div>

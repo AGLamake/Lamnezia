@@ -110,6 +110,12 @@
                 <td data-label="{% translate 'In effect' %}" class="font-medium">{% include "dashboard/users/_limit.html" with value=card.effective.max_keys empty=no_limit %}</td>
               </tr>
               <tr>
+                <td class="cell-title">{% translate "Subscription devices at most" %}</td>
+                <td data-label="{% translate 'In the plan' %}">{% include "dashboard/users/_limit.html" with value=card.plan.max_devices empty=no_limit %}</td>
+                <td data-label="{% translate 'Personal' %}">{% include "dashboard/users/_limit.html" with value=card.limits.max_devices empty=as_planned %}</td>
+                <td data-label="{% translate 'In effect' %}" class="font-medium">{% include "dashboard/users/_limit.html" with value=card.effective.max_devices empty=no_limit %}</td>
+              </tr>
+              <tr>
                 <td class="cell-title">{% translate "Access until" %}</td>
                 <td data-label="{% translate 'In the plan' %}">{% if card.plan.access_days %}{% blocktranslate count days=card.plan.access_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}{% else %}<span class="help-text">{% translate "no end" %}</span>{% endif %}</td>
                 <td data-label="{% translate 'Personal' %}">{{ card.limits.access_until|date:"SHORT_DATETIME_FORMAT"|default:as_planned }}</td>
@@ -151,6 +157,10 @@
           </form>
         {% endif %}
       </div>
+      {% if subscription_url %}
+        {% url 'dashboard:user-subscription' card.user.pk as action %}
+        {% include "keys/_subscription_devices.html" with devices=subscription_devices max_devices=card.effective.max_devices action=action %}
+      {% endif %}
     </section>
     {% endif %}
 

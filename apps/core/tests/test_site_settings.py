@@ -94,6 +94,7 @@ class TestPage:
             "registration_mode": "invite_only",
             "require_email_confirmation": "on",
             "key_reveal_policy": "always",
+            "subscription_without_device_id": "on",
             "bot_key_delivery": "allowed",
             "guide_suggestions": "on",
             "traffic_warning_percent": "80",

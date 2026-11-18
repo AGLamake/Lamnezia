@@ -50,6 +50,7 @@ _LABELS: dict[str, Promise] = {
     "keys.reset_view": _("Allow showing key again"),
     "keys.subscription_renew": _("Issue subscription link"),
     "keys.subscription_delete": _("Delete subscription link"),
+    "keys.subscription_device_forget": _("Forget subscription device"),
     "notifications.channel_create": _("Create notification channel"),
     "notifications.channel_update": _("Change notification channel"),
     "notifications.channel_delete": _("Delete notification channel"),

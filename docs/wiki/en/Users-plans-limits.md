@@ -12,6 +12,7 @@ what limits apply. Plans are managed in **Plans** in the admin interface (`/plan
 | Traffic per period | GB a user may use per period; the period length is in days (30 by default). Empty: no limit. |
 | Traffic in total | GB over the whole access term. Empty: no limit. |
 | Keys at most | How many keys a user may have. Empty: no limit. |
+| Subscription devices at most | How many devices that send a device ID may fetch the user's subscription link, see [devices](Portal.md#devices). Empty: no limit. |
 | Speed, Mbit/s | Speed of every key of a user, download and upload each. Empty: no limit. See [speed limits](#speed-limits). |
 | Access, days | Term from the day the plan is assigned. Empty: no end date. |
 | Servers, server groups, protocols | Where users get keys. A group gives the key of the group on each of its servers, see [server groups](Server-groups.md). No servers or groups selected: all servers; no protocols: all. |
@@ -134,7 +135,9 @@ A click on a name opens the card:
 - **Plan and limits** — the value in the plan, the personal value and the one in effect for every
   limit; **Change** opens the [plan of the user](#plan-of-a-user);
 - **Traffic** — used in the current period and since the plan was assigned;
-- **Keys** — all keys of the user with their status and protocol.
+- **Keys** — all keys of the user with their status and protocol;
+- **Subscription link** — the link and the [devices](Portal.md#devices) that fetch it, each can be
+  forgotten.
 
 ### Bulk actions
 

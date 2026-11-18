@@ -300,17 +300,26 @@ msgstr "Сервер не применил новый список клиент�
 msgid "The step log names them and why. Run the operation again: it retries only them."
 msgstr "Какие и почему — в журнале шага. Запустите операцию снова: она повторит только их."
 
+msgid "The subscription is already used on as many devices as the plan allows. Forget a device on the subscription page of the portal, then refresh."
+msgstr "Подписка уже используется на стольких устройствах, сколько разрешает тариф. Забудьте устройство на странице подписки в портале и обновите подписку."
+
 msgid "There are no free addresses left in the server subnet."
 msgstr "В подсети сервера не осталось свободных адресов."
 
 msgid "There is no previous revocation list."
 msgstr "Предыдущего списка отзыва нет."
 
+msgid "This app does not send a device ID, and the panel gives the subscription only to apps that do. Use another app, e.g. Happ."
+msgstr "Это приложение не передаёт ID устройства, а панель выдаёт подписку только приложениям, которые его передают. Используйте другое приложение, например Happ."
+
 msgid "This client belongs to the Amnezia app that installed the server."
 msgstr "Этот клиент принадлежит приложению Amnezia, которое установило сервер."
 
 msgid "Tick the keys and choose what to do with them."
 msgstr "Отметьте ключи и выберите, что с ними сделать."
+
+msgid "Unknown device"
+msgstr "Неизвестное устройство"
 
 msgid "Update the certificate list"
 msgstr "Обновить список сертификатов"
@@ -351,8 +360,17 @@ msgstr "активен"
 msgid "added outside the panel"
 msgstr "добавлен вне панели"
 
+msgid "app"
+msgstr "приложение"
+
 msgid "created at"
 msgstr "создан"
+
+msgid "device ID digest"
+msgstr "хеш ID устройства"
+
+msgid "device model"
+msgstr "модель устройства"
 
 msgid "device name"
 msgstr "имя устройства"
@@ -372,6 +390,9 @@ msgstr "отключён"
 msgid "disabled by limit"
 msgstr "отключён по лимиту"
 
+msgid "first seen"
+msgstr "первый запрос"
+
 msgid "first viewed at"
 msgstr "впервые открыт"
 
@@ -389,6 +410,9 @@ msgstr "выдаётся"
 
 msgid "key"
 msgstr "ключ"
+
+msgid "last seen"
+msgstr "последний запрос"
 
 msgid "name"
 msgstr "название"
@@ -420,11 +444,20 @@ msgstr "отзывается"
 msgid "status"
 msgstr "статус"
 
+msgid "subscription device"
+msgstr "устройство подписки"
+
+msgid "subscription devices"
+msgstr "устройства подписки"
+
 msgid "subscription link"
 msgstr "ссылка-подписка"
 
 msgid "subscription links"
 msgstr "ссылки-подписки"
+
+msgid "system"
+msgstr "система"
 
 msgid "token"
 msgstr "токен"

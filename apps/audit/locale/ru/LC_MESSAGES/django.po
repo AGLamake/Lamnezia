@@ -120,6 +120,9 @@ msgstr "Продление доступа пользователям"
 msgid "Forget server host key"
 msgstr "Сброс ключа хоста сервера"
 
+msgid "Forget subscription device"
+msgstr "Забыть устройство подписки"
+
 msgid "From"
 msgstr "С"
 

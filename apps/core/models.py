@@ -68,6 +68,14 @@ class SiteSettings(models.Model):
         choices=KeyRevealPolicy.choices,
         default=KeyRevealPolicy.ALWAYS,
     )
+    subscription_without_device_id = models.BooleanField(
+        _("subscription without a device ID"),
+        default=True,
+        help_text=_(
+            "Give the subscription to clients that do not send x-hwid. Off: only clients that "
+            "send it, so the plan's device limit cannot be bypassed."
+        ),
+    )
     bot_key_delivery = models.CharField(
         _("keys in the bots"),
         max_length=16,

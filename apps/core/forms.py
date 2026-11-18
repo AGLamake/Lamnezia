@@ -41,6 +41,7 @@ class SiteSettingsForm(forms.ModelForm):  # type: ignore[type-arg]
             "default_plan",
             "require_email_confirmation",
             "key_reveal_policy",
+            "subscription_without_device_id",
             "bot_key_delivery",
             "guide_suggestions",
             "traffic_warning_percent",

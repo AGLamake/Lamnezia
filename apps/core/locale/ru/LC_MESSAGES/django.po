@@ -61,6 +61,9 @@ msgstr "Из Discord Developer Portal; через это приложение п
 msgid "GitHub token"
 msgstr "Токен GitHub"
 
+msgid "Give the subscription to clients that do not send x-hwid. Off: only clients that send it, so the plan's device limit cannot be bypassed."
+msgstr "Выдавать подписку клиентам, которые не шлют x-hwid. Выключено: только тем, кто шлёт, чтобы лимит устройств тарифа нельзя было обойти."
+
 msgid "Given to new users in open registration with automatic approval."
 msgstr "Выдаётся новым пользователям при открытой регистрации с автоматическим допуском."
 
@@ -231,6 +234,9 @@ msgstr "вход через Discord"
 
 msgid "sign in with Telegram"
 msgstr "вход через Telegram"
+
+msgid "subscription without a device ID"
+msgstr "подписка без ID устройства"
 
 msgid "task"
 msgstr "задача"

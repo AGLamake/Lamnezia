@@ -15,6 +15,9 @@ msgstr "AmneziaWG (старый)"
 msgid "Counted from the day the plan is assigned. Empty: no end date."
 msgstr "Отсчитывается со дня назначения тарифа. Пусто — без срока."
 
+msgid "Devices that fetch the subscription link with x-hwid. Empty: no limit."
+msgstr "Устройства, которые запрашивают ссылку-подписку с x-hwid. Пусто: без ограничения."
+
 msgid "Empty: as in the plan."
 msgstr "Пусто — как в тарифе."
 
@@ -122,6 +125,9 @@ msgstr "серверы"
 
 msgid "speed, Mbit/s"
 msgstr "скорость, Мбит/с"
+
+msgid "subscription devices at most"
+msgstr "устройств подписки не больше"
 
 msgid "traffic in total"
 msgstr "трафик всего"

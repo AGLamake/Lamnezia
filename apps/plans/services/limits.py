@@ -24,6 +24,7 @@ class EffectiveLimits:
     period_days: int
     total_traffic_limit: int | None
     max_keys: int | None
+    max_devices: int | None
     speed_limit: int | None
     access_until: datetime | None
     period_start: datetime | None
@@ -43,6 +44,7 @@ class EffectiveLimits:
             period_days=limits.period_days or plan.period_days,
             total_traffic_limit=_override(limits.total_traffic_limit, plan.total_traffic_limit),
             max_keys=_override(limits.max_keys, plan.max_keys),
+            max_devices=_override(limits.max_devices, plan.max_devices),
             speed_limit=_override(limits.speed_limit, plan.speed_limit),
             access_until=limits.access_until or _access_end(plan, limits.plan_assigned_at),
             period_start=limits.plan_assigned_at,
@@ -74,6 +76,9 @@ class EffectiveLimits:
     def allows_another_key(self, keys_in_use: int) -> bool:
         return self.max_keys is None or keys_in_use < self.max_keys
 
+    def allows_another_device(self, devices: int) -> bool:
+        return self.max_devices is None or devices < self.max_devices
+
 
 # What `EffectiveLimits.of` reads of a plan; prefetched, limits of many users take no more queries.
 PLAN_SERVERS = ("plan__servers", "plan__groups__members__instance")
@@ -95,6 +100,7 @@ NO_PLAN = EffectiveLimits(
     period_days=Plan._meta.get_field("period_days").get_default(),
     total_traffic_limit=0,
     max_keys=0,
+    max_devices=None,
     speed_limit=None,
     access_until=None,
     period_start=None,

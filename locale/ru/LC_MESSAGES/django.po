@@ -1297,6 +1297,9 @@ msgstr "Забыть"
 msgid "Forget the SSH fingerprint? Do it only if the server was reinstalled: the next connection trusts whatever key the server shows."
 msgstr "Забыть отпечаток SSH? Делайте это, только если сервер переустанавливали: следующее подключение доверится любому ключу, который покажет сервер."
 
+msgid "Forget the device? It gets the keys again only while there is a free place."
+msgstr "Забыть устройство? Оно снова получит ключи, только если будет свободное место."
+
 msgid "Forgot your password?"
 msgstr "Забыли пароль?"
 
@@ -2069,6 +2072,9 @@ msgstr "Копии файлов пока нет: панель сохраняет
 
 msgid "No copy of the files yet: the restore uses the keys and settings in the panel."
 msgstr "Копии файлов ещё нет: восстановление возьмёт ключи и настройки из панели."
+
+msgid "No device has fetched the link with a device ID yet. Apps such as Happ send it; the plan may limit the number of devices."
+msgstr "Ни одно устройство ещё не запрашивало ссылку с ID устройства. Его передают приложения вроде Happ; тариф может ограничить число устройств."
 
 msgid "No differences"
 msgstr "Расхождений нет"
@@ -3174,6 +3180,9 @@ msgstr "Хранение"
 msgid "Submit empty to see validation errors."
 msgstr "Отправьте пустой, чтобы увидеть ошибки проверки."
 
+msgid "Subscription devices at most"
+msgstr "Устройств подписки не больше"
+
 msgid "Subscription link"
 msgstr "Ссылка-подписка"
 
@@ -3384,6 +3393,9 @@ msgstr "Сначала должна ответить копия на новой 
 
 msgid "The current link will stop working. Continue?"
 msgstr "Текущая ссылка перестанет работать. Продолжить?"
+
+msgid "The device is forgotten."
+msgstr "Устройство забыто."
 
 msgid "The device loses access right away. This cannot be undone."
 msgstr "Устройство сразу потеряет доступ. Это нельзя отменить."
@@ -4723,6 +4735,10 @@ msgstr "отстаёт с"
 
 msgid "language"
 msgstr "язык"
+
+#, python-format
+msgid "last fetch %(date)s"
+msgstr "последний запрос %(date)s"
 
 msgid "last seen online"
 msgstr "последний раз в сети"

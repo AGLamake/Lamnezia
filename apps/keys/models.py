@@ -149,3 +149,37 @@ class Subscription(models.Model):
 
     def __str__(self) -> str:
         return str(self.user)
+
+
+class SubscriptionDevice(models.Model):
+    """A device that fetched a subscription link with its `x-hwid`; the plan limits their number.
+
+    Only a digest of the device ID is kept: the panel matches it, never shows it. Model, system
+    and app are what the client said about itself. Request addresses are not stored.
+    """
+
+    subscription = models.ForeignKey(
+        Subscription,
+        verbose_name=_("subscription link"),
+        on_delete=models.CASCADE,
+        related_name="devices",
+    )
+    digest = models.CharField(_("device ID digest"), max_length=64)
+    model = models.CharField(_("device model"), max_length=100, blank=True)
+    system = models.CharField(_("system"), max_length=100, blank=True)
+    app = models.CharField(_("app"), max_length=100, blank=True)
+    first_seen = models.DateTimeField(_("first seen"), auto_now_add=True)
+    last_seen = models.DateTimeField(_("last seen"))
+
+    class Meta:
+        verbose_name = _("subscription device")
+        verbose_name_plural = _("subscription devices")
+        ordering = ("first_seen", "pk")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("subscription", "digest"), name="keys_subscription_device_unique"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return self.model or self.app or str(_("Unknown device"))

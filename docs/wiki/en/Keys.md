@@ -40,7 +40,8 @@ keep the old shortId and no longer connect: their owners get the **XRay keys mus
 again** notification (`short_id_changed`). A subscription link picks the change up by itself.
 
 The subscription link gives the XRay keys as `vless://` links or, for Clash/Mihomo and sing-box
-clients, as a profile of their own format; see [Subscription link](Portal.md#subscription-link).
+clients, as a profile of their own format; see [Subscription link](Portal.md#subscription-link). The plan may limit the devices that
+fetch the link, see [Devices](Portal.md#devices).
 
 ## Other actions
 

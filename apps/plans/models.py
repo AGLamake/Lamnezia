@@ -39,6 +39,9 @@ class Plan(models.Model):
         _("traffic in total"), null=True, blank=True
     )
     max_keys = models.PositiveSmallIntegerField(_("keys at most"), null=True, blank=True)
+    max_devices = models.PositiveSmallIntegerField(
+        _("subscription devices at most"), null=True, blank=True
+    )
     speed_limit = models.PositiveIntegerField(
         _("speed, Mbit/s"), null=True, blank=True, validators=[MinValueValidator(1)]
     )
@@ -111,6 +114,9 @@ class UserLimits(models.Model):
         _("traffic in total"), null=True, blank=True
     )
     max_keys = models.PositiveSmallIntegerField(_("keys at most"), null=True, blank=True)
+    max_devices = models.PositiveSmallIntegerField(
+        _("subscription devices at most"), null=True, blank=True
+    )
     speed_limit = models.PositiveIntegerField(
         _("speed, Mbit/s"), null=True, blank=True, validators=[MinValueValidator(1)]
     )
