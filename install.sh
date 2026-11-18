@@ -3,20 +3,29 @@
 #   curl -fsSL https://raw.githubusercontent.com/AGLamake/Lamnezia/releases/install.sh | bash -s -- --domain panel.example.com
 # Running it again updates an existing installation and keeps its .env.
 # A panel archive (System -> Panel archive) is restored on a new server with --restore FILE.
+# Without a terminal (cloud-init) it asks nothing: the options come from LAMNEZIA_* variables,
+# see deploy/cloud-init/user-data.yaml.
 set -euo pipefail
 
 REPO="${LAMNEZIA_REPO:-https://github.com/AGLamake/Lamnezia.git}"
 # The releases branch holds only releases, so its tip is the latest one.
 REF="${LAMNEZIA_REF:-releases}"
-DIR="/opt/lamnezia"
-DOMAIN=""
-EMAIL=""
-PROXY="auto"
-IMAGE=""
+DIR="${LAMNEZIA_DIR:-/opt/lamnezia}"
+DOMAIN="${LAMNEZIA_DOMAIN:-}"
+EMAIL="${LAMNEZIA_EMAIL:-}"
+PROXY="${LAMNEZIA_PROXY:-auto}"
+IMAGE="${LAMNEZIA_IMAGE:-}"
+ADMIN="${LAMNEZIA_ADMIN_USERNAME:-admin}"
+# docker compose prefers the shell environment to .env: these must not reach it.
+unset LAMNEZIA_DOMAIN LAMNEZIA_EMAIL LAMNEZIA_PROXY LAMNEZIA_IMAGE
 IMAGE_REPO="ghcr.io/aglamake/lamnezia"
 RESTORE=""
 RESTORE_DIR=""
 MOVING=0
+UNATTENDED=0
+NEW_ENV=0
+ADMIN_PASSWORD=""
+SUMMARY_FILE="install-summary.txt"
 
 usage() {
     cat <<EOF
@@ -35,6 +44,11 @@ Usage: install.sh [--domain NAME] [--email ADDRESS] [--proxy auto|nginx|caddy] [
             asked or taken from LAMNEZIA_ARCHIVE_PASSWORD; --domain overrides the archived one
   --moving  set by the panel move: the domain still points to the old machine, so a failed
             certificate request is retried every 10 minutes instead of stopping the install
+
+Without a terminal, or with LAMNEZIA_UNATTENDED=1, nothing is asked. The options may then come
+from LAMNEZIA_DOMAIN, LAMNEZIA_EMAIL, LAMNEZIA_PROXY, LAMNEZIA_IMAGE, LAMNEZIA_DIR and
+LAMNEZIA_REF; a new installation also gets the administrator LAMNEZIA_ADMIN_USERNAME (admin)
+with a generated password. The result is written to install-summary.txt (mode 0600) in --dir.
 EOF
 }
 
@@ -63,7 +77,7 @@ parse_args() {
 # Prompts read from the terminal, so they work under "curl ... | bash" too.
 ask() {
     local prompt="$1" answer
-    [ -r /dev/tty ] || die "$prompt: pass it as an option, there is no terminal to ask"
+    [ "$UNATTENDED" = 0 ] || die "$prompt: pass it as an option or a LAMNEZIA_* variable"
     read -r -p "$prompt: " answer </dev/tty
     printf '%s' "$answer"
 }
@@ -71,6 +85,16 @@ ask() {
 check_system() {
     [ "$(id -u)" -eq 0 ] || die "run as root (sudo bash install.sh ...)"
     command -v apt-get >/dev/null || die "only Debian and Ubuntu are supported"
+}
+
+# cloud-init runs scripts without a terminal and often without HOME; /dev/tty may exist there
+# but cannot be opened.
+detect_unattended() {
+    if [ "${LAMNEZIA_UNATTENDED:-0}" = 1 ] || ! { : </dev/tty; } 2>/dev/null; then
+        UNATTENDED=1
+        export DEBIAN_FRONTEND=noninteractive HOME="${HOME:-/root}"
+        log "No terminal: installing without questions"
+    fi
 }
 
 install_packages() {
@@ -153,6 +177,7 @@ write_env() {
     # compose reads COMPOSE_PROFILES from .env, so later "docker compose up" keeps Caddy.
     add_proxy_profile "$env_file"
     chmod 600 "$env_file"
+    NEW_ENV=1
 }
 
 add_proxy_profile() {
@@ -163,7 +188,7 @@ add_proxy_profile() {
 
 archive_password() {
     if [ -n "${LAMNEZIA_ARCHIVE_PASSWORD:-}" ]; then return; fi
-    [ -r /dev/tty ] || die "set LAMNEZIA_ARCHIVE_PASSWORD, there is no terminal to ask the password"
+    [ "$UNATTENDED" = 0 ] || die "set LAMNEZIA_ARCHIVE_PASSWORD, there is no terminal to ask the password"
     read -r -s -p "Archive password: " LAMNEZIA_ARCHIVE_PASSWORD </dev/tty
     printf '\n'
     export LAMNEZIA_ARCHIVE_PASSWORD
@@ -369,8 +394,48 @@ UNIT
     systemctl enable --now lamnezia-update.path
 }
 
+# Unattended, a new panel gets its first administrator at once: nobody is there to run
+# createadmin. Prints the password; when the user cannot be created, prints nothing.
+create_admin() {
+    local password
+    password="$(openssl rand -base64 18 | tr -d '/+=')"
+    if printf '%s\n' "$password" | (cd "$DIR" && docker compose exec -T web \
+        python manage.py createadmin --username "$ADMIN" --password-stdin) >/dev/null; then
+        printf '%s' "$password"
+    else
+        log "Could not create the administrator $ADMIN: create one with createadmin" >&2
+    fi
+}
+
+# The summary may hold a password, so only root reads it; the log shows only where it is.
+# Written for a new installation only: a rerun must not replace the password not yet used.
+write_summary() {
+    local file="$DIR/$SUMMARY_FILE"
+    [ "$NEW_ENV" = 1 ] || [ -n "$RESTORE" ] || return 0
+    if [ "$UNATTENDED" = 1 ] && [ "$NEW_ENV" = 1 ]; then ADMIN_PASSWORD="$(create_admin)"; fi
+    (
+        umask 077
+        {
+            printf 'Lamnezia was installed %s\n\n' "$(date -u '+%Y-%m-%d %H:%M UTC')"
+            printf 'Panel: https://%s/\n' "$DOMAIN"
+            if [ -n "$ADMIN_PASSWORD" ]; then
+                printf 'Administrator: %s\nPassword: %s\n' "$ADMIN" "$ADMIN_PASSWORD"
+                printf 'Sign in, change the password, set up two-factor login, delete this file.\n'
+            elif [ -n "$RESTORE" ]; then
+                printf 'Restored from %s: sign in with the accounts of the archived panel.\n' "$RESTORE"
+            else
+                printf 'Create the first administrator:\n'
+                printf '  cd %s && docker compose exec web python manage.py createadmin --username admin\n' "$DIR"
+            fi
+        } >"$file"
+    )
+    chmod 600 "$file"
+    log "Summary saved to $file"
+}
+
 main() {
     parse_args "$@"
+    detect_unattended
     check_system
     install_packages
     fetch_code
@@ -389,7 +454,10 @@ main() {
         return
     fi
     log "Lamnezia is running at https://$DOMAIN/"
-    if [ -n "$RESTORE" ]; then
+    write_summary
+    if [ -n "$ADMIN_PASSWORD" ]; then
+        log "The administrator $ADMIN and the password are in the summary"
+    elif [ -n "$RESTORE" ]; then
         log "Restored from $RESTORE: sign in with the accounts of the archived panel"
     else
         log "Create the first administrator: cd $DIR && docker compose exec web python manage.py createadmin --username admin"

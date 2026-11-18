@@ -76,6 +76,35 @@ The value is a version (`1.2.0`, `1.2`), `latest` or a full image reference. The
 `--restore FILE` installs the panel from a [panel archive](Backup.md#from-a-panel-archive): with its
 database, secrets and files instead of new ones.
 
+### Without questions (cloud-init)
+
+Without a terminal — cloud-init, a provider's startup script, `ssh host 'bash install.sh'` — or with
+`LAMNEZIA_UNATTENDED=1` the script asks nothing. The options may then come from variables:
+
+| Variable | Option | Meaning |
+|---|---|---|
+| `LAMNEZIA_DOMAIN` | `--domain` | panel domain, required for a new installation |
+| `LAMNEZIA_EMAIL` | `--email` | address for Let's Encrypt notices |
+| `LAMNEZIA_PROXY` | `--proxy` | `auto`, `nginx` or `caddy` |
+| `LAMNEZIA_IMAGE` | `--image` | ready image: a version, `latest` or a full reference |
+| `LAMNEZIA_DIR` | `--dir` | installation directory |
+| `LAMNEZIA_REF` | — | branch or tag of the code, `releases` by default |
+| `LAMNEZIA_ADMIN_USERNAME` | — | name of the first administrator, `admin` by default |
+
+An option given on the command line wins over its variable. A new installation without questions
+also creates the first administrator with a generated password, so step 4 is not needed. The panel
+address, the administrator and the password are written to `/opt/lamnezia/install-summary.txt`,
+readable by root only; the password does not appear in the output. Sign in, change the password,
+set up two-factor login and delete the file. Running the script again does not touch the file or
+the accounts. With a terminal everything works as before, the file only tells the address and the
+next step.
+
+An example of user data for cloud-init is in
+[`deploy/cloud-init/user-data.yaml`](https://github.com/AGLamake/Lamnezia/blob/releases/deploy/cloud-init/user-data.yaml):
+set the domain and the address, paste it into the provider's "user data" field and create the
+server. The DNS record must point to the server before it boots, otherwise the certificate is not
+issued. The install log is in `/var/log/cloud-init-output.log`.
+
 ## 4. First administrator
 
 ```bash

@@ -34,3 +34,6 @@ Thumbs.db
 
 # Release update requests and host status (install.sh, System → Panel update)
 /update/
+
+# What install.sh tells after a new installation, the first password included
+/install-summary.txt

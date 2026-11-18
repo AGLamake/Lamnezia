@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Install without questions**: without a terminal (cloud-init) or with `LAMNEZIA_UNATTENDED=1`
+  `install.sh` asks nothing and takes its options from `LAMNEZIA_DOMAIN`, `LAMNEZIA_EMAIL`,
+  `LAMNEZIA_PROXY`, `LAMNEZIA_IMAGE`, `LAMNEZIA_DIR` and `LAMNEZIA_REF`. A new installation then
+  also gets its first administrator with a generated password; the panel address and the password
+  go to `install-summary.txt` (mode 0600) in the installation directory, not to the output. An
+  example of cloud-init user data is in `deploy/cloud-init/`. With a terminal nothing changes.
 - **Device limit for the subscription link**: the panel remembers the devices that fetch the
   subscription link with a device ID (`x-hwid`, sent by Happ and others) and shows them on the
   portal and the user card, where each can be forgotten. A plan's **Subscription devices at most**
