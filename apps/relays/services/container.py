@@ -133,7 +133,9 @@ class RelayContainer:
         return [
             "docker", "run", "-d", "--name", NAME, "--restart", "always",
             "--cap-add=NET_ADMIN", "--device", "/dev/net/tun",
-            "--sysctl", "net.ipv4.ip_forward=1", "-v", f"{VOLUME}:{FOLDER}",
+            "--sysctl", "net.ipv4.ip_forward=1",
+            # Loose reverse path check: answers of a split group come back over its uplink.
+            "--sysctl", "net.ipv4.conf.all.rp_filter=2", "-v", f"{VOLUME}:{FOLDER}",
             *log_arguments(logs=True), *published, NAME,
         ]  # fmt: skip
 

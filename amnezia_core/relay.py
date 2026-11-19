@@ -6,14 +6,19 @@ next backend by priority after `failures` failed probes in a row. The agent writ
 into the state file, which the panel reads over SSH. For planned maintenance the panel may
 also write a switch request; the agent answers it in the state file. The files are JSON with a
 `version`, so an agent and a panel of different releases notice a format they do not know.
+
+A group in split routing (docs/SPLIT.md) ends the tunnel on the relay: a clone of the group
+answers its clients, Russian networks go straight out and the rest goes over the uplink, a
+client of the group on the active member. Its peers and its list of networks come in files of
+their own, so issuing a key or a new list does not rewrite the config.
 """
 
 import json
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
-from ipaddress import IPv4Address, IPv4Interface
+from ipaddress import IPv4Address, IPv4Interface, IPv4Network, collapse_addresses
 from typing import Any
 
 from amnezia_core.errors import AmneziaFormatError, RelayFormatError
@@ -24,6 +29,10 @@ FORMAT_VERSION = 1
 # does not lengthen the 18-22 s outage the client has anyway.
 DEFAULT_CHECK_INTERVAL = 5
 DEFAULT_FAILURES = 3
+# Good uplink checks in a row that take a split group back from the emergency forward.
+DEFAULT_RECOVERY = 6
+# The agent checks the uplink by a ping through it: an answer means traffic leaves the member.
+DEFAULT_UPLINK_CHECK = IPv4Address("1.1.1.1")
 
 _MAX_PORT = 65535
 
@@ -83,29 +92,90 @@ class ServicePeer:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ServicePeer":
-        params = _object(data, "awg_params")
-        if not all(isinstance(value, str) for value in params.values()):
-            raise RelayFormatError("Service peer awg_params must map names to strings.")
-        try:
-            address = IPv4Interface(_string(data, "address"))
-        except ValueError as error:
-            raise RelayFormatError(f"Service peer address is invalid: {error}") from error
         return cls(
             private_key=_string(data, "private_key"),
-            address=address,
+            address=_interface(data, "address"),
             server_public_key=_string(data, "server_public_key"),
             preshared_key=_string(data, "preshared_key"),
-            awg_params=params,
+            awg_params=_params(data),
+        )
+
+
+class Routing(StrEnum):
+    """How the relay carries a group: forwards its port to a member or splits the traffic itself."""
+
+    FORWARD = "forward"
+    SPLIT = "split"
+
+
+class UplinkKind(StrEnum):
+    """What carries the uplink of a split group to the member; XRay Reality may join AmneziaWG."""
+
+    AWG = "awg"
+
+
+@dataclass(frozen=True)
+class Clone:
+    """The group's server on the relay: its key, its address in the group subnet and the
+    obfuscation parameters of the group's awg0.conf. It listens on the group port."""
+
+    private_key: str = field(repr=False)
+    address: IPv4Interface
+    awg_params: Mapping[str, str]
+
+    def __post_init__(self) -> None:
+        decode_key(self.private_key)
+        network = self.address.network
+        if self.address.ip in (network.network_address, network.broadcast_address):
+            raise RelayFormatError(f"Clone address {self.address} is not a host in its subnet.")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "private_key": self.private_key,
+            "address": str(self.address),
+            "awg_params": dict(self.awg_params),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "Clone":
+        return cls(_string(data, "private_key"), _interface(data, "address"), _params(data))
+
+
+@dataclass(frozen=True)
+class SplitRouting:
+    """What a split group needs on the relay: its clone and the uplink peer, a client of the
+    group that the relay connects to the active member with."""
+
+    clone: Clone
+    uplink: ServicePeer
+    kind: UplinkKind = UplinkKind.AWG
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": str(self.kind),
+            "clone": self.clone.to_dict(),
+            "uplink": self.uplink.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "SplitRouting":
+        return cls(
+            clone=Clone.from_dict(_object(data, "clone")),
+            uplink=ServicePeer.from_dict(_object(data, "uplink")),
+            kind=_choice(UplinkKind, data.get("kind", UplinkKind.AWG), "uplink kind"),
         )
 
 
 @dataclass(frozen=True)
 class RelayGroup:
-    """A group behind the relay: its public UDP port and the members in priority order."""
+    """A group behind the relay: its public UDP port, the members in priority order and how
+    the relay carries it; a split group also has its clone and uplink."""
 
     port: int
     backends: tuple[Backend, ...]
     service: ServicePeer
+    routing: Routing = Routing.FORWARD
+    split: SplitRouting | None = None
 
     def __post_init__(self) -> None:
         _check_port(self.port)
@@ -113,20 +183,31 @@ class RelayGroup:
             raise RelayFormatError(f"Group on port {self.port} has no backends.")
         if len(set(self.backends)) != len(self.backends):
             raise RelayFormatError(f"Group on port {self.port} lists a backend twice.")
+        if self.routing is Routing.SPLIT and self.split is None:
+            raise RelayFormatError(f"Split group on port {self.port} has no clone and uplink.")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        data = {
             "port": self.port,
             "backends": [backend.to_dict() for backend in self.backends],
             "service": self.service.to_dict(),
+            "routing": str(self.routing),
         }
+        if self.split is not None:
+            data["split"] = self.split.to_dict()
+        return data
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "RelayGroup":
+        split = data.get("split")
+        if split is not None and not isinstance(split, dict):
+            raise RelayFormatError("'split' must be an object.")
         return cls(
             port=_integer(data, "port"),
             backends=tuple(Backend.from_dict(item) for item in _objects(data, "backends")),
             service=ServicePeer.from_dict(_object(data, "service")),
+            routing=_choice(Routing, data.get("routing", Routing.FORWARD), "routing"),
+            split=SplitRouting.from_dict(split) if split is not None else None,
         )
 
 
@@ -134,16 +215,20 @@ class RelayGroup:
 class RelayConfig:
     """Everything the agent needs: groups, how often to probe and after how many failures to switch.
 
-    The file holds the service peers' private keys: the panel writes it readable by root only.
+    `recovery` good uplink checks in a row take a split group back from the emergency forward;
+    `uplink_check` is the address the agent pings through the uplink. The file holds private
+    keys: the panel writes it readable by root only.
     """
 
     groups: tuple[RelayGroup, ...]
     check_interval: int = DEFAULT_CHECK_INTERVAL
     failures: int = DEFAULT_FAILURES
+    recovery: int = DEFAULT_RECOVERY
+    uplink_check: IPv4Address = DEFAULT_UPLINK_CHECK
 
     def __post_init__(self) -> None:
-        if self.check_interval < 1 or self.failures < 1:
-            raise RelayFormatError("check_interval and failures must be at least 1.")
+        if min(self.check_interval, self.failures, self.recovery) < 1:
+            raise RelayFormatError("check_interval, failures and recovery must be at least 1.")
         ports = [group.port for group in self.groups]
         if len(set(ports)) != len(ports):
             raise RelayFormatError("Two groups of the relay share a port.")
@@ -153,6 +238,8 @@ class RelayConfig:
             "version": FORMAT_VERSION,
             "check_interval": self.check_interval,
             "failures": self.failures,
+            "recovery": self.recovery,
+            "uplink_check": str(self.uplink_check),
             "groups": [group.to_dict() for group in self.groups],
         }
         return json.dumps(data, indent=2) + "\n"
@@ -165,8 +252,56 @@ class RelayConfig:
                 groups=tuple(RelayGroup.from_dict(item) for item in _objects(data, "groups")),
                 check_interval=_integer(data, "check_interval"),
                 failures=_integer(data, "failures"),
+                recovery=_integer(data, "recovery") if "recovery" in data else DEFAULT_RECOVERY,
+                uplink_check=_address(data, "uplink_check", DEFAULT_UPLINK_CHECK),
             )
         )
+
+
+def networks_file(port: int) -> str:
+    """Name of the list file of a split group in the agent folder."""
+    return f"networks-{port}.txt"
+
+
+def clone_peers_file(port: int) -> str:
+    """Name of the file with the `[Peer]` sections of a split group's clone in the agent folder."""
+    return f"peers-{port}.conf"
+
+
+@dataclass(frozen=True)
+class NetworkList:
+    """Networks a split group sends straight out of the relay; the rest goes over the uplink.
+
+    The file has one network per line, `#` starts a comment. It is never empty: the agent
+    refuses an empty or broken file and keeps the list it has.
+    """
+
+    networks: tuple[IPv4Network, ...]
+
+    def __post_init__(self) -> None:
+        if not self.networks:
+            raise RelayFormatError("A network list must not be empty.")
+
+    @classmethod
+    def of(cls, networks: Iterable[IPv4Network]) -> "NetworkList":
+        """The list with overlapping and adjacent networks merged, in address order."""
+        return cls(tuple(collapse_addresses(networks)))
+
+    def to_text(self) -> str:
+        return "".join(f"{network}\n" for network in self.networks)
+
+    @classmethod
+    def parse(cls, text: str) -> "NetworkList":
+        networks = []
+        for number, line in enumerate(text.splitlines(), start=1):
+            entry = line.split("#", 1)[0].strip()
+            if not entry:
+                continue
+            try:
+                networks.append(IPv4Network(entry))
+            except ValueError as error:
+                raise RelayFormatError(f"Line {number} is not an IPv4 network: {error}") from error
+        return cls.of(networks)
 
 
 @dataclass(frozen=True)
@@ -192,11 +327,36 @@ class BackendState:
 
 
 @dataclass(frozen=True)
+class UplinkState:
+    """The uplink of a split group: the member it points to and whether the last check passed."""
+
+    endpoint: Backend | None
+    alive: bool
+    checked_at: datetime | None
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "UplinkState":
+        endpoint = data.get("endpoint")
+        if endpoint is not None and not isinstance(endpoint, dict):
+            raise RelayFormatError("Uplink endpoint must be a backend or null.")
+        alive = data.get("alive")
+        if not isinstance(alive, bool):
+            raise RelayFormatError("Uplink state needs a boolean alive.")
+        return cls(
+            endpoint=Backend.from_dict(endpoint) if endpoint is not None else None,
+            alive=alive,
+            checked_at=_moment(data, "checked_at"),
+        )
+
+
+@dataclass(frozen=True)
 class GroupState:
     """State of one group: the active backend, the last switch and the forwarded bytes.
 
-    `unanswered`: clients reach the active backend and none gets an answer; an agent of an
-    older release does not tell it.
+    `unanswered`: clients reach the active backend and none gets an answer. `routing` is what
+    the config asks, `mode` what the agent does: a split group in `forward` mode is in the
+    emergency forward (docs/SPLIT.md 4.3). `networks` counts the applied list of a split group.
+    An agent of an older release tells none of these.
     """
 
     port: int
@@ -206,13 +366,31 @@ class GroupState:
     bytes_from_clients: int
     bytes_to_clients: int
     unanswered: bool = False
+    routing: Routing = Routing.FORWARD
+    mode: Routing = Routing.FORWARD
+    mode_changed_at: datetime | None = None
+    uplink: UplinkState | None = None
+    networks: int = 0
+
+    @property
+    def emergency(self) -> bool:
+        """A split group the agent forwards because its uplink fails and a member answers."""
+        return self.routing is Routing.SPLIT and self.mode is Routing.FORWARD
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "GroupState":
         active = data.get("active")
         if active is not None and not isinstance(active, dict):
             raise RelayFormatError("Group state active must be a backend or null.")
+        uplink = data.get("uplink")
+        if uplink is not None and not isinstance(uplink, dict):
+            raise RelayFormatError("Group state uplink must be an object or null.")
         return cls(
+            routing=_choice(Routing, data.get("routing", Routing.FORWARD), "routing"),
+            mode=_choice(Routing, data.get("mode", Routing.FORWARD), "mode"),
+            mode_changed_at=_moment(data, "mode_changed_at"),
+            uplink=UplinkState.from_dict(uplink) if uplink is not None else None,
+            networks=_integer(data, "networks") if "networks" in data else 0,
             unanswered=data.get("unanswered") is True,
             port=_integer(data, "port"),
             active=Backend.from_dict(active) if active is not None else None,
@@ -352,6 +530,36 @@ def _objects(data: Mapping[str, Any], key: str) -> list[dict[str, Any]]:
     if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
         raise RelayFormatError(f"{key!r} must be a list of objects.")
     return value
+
+
+def _interface(data: Mapping[str, Any], key: str) -> IPv4Interface:
+    try:
+        return IPv4Interface(_string(data, key))
+    except ValueError as error:
+        raise RelayFormatError(f"{key!r} is not an IPv4 interface address: {error}") from error
+
+
+def _address(data: Mapping[str, Any], key: str, default: IPv4Address) -> IPv4Address:
+    if key not in data:
+        return default
+    try:
+        return IPv4Address(_string(data, key))
+    except ValueError as error:
+        raise RelayFormatError(f"{key!r} is not an IPv4 address: {error}") from error
+
+
+def _params(data: Mapping[str, Any]) -> dict[str, str]:
+    params = _object(data, "awg_params")
+    if not all(isinstance(value, str) for value in params.values()):
+        raise RelayFormatError("awg_params must map names to strings.")
+    return params
+
+
+def _choice[E: StrEnum](kind: type[E], value: Any, name: str) -> E:
+    try:
+        return kind(value)
+    except ValueError as error:
+        raise RelayFormatError(f"Unknown {name} {value!r}.") from error
 
 
 def _moment(data: Mapping[str, Any], key: str) -> datetime | None:

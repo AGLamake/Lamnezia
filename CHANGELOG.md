@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Split routing in the relay agent**: a group of the relay can run split instead of forwarding
+  its port. The relay answers the clients with a copy of the group's interface, sends traffic to
+  the networks of the group's list and to private networks out directly and the rest to the
+  active member over an AmneziaWG uplink; a switch of the member only changes the uplink's
+  address. When the uplink fails while a member answers, the group falls back to forwarding and
+  returns after good uplink checks in a row (`recovery`, 6 by default). The config and state
+  formats carry the routing, the clone, the uplink and the mode; an empty or broken network list
+  is not applied. The relay image gets `iproute2` and a loose reverse path check. Panel settings
+  come later.
 - **Install without questions**: without a terminal (cloud-init) or with `LAMNEZIA_UNATTENDED=1`
   `install.sh` asks nothing and takes its options from `LAMNEZIA_DOMAIN`, `LAMNEZIA_EMAIL`,
   `LAMNEZIA_PROXY`, `LAMNEZIA_IMAGE`, `LAMNEZIA_DIR` and `LAMNEZIA_REF`. A new installation then

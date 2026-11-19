@@ -1,8 +1,9 @@
 # Lamnezia relay: forwards the UDP port of a group to its live member (docs/FALLBACK.md section 5).
 # amneziawg-go and awg probe the members; nftables forwards; conntrack drops old flows on a switch.
+# A split group (docs/SPLIT.md) also needs iproute2: policy routing of its marked packets.
 FROM amneziavpn/amneziawg-go:latest
 
-RUN apk add --no-cache python3 nftables conntrack-tools dumb-init
+RUN apk add --no-cache python3 nftables conntrack-tools dumb-init iproute2
 
 # The panel writes agent.py and config.json into the folder after `docker run`; until then the
 # container waits, and a restart picks up a new agent.

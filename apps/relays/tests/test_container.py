@@ -71,6 +71,7 @@ def test_install_publishes_the_ports_in_its_own_network(server: FakeRelayServer)
     assert server.ports == {PORT, 51820}
     assert "--network" not in arguments and "host" not in arguments
     assert {"--cap-add=NET_ADMIN", "/dev/net/tun", "net.ipv4.ip_forward=1"} <= set(arguments)
+    assert "net.ipv4.conf.all.rp_filter=2" in arguments
     assert server.files[f"{FOLDER}/config.json"] == CONFIG
     assert server.files[f"{FOLDER}/agent.py"] == agent_source()
     assert "restart" not in server.docker_calls, "a new container starts the agent by itself"

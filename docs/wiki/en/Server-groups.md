@@ -185,6 +185,22 @@ published, starts the container again with the right ports. If the same differen
 that, the panel no longer updates the relay by itself and only shows the warning: press
 **Update** or **Reinstall**.
 
+### Split routing
+
+The relay agent can also run a group in **split** routing instead of forwarding its port. The relay
+then answers the clients itself with a copy of the group's interface (same key and parameters, the
+group's port), sends traffic to the networks of the group's list and to private networks straight
+out of the relay, and sends everything else to the active member over an AmneziaWG uplink with the
+group's parameters. A switch to another member only changes the uplink's address: the clients'
+sessions stay. When the uplink fails on every member while a member still answers the usual probe,
+the group falls back to plain forwarding to that member; after a few good uplink checks in a row
+(6 by default) it goes back to split. When no member answers at all, the group stays split, so the
+sites of the list keep working. A network list that is empty or has a bad line is not applied; the
+group keeps its previous list. The mode the group is in is part of the state the agent writes.
+
+The panel settings for split routing come in a later version. The agent needs the new relay image:
+use **Reinstall** on the relay card once they are there.
+
 ## Keys of a group behind the relay
 
 Once the relay of a group is installed, the `vpn://` links and `.conf` files of its keys carry the

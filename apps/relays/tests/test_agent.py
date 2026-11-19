@@ -37,13 +37,16 @@ PORT = 55424
 
 @dataclass
 class FakeNetwork:
-    """Members in `alive` answer a probe; every call is recorded in order."""
+    """Members in `alive` answer a probe, the uplink works through those in `through`; every
+    call is recorded in order."""
 
     alive: set[Backend] = field(default_factory=set)
     calls: list[tuple[str, object]] = field(default_factory=list)
     rules: str = ""
     bytes: dict[int, tuple[int, int]] = field(default_factory=dict)
     clients: dict[int, list[Flow]] = field(default_factory=dict)
+    through: set[Backend] = field(default_factory=lambda: {A, B, C})
+    endpoint: Backend | None = None
 
     def prepare(self, group: Group) -> None:
         self.calls.append(("prepare", group.port))
@@ -68,6 +71,21 @@ class FakeNetwork:
 
     def flows(self, port: int) -> list[Flow]:
         return list(self.clients.get(port, ()))
+
+    def clone(self, group: Group) -> None:
+        self.calls.append(("clone", group.port))
+
+    def unclone(self, port: int) -> None:
+        self.calls.append(("unclone", port))
+
+    def point(self, group: Group, backend: Backend) -> None:
+        self.calls.append(("point", backend))
+        self.endpoint = backend
+
+    def uplink_alive(self, group: Group, target: str) -> bool:
+        """The uplink works through the members in `through`."""
+        self.calls.append(("uplink", target))
+        return self.endpoint in self.through
 
     def since(self, mark: int) -> list[tuple[str, object]]:
         return self.calls[mark:]
