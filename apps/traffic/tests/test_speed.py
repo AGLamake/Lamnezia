@@ -1,5 +1,5 @@
-from collections.abc import Callable
-from contextlib import AbstractContextManager
+from collections.abc import Callable, Iterator
+from contextlib import AbstractContextManager, nullcontext
 from ipaddress import IPv4Address
 from typing import Any
 
@@ -11,13 +11,15 @@ from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.actions import KeyActions
-from apps.keys.tests.conftest import SOURCE
+from apps.keys.services.instances import Instance, instances
+from apps.keys.tests.conftest import HOST, SOURCE
 from apps.keys.tests.fake_server import FakeAwgServer
 from apps.operations.models import Operation, OperationStatus
 from apps.plans.models import UserLimits
 from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
+from apps.ssh.services.commands import CommandResult
 from apps.traffic.models import TrafficSource
-from apps.traffic.services.shaping import SpeedRule
+from apps.traffic.services.shaping import SpeedRule, TotalSpeed
 from apps.traffic.services.speed import SPEED_APPLY, SpeedLimiter
 
 pytestmark = pytest.mark.django_db
@@ -236,3 +238,111 @@ def test_start_script_without_a_place_for_the_hook_is_kept(
     assert server.files[START_SCRIPT_PATH] == "#!/bin/sh\nexec sleep infinity\n"
     log = "".join(step.log for step in operation.steps.all())
     assert "no place to start the limits from" in log
+
+
+SHARED = "awg:2"
+
+
+@pytest.fixture
+def shared(server: FakeAwgServer) -> Iterator[FakeAwgServer]:
+    """The same server as instance `awg:2` with a total limit: 100 Mbit/s down, 20 up."""
+
+    def provider() -> list[Instance]:
+        connect = lambda: nullcontext(server.host())  # noqa: E731
+        return [Instance(SHARED, "Shared", HOST, connect, download_limit=100, upload_limit=20)]
+
+    instances.register(provider)
+    yield server
+    instances.unregister(provider)
+
+
+def issued_on(source: str, admin: KeyActions, owner: User | None, capture: OnCommit) -> AccessKey:
+    with capture(execute=True):
+        admin.issue(source, "iPhone", owner)
+    return AccessKey.objects.latest("pk")
+
+
+def test_a_total_limit_takes_every_active_key_of_the_instance(
+    shared: FakeAwgServer, admin: KeyActions, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    capture = django_capture_on_commit_callbacks
+    limited = issued_on(SHARED, admin, subscriber(speed=10), capture)
+    free = issued_on(SHARED, admin, subscriber(), capture)
+    nobody = issued_on(SHARED, admin, None, capture)
+    disabled = issued_on(SHARED, admin, subscriber(), capture)
+    AccessKey.objects.filter(pk=disabled.pk).update(status=KeyStatus.DISABLED_MANUAL)
+    issued(admin, subscriber(), capture)  # on an instance without a total
+
+    expected = sorted(
+        [
+            rule(limited, 10),
+            SpeedRule(IPv4Address(free.client_ip)),
+            SpeedRule(IPv4Address(nobody.client_ip)),
+        ]
+    )
+    wanted = SpeedLimiter.wanted_rules()
+    assert wanted[SHARED] == [r.to_json() for r in expected]
+    assert SOURCE not in wanted
+
+
+def test_a_total_limit_is_applied_without_keys_and_saved_with_the_operation(
+    shared: FakeAwgServer, sync: Callable[[], list[Operation]]
+) -> None:
+    (operation,) = sync()
+
+    assert operation.params == {
+        "source": SHARED,
+        "rules": [],
+        "started": "",
+        "total": TotalSpeed(100, 20).to_json(),
+    }
+    script = shared.files[SPEED_SCRIPT]
+    assert "htb rate 100mbit ceil 100mbit" in script
+    assert 'ip link add "$ifb" type ifb' in script
+    assert "htb rate 20mbit ceil 20mbit" in script
+    assert any("modprobe ifb" in command for command in shared.commands)
+    assert not TrafficSource.objects.get(source=SHARED).upload_policed
+    assert sync() == []
+
+
+def test_without_ifb_upload_is_policed_and_the_card_is_told(
+    shared: FakeAwgServer,
+    admin: KeyActions,
+    django_capture_on_commit_callbacks: OnCommit,
+    sync: Callable[[], list[Operation]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    key = issued_on(SHARED, admin, subscriber(speed=10), django_capture_on_commit_callbacks)
+    handle = shared.handle
+
+    def no_ifb(command: str, stdin: bytes) -> Any:
+        if "modprobe ifb" in command:
+            return CommandResult(1, b"", b"")
+        return handle(command, stdin)
+
+    monkeypatch.setattr(shared, "handle", no_ifb)
+
+    sync()
+
+    script = shared.files[SPEED_SCRIPT]
+    assert "ifb type ifb" not in script
+    assert f"match ip src {key.client_ip}/32 police rate 10mbit" in script
+    assert TrafficSource.objects.get(source=SHARED).upload_policed
+
+
+def test_without_any_limit_tc_is_not_installed(
+    server: FakeAwgServer,
+    admin: KeyActions,
+    django_capture_on_commit_callbacks: OnCommit,
+    sync: Callable[[], list[Operation]],
+) -> None:
+    user = subscriber(speed=10)
+    issued(admin, user, django_capture_on_commit_callbacks)
+    sync()
+    UserLimits.objects.filter(user=user).update(plan=PlanFactory())
+    server.commands.clear()
+
+    sync()
+
+    assert not any("apk add" in command or "modprobe" in command for command in server.commands)
+    assert "tc qdisc del" in server.files[SPEED_SCRIPT]

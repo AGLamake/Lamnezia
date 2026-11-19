@@ -57,6 +57,9 @@ class ProtocolInstance(models.Model):
     private_key = EncryptedTextField(_("server private key"))
     preshared_key = EncryptedTextField(_("preshared key"), blank=True)
     origin = models.CharField(_("origin"), max_length=16, choices=InstanceOrigin)
+    # The speed limit of the whole protocol on the server, Mbit/s; WireGuard family only.
+    download_limit = models.PositiveIntegerField(_("download limit"), null=True, blank=True)
+    upload_limit = models.PositiveIntegerField(_("upload limit"), null=True, blank=True)
     # Docker keeps the container log; Amnezia itself starts containers without one.
     container_logs = models.BooleanField(_("keep the container log"), default=False)
     # The container is removed from the server, the keys and the backup are kept for a restore.

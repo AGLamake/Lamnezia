@@ -361,3 +361,27 @@ def _param_field(name: str) -> forms.Field:
         return forms.ChoiceField(label=name, choices=_TOGGLE_CHOICES, required=False)
     widget = forms.TextInput(attrs={"spellcheck": "false", "autocomplete": "off"})
     return forms.CharField(label=name, required=False, widget=widget)
+
+
+def _mbit_field(label: Any) -> forms.IntegerField:
+    return forms.IntegerField(
+        label=label,
+        required=False,
+        min_value=1,
+        max_value=100_000,
+        help_text=_("Mbit/s. Empty: no limit."),
+    )
+
+
+class SpeedLimitForm(forms.Form):
+    """The total speed limit of a protocol on its server, download and upload apart."""
+
+    download_limit = _mbit_field(_("Download limit of the server"))
+    upload_limit = _mbit_field(_("Upload limit of the server"))
+
+    def __init__(self, *args: Any, instance: ProtocolInstance, **kwargs: Any) -> None:
+        kwargs.setdefault(
+            "initial",
+            {"download_limit": instance.download_limit, "upload_limit": instance.upload_limit},
+        )
+        super().__init__(*args, **kwargs)

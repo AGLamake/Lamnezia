@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Speed limit of the server**: the settings of an AmneziaWG or WireGuard protocol take a total
+  download and upload limit. Inside it the speed is shared equally between those who download
+  now, and the speed limits of plans work inside it. The limit is shown on the server card; in a
+  group it is set on the leading server.
 - **Split routing in the relay agent**: a group of the relay can run split instead of forwarding
   its port. The relay answers the clients with a copy of the group's interface, sends traffic to
   the networks of the group's list and to private networks out directly and the rest to the
@@ -291,6 +295,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Upload speed limits are shaped, not policed**: upload goes through an IFB device with the same
+  HTB classes as download, so packets over the limit wait instead of being dropped. The operation
+  loads the `ifb` module on the host and keeps it loaded after a reboot; without the module upload
+  is policed as before and the server card says so. With no limits at all `tc` is not installed.
 - **A change of I1–I5 alone** asks for no confirmation and no longer restarts AmneziaWG: the server
   does not read these packets, so only the config and the key profiles are updated and old profiles
   keep working. I1–I5 with `<c>` (unknown to the kernel module) or larger than 1400 bytes are refused.

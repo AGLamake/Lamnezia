@@ -296,6 +296,9 @@ msgstr "Не удалось установить Docker."
 msgid "Docker is installed but does not run."
 msgstr "Docker установлен, но не запускается."
 
+msgid "Download limit of the server"
+msgstr "Предел скачивания на сервере"
+
 msgid "E-mail for the certificate"
 msgstr "E-mail для сертификата"
 
@@ -526,6 +529,9 @@ msgstr "Создаётся центр сертификации: это може�
 
 msgid "Masking site"
 msgstr "Сайт маскировки"
+
+msgid "Mbit/s. Empty: no limit."
+msgstr "Мбит/с. Пусто — без предела."
 
 msgid "Message headers"
 msgstr "Заголовки сообщений"
@@ -1101,6 +1107,9 @@ msgstr "Сервис снова работает со старыми настр�
 msgid "The settings of a group member change on the group page."
 msgstr "Настройки участника группы меняются на странице группы."
 
+msgid "The speed limit is saved and is being applied."
+msgstr "Предел скорости сохранён и применяется."
+
 msgid "The speed test container could not be built or started."
 msgstr "Не удалось собрать или запустить контейнер замера скорости."
 
@@ -1164,6 +1173,9 @@ msgstr "До четырёх портов через запятую: один д�
 
 msgid "Update the keys"
 msgstr "Обновление ключей"
+
+msgid "Upload limit of the server"
+msgstr "Предел отдачи на сервере"
 
 #, python-format
 msgid "Use a private network from /%(largest)d to /%(smallest)d."
@@ -1282,6 +1294,9 @@ msgstr "интерфейсы контейнеров"
 msgid "container removed at"
 msgstr "контейнер удалён"
 
+msgid "download limit"
+msgstr "предел скачивания"
+
 msgid "easy-rsa could not make the OpenVPN certificate authority."
 msgstr "easy-rsa не смог создать центр сертификации OpenVPN."
 
@@ -1398,3 +1413,6 @@ msgstr "подсеть"
 
 msgid "supported"
 msgstr "поддерживается"
+
+msgid "upload limit"
+msgstr "предел отдачи"

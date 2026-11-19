@@ -21,8 +21,11 @@ from apps.keys.services.xray_clients import XrayClientManager
 from apps.ssh.errors import RemoteFileNotFoundError
 from apps.ssh.services import DockerContainer, RemoteHost
 from apps.traffic.services.shaping import (
+    NO_TOTAL,
     SPEED_SCRIPT_MODE,
     SpeedRule,
+    TotalSpeed,
+    needs_shaping,
     speed_script,
     speed_script_path,
 )
@@ -34,12 +37,21 @@ from apps.traffic.services.xray_shaping import (
     speed_nft,
 )
 
-# Amnezia images ship the busybox tc, which cannot add HTB classes; the full one comes from
-# Alpine's iproute2 (split into iproute2-tc since Alpine 3.13).
+# Amnezia images ship the busybox tc and ip, which cannot add HTB classes or an IFB device; the
+# full ones come from Alpine's iproute2.
 _INSTALL_TC = (
-    "tc -V 2>/dev/null | grep -q iproute2 && exit 0\n"
-    "apk add --no-cache iproute2-tc >/dev/null 2>&1 || apk add --no-cache iproute2 >/dev/null\n"
+    "tc -V 2>/dev/null | grep -q iproute2 && ip -V 2>/dev/null | grep -q iproute2 && exit 0\n"
+    "apk add --no-cache iproute2 >/dev/null\n"
     "tc -V\n"
+)
+# The ifb module on the host, loaded again after a reboot; numifbs=0 adds no devices to the host.
+# The containers are privileged, so they create their own IFB device once it is loaded.
+_IFB_MODULE_FILE = "/etc/modules-load.d/lamnezia-ifb.conf"
+_IFB_OPTIONS_FILE = "/etc/modprobe.d/lamnezia-ifb.conf"
+_LOAD_IFB = (
+    "modprobe ifb numifbs=0 2>/dev/null || [ -d /sys/module/ifb ] || exit 1\n"
+    f"echo ifb > {_IFB_MODULE_FILE}\n"
+    f"echo 'options ifb numifbs=0' > {_IFB_OPTIONS_FILE}\n"
 )
 # The XRay image has no firewall tools; the package stays until the container is re-created.
 _INSTALL_NFT = "command -v nft >/dev/null || apk add --no-cache nftables >/dev/null\nnft -v\n"
@@ -75,7 +87,9 @@ class SpeedShaper:
     """Replaces the tc rules of a container's interface, under the server lock (DESIGN.md 5.4).
 
     The rules are kept in a script next to the protocol config, and start.sh runs it after the
-    interface comes up, so the limits outlive a container restart. Safe to run again.
+    interface comes up, so the limits outlive a container restart. Upload is shaped on an IFB
+    device when the host can load the ifb module, and policed otherwise. With nothing limited
+    the script only removes the old rules, and tc is not installed. Safe to run again.
     """
 
     def __init__(self, host: RemoteHost, steps: StepRecorder, kind: WgContainer) -> None:
@@ -84,22 +98,36 @@ class SpeedShaper:
         self._container: DockerContainer = host.container(kind.name)
         self._steps = steps
 
-    def apply(self, rules: Iterable[SpeedRule]) -> None:
+    def apply(self, rules: Iterable[SpeedRule], total: TotalSpeed = NO_TOTAL) -> bool:
+        """Return whether upload is policed: something limits it and the host has no ifb.
+
+        Without any limit the script only removes the old rules, so nothing is installed.
+        """
         rules = list(rules)
+        limited = needs_shaping(rules, total)
         path = speed_script_path(self._kind)
+        ifb = False
         with ExitStack() as held:
             with self._steps.step(_("Lock the server")):
                 held.enter_context(self._host.lock())
-            with self._steps.step(_("Install tc in the container")):
-                self._steps.log(self._container.run(_INSTALL_TC).strip())
+            if limited:
+                with self._steps.step(_("Install tc in the container")):
+                    self._steps.log(self._container.run(_INSTALL_TC).strip())
+                with self._steps.step(_("Load the ifb module on the host")):
+                    ifb = self._host.sh(_LOAD_IFB).ok
+                    self._steps.log("ifb: loaded" if ifb else "ifb: missing, upload is policed")
             with self._steps.step(_("Apply the speed limits")):
-                script = speed_script(self._kind.interface, rules)
+                script = speed_script(self._kind.interface, rules, total, ifb=ifb)
                 self._container.write_file_atomic(path, script.encode(), SPEED_SCRIPT_MODE)
                 self._container.run(f"sh {path}")
-                self._steps.log(f"limited keys on {self._kind.interface}: {len(rules)}")
+                own = sum(1 for rule in rules if rule.mbit)
+                self._steps.log(
+                    f"keys on {self._kind.interface}: {len(rules)}, with own limit: {own}"
+                )
             with self._steps.step(_("Keep the limits after a restart")):
                 line = f"[ -f {path} ] && sh {path} || true"
                 StartScript(self._container, self._steps).add(line, with_startup_line)
+        return not ifb and (bool(total.upload) or any(rule.mbit for rule in rules))
 
 
 class XraySpeedShaper:

@@ -63,17 +63,35 @@ without an author.
 ## Speed limits
 
 The speed of a key is limited on the server, inside the protocol container, by its address: `tc`
-shapes download on the interface (HTB) and drops upload over the limit (policing). Each key of the
-user gets the full speed; the limit is not shared between the keys. Users without a speed limit
-and keys without an owner are not limited. AmneziaWG, WireGuard and XRay (see
-[XRay](#xray-speed-limits) below). Policing passes packets
-up to 64 KB, which the tunnel glues from smaller ones, and lets a tenth of a second at the limit
-through at once (at least 128 KB), so a limit does not cut upload far below its value.
+shapes download on the interface (HTB), and upload with the same HTB classes on an IFB device the
+incoming traffic of the interface is redirected to. Each key of the user gets the full speed; the
+limit is not shared between the keys. Users without a speed limit and keys without an owner are
+not limited. AmneziaWG, WireGuard and XRay (see [XRay](#xray-speed-limits) below).
+
+IFB needs the `ifb` kernel module on the host: the operation loads it and lists it in
+`/etc/modules-load.d/lamnezia-ifb.conf`, so it is loaded after a reboot. Without the module,
+upload is still limited by dropping packets over the limit (policing), the upload limit of the
+server does not apply, and the server card and the protocol settings page say so. Policing passes
+packets up to 64 KB, which the tunnel glues from smaller ones, and lets a tenth of a second at the
+limit through at once (at least 128 KB), so a limit does not cut upload far below its value.
+
+### Speed limit of the server
+
+For AmneziaWG and WireGuard, the protocol **Settings** on a server take a total limit, download
+and upload apart, in Mbit/s; empty means no limit. Inside it the speed is shared equally between
+those who download now: each key of the protocol gets a class with an equal guarantee and may take
+the free part of the limit, but not more than its own speed limit. Clients the panel does not know
+(added in the Amnezia app, for example) share one more such share. The limit is shown on the
+server card. Servers of a group take the limit on the leading server; clones have none.
+
+With neither a total limit nor a speed limit of keys, the panel does not install `tc` and only
+removes the old rules, if there were any.
 
 A limit is applied and removed without a restart of the container and without breaking the
 sessions of other clients:
 
-- at once when the speed of a plan or a user, or the plan of a user, is saved;
+- at once when the speed of a plan or a user, the plan of a user, or the total limit of a server
+  is saved;
 - otherwise every `LAMNEZIA_TRAFFIC_INTERVAL` seconds, which also picks up issued, enabled and
   disabled keys and bulk plan changes.
 
@@ -84,8 +102,8 @@ the next change starts a new one.
 On the server the panel keeps the rules in `lamnezia_speed.sh` next to the protocol config
 (`/opt/amnezia/awg/` for AmneziaWG) and adds one line before `tail -f /dev/null` in
 `/opt/amnezia/start.sh`, which runs it after the interface comes up, so the limits stay after a
-restart of the container or the server. If the container image has no full `tc`, the operation
-installs `iproute2-tc` from Alpine packages (the container needs internet access once).
+restart of the container or the server. If the container image has no full `tc` and `ip`, the
+operation installs `iproute2` from Alpine packages (the container needs internet access once).
 
 Reinstalling the protocol in the Amnezia app recreates the container without these files: the
 limits come back after the next change of limits or keys, or when the last operation is run again.

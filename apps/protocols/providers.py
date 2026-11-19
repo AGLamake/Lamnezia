@@ -69,6 +69,8 @@ def key_instances() -> Iterator[Instance]:
             openvpn_client_config=str(instance.params.get("additional_client_config", "")),
             block_outside_dns=instance.params.get("block_outside_dns") == "true",
             maintenance=server.maintenance,
+            download_limit=instance.download_limit,
+            upload_limit=instance.upload_limit,
         )
 
 

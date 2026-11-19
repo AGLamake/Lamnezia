@@ -61,6 +61,7 @@ _LABELS: dict[str, Promise] = {
     "protocols.readdress": _("Move keys to the new server address"),
     "protocols.service_links_view": _("Show Telegram proxy links"),
     "protocols.service_password_view": _("Show service password"),
+    "protocols.speed_limit": _("Change speed limit of server"),
     "servers.forget_host_key": _("Forget server host key"),
     "support.template_create": _("Create reply template"),
     "support.template_update": _("Edit reply template"),

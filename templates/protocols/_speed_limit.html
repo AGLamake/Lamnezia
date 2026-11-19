@@ -1,0 +1,9 @@
+{% load i18n %}
+{% if limited %}
+  <p class="help-text">{% translate "Speed limit of the server" %}:
+    {% if instance.download_limit %}{% blocktranslate with mbit=instance.download_limit %}download {{ mbit }} Mbit/s{% endblocktranslate %}{% endif %}{% if instance.download_limit and instance.upload_limit %}, {% endif %}{% if instance.upload_limit %}{% blocktranslate with mbit=instance.upload_limit %}upload {{ mbit }} Mbit/s{% endblocktranslate %}{% endif %}</p>
+{% endif %}
+{% if policed %}
+  <p class="help-text text-warning dark:text-warning-soft-fg">{% translate "No ifb module on the server: upload over the speed limits is dropped, not delayed, and the upload limit of the server does not apply." %}
+    <a href="{% url 'protocols:settings' instance.pk %}" class="text-link hover:underline">{% translate "Settings" %}</a></p>
+{% endif %}

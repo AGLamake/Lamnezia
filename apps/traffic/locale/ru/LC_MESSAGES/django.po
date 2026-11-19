@@ -24,6 +24,9 @@ msgstr "Установка tc в контейнер"
 msgid "Keep the limits after a restart"
 msgstr "Сохранение ограничений после перезапуска"
 
+msgid "Load the ifb module on the host"
+msgstr "Загрузка модуля ifb на хосте"
+
 msgid "Lock the server"
 msgstr "Блокировка сервера"
 
@@ -89,3 +92,6 @@ msgstr "источник трафика"
 
 msgid "traffic sources"
 msgstr "источники трафика"
+
+msgid "upload policed"
+msgstr "отдача ограничивается отбрасыванием"

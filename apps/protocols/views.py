@@ -31,6 +31,7 @@ from apps.protocols.forms import (
     ProtocolSettingsForm,
     ReaddressForm,
     RemoveContainerForm,
+    SpeedLimitForm,
     SpeedTestForm,
 )
 from apps.protocols.install_form import InstallForm
@@ -69,6 +70,7 @@ from apps.protocols.services.proxy_secret import renews_secret, start_secret_ren
 from apps.protocols.services.readdress import ServerReaddress
 from apps.protocols.services.service_removal import start_service_removal
 from apps.protocols.services.settings_info import SettingsInfo
+from apps.protocols.services.speed_limit import ServerSpeedLimit
 from apps.protocols.services.speed_test import RunningTest
 from apps.protocols.settings_forms import OpenVpnSettingsForm, SettingsForm, XraySettingsForm
 from apps.servers.models import Server
@@ -254,17 +256,44 @@ class ProtocolSettingsView(AdminRequiredMixin, InstanceMixin, FormView):  # type
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         keys = InstanceKeyCount.of(self.instance.source)
+        speed = ServerSpeedLimit(self.instance)
         return super().get_context_data(
             instance=self.instance,
             keys=keys.total,
             imported=keys.imported,
             group=self.group,
+            speed_form=SpeedLimitForm(instance=self.instance) if speed.applies else None,
+            upload_policed=speed.applies and speed.upload_policed,
             **kwargs,
         )
 
     def form_valid(self, form: SettingsForm) -> HttpResponse:
         operation = form.start(self.member)
         return redirect("operations:detail", pk=operation.pk)
+
+
+class SpeedLimitView(AdminRequiredMixin, InstanceMixin, View):
+    """Saves the total speed limit of the protocol; the traffic app applies it on the server."""
+
+    containers = tuple(WG_CONTAINERS)
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        speed = ServerSpeedLimit(self.instance)
+        if not speed.applies:
+            raise Http404
+        form = SpeedLimitForm(request.POST, instance=self.instance)
+        if not form.is_valid():
+            for errors in form.errors.as_data().values():
+                for error in errors:
+                    messages.error(request, " ".join(error.messages))
+        else:
+            data = form.cleaned_data
+            changed = speed.save(
+                data["download_limit"], data["upload_limit"], self.member, self.client_ip
+            )
+            if changed:
+                messages.success(request, _("The speed limit is saved and is being applied."))
+        return redirect("protocols:settings", pk=pk)
 
 
 class ContainerActionView(AdminRequiredMixin, InstanceMixin, View):

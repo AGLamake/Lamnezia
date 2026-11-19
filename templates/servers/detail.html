@@ -1,5 +1,5 @@
 {% extends "servers/base.html" %}
-{% load backups i18n masking offload operations servers ui %}
+{% load backups i18n masking offload operations servers speed_limit ui %}
 {% block title %}{{ server.name }} · Lamnezia{% endblock %}
 
 {% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li aria-current="page">{{ server.name }}</li>{% endblock %}
@@ -131,6 +131,7 @@
                     <a href="{% url 'protocols:remove' row.instance.pk %}" class="link-danger">{% translate "Remove" %}</a>
                   </span>
                 </div>
+                {% speed_limit_line row.instance %}
                 {% if row.awg_upgrade %}
                   <p class="help-text">{% translate "The Amnezia app calls AmneziaWG 2.0 outdated and offers to reinstall the container, which removes all its clients. Move it to 3.1 here instead: the keys stay." %}</p>
                   <form method="post" action="{% url 'protocols:awg-upgrade' row.instance.pk %}" class="flex flex-wrap items-center gap-x-3 gap-y-1 help-text" data-confirm="{% translate "Move the server to AmneziaWG 3.1? The container is rebuilt, clients are cut off for a few minutes and then import their keys again. If something fails, the server stays on 2.0." %}">

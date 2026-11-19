@@ -48,6 +48,9 @@ msgstr "Изменение группы серверов"
 msgid "Change site settings"
 msgstr "Изменение настроек сайта"
 
+msgid "Change speed limit of server"
+msgstr "Изменение предела скорости сервера"
+
 msgid "Change user limits"
 msgstr "Изменение лимитов пользователя"
 

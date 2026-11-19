@@ -75,12 +75,15 @@ class TrafficSource(models.Model):
     traffic is then unknown, not zero. A protocol without counters (OpenVPN, IPsec) has no row.
     `started` is the container's start time from the latest reading: when it changes, the
     container restarted and its counters started from zero.
+    `upload_policed` says the speed limits drop the upload over them instead of delaying it.
     """
 
     source = models.CharField(_("source"), max_length=100, unique=True)
     available = models.BooleanField(_("statistics available"), default=True)
     started = models.CharField(_("container started"), max_length=40, blank=True, default="")
     checked_at = models.DateTimeField(_("checked at"))
+    # The latest speed operation policed upload: the host has no ifb module.
+    upload_policed = models.BooleanField(_("upload policed"), default=False)
 
     class Meta:
         verbose_name = _("traffic source")

@@ -1,5 +1,7 @@
 """Speed limits of plans (DESIGN.md 6.4): the rules of each instance follow the active keys
 of users with a speed limit; tc rules by peer address for WireGuard, routes by client for XRay.
+A WireGuard-family instance with a total limit of its own gets a rule for every active key, so
+the keys share the total equally (see shaping.py).
 
 Each run compares the rules an instance should have with those of its latest operation and
 starts a new one only when they differ, so a change is applied within one run. A failed
@@ -17,6 +19,8 @@ from collections.abc import Iterable
 from ipaddress import IPv4Address
 from typing import Any
 
+from django.db.models import Q
+
 from amnezia_core.containers import WgContainer
 from amnezia_core.xray import XrayContainer
 from apps.keys.models import AccessKey, KeyStatus
@@ -26,7 +30,7 @@ from apps.operations.services.launcher import launch
 from apps.plans.models import UserLimits
 from apps.plans.services.limits import PLAN_SERVERS, EffectiveLimits
 from apps.traffic.models import TrafficSource
-from apps.traffic.services.shaping import SpeedRule
+from apps.traffic.services.shaping import SpeedRule, TotalSpeed
 from apps.traffic.services.xray_shaping import XraySpeedRule
 
 SPEED_APPLY = "traffic.apply_speed"
@@ -49,6 +53,9 @@ class SpeedLimiter:
             params: dict[str, Any] = {"source": instance.source, "rules": rules}
             if isinstance(instance.container, WgContainer):
                 params["started"] = _container_started(instance.source)
+                total = _total_of(instance)
+                if total:
+                    params["total"] = total.to_json()
             if self._needs_apply(instance, params):
                 started.append(launch(SPEED_APPLY, params, subject=instance.title))
         return started
@@ -56,7 +63,8 @@ class SpeedLimiter:
     @staticmethod
     def wanted_rules() -> dict[str, RulesJson]:
         """Rules by instance source, sorted, as operation params: one per active key of a user
-        whose plan limits speed. A WireGuard key is found by its address, an XRay key by email.
+        whose plan limits speed, and on a WireGuard instance with a total limit one per active key.
+        A WireGuard key is found by its address, an XRay key by email.
         """
         subscriptions = (
             UserLimits.objects.filter(plan__isnull=False)
@@ -69,16 +77,22 @@ class SpeedLimiter:
             if (speed := EffectiveLimits.of(limits).speed_limit) is not None
         }
         xray_sources = {i.source for i in instances if isinstance(i.container, XrayContainer)}
+        shared = [
+            i.source for i in instances if isinstance(i.container, WgContainer) and _total_of(i)
+        ]
         keys = AccessKey.objects.filter(
-            user_id__in=list(speeds), status=KeyStatus.ACTIVE
+            Q(user_id__in=list(speeds)) | Q(source__in=shared), status=KeyStatus.ACTIVE
         ).values_list("source", "public_key", "client_ip", "user_id")
         peers: dict[str, list[SpeedRule]] = defaultdict(list)
         clients: dict[str, list[XraySpeedRule]] = defaultdict(list)
         for source, public_key, client_ip, user_id in keys:
+            speed = speeds.get(user_id)
             if source in xray_sources:
-                clients[source].append(XraySpeedRule(public_key, speeds[user_id]))
+                if speed is not None:
+                    clients[source].append(XraySpeedRule(public_key, speed))
             elif client_ip is not None:
-                peers[source].append(SpeedRule(IPv4Address(client_ip), speeds[user_id]))
+                peers[source].append(SpeedRule(IPv4Address(client_ip), speed))
+        # A peer has one address, so rules never compare by speed.
         wanted = {source: _as_json(sorted(rules)) for source, rules in peers.items()}
         wanted.update({source: _as_json(sorted(rules)) for source, rules in clients.items()})
         return wanted
@@ -86,23 +100,27 @@ class SpeedLimiter:
     @staticmethod
     def _needs_apply(instance: Instance, params: dict[str, Any]) -> bool:
         """A fresh instance without limits needs nothing; an unfinished operation is waited for."""
-        rules = params["rules"]
+        limited = bool(params["rules"] or params.get("total"))
         latest = (
             Operation.objects.filter(kind=SPEED_APPLY, params__source=instance.source)
             .order_by("-created_at", "-pk")
             .first()
         )
         if latest is None:
-            return bool(rules)
+            return limited
         if latest.status in _UNFINISHED:
             return False
-        if latest.params.get("rules") != rules:
+        if any(latest.params.get(name) != params.get(name) for name in ("rules", "total")):
             return True
-        if not rules or latest.status != OperationStatus.SUCCEEDED:
+        if not limited or latest.status != OperationStatus.SUCCEEDED:
             return False
         if isinstance(instance.container, XrayContainer):
             return _statistics_lost(instance.source, after=latest)
         return bool(latest.params.get("started") != params["started"])
+
+
+def _total_of(instance: Instance) -> TotalSpeed:
+    return TotalSpeed(instance.download_limit, instance.upload_limit)
 
 
 def _as_json(rules: Iterable[SpeedRule | XraySpeedRule]) -> RulesJson:

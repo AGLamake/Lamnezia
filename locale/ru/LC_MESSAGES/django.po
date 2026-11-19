@@ -2094,6 +2094,9 @@ msgstr "Пока ни одна группа не назначила этот с�
 msgid "No groups yet. A group starts from a standalone AmneziaWG 3.1 server."
 msgstr "Групп пока нет. Группа создаётся из одиночного сервера AmneziaWG 3.1."
 
+msgid "No ifb module on the server: upload over the speed limits is dropped, not delayed, and the upload limit of the server does not apply."
+msgstr "На сервере нет модуля ifb: отдача сверх пределов скорости отбрасывается, а не задерживается, и предел отдачи сервера не действует."
+
 msgid "No incidents yet."
 msgstr "Инцидентов пока нет."
 
@@ -3122,6 +3125,9 @@ msgstr "Что-то пошло не так"
 msgid "Speed"
 msgstr "Скорость"
 
+msgid "Speed limit of the server"
+msgstr "Предел скорости сервера"
+
 msgid "Speed test by port"
 msgstr "Замер скорости по портам"
 
@@ -3876,6 +3882,9 @@ msgstr "У сервера другая подсеть клиентов, чем �
 msgid "The server has no clients: no snapshot is needed."
 msgstr "У сервера нет клиентов: снимок не нужен."
 
+msgid "The server has no ifb kernel module: upload is limited by dropping packets over the limit, and the upload limit of the server does not apply."
+msgstr "На сервере нет модуля ядра ifb: отдача ограничивается отбрасыванием пакетов сверх предела, и предел отдачи сервера не действует."
+
 msgid "The server has not answered yet."
 msgstr "Сервер ещё ни разу не ответил."
 
@@ -3969,6 +3978,9 @@ msgstr "Токен отключён."
 
 msgid "The token sees what this staff member sees: a moderator's token, their zone."
 msgstr "Токен видит то же, что этот сотрудник: токен модератора — только его зону."
+
+msgid "The total speed of the protocol on this server. Whoever downloads now gets an equal share of it; the speed limits of plans work inside it. The connections are not broken."
+msgstr "Общая скорость протокола на этом сервере. Кто сейчас качает, получает равную долю; пределы скорости тарифов действуют внутри неё. Подключения не рвутся."
 
 msgid "The traffic of some keys is unknown, so the panel cannot tell whether it lasts until the period resets."
 msgstr "Трафик части ключей неизвестен, поэтому панель не может сказать, хватит ли его до сброса периода."
@@ -4635,6 +4647,10 @@ msgstr "домен проверен"
 msgid "done"
 msgstr "готово"
 
+#, python-format
+msgid "download %(mbit)s Mbit/s"
+msgstr "скачивание %(mbit)s Мбит/с"
+
 msgid "due today"
 msgstr "сегодня"
 
@@ -5251,6 +5267,10 @@ msgstr "до %(date)s"
 
 msgid "updated at"
 msgstr "обновлена"
+
+#, python-format
+msgid "upload %(mbit)s Mbit/s"
+msgstr "отдача %(mbit)s Мбит/с"
 
 msgid "useful material"
 msgstr "полезный материал"

@@ -22,7 +22,8 @@ class Instance:
     XRay instance as the panel last read it from server.json; `server_ip` is the IP the IPsec
     server certificate is issued for. Both are empty for other protocols. An OpenVPN profile
     gets `openvpn_client_config` and `block_outside_dns` set on the settings page. New keys are
-    not issued on a server under `maintenance`.
+    not issued on a server under `maintenance`. `download_limit` and `upload_limit` are the
+    speed limits of the whole instance in Mbit/s.
     """
 
     source: str
@@ -38,6 +39,8 @@ class Instance:
     block_outside_dns: bool = False
     maintenance: bool = False
     port: int | None = None
+    download_limit: int | None = None
+    upload_limit: int | None = None
 
 
 class UnknownInstanceError(LookupError):
