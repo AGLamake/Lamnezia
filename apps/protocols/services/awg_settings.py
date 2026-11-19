@@ -8,6 +8,8 @@ old profiles carry the old settings. Turning the container log on or off moves t
 new container too; profiles stay. The move of an AmneziaWG 2.0 server to 3.1 works the same
 way, with a fresh image. A new client subnet moves the container too, since start.sh takes the
 subnet when the container starts; the server and every client keep their host part in it.
+The special junk packets I1-I5 belong to the clients: the server keeps them in comments and is
+not restarted for them, and old profiles keep connecting.
 """
 
 from collections.abc import Callable, Mapping
@@ -20,9 +22,10 @@ from typing import Any, ClassVar
 from django.db import transaction
 from django.utils.translation import gettext as _
 
-from amnezia_core.awg import AwgServerConfig, Renumbering
+from amnezia_core.awg import SPECIAL_JUNK, AwgServerConfig, Renumbering, same_for_server
 from amnezia_core.awg_export import has_awg3_params
 from amnezia_core.awg_install import upgraded_awg_params, without_timers
+from amnezia_core.awg_masking import Masking
 from amnezia_core.containers import AWG2, WgContainer
 from apps.accounts.models import User
 from apps.keys.models import AccessKey, KeyStatus
@@ -130,10 +133,11 @@ class AwgSettings:
     def changes_server(self, other: "AwgSettings") -> bool:
         """The port, the subnet or the obfuscation differ: the old profile does not connect.
 
-        The timers alone do not count: each side keeps its own.
+        The timers and I1-I5 alone do not count: each side keeps its own timers, and the server
+        does not check the special junk packets of a client.
         """
-        mine = (self.port, self.subnet, without_timers(self.params))
-        return mine != (other.port, other.subnet, without_timers(other.params))
+        mine = (self.port, self.subnet, _server_params(self.params))
+        return mine != (other.port, other.subnet, _server_params(other.params))
 
     def changes_profiles(self, other: "AwgSettings") -> bool:
         """Clients must import their keys again; the container log is no concern of theirs."""
@@ -141,6 +145,13 @@ class AwgSettings:
 
     def touches_server(self, other: "AwgSettings") -> bool:
         return self.changes_server(other) or self.params != other.params or self.logs != other.logs
+
+
+def _server_params(params: Mapping[str, str]) -> dict[str, str]:
+    """The parameters an old profile must match to connect."""
+    return {
+        name: value for name, value in without_timers(params).items() if name not in SPECIAL_JUNK
+    }
 
 
 class AwgReconfiguration:
@@ -170,17 +181,24 @@ class AwgReconfiguration:
             moves = new_port or renumbers or self._docker.keeps_log() != settings.logs
         if moves:
             self._move(config, settings.port, logs=settings.logs, check_port=new_port)
+        elif same_for_server(config.serialize(), before) and config.serialize() != before:
+            with self._ctx.step(_("Save the server config")):
+                self._docker.shell.write_file_atomic(
+                    self._kind.config_path, config.serialize().encode()
+                )
+                self._ctx.log(_("Only I1-I5 change: the VPN interface keeps running."))
         elif config.serialize() != before:
             with self._ctx.step(_("Restart the VPN interface")):
                 self._restart(config.serialize(), previous=text)
         return config
 
-    def upgrade(self, port: int) -> AwgServerConfig:
+    def upgrade(self, port: int, masking: Masking | None = None) -> AwgServerConfig:
         """AmneziaWG 3.1 for a 2.0 server: a fresh image and the 3.1 parameters in the config.
 
         The server keys, the PSK and clientsTable move into the new container as they are; if it
         does not run with the new settings, the old container comes back. A server already on 3.1
-        is left alone, so a retry after a failure in the panel only reads it.
+        is left alone, so a retry after a failure in the panel only reads it. The app's I1 gives
+        way to the `masking` template, a random one if None.
         """
         with ExitStack() as stack:
             with self._ctx.step(_("Wait for other operations on the server")):
@@ -197,7 +215,7 @@ class AwgReconfiguration:
                 # The running container keeps its old image until the new one replaces it.
                 old_image = self._docker.image_id()
                 self._docker.build_image()
-            config.update_interface(port, upgraded_awg_params(config.awg_params))
+            config.update_interface(port, upgraded_awg_params(config.awg_params, masking))
             self._move(config, port, logs=self._docker.keeps_log(), check_port=False)
             self._docker.remove_old_image(old_image)
         return config

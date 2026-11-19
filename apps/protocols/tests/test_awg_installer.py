@@ -5,14 +5,18 @@ import pytest
 from amnezia_core.awg import AwgServerConfig
 from amnezia_core.awg_export import AwgClientProfile, AwgServerSettings
 from amnezia_core.awg_install import AwgInstallSettings
+from amnezia_core.awg_masking import check_special_junk
 from amnezia_core.clients_table import ClientsTable
 from amnezia_core.keys import KeyPair
 from apps.operations.models import Operation, StepStatus
 from apps.operations.services.context import OperationContext
 from apps.operations.tests.factories import OperationFactory
 from apps.protocols.errors import SetupError, SetupErrorCode
+from apps.protocols.install_form import InstallForm
 from apps.protocols.services.awg_installer import AwgInstaller
+from apps.protocols.services.installation import install_choices
 from apps.protocols.tests.fake_awg import START_SCRIPT, FakeAwgServer
+from apps.servers.tests.factories import ServerFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -84,12 +88,22 @@ def test_container_runs_without_a_log_unless_asked() -> None:
     assert kept.log_driver == "json-file"
 
 
+def test_the_chosen_masking_template_goes_into_i1() -> None:
+    server = FakeAwgServer()
+    ctx = OperationContext(OperationFactory())
+    params = {"port": 40001, "logs": False, "masking": "sip"}
+
+    config = AwgInstaller.from_params(server.host(), ctx, params).run()
+
+    assert config.awg_params["I1"].startswith("<b 0x" + b"INVITE sip:".hex())
+
+
 def test_installed_files_are_what_the_amnezia_app_reads() -> None:
     server = FakeAwgServer()
 
     config, _ = install(server, AwgInstallSettings(port=40001, subnet=IPv4Network("10.9.8.0/24")))
 
-    assert config.awg_params["I1"].startswith("<r 2>")
+    assert check_special_junk(config.awg_params["I1"]) is None
     assert "ContentPaddingAddition" not in config.awg_params
     assert len(ClientsTable.parse(server.container_files[CLIENTS_TABLE].decode())) == 0
     start = server.container_files[START_SCRIPT].decode()
@@ -202,3 +216,20 @@ def test_awg_that_does_not_come_up_fails_the_last_step() -> None:
 
     assert error.code == SetupErrorCode.AWG_NOT_RUNNING
     assert operation.steps.get(status=StepStatus.FAILED).title == "Start AmneziaWG 2.0"
+
+
+@pytest.mark.parametrize(
+    ("container", "masking"),
+    [("amnezia-awg2", "icloud"), ("amnezia-awg", "icloud"), ("amnezia-wireguard", "")],
+)
+def test_install_form_asks_obfuscated_containers_for_a_template(
+    container: str, masking: str
+) -> None:
+    server = ServerFactory()
+    data = {"container": container, "port": "", "masking": "icloud"}
+
+    form = InstallForm(data, server=server, choices=install_choices(server))
+
+    assert form.is_valid(), form.errors
+    assert form.request.masking == masking
+    assert form["masking"].initial == "random"

@@ -10,9 +10,11 @@ from django.utils.translation import pgettext_lazy
 
 from amnezia_core.awg import SPECIAL_JUNK, interface_params
 from amnezia_core.awg_export import AWG3_PARAMS
+from amnezia_core.awg_masking import is_app_masking
 from amnezia_core.awg_params import MAX_PORT, Problem, check_awg_params
 from amnezia_core.containers import WG_CONTAINERS
 from amnezia_core.script_vars import TOGGLES
+from apps.protocols.masking import masking_field, masking_packet
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.services.awg_settings import AwgSettings
 from apps.protocols.services.host_scripts import AMNEZIA_NETWORK_SUBNET
@@ -41,18 +43,28 @@ PROBLEMS: dict[Problem, Promise] = {
     ),
     Problem.NOT_A_KEY: _("Enter a 32-byte key in base64."),
     Problem.NOT_A_TOGGLE: _("Choose on or off."),
-    Problem.NOT_JUNK_TAGS: _("Use only the tags <b 0x..>, <r N>, <rc N>, <rd N>, <c> and <t>."),
+    Problem.NOT_JUNK_TAGS: _(
+        "Use only the tags <b 0x..>, <r N>, <rc N>, <rd N> and <t>: the kernel module of "
+        "AmneziaWG does not know <c>."
+    ),
+    Problem.JUNK_TOO_LONG: _("The packet must not be larger than 1400 bytes."),
     Problem.PADDING_TOO_SMALL: _(
         "With HeaderProtectionKey each of S1-S4 must be at least 12, or AmneziaWG does not start."
     ),
 }
 
+# The field that puts a new I1 of a template in place of the current one.
+MASKING = "masking"
+_APP_MASKING_NOTE = _(
+    "I1 is the packet of the Amnezia app, the same on every server and easy to recognise: "
+    "choose a template. Only new and updated profiles get it, the server is not restarted."
+)
 # How the AWG parameters are grouped on the page.
 _GROUPS: tuple[tuple[Promise, tuple[str, ...]], ...] = (
     (_("Junk packets"), ("Jc", "Jmin", "Jmax")),
     (_("Message padding"), ("S1", "S2", "S3", "S4")),
     (_("Message headers"), ("H1", "H2", "H3", "H4")),
-    (_("Special junk packets"), SPECIAL_JUNK),
+    (_("Special junk packets"), (MASKING, *SPECIAL_JUNK)),
     (_("AmneziaWG 3.1"), AWG3_PARAMS),
 )
 # A subnet larger than this is not a VPN of one server.
@@ -107,6 +119,8 @@ class ProtocolSettingsForm(SettingsForm):
         self.param_names = interface_params(WG_CONTAINERS[instance.container])
         for name in self.param_names:
             self.fields[name] = _param_field(name)
+        if "I1" in self.param_names:
+            self.fields[MASKING] = masking_field(keep=True)
 
     def initial_of(self, instance: ProtocolInstance) -> dict[str, Any]:
         return {
@@ -126,11 +140,18 @@ class ProtocolSettingsForm(SettingsForm):
             ParamGroup(
                 title,
                 [self[name] for name in names if name in self.fields],
-                _AWG3_NOTE if names == AWG3_PARAMS and self.instance.awg_outdated else None,
+                self._note(names),
             )
             for title, names in groups
             if any(name in self.fields for name in names)
         ]
+
+    def _note(self, names: tuple[str, ...]) -> Promise | None:
+        if names == AWG3_PARAMS and self.instance.awg_outdated:
+            return _AWG3_NOTE
+        if MASKING in names and is_app_masking(self.instance.params.get("I1", "")):
+            return _APP_MASKING_NOTE
+        return None
 
     def clean_subnet(self) -> str:
         """A private network no smaller than the current one, apart from the other subnets."""
@@ -171,6 +192,9 @@ class ProtocolSettingsForm(SettingsForm):
         return subnets
 
     def check(self, data: dict[str, Any]) -> None:
+        if data.get(MASKING):
+            # Drawn once here: the settings and the confirmation then see the same packet.
+            data["I1"] = masking_packet(data[MASKING])
         params = {name: data.get(name) or "" for name in self.param_names}
         for problem in check_awg_params(params):
             if problem.param not in self.errors:
@@ -241,9 +265,10 @@ class IpsecReissueForm(forms.Form):
 
 
 class AwgUpgradeForm(forms.Form):
-    """The move of AmneziaWG 2.0 to 3.1: whether imported keys are reissued."""
+    """The move of AmneziaWG 2.0 to 3.1: whether imported keys are reissued, the I1 template."""
 
     reissue = _reissue_imported()
+    masking = masking_field()
 
 
 class AwgMigrationForm(forms.Form):

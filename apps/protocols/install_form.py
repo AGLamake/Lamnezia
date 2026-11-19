@@ -18,6 +18,7 @@ from amnezia_core.proxies import DEFAULT_TLS_DOMAIN, FAKETLS, STANDARD
 from amnezia_core.proxy_options import TelegramProxyOptions, is_hex32, parse_secret_list
 from amnezia_core.xray import DEFAULT_SITE, is_valid_site
 from apps.protocols.catalog import ContainerGroup
+from apps.protocols.masking import masking_field
 from apps.protocols.services.installation import InstallChoice, InstallRequest, used_ports
 from apps.protocols.services.installer import InstallerClass, installers
 from apps.servers.models import Server
@@ -134,6 +135,7 @@ class InstallForm(forms.Form):
             "interface. Configs and keys do not change; it is turned off on the server card."
         ),
     )
+    masking = masking_field()
 
     def __init__(
         self, *args: Any, server: Server, choices: list[InstallChoice], **kwargs: Any
@@ -192,6 +194,7 @@ class InstallForm(forms.Form):
             domain=self._text("domain").lower() if "domain" in asks else "",
             email=self._text("email") if "email" in asks else "",
             offload="offload" in asks and bool(data.get("offload")),
+            masking=self._text("masking") if "masking" in asks else "",
             proxy=self._proxy_options(installer) if "mode" in asks else None,
         )
 

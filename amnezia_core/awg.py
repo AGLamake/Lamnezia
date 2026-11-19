@@ -250,6 +250,15 @@ def _renumbered(allowed_ip: str, renumbering: Renumbering) -> str:
     return f"{renumbering.address(host.ip)}/{_SINGLE_HOST_PREFIX}"
 
 
+def same_for_server(text: str, other: str) -> bool:
+    """Two configs differ at most in the I1-I5 comments: the server reads neither."""
+
+    def server_lines(config: str) -> list[str]:
+        return [line for line in config.splitlines() if _special_junk_key(line) is None]
+
+    return server_lines(text) == server_lines(other)
+
+
 def _special_junk_key(line: str) -> str | None:
     match = _COMMENTED_SPECIAL_JUNK.match(line)
     return match["key"] if match else None

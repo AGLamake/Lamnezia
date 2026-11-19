@@ -13,6 +13,7 @@ from amnezia_core.awg_install import (
     upgraded_awg_params,
     without_timers,
 )
+from amnezia_core.awg_masking import APP_I1, Masking, check_special_junk
 from amnezia_core.awg_params import check_awg_params
 from amnezia_core.errors import AmneziaFormatError
 from amnezia_core.keys import KeyPair
@@ -26,7 +27,7 @@ def test_params_match_the_app_defaults() -> None:
     assert (params["Jmin"], params["Jmax"]) == ("10", "50")
     assert [params[f"S{n}"] for n in range(1, 5)] == ["12"] * 4
     assert [params[f"H{n}"] for n in range(1, 5)] == ["1", "2", "3", "4"]
-    assert params["I1"].startswith("<r 2><b 0x8580000100010000")
+    assert params["I1"] != APP_I1 and check_special_junk(params["I1"]) is None
     assert (params["RandomTrailers"], params["DisableCookies"]) == ("on", "on")
     assert "ContentPaddingAddition" not in params
     KeyPair.from_private_key(params["HeaderProtectionKey"])
@@ -125,6 +126,25 @@ def test_upgrade_keeps_awg3_values_already_set() -> None:
     params = upgraded_awg_params({**AWG2_PARAMS, "RekeyTimeout": "4-6"})
 
     assert params["RekeyTimeout"] == "4-6"
+
+
+def test_new_server_gets_the_chosen_template() -> None:
+    params = generate_awg_params(random.Random(1), Masking.SIP)
+
+    assert params["I1"].startswith("<b 0x" + b"INVITE sip:".hex())
+
+
+@pytest.mark.parametrize("i1", ["", APP_I1])
+def test_upgrade_replaces_the_app_packet_with_a_template(i1: str) -> None:
+    params = upgraded_awg_params({**AWG2_PARAMS, "I1": i1}, Masking.STUN)
+
+    assert params["I1"].startswith("<b 0x0001")
+
+
+def test_upgrade_keeps_an_own_packet() -> None:
+    params = upgraded_awg_params({**AWG2_PARAMS, "I1": "<b 0x01><r 4>"}, Masking.STUN)
+
+    assert params["I1"] == "<b 0x01><r 4>"
 
 
 def test_short_timers_are_valid_and_told_apart_from_the_defaults() -> None:

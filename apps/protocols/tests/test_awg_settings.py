@@ -7,6 +7,7 @@ from django.test import Client
 
 from amnezia_core.awg import AWG_CLIENTS_TABLE_PATH, AWG_CONFIG_PATH, AWG_PSK_PATH, AwgServerConfig
 from amnezia_core.awg_install import SHORT_TIMERS, upgraded_awg_params
+from amnezia_core.awg_masking import is_app_masking
 from amnezia_core.containers import AWG2, AWG_LEGACY, WIREGUARD, WgContainer
 from amnezia_core.keys import KeyPair
 from apps.accounts.models import Role, User
@@ -236,6 +237,27 @@ def test_dns_alone_changes_only_the_profiles(
     assert instance.dns == ("9.9.9.9", "149.112.112.112")
 
 
+def test_new_i1_reaches_the_profiles_without_restarting_awg(
+    connected: FakeAwgServer, instance: ProtocolInstance, admin: User, start: Start
+) -> None:
+    key = issued_key(instance, UserFactory(email="anna@example.com"))
+    settings = settings_of(instance, params={"I1": "<b 0x0001><r 4>"})
+    starts = connected.awg_starts_count
+
+    operation = start(lambda: start_settings_change(instance, settings, admin, reissue=False))
+
+    assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
+    assert server_config(connected).awg_params["I1"] == "<b 0x0001><r 4>"
+    assert connected.awg_up
+    assert connected.awg_starts_count == starts
+    assert connected.syncconf_count == 0
+    assert not {"run", "restart", "stop"} & set(connected.docker_calls)
+    key.refresh_from_db()
+    assert ServerProfile.from_json(key.profile).params["I1"] == "<b 0x0001><r 4>"
+    # Old profiles keep connecting: the owners are not asked to import the key.
+    assert not Notification.objects.filter(event=Event.KEYS_CHANGED).exists()
+
+
 def test_container_log_moves_the_files_into_a_new_container_on_the_same_port(
     connected: FakeAwgServer, instance: ProtocolInstance, admin: User, start: Start
 ) -> None:
@@ -332,6 +354,8 @@ def test_settings_page_shows_the_current_values(
         {"H2": "1020325451"},
         {"S1": "0", "S2": "56"},
         {"I1": "<x 5>"},
+        {"I1": "<b 0x01><c>"},
+        {"I2": "<r 1401>"},
         {"port": "3478", "confirm": "on"},
     ],
 )
@@ -453,6 +477,32 @@ def test_dns_change_needs_no_confirmation(admin_client: Client, instance: Protoc
     )
 
     assert Operation.objects.get().params["dns"] == ["9.9.9.9", "1.0.0.1"]
+
+
+def test_masking_template_needs_no_confirmation(
+    admin_client: Client, instance: ProtocolInstance
+) -> None:
+    admin_client.post(f"/protocols/{instance.pk}/settings/", form_data(instance, masking="stun"))
+
+    i1 = Operation.objects.get().params["params"]["I1"]
+    assert i1.startswith("<b 0x0001")
+    assert not is_app_masking(i1)
+
+
+def test_own_i1_needs_no_confirmation(admin_client: Client, instance: ProtocolInstance) -> None:
+    admin_client.post(f"/protocols/{instance.pk}/settings/", form_data(instance, I1="<r 40>"))
+
+    assert Operation.objects.get().params["params"]["I1"] == "<r 40>"
+
+
+def test_settings_of_the_app_i1_ask_for_a_template(
+    admin_client: Client, instance: ProtocolInstance
+) -> None:
+    response = admin_client.get(f"/protocols/{instance.pk}/settings/")
+
+    group = next(g for g in response.context["form"].groups if g.title == "Special junk packets")
+    assert group.fields[0].name == "masking"
+    assert "the same on every server" in str(group.note)
 
 
 def test_container_log_needs_no_confirmation(

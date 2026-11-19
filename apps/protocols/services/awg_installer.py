@@ -12,6 +12,7 @@ from django.utils.translation import gettext as _
 from amnezia_core.awg import AwgServerConfig
 from amnezia_core.awg_backup import AwgServerFiles
 from amnezia_core.awg_install import DEFAULT_PORT, WIREGUARD_DEFAULT_PORT, AwgInstallSettings
+from amnezia_core.awg_masking import Masking
 from amnezia_core.clients_table import ClientsTable
 from amnezia_core.containers import AWG2, AWG_LEGACY, WIREGUARD, WgContainer
 from amnezia_core.keys import KeyPair
@@ -38,7 +39,7 @@ class WgInstaller(ContainerInstaller[AwgServerConfig]):
 
     kind: ClassVar[WgContainer]
     transport = Transport.UDP
-    install_fields = ("offload",)
+    install_fields: ClassVar[tuple[str, ...]] = ("offload",)
 
     def __init__(
         self,
@@ -58,7 +59,8 @@ class WgInstaller(ContainerInstaller[AwgServerConfig]):
     def from_params(
         cls, host: RemoteHost, ctx: OperationContext, params: Mapping[str, Any]
     ) -> Self:
-        settings = AwgInstallSettings.for_container(cls.kind, int(params["port"]))
+        masking = Masking.named(params.get("masking", ""))
+        settings = AwgInstallSettings.for_container(cls.kind, int(params["port"]), masking)
         return cls(host, ctx, settings, logs=bool(params["logs"]))
 
     def script_variables(self) -> dict[str, str]:
@@ -102,6 +104,7 @@ class AwgInstaller(WgInstaller):
 
     kind = AWG2
     container = AWG2.name
+    install_fields = ("offload", "masking")
     folder = SCRIPT_FOLDERS[AWG2.name]
     title = CATALOG[AWG2.name].title
     default_port = DEFAULT_PORT
@@ -121,6 +124,7 @@ class AwgLegacyInstaller(WgInstaller):
 
     kind = AWG_LEGACY
     container = AWG_LEGACY.name
+    install_fields = ("offload", "masking")
     folder = SCRIPT_FOLDERS[AWG_LEGACY.name]
     title = CATALOG[AWG_LEGACY.name].title
     default_port = DEFAULT_PORT

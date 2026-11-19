@@ -1,5 +1,5 @@
 {% extends "servers/base.html" %}
-{% load backups i18n offload operations servers ui %}
+{% load backups i18n masking offload operations servers ui %}
 {% block title %}{{ server.name }} · Lamnezia{% endblock %}
 
 {% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li aria-current="page">{{ server.name }}</li>{% endblock %}
@@ -136,6 +136,12 @@
                   <form method="post" action="{% url 'protocols:awg-upgrade' row.instance.pk %}" class="flex flex-wrap items-center gap-x-3 gap-y-1 help-text" data-confirm="{% translate "Move the server to AmneziaWG 3.1? The container is rebuilt, clients are cut off for a few minutes and then import their keys again. If something fails, the server stays on 2.0." %}">
                     {% csrf_token %}
                     <label class="flex items-center gap-2"><input type="checkbox" name="reissue"> {% translate "Reissue the keys imported from the server" %}</label>
+                    {% masking_templates as templates %}{% masking_default as default %}
+                    <label class="flex items-center gap-2">{% translate "I1 masking" %}
+                      <select name="masking" class="input">
+                        {% for value, label in templates %}<option value="{{ value }}"{% if value == default %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                      </select>
+                    </label>
                     <button type="submit" class="text-link hover:underline">{% translate "Move to AmneziaWG 3.1" %}</button>
                   </form>
                 {% endif %}

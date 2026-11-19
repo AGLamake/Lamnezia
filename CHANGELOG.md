@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   formats carry the routing, the clone, the uplink and the mode; an empty or broken network list
   is not applied. The relay image gets `iproute2` and a loose reverse path check. Panel settings
   come later.
+- **I1 masking templates for AmneziaWG**: instead of the same packet of the Amnezia app on every
+  server, I1 is built from a template: STUN (WebRTC), QUIC Initial, a DNS query with EDNS0, SIP
+  INVITE or a DNS answer for icloud.com with a real Apple address. Per-server fields differ, and
+  only tags the kernel module also knows are used. The template is chosen on install (random by
+  default), on the move to 3.1 (the app's I1 is replaced, an own one stays) and in **Settings**,
+  which reminds to replace the app's I1; for a group it is a group setting.
 - **Install without questions**: without a terminal (cloud-init) or with `LAMNEZIA_UNATTENDED=1`
   `install.sh` asks nothing and takes its options from `LAMNEZIA_DOMAIN`, `LAMNEZIA_EMAIL`,
   `LAMNEZIA_PROXY`, `LAMNEZIA_IMAGE`, `LAMNEZIA_DIR` and `LAMNEZIA_REF`. A new installation then
@@ -284,6 +290,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   leading server that does not answer is left behind as lagging.
 
 ### Changed
+
+- **A change of I1–I5 alone** asks for no confirmation and no longer restarts AmneziaWG: the server
+  does not read these packets, so only the config and the key profiles are updated and old profiles
+  keep working. I1–I5 with `<c>` (unknown to the kernel module) or larger than 1400 bytes are refused.
 
 - **Image built from tracked files only**: `.dockerignore` is a whitelist of what git tracks, so a
   local build of a working copy no longer takes in its untracked files, notes or scripts; compiled

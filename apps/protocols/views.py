@@ -493,9 +493,13 @@ class AwgUpgradeView(AdminRequiredMixin, InstanceMixin, View):
         if not can_upgrade(self.instance):
             raise Http404
         form = AwgUpgradeForm(request.POST)
-        reissue = form.is_valid() and form.cleaned_data["reissue"]
+        data = form.cleaned_data if form.is_valid() else {}
         operation = start_awg_upgrade(
-            self.instance, self.member, reissue=reissue, ip=self.client_ip
+            self.instance,
+            self.member,
+            reissue=data.get("reissue", False),
+            masking=data.get("masking", ""),
+            ip=self.client_ip,
         )
         return redirect("operations:detail", pk=operation.pk)
 

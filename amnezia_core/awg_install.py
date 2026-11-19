@@ -13,6 +13,7 @@ from ipaddress import IPv4Network
 from typing import Self
 
 from amnezia_core.awg_export import has_awg3_params
+from amnezia_core.awg_masking import Masking, is_app_masking
 from amnezia_core.awg_params import MESSAGE_SIZES, MIN_PADDING
 from amnezia_core.containers import AWG2, WgContainer
 from amnezia_core.errors import AmneziaFormatError
@@ -52,10 +53,6 @@ _FIXED_PARAMS = {
     "MaxHandshakeAttempts": "15-20",
     "RandomTrailers": "on",
     "DisableCookies": "on",
-    "I1": (
-        "<r 2><b 0x858000010001000000000669636c6f756403636f6d0000010001c00c000100010000105a"
-        "00044d583737>"
-    ),
 }
 # Timers of AmneziaWG 3.1 that make a client behind a relay reach a new server in 7-9 s instead
 # of 18-22 s (measured in P12-01): the outage is the upper bound of KeepaliveTimeout plus
@@ -78,29 +75,42 @@ def has_short_timers(params: Mapping[str, str]) -> bool:
     return all(params.get(name, "").strip() == value for name, value in SHORT_TIMERS.items())
 
 
-def generate_awg_params(rng: random.Random | None = None) -> dict[str, str]:
-    """Obfuscation parameters for awg0.conf; ContentPaddingAddition stays unset, as upstream."""
+def generate_awg_params(
+    rng: random.Random | None = None, masking: Masking | None = None
+) -> dict[str, str]:
+    """Obfuscation parameters for awg0.conf; ContentPaddingAddition stays unset, as upstream.
+
+    I1 follows `masking`, a random template without it, instead of the one packet of the app.
+    """
     rng = rng or secrets.SystemRandom()
     return {
         "Jc": str(rng.randint(*_JUNK_PACKET_COUNT)),
         **_FIXED_PARAMS,
+        "I1": (masking or Masking.pick(rng)).packet(rng),
         "HeaderProtectionKey": KeyPair.generate().private_key,
     }
 
 
-def upgraded_awg_params(params: Mapping[str, str]) -> dict[str, str]:
+def upgraded_awg_params(
+    params: Mapping[str, str], masking: Masking | None = None
+) -> dict[str, str]:
     """AmneziaWG 2.0 parameters moved to 3.1: what a new server gets for 3.1 is added.
 
-    Values already set stay. Header protection needs every S1-S4 of at least 12 bytes
-    (amneziawg-go refuses less); a smaller one grows to the nearest size that keeps the four
-    messages of different lengths.
+    Values already set stay, except the I1 of the app: it gives way to a template, as an empty
+    one does. Header protection needs every S1-S4 of at least 12 bytes (amneziawg-go refuses
+    less); a smaller one grows to the nearest size that keeps the four messages of different
+    lengths.
     """
+    generated = generate_awg_params(masking=masking)
     added = {
         name: value
-        for name, value in generate_awg_params().items()
+        for name, value in generated.items()
         if has_awg3_params({name: value}) and not params.get(name, "").strip()
     }
     upgraded = {**params, **added}
+    current = upgraded.get("I1", "").strip()
+    if not current or is_app_masking(current):
+        upgraded["I1"] = generated["I1"]
     for name, message in MESSAGE_SIZES.items():
         others = {
             int(upgraded.get(other) or 0) + size
@@ -133,9 +143,11 @@ class AwgInstallSettings:
             raise AmneziaFormatError(f"Subnet {self.subnet} is too small for clients.")
 
     @classmethod
-    def for_container(cls, container: WgContainer, port: int) -> Self:
-        """Defaults of the Amnezia app for `container` on `port`."""
-        params = generate_awg_params() if container.obfuscated else {}
+    def for_container(
+        cls, container: WgContainer, port: int, masking: Masking | None = None
+    ) -> Self:
+        """Defaults of the Amnezia app for `container` on `port`, I1 by `masking`."""
+        params = generate_awg_params(masking=masking) if container.obfuscated else {}
         return cls(port=port, params=params, container=container)
 
     def script_variables(self) -> dict[str, str]:

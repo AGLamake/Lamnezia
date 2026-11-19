@@ -35,16 +35,17 @@ def test_server_moves_to_awg3_with_its_keys_and_clients(
 ) -> None:
     key = issued_key(instance, UserFactory(email="anna@example.com"))
 
-    operation = start(lambda: start_awg_upgrade(instance, admin, reissue=False))
+    operation = start(lambda: start_awg_upgrade(instance, admin, reissue=False, masking="sip"))
 
     assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
     assert operation.kind == UPGRADE_KIND
     assert "build" in connected.docker_calls
     config = server_config(connected)
     assert has_awg3_params(config.awg_params)
-    assert {name: config.awg_params[name] for name in APP_CONFIG.awg_params} == (
-        APP_CONFIG.awg_params
-    )
+    kept = {name: config.awg_params[name] for name in APP_CONFIG.awg_params if name != "I1"}
+    assert kept == {name: v for name, v in APP_CONFIG.awg_params.items() if name != "I1"}
+    # The app's I1 gives way to the chosen template.
+    assert config.awg_params["I1"].startswith("<b 0x" + b"INVITE sip:".hex())
     assert config.private_key == APP_CONFIG.private_key
     assert config.peers == APP_CONFIG.peers
     assert config.listen_port == 55424
@@ -143,7 +144,12 @@ def test_imported_keys_are_reissued_on_request(
     operation = start(lambda: start_awg_upgrade(instance, admin, reissue=True))
 
     assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
-    assert operation.params == {"instance_id": instance.pk, "user_id": admin.pk, "reissue": True}
+    assert operation.params == {
+        "instance_id": instance.pk,
+        "user_id": admin.pk,
+        "reissue": True,
+        "masking": "",
+    }
     assert Operation.objects.filter(kind="keys.reissue").exists()
 
 
@@ -158,6 +164,7 @@ def test_card_offers_the_upgrade(admin_client: Client, instance: ProtocolInstanc
     page = admin_client.get(reverse("servers:detail", args=[instance.server_id]))
 
     assert reverse("protocols:awg-upgrade", args=[instance.pk]).encode() in page.content
+    assert b'<option value="random" selected>' in page.content
     assert b"version 2<" in page.content
     assert b"calls AmneziaWG 2.0 outdated" in page.content
 
@@ -181,12 +188,13 @@ def test_upgrade_button_starts_the_operation(
     admin_client: Client, instance: ProtocolInstance
 ) -> None:
     response = admin_client.post(
-        reverse("protocols:awg-upgrade", args=[instance.pk]), {"reissue": "on"}
+        reverse("protocols:awg-upgrade", args=[instance.pk]), {"reissue": "on", "masking": "quic"}
     )
 
     operation = Operation.objects.get(kind=UPGRADE_KIND)
     assert response.url == reverse("operations:detail", args=[operation.pk])  # type: ignore[attr-defined]
     assert operation.params["reissue"] is True
+    assert operation.params["masking"] == "quic"
     assert AuditEvent.objects.get(action=UPGRADE_KIND).data == {"operation": operation.pk}
 
 

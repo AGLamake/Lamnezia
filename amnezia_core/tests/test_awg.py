@@ -3,7 +3,7 @@ from ipaddress import IPv4Address, IPv4Interface, IPv4Network
 
 import pytest
 
-from amnezia_core.awg import AwgServerConfig, Peer, Renumbering
+from amnezia_core.awg import AwgServerConfig, Peer, Renumbering, same_for_server
 from amnezia_core.errors import ConfigFormatError
 from amnezia_core.tests.conftest import FIRST_PEER, SECOND_PEER
 
@@ -135,6 +135,19 @@ def test_update_interface_drops_empty_parameters(config: AwgServerConfig) -> Non
 def test_update_interface_refuses_a_line_break(config: AwgServerConfig) -> None:
     with pytest.raises(ConfigFormatError):
         config.update_interface(55424, {"I1": "<r 2>\n[Peer]"})
+
+
+def test_a_new_special_junk_packet_is_the_same_config_for_the_server(
+    config: AwgServerConfig,
+) -> None:
+    before = config.serialize()
+
+    config.update_interface(55424, {**config.awg_params, "I1": "<r 4>", "I2": "<t>"})
+    junk = config.serialize()
+    config.update_interface(55424, {**config.awg_params, "Jc": "9"})
+
+    assert same_for_server(before, junk)
+    assert not same_for_server(junk, config.serialize())
 
 
 def test_renumber_keeps_the_host_part_of_every_address(config: AwgServerConfig) -> None:

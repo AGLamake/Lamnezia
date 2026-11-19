@@ -266,6 +266,12 @@ msgstr "Создание сети Amnezia"
 msgid "DNS"
 msgstr "DNS"
 
+msgid "DNS answer for icloud.com, as in the app, with an Apple address"
+msgstr "Ответ DNS для icloud.com, как в приложении, с адресом Apple"
+
+msgid "DNS query"
+msgstr "Запрос DNS"
+
 msgid "Delete 3proxy.log"
 msgstr "Удаление 3proxy.log"
 
@@ -398,6 +404,12 @@ msgstr "Как замерять"
 msgid "I understand that every client must import the key again"
 msgstr "Я понимаю, что каждому клиенту нужно заново импортировать ключ"
 
+msgid "I1 is the packet of the Amnezia app, the same on every server and easy to recognise: choose a template. Only new and updated profiles get it, the server is not restarted."
+msgstr "I1 — пакет приложения Amnezia, одинаковый на всех серверах и легко узнаваемый: выберите шаблон. Его получат только новые и обновлённые профили, сервер не перезапускается."
+
+msgid "I1 masking"
+msgstr "Маскировка I1"
+
 msgid "IKEv2/IPsec - modern stable protocol, a bit faster than others, restores connection after signal loss. It has native support on the latest versions of Android and iOS."
 msgstr "IKEv2/IPsec — современный стабильный протокол, немного быстрее других, восстанавливает соединение после потери сигнала. Он имеет встроенную поддержку в последних версиях Android и iOS."
 
@@ -458,6 +470,9 @@ msgstr "Мусорные пакеты"
 
 msgid "Keep the container log"
 msgstr "Вести лог контейнера"
+
+msgid "Keep the current I1"
+msgstr "Оставить текущий I1"
 
 msgid "Keep the keys and the backup"
 msgstr "Сохранить ключи и бэкап"
@@ -571,6 +586,9 @@ msgstr "Сервер не поддерживает, пропущено: %(comman
 msgid "One of the speed test ports is already used by another program on the server."
 msgstr "Один из портов замера уже занят другой программой на сервере."
 
+msgid "Only I1-I5 change: the VPN interface keeps running."
+msgstr "Меняются только I1–I5: интерфейс VPN продолжает работать."
+
 msgid "Only Latin letters, digits and underscores."
 msgstr "Только латинские буквы, цифры и подчёркивание."
 
@@ -626,6 +644,12 @@ msgstr "Домен прокси"
 
 msgid "Public host"
 msgstr "Публичный хост"
+
+msgid "QUIC: an HTTP/3 connection"
+msgstr "QUIC: соединение HTTP/3"
+
+msgid "Random template"
+msgstr "Случайный шаблон"
 
 #, python-format
 msgid "Read %(title)s"
@@ -736,6 +760,9 @@ msgstr "Отозвать старые ключи"
 msgid "SFTP file sharing"
 msgstr "Файловое хранилище SFTP"
 
+msgid "SIP: a phone call"
+msgstr "SIP: телефонный звонок"
+
 msgid "SNI"
 msgstr "SNI"
 
@@ -748,12 +775,18 @@ msgstr "SNI не может содержать *."
 msgid "SOCKS5 proxy server"
 msgstr "Прокси-сервер SOCKS5"
 
+msgid "STUN: a WebRTC call"
+msgstr "STUN: звонок WebRTC"
+
 #, python-format
 msgid "Save %(title)s and its clients"
 msgstr "Сохранить %(title)s и клиентов"
 
 msgid "Save the keys"
 msgstr "Сохранить ключи"
+
+msgid "Save the server config"
+msgstr "Запись конфигурации сервера"
 
 msgid "Save the server files"
 msgstr "Сохранение файлов сервера"
@@ -970,6 +1003,9 @@ msgstr "У домена прокси нет IPv4-адреса в DNS."
 msgid "The domain or IP address in the links; empty for the address of the server."
 msgstr "Домен или IP-адрес в ссылках; пусто — адрес сервера."
 
+msgid "The first packet a client sends, I1, looks like the start of this protocol. The Amnezia app sends the same packet from every server, so it is easy to recognise."
+msgstr "Первый пакет клиента, I1, выглядит как начало этого протокола. Приложение Amnezia шлёт один и тот же пакет со всех серверов, поэтому его легко узнать."
+
 msgid "The image was built before AmneziaWG 3.1. Move the server to 3.1 with the button on the server page: it builds a fresh image. The step log names the parameter."
 msgstr "Образ собран до AmneziaWG 3.1. Переведите сервер на 3.1 кнопкой на странице сервера: она собирает свежий образ. Какой параметр не принят — видно в журнале шага."
 
@@ -1007,6 +1043,9 @@ msgstr "Операционная система сервера не поддер
 
 msgid "The package manager on the server is busy."
 msgstr "Менеджер пакетов на сервере занят."
+
+msgid "The packet must not be larger than 1400 bytes."
+msgstr "Пакет должен быть не больше 1400 байт."
 
 msgid "The panel has no settings for this container."
 msgstr "У панели нет параметров для этого контейнера."
@@ -1130,8 +1169,8 @@ msgstr "Обновление ключей"
 msgid "Use a private network from /%(largest)d to /%(smallest)d."
 msgstr "Укажите частную сеть от /%(largest)d до /%(smallest)d."
 
-msgid "Use only the tags <b 0x..>, <r N>, <rc N>, <rd N>, <c> and <t>."
-msgstr "Используйте только теги <b 0x..>, <r N>, <rc N>, <rd N>, <c> и <t>."
+msgid "Use only the tags <b 0x..>, <r N>, <rc N>, <rd N> and <t>: the kernel module of AmneziaWG does not know <c>."
+msgstr "Используйте только теги <b 0x..>, <r N>, <rc N>, <rd N> и <t>: модуль ядра AmneziaWG не знает <c>."
 
 msgid "User name"
 msgstr "Имя пользователя"

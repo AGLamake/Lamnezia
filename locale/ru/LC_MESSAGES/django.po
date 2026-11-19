@@ -1446,6 +1446,9 @@ msgstr "Как замерить и читать результат"
 msgid "I saved the codes"
 msgstr "Коды сохранены"
 
+msgid "I1 masking"
+msgstr "Маскировка I1"
+
 msgid "IP address"
 msgstr "IP-адрес"
 

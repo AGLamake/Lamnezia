@@ -280,6 +280,22 @@ def test_short_timers_reach_every_member_and_the_keys_of_the_group(
     assert not lagging(joined)
 
 
+def test_new_i1_reaches_every_member_and_the_keys_of_the_group(
+    servers: Fakes, leader: ProtocolInstance, joined: GroupMember, change: Change
+) -> None:
+    key = issued_key(leader, UserFactory())
+    starts = {host: servers[host].awg_starts_count for host in (LEADER_HOST, JOINER_HOST)}
+
+    succeeded(change(params={"I1": "<b 0x0001><r 6>"}))
+
+    for host in (LEADER_HOST, JOINER_HOST):
+        assert config(servers, host).awg_params["I1"] == "<b 0x0001><r 6>"
+        assert servers[host].awg_starts_count == starts[host]
+    key.refresh_from_db()
+    assert ServerProfile.from_json(key.profile).params["I1"] == "<b 0x0001><r 6>"
+    assert not Notification.objects.filter(event=Event.KEYS_CHANGED).exists()
+
+
 def settings_data(leader: ProtocolInstance, **changes: str) -> dict[str, str]:
     return {
         "subnet": leader.subnet,
@@ -295,6 +311,14 @@ def posted_params(admin_client: Client, group: ServerGroup, data: dict[str, str]
     admin_client.post(f"/servers/groups/{group.pk}/settings/", data)
     params: dict[str, str] = Operation.objects.get(kind=SETTINGS_KIND).params["params"]
     return params
+
+
+def test_masking_template_is_a_group_setting(
+    admin_client: Client, group: ServerGroup, leader: ProtocolInstance
+) -> None:
+    params = posted_params(admin_client, group, settings_data(leader, masking="dns"))
+
+    assert params["I1"].startswith("<r 2><b 0x0100")
 
 
 def test_turning_short_timers_on_sets_them(

@@ -27,10 +27,23 @@ def can_upgrade(instance: ProtocolInstance) -> bool:
 
 
 def start_awg_upgrade(
-    instance: ProtocolInstance, user: User, *, reissue: bool, ip: str | None = None
+    instance: ProtocolInstance,
+    user: User,
+    *,
+    reissue: bool,
+    masking: str = "",
+    ip: str | None = None,
 ) -> Operation:
-    """`reissue`: imported keys, which have no profile to update, are issued anew."""
-    params = {"instance_id": instance.pk, "user_id": user.pk, "reissue": reissue}
+    """`reissue`: imported keys, which have no profile to update, are issued anew.
+
+    `masking`: the I1 template in place of the app's packet; empty for a random one.
+    """
+    params = {
+        "instance_id": instance.pk,
+        "user_id": user.pk,
+        "reissue": reissue,
+        "masking": masking,
+    }
     operation = launch(UPGRADE_KIND, params, user=user, subject=str(instance))
     audit.log(UPGRADE_KIND, actor=user, target=instance, data={"operation": operation.pk}, ip=ip)
     return operation

@@ -71,6 +71,9 @@ the app as if it had been installed there:
   the AmneziaWG 2.0 timings) the same way the app does; client subnet `10.8.1.0/24` by default;
 - creates an empty client list (`clientsTable`).
 
+AmneziaWG 2.0 and AmneziaWG legacy have an **I1 masking** field on the form, see
+[I1 masking templates](#i1-masking-templates). A random template is the default.
+
 If the container `amnezia-awg2` already exists (installed by the app or by an earlier attempt), the
 panel does not rebuild it and never overwrites its `awg0.conf`, `clientsTable` or `start.sh`: keys
 and clients stay. A failed installation can be retried.
@@ -121,7 +124,9 @@ An AmneziaWG 2.0 card (installed by the panel or imported from the Amnezia app) 
 1. builds the image again with a fresh `amneziavpn/amneziawg-go` (`docker build --no-cache --pull`);
    the old container keeps serving clients meanwhile;
 2. adds the 3.1 parameters to `awg0.conf` and raises S1–S4 to at least 12; the other parameters, the
-   server keys, the PSK, the peers and `clientsTable` stay as they are, and so does the port;
+   server keys, the PSK, the peers and `clientsTable` stay as they are, and so does the port. The
+   I1 of the Amnezia app (or an empty one) gives way to the template of the **I1 masking** field next
+   to the button, a random one by default; an administrator's own I1 stays;
 3. replaces the container and checks that `awg show awg0` has the `header protection key` line;
 4. updates the profiles of the keys and notifies their owners: each user imports the key again.
    With **Reissue the keys imported from the server** the keys created in the Amnezia app are
@@ -354,7 +359,8 @@ ones, for example:
 - Jmin is larger than Jmax, or a junk packet is over 1280 bytes;
 - the H1–H4 ranges overlap, or S1–S4 give two kinds of packets the same size;
 - `HeaderProtectionKey` is set while one of S1–S4 is below 12 (AmneziaWG would not start);
-- I1–I5 use tags other than `<b 0x..>`, `<r N>`, `<rc N>`, `<rd N>`, `<c>` and `<t>`.
+- I1–I5 use tags other than `<b 0x..>`, `<r N>`, `<rc N>`, `<rd N>` and `<t>` (the AmneziaWG
+  kernel module does not know `<c>`), or the packet is larger than 1400 bytes.
 
 An empty parameter is left out of `awg0.conf`, as the Amnezia app does it. The parameters of
 AmneziaWG 3.1 (`HeaderProtectionKey`, timers, `RandomTrailers`, `DisableCookies`) are a separate
@@ -368,7 +374,8 @@ even when started past its card. A joining server takes the DNS of the group.
 A change of the port or the parameters breaks every client until it imports the key again, so the
 form asks for a confirmation. `KeepaliveTimeout` and `RekeyTimeout` are the exception: each side
 runs its own timers, old profiles keep connecting, and a change of them alone asks for nothing and
-tells no owner to import the key. **Apply** starts an operation:
+tells no owner to import the key. The same goes for I1–I5: the server does not read them (see
+[I1 masking templates](#i1-masking-templates)). **Apply** starts an operation:
 
 - **Parameters only.** The `[Interface]` of `awg0.conf` is rewritten and AmneziaWG is restarted in
   the same container (`awg-quick down`/`up`). Peers, the server key and `clientsTable` stay. If awg
@@ -388,6 +395,8 @@ tells no owner to import the key. **Apply** starts an operation:
   container comes back with the old addresses. The subnet must be private, from `/16` to the
   current size (all clients must fit), and must not overlap another subnet of the server.
 - **DNS only.** The server is not touched: DNS goes only into the client profiles.
+- **I1–I5 only.** The panel writes them into `awg0.conf` (the Amnezia app reads them there) without
+  restarting AmneziaWG or touching the container, and updates the profiles of the issued keys.
 
 The header protection key is not written to the operation parameters, its log or the audit log,
 neither for a protocol nor for a [group](Server-groups.md).
@@ -402,6 +411,34 @@ The reissue is one **Reissue keys** operation (`keys.reissue`) per protocol, how
 If an operation was interrupted while moving the port and `amnezia-awg2-previous` is left on the
 server, the next change stops with a hint: compare the containers in `docker ps -a` and remove the
 one that is not needed.
+
+### I1 masking templates
+
+I1 is the first packet a client sends before the handshake, so that the flow looks like another
+protocol. The Amnezia app puts the same I1 on every server (a DNS answer for icloud.com with the same
+address), so it is easy to recognise. The panel builds I1 from a template instead:
+
+| Template | What the packet looks like |
+|---|---|
+| **STUN** | a Binding request of a WebRTC call with the ICE attributes |
+| **QUIC** | an Initial packet of an HTTP/3 connection, at least 1200 bytes |
+| **DNS query** | a query for a popular domain with an EDNS0 record |
+| **SIP** | an INVITE request of a phone call |
+| **DNS answer for icloud.com** | as in the app, but with a real Apple address |
+
+The fields a server could be recognised by (the domain, addresses, identifiers) differ per server,
+and the transaction identifiers are random in every packet. The templates use only the tags both
+amneziawg-go and the kernel module understand: `<b>`, `<r>`, `<rc>`, `<rd>`, `<t>`.
+
+The template is chosen when AmneziaWG 2.0 or legacy is installed, when a server moves to 3.1 and in
+**Settings** (the **I1 masking** field in the special junk packets group). If a server has the I1 of
+the app, the settings remind of it. For a [server group](Server-groups.md) the template is a group
+setting.
+
+The server does not use I1: only clients need it. So a change of I1 asks for no confirmation, does
+not restart AmneziaWG and does not ask the owners to import the key again. Old profiles keep
+working, new keys and updated profiles get the new I1. Keys imported from the server get it only
+when reissued, which is up to the administrator.
 
 ### Other protocols and services
 

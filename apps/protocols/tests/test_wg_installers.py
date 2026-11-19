@@ -7,6 +7,7 @@ import pytest
 from amnezia_core.awg import AwgServerConfig
 from amnezia_core.awg_export import AwgClientProfile, AwgServerSettings
 from amnezia_core.awg_install import AwgInstallSettings
+from amnezia_core.awg_masking import check_special_junk
 from amnezia_core.clients_table import ClientsTable
 from amnezia_core.containers import AWG_LEGACY, WIREGUARD, WgContainer
 from amnezia_core.keys import KeyPair
@@ -78,7 +79,7 @@ def test_legacy_awg_gets_wg0_conf_with_app_defaults() -> None:
         "4",
     )
     # The legacy script keeps I1 only as a comment, where the app reads it back.
-    assert config.awg_params["I1"].startswith("<r 2>")
+    assert check_special_junk(config.awg_params["I1"]) is None
     assert (
         len(ClientsTable.parse(server.container_files[AWG_LEGACY.clients_table_path].decode())) == 0
     )

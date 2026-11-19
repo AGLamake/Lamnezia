@@ -119,6 +119,8 @@ class InstallRequest:
     email: str = ""
     # The TSO/GSO workaround of a WireGuard-family container (services/offload.py).
     offload: bool = False
+    # The I1 template of an obfuscated WireGuard-family container (apps/protocols/masking.py).
+    masking: str = ""
     # The settings of MTProxy and Telemt.
     proxy: TelegramProxyOptions | None = None
 
@@ -139,6 +141,8 @@ def start_install(
         params["site"] = request.site
     if request.offload:
         params["offload"] = True
+    if request.masking:
+        params["masking"] = request.masking
     if request.domain:
         params["hostname"] = request.domain
         params["email"] = request.email

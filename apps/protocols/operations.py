@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
+from amnezia_core.awg_masking import Masking
 from amnezia_core.containers import AWG2, WG_CONTAINERS
 from apps.accounts.models import User
 from apps.keys.models import AccessKey
@@ -175,7 +176,9 @@ def upgrade_awg(ctx: OperationContext) -> None:
     with ExitStack() as stack:
         with ctx.step(_("Connect to the server")):
             host = stack.enter_context(connect(instance.server))
-        config = AwgReconfiguration(host, ctx, AWG2).upgrade(instance.port)
+        config = AwgReconfiguration(host, ctx, AWG2).upgrade(
+            instance.port, Masking.named(ctx.params.get("masking", ""))
+        )
     panel = InstanceSettings(instance, ctx)
     with ctx.step(_("Update the keys")):
         keys = panel.save(replace(AwgSettings.of(instance), params=config.awg_params))

@@ -13,6 +13,7 @@ from enum import StrEnum
 from itertools import pairwise
 
 from amnezia_core.awg import SPECIAL_JUNK
+from amnezia_core.awg_masking import JunkProblem, check_special_junk
 from amnezia_core.errors import InvalidKeyError
 from amnezia_core.keys import decode_key
 from amnezia_core.script_vars import TOGGLES
@@ -47,8 +48,6 @@ _TOGGLE_VALUES = ("on", "off")
 
 _NUMBER = re.compile(r"\d+")
 _RANGE = re.compile(r"(?P<start>\d+)(?:-(?P<end>\d+))?")
-# Tags of the AmneziaWG special junk packets: bytes, random bytes/chars/digits, counter, time.
-_JUNK_TAGS = re.compile(r"(?:<(?:b 0x[0-9a-fA-F]+|r \d+|rc \d+|rd \d+|c|t)>)+")
 
 
 class Problem(StrEnum):
@@ -61,6 +60,7 @@ class Problem(StrEnum):
     NOT_A_KEY = "not_a_key"
     NOT_A_TOGGLE = "not_a_toggle"
     NOT_JUNK_TAGS = "not_junk_tags"
+    JUNK_TOO_LONG = "junk_too_long"
     PADDING_TOO_SMALL = "padding_too_small"
 
 
@@ -75,7 +75,7 @@ class ParamProblem:
 def check_awg_params(params: Mapping[str, str]) -> list[ParamProblem]:
     """Every problem of the parameters, at most one per parameter; empty if they can be saved."""
     values = {name: value.strip() for name, value in params.items()}
-    problems = [*_check_sizes(values), *_check_formats(values)]
+    problems = [*_check_sizes(values), *_check_formats(values), *_check_junk(values)]
     seen = {problem.param for problem in problems}
     problems += [p for p in _check_relations(values) if p.param not in seen]
     return problems
@@ -99,6 +99,15 @@ def _check_formats(values: Mapping[str, str]) -> list[ParamProblem]:
         for name in names
         if values.get(name) and not is_valid(values[name])
     ]
+
+
+def _check_junk(values: Mapping[str, str]) -> list[ParamProblem]:
+    problems = []
+    for name in SPECIAL_JUNK:
+        problem = check_special_junk(values[name]) if values.get(name) else None
+        if problem is not None:
+            problems.append(ParamProblem(name, _JUNK_PROBLEMS[problem]))
+    return problems
 
 
 def _check_relations(values: Mapping[str, str]) -> list[ParamProblem]:
@@ -151,16 +160,16 @@ def _is_key(value: str) -> bool:
     return True
 
 
-def _is_junk_tags(value: str) -> bool:
-    return _JUNK_TAGS.fullmatch(value) is not None
-
-
 _FORMATS: tuple[tuple[tuple[str, ...], Callable[[str], bool], Problem], ...] = (
     ((*_HEADERS, *_RANGE_PARAMS), _is_range, Problem.NOT_A_RANGE),
     (TOGGLES, _is_toggle, Problem.NOT_A_TOGGLE),
-    (SPECIAL_JUNK, _is_junk_tags, Problem.NOT_JUNK_TAGS),
     (("HeaderProtectionKey",), _is_key, Problem.NOT_A_KEY),
 )
+
+_JUNK_PROBLEMS = {
+    JunkProblem.NOT_PORTABLE: Problem.NOT_JUNK_TAGS,
+    JunkProblem.TOO_LONG: Problem.JUNK_TOO_LONG,
+}
 
 
 def _number(values: Mapping[str, str], name: str, default: int = 0) -> int:
