@@ -446,7 +446,7 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
         "\t\ttype nat hook prerouting priority dstnat; policy accept;",
         *dnat,
         "\t}",
-        "\tchain mark {",
+        "\tchain steer {",
         "\t\ttype filter hook prerouting priority mangle; policy accept;",
         *marks,
         "\t}",

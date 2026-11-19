@@ -1,6 +1,9 @@
 """The relay agent with a split group: the clone, the uplink and the emergency forward."""
 
 import os
+import re
+import shutil
+import subprocess
 from ipaddress import IPv4Address, IPv4Interface
 from pathlib import Path
 
@@ -285,6 +288,60 @@ def test_split_ruleset_with_an_empty_list_sends_everything_over_the_uplink() -> 
 
 def test_forward_only_ruleset_has_no_sets() -> None:
     assert "set " not in ruleset({PORT: A})
+
+
+NFT_KEYWORDS = frozenset(
+    [
+        "accept",
+        "chain",
+        "counter",
+        "ct",
+        "dnat",
+        "drop",
+        "elements",
+        "filter",
+        "flags",
+        "hook",
+        "ip",
+        "map",
+        "mark",
+        "masquerade",
+        "meta",
+        "nat",
+        "policy",
+        "priority",
+        "route",
+        "rule",
+        "set",
+        "snat",
+        "table",
+        "tcp",
+        "type",
+        "udp",
+    ]
+)
+
+
+def mixed_ruleset() -> str:
+    return ruleset({PORT: A, 51820: None}, [SplitRoute(9733, SUBNET, ("5.8.0.0/15",))])
+
+
+def test_chain_and_set_names_are_not_nft_keywords() -> None:
+    names = re.findall(r"^\t(?:chain|set) (\S+) \{", mixed_ruleset(), re.MULTILINE)
+
+    assert names and not NFT_KEYWORDS.intersection(names)
+
+
+def test_ruleset_passes_the_nft_syntax_check() -> None:
+    nft = shutil.which("nft")
+    if nft is None:
+        pytest.skip("nft is not installed")
+    check = subprocess.run(
+        [nft, "-c", "-f", "-"], input=mixed_ruleset(), capture_output=True, text=True, check=False
+    )
+    if "Operation not permitted" in check.stderr:
+        pytest.skip("nft needs CAP_NET_ADMIN")
+    assert check.returncode == 0, check.stderr
 
 
 def test_parse_networks_merges_and_skips_comments() -> None:

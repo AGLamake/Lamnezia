@@ -347,6 +347,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Relay stopped forwarding after the split routing update**: the agent named an nft chain
+  `mark`, which is an nft keyword, so the whole rule set failed to load and no group was
+  forwarded. The chain is now called `steer`; updating the agent brings the relay back.
 - **"Unreachable from the relay" every few minutes**: a group member that answered the relay
   only now and then was told unreachable after each run of failed probes and reachable after each
   answer. Now `member_unreachable` comes once per outage, and the outage ends with
