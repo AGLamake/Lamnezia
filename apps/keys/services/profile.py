@@ -172,6 +172,16 @@ def profile_container(text: str) -> str:
     return str(json.loads(text).get("container", "")) if text else ""
 
 
+def profile_host(text: str) -> str:
+    """The server address clients connect to: every stored profile keeps it in `host`."""
+    return str(json.loads(text).get("host", "")) if text else ""
+
+
+def with_host(text: str, host: str) -> str:
+    """The stored profile sending clients to `host`, saved as sorted JSON like the others."""
+    return json.dumps({**json.loads(text), "host": host}, sort_keys=True)
+
+
 @dataclass(frozen=True)
 class IpsecKeyProfile:
     """Server half of an IKEv2 client profile: the CA and the identity of the server.

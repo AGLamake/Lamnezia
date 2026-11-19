@@ -1,5 +1,10 @@
 from apps.ssh.services.commands import CommandResult, CommandRunner, RemoteProcess
-from apps.ssh.services.connection import SshConnection, SshCredentials, SshTimeouts
+from apps.ssh.services.connection import (
+    SshConnection,
+    SshCredentials,
+    SshTimeouts,
+    read_host_key,
+)
 from apps.ssh.services.host_keys import KnownHostVerifier
 from apps.ssh.services.lock import ServerLock
 from apps.ssh.services.remote import DockerContainer, RemoteHost, ShellTarget
@@ -16,4 +21,5 @@ __all__ = [
     "SshConnection",
     "SshCredentials",
     "SshTimeouts",
+    "read_host_key",
 ]

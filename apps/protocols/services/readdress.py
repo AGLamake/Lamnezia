@@ -2,10 +2,10 @@
 
 vpn:// carries the server address. Keys issued by the panel keep the server half of the profile,
 so the new address is written into it and the owner imports the key again. Imported keys have no
-profile; they are reissued, if the administrator asks.
+profile; they are reissued, if the administrator asks. A key sent to another checked address of
+the server keeps it; once that address is removed, the key moves to the server's own one.
 """
 
-import json
 from dataclasses import dataclass
 from functools import partial
 
@@ -14,6 +14,7 @@ from django.db import transaction
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
 from apps.keys.models import AccessKey, KeyStatus
+from apps.keys.services.profile import profile_host, with_host
 from apps.keys.services.reissue import KeyReissue
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.signals import keys_changed
@@ -31,7 +32,7 @@ class ReaddressResult:
 
 
 class ServerReaddress:
-    """The server's live keys that still point at its old address."""
+    """The server's live keys that do not point where they should: its address or their own."""
 
     def __init__(self, server: Server) -> None:
         self.server = server
@@ -40,7 +41,12 @@ class ServerReaddress:
             .exclude(status=KeyStatus.REVOKED)
             .select_related("user")
         )
-        self.outdated = [key for key in keys if key.profile and _host(key) != server.host]
+        self._addresses = set(
+            server.addresses.filter(verified_at__isnull=False).values_list("host", flat=True)
+        )
+        self.outdated = [
+            key for key in keys if key.profile and profile_host(key.profile) != self._host(key)
+        ]
         self.imported = [key for key in keys if key.imported]
 
     @property
@@ -51,8 +57,10 @@ class ServerReaddress:
     def apply(self, actor: User, *, reissue: bool, ip: str | None = None) -> ReaddressResult:
         """Move the profiles, reissue imported keys if asked, and tell the owners."""
         for key in self.outdated:
-            key.profile = _with_host(key.profile, self.server.host)
-            key.save(update_fields=["profile"])
+            host = self._host(key)
+            key.address = "" if host == self.server.host else host
+            key.profile = with_host(key.profile, host)
+            key.save(update_fields=["profile", "address"])
         reissued = self._reissue(actor, ip) if reissue else []
         owners = {key.user for key in [*self.outdated, *reissued] if key.user is not None}
         for owner in owners:
@@ -74,15 +82,9 @@ class ServerReaddress:
         )
         return result
 
+    def _host(self, key: AccessKey) -> str:
+        return key.address if key.address in self._addresses else self.server.host
+
     def _reissue(self, actor: User, ip: str | None) -> list[AccessKey]:
         """One operation per protocol of the server, however many keys it has."""
         return KeyReissue(actor, ip).start(self.imported).reissued
-
-
-def _host(key: AccessKey) -> str:
-    return str(json.loads(key.profile).get("host", ""))
-
-
-def _with_host(profile: str, host: str) -> str:
-    """Every key profile keeps the address in `host` and is saved as sorted JSON."""
-    return json.dumps({**json.loads(profile), "host": host}, sort_keys=True)

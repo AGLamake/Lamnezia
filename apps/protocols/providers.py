@@ -11,6 +11,7 @@ from amnezia_core.xray import XRAY, XRAY_CONTAINER, XrayContainer
 from apps.groups.services.addressing import client_hosts, key_sources
 from apps.keys.services.instances import Instance, instances
 from apps.protocols.models import ProtocolInstance
+from apps.servers.models import ServerAddress
 from apps.servers.services.connection import connect
 from apps.traffic.services.targets import PollTarget, poll_targets
 
@@ -51,10 +52,13 @@ _KEY_CONTAINERS: dict[str, WgContainer | XrayContainer | OpenVpnContainer | Ipse
 @instances.register
 def key_instances() -> Iterator[Instance]:
     # Keys of a group are issued on its leading server; the members are its clones. Behind a
-    # running relay, the keys send clients to the address of the group.
+    # running relay, the keys send clients to the address of the group, so they get no other
+    # address of the server to choose.
     relayed = client_hosts()
+    addresses = _checked_addresses()
     for instance in _instances(_KEY_CONTAINERS, clones=False):
         server = instance.server
+        grouped = getattr(instance, "group_member", None) is not None
         yield Instance(
             instance.source,
             f"{_place(instance)} · {instance.title}",
@@ -71,7 +75,17 @@ def key_instances() -> Iterator[Instance]:
             maintenance=server.maintenance,
             download_limit=instance.download_limit,
             upload_limit=instance.upload_limit,
+            addresses=() if grouped else addresses.get(server.pk, ()),
         )
+
+
+def _checked_addresses() -> dict[int, tuple[str, ...]]:
+    """The other addresses of every server that the check found leading to it."""
+    found: dict[int, tuple[str, ...]] = {}
+    checked = ServerAddress.objects.filter(verified_at__isnull=False).order_by("server_id", "host")
+    for server_id, host in checked.values_list("server_id", "host"):
+        found[server_id] = (*found.get(server_id, ()), host)
+    return found
 
 
 def _place(instance: ProtocolInstance) -> str:

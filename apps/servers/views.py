@@ -15,9 +15,16 @@ from apps.operations.views import progress_context
 from apps.protocols.services.inventory import server_containers
 from apps.protocols.services.ipsec_reissue import IpsecIdentity
 from apps.protocols.services.readdress import ServerReaddress
-from apps.servers.forms import CONNECTION_FIELDS, ProbeForm, ServerFilterForm, ServerForm
-from apps.servers.models import CheckWarning, Server
+from apps.servers.forms import (
+    CONNECTION_FIELDS,
+    ProbeForm,
+    ServerAddressForm,
+    ServerFilterForm,
+    ServerForm,
+)
+from apps.servers.models import CheckWarning, Server, ServerAddress
 from apps.servers.services import probe
+from apps.servers.services.addresses import ServerAddresses
 from apps.servers.services.check import start_check
 from apps.servers.services.history import latest_operation
 from apps.servers.services.host_key import (
@@ -57,6 +64,8 @@ class ServerDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg
             containers=server_containers(server),
             history=daily_history(server, settings.MONITOR_HISTORY_DAYS),
             probe_form=ProbeForm(server=server),
+            addresses=list(server.addresses.all()),
+            address_form=ServerAddressForm(server=server),
             host_key=trusted_host_key(server),
             ipsec=IpsecIdentity.of(server),
             **(progress_context(latest) if latest else {}),
@@ -135,3 +144,42 @@ class ProbeRemoveView(AdminRequiredMixin, View):
         server = get_object_or_404(Server, pk=pk)
         probe.start_remove(server, self.member)
         return redirect("servers:detail", pk=server.pk)
+
+
+class _AddressView(AdminRequiredMixin, View):
+    """Changes of the other addresses of a server; the server page shows the result."""
+
+    def addresses(self, pk: int) -> ServerAddresses:
+        return ServerAddresses(get_object_or_404(Server, pk=pk), self.member, self.client_ip)
+
+    def address(self, server: Server, address_pk: int) -> ServerAddress:
+        return get_object_or_404(server.addresses, pk=address_pk)
+
+
+class ServerAddressAddView(_AddressView):
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        addresses = self.addresses(pk)
+        form = ServerAddressForm(request.POST, server=addresses.server)
+        if not form.is_valid():
+            for error in form.errors["host"]:
+                messages.error(request, str(error))
+            return redirect("servers:detail", pk=pk)
+        return redirect("operations:detail", pk=addresses.add(form.cleaned_data["host"]).pk)
+
+
+class ServerAddressCheckView(_AddressView):
+    def post(self, request: HttpRequest, pk: int, address_pk: int) -> HttpResponse:
+        addresses = self.addresses(pk)
+        operation = addresses.check(self.address(addresses.server, address_pk))
+        return redirect("operations:detail", pk=operation.pk)
+
+
+class ServerAddressRemoveView(_AddressView):
+    """Keys sent to the removed address are moved to the server's own one on the next page."""
+
+    def post(self, request: HttpRequest, pk: int, address_pk: int) -> HttpResponse:
+        addresses = self.addresses(pk)
+        addresses.remove(self.address(addresses.server, address_pk))
+        if ServerReaddress(addresses.server).outdated:
+            return redirect("protocols:readdress", server_pk=pk)
+        return redirect("servers:detail", pk=pk)

@@ -1,7 +1,8 @@
 """Saving keys the server has just issued, with the server address their instance has now.
 
 The address of an instance may change while a key is issued: a relay of its server group starts
-running, or the group drops it. The profile of an AmneziaWG key takes the address at saving.
+running, or the group drops it. The profile of an AmneziaWG key takes the address at saving;
+a key with another address of the server chosen (`AccessKey.address`) keeps that one.
 
 An IPsec key names the IP of the server certificate. The IP is read from the server while the
 key is issued, and a reissue of the certificate may finish before the key is saved: it stores
@@ -19,7 +20,7 @@ from amnezia_core.containers import WgContainer
 from amnezia_core.ipsec import IpsecContainer
 from apps.keys.models import AccessKey
 from apps.keys.services.instances import instances
-from apps.keys.services.profile import IpsecKeyProfile, ServerProfile
+from apps.keys.services.profile import IpsecKeyProfile, ServerProfile, with_host
 
 ISSUED_FIELDS = ("client_ip", "private_key", "profile", "status")
 
@@ -40,14 +41,17 @@ class IssuedKeys:
 
     @staticmethod
     def _refresh(key: AccessKey) -> None:
-        """A profile gets the address the instance has now, an IPsec one the certificate IP too."""
+        """A profile gets the address the instance has now, or the other address of the server
+        chosen for the key; an IPsec one the certificate IP too."""
         if not key.profile:
             return
         instance = instances.get(key.source)
+        host = instance.client_host(key.address)
         if isinstance(instance.container, WgContainer):
             profile = ServerProfile.from_json(key.profile)
-            key.profile = replace(profile, host=instance.host).to_json()
+            key.profile = replace(profile, host=host).to_json()
         elif isinstance(instance.container, IpsecContainer) and instance.server_ip:
             ipsec = IpsecKeyProfile.from_json(key.profile)
-            current = replace(ipsec, host=instance.host, server_ip=instance.server_ip)
-            key.profile = current.to_json()
+            key.profile = replace(ipsec, host=host, server_ip=instance.server_ip).to_json()
+        elif host != instance.host:
+            key.profile = with_host(key.profile, host)

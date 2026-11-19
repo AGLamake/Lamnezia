@@ -3,6 +3,9 @@ from django.urls import path
 from apps.servers.views import (
     ProbeInstallView,
     ProbeRemoveView,
+    ServerAddressAddView,
+    ServerAddressCheckView,
+    ServerAddressRemoveView,
     ServerCheckView,
     ServerCreateView,
     ServerDetailView,
@@ -20,6 +23,17 @@ urlpatterns = [
     path("<int:pk>/edit/", ServerUpdateView.as_view(), name="edit"),
     path("<int:pk>/check/", ServerCheckView.as_view(), name="check"),
     path("<int:pk>/host-key/forget/", ServerHostKeyForgetView.as_view(), name="forget-host-key"),
+    path("<int:pk>/addresses/", ServerAddressAddView.as_view(), name="address-add"),
+    path(
+        "<int:pk>/addresses/<int:address_pk>/check/",
+        ServerAddressCheckView.as_view(),
+        name="address-check",
+    ),
+    path(
+        "<int:pk>/addresses/<int:address_pk>/remove/",
+        ServerAddressRemoveView.as_view(),
+        name="address-remove",
+    ),
     path("<int:pk>/probe/", ProbeInstallView.as_view(), name="probe-install"),
     path("<int:pk>/probe/remove/", ProbeRemoveView.as_view(), name="probe-remove"),
 ]

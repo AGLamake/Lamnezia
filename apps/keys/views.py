@@ -14,6 +14,7 @@ from apps.accounts.permissions import StaffRequiredMixin
 from apps.core.paging import PageSizeMixin
 from apps.keys.forms import (
     QUOTA_REACHED,
+    KeyAddressForm,
     KeyAssignForm,
     KeyBulkForm,
     KeyFilterForm,
@@ -21,6 +22,7 @@ from apps.keys.forms import (
 )
 from apps.keys.models import AccessKey, DriftKind
 from apps.keys.services.actions import KeyActions
+from apps.keys.services.address import KeyAddress
 from apps.keys.services.drift import ALLOWED_ACTIONS, DriftAction, DriftActions
 from apps.keys.services.instances import instances
 from apps.keys.services.profile import KeyExport
@@ -104,8 +106,10 @@ class KeyDetailView(_KeysStaffView, DetailView):  # type: ignore[type-arg]
         return self.get_key()
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        address = KeyAddress(self.object, self.member, self.client_ip)
         return super().get_context_data(
             assign_form=KeyAssignForm(zone=self.zone),
+            address_form=KeyAddressForm(address=address) if address.choices else None,
             instance_title=instances.titles().get(self.object.source, self.object.source),
             profile_pending=request_profiles([self.object]),
             **kwargs,
@@ -164,6 +168,21 @@ class KeyAssignView(_KeysStaffView, View):
             messages.error(request, _("Choose a user to give the key to."))
             return redirect("keys:detail", pk=key.pk)
         return _to_operation(self.actions.assign(key, form.cleaned_data["user"]))
+
+
+class KeyAddressView(_KeysStaffView, View):
+    """Send the key to another address of its server; the owner is told to import it again."""
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        address = KeyAddress(self.get_key(), self.member, self.client_ip)
+        form = KeyAddressForm(request.POST, address=address)
+        if not form.is_valid():
+            messages.error(request, _("Choose one of the server addresses."))
+        elif address.change(form.cleaned_data["host"]):
+            messages.success(
+                request, _("The key now sends clients to %(host)s.") % {"host": address.current}
+            )
+        return redirect("keys:detail", pk=pk)
 
 
 class KeyResetFirstViewView(_KeysStaffView, View):

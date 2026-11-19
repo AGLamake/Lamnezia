@@ -53,6 +53,23 @@ certificates stay, so the keys issued by the panel only get the new IP in their 
 owners are notified and import the keys again. The keys imported from the server are reissued
 only if that box is ticked. A failed operation can be run again: finished steps are not repeated.
 
+### Other addresses of a server
+
+If a provider blocks the server address for some users, their keys can get another IP or domain
+of the same server. Server card → **Other addresses** → **Add**: the panel saves the address and
+starts the `servers.check_address` check. The check connects to the address on the SSH port of
+the server, reads the SSH key shown there (without logging in) and compares it with the
+fingerprint saved for the server. A match means the address *leads to the server*; otherwise it
+is marked *check failed* with the reason. So the SSH of the server must answer on that address
+too, and the server must have a saved fingerprint: check the server first. **Check** runs the
+check again; an address that stopped answering is no longer offered to keys.
+
+Keys are offered only checked addresses; the address is chosen on the key page, see
+[Keys](Keys.md#other-actions). Keys of a server group keep the address of the group. **Remove**
+is written to the audit log (`servers.remove_address`, adding is `servers.add_address`); if some
+keys were sent to the removed address, the panel opens **Keys after the address change** and they
+move to the server's own address.
+
 ## Server check
 
 After the server is added, and after its address or credentials change, the panel checks it in the

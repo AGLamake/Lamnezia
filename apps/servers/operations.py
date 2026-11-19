@@ -11,8 +11,9 @@ from django.utils.translation import gettext_lazy
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
 from apps.operations.services.subjects import subjects
-from apps.servers.models import Server
+from apps.servers.models import Server, ServerAddress
 from apps.servers.services import probe
+from apps.servers.services.addresses import CHECK_ADDRESS_KIND, AddressCheck
 from apps.servers.services.check import CHECK_KIND, ServerCheck
 from apps.servers.services.connection import connect
 
@@ -32,6 +33,16 @@ def check_server(ctx: OperationContext) -> None:
         server.record_failed_check()
         raise
     server.record_check(facts)
+
+
+@operations.register(CHECK_ADDRESS_KIND, gettext_lazy("Check another server address"))
+def check_address(ctx: OperationContext) -> None:
+    addresses = ServerAddress.objects.select_related("server")
+    address = addresses.filter(pk=ctx.params["address_id"]).first()
+    if address is None:  # removed before the check ran
+        return
+    with ctx.step(_("Compare the SSH key at the address with the server's")):
+        AddressCheck(address, ctx).run()
 
 
 @operations.register(probe.INSTALL_KIND, gettext_lazy("Install the reachability probe"))

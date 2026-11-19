@@ -23,7 +23,9 @@ class Instance:
     server certificate is issued for. Both are empty for other protocols. An OpenVPN profile
     gets `openvpn_client_config` and `block_outside_dns` set on the settings page. New keys are
     not issued on a server under `maintenance`. `download_limit` and `upload_limit` are the
-    speed limits of the whole instance in Mbit/s.
+    speed limits of the whole instance in Mbit/s. `addresses` are the other checked addresses
+    of the server a key may send clients to instead of `host`; none for keys of a server group,
+    which go where the group sends them.
     """
 
     source: str
@@ -41,6 +43,12 @@ class Instance:
     port: int | None = None
     download_limit: int | None = None
     upload_limit: int | None = None
+    addresses: tuple[str, ...] = ()
+
+    def client_host(self, address: str) -> str:
+        """Where a key with the chosen `address` sends clients: an address no longer offered
+        falls back to `host`."""
+        return address if address in self.addresses else self.host
 
 
 class UnknownInstanceError(LookupError):

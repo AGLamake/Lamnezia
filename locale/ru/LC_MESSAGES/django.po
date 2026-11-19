@@ -356,6 +356,9 @@ msgstr "Активных ключей"
 msgid "Acts as"
 msgstr "Действует от имени"
 
+msgid "Add"
+msgstr "Добавить"
+
 msgid "Add a channel"
 msgstr "Добавить канал"
 
@@ -705,6 +708,9 @@ msgstr "Идёт догон"
 
 msgid "Change"
 msgstr "Изменить"
+
+msgid "Change address"
+msgstr "Сменить адрес"
 
 msgid "Change email"
 msgstr "Сменить почту"
@@ -1454,6 +1460,9 @@ msgstr "IP-адрес"
 
 msgid "IPsec server certificate"
 msgstr "Сертификат сервера IPsec"
+
+msgid "If a provider blocks the server address for some users, give their keys another IP or domain of the server. The panel checks that the address leads to this server: it compares the SSH key shown there with the server's."
+msgstr "Если провайдер блокирует адрес сервера для части пользователей, дайте их ключам другой IP или домен сервера. Панель проверяет, что адрес ведёт на этот сервер: сравнивает SSH-ключ, который там показывается, с ключом сервера."
 
 msgid "If an account has this email, a link to set a new password is on its way. Check the spam folder too."
 msgstr "Если такой email есть у учётной записи, ссылка для нового пароля уже в пути. Загляните и в папку «Спам»."
@@ -2395,6 +2404,9 @@ msgstr "Или отсканируйте QR-код"
 msgid "Orders"
 msgstr "Заказы"
 
+msgid "Other addresses"
+msgstr "Другие адреса"
+
 msgid "Other operations run on the panel."
 msgstr "В панели идут другие операции."
 
@@ -2727,6 +2739,9 @@ msgstr "Удалить служебный пир с %(server)s"
 msgid "Remove the service? What it keeps on the server is deleted with the container."
 msgstr "Удалить сервис? Всё, что он хранит на сервере, удалится вместе с контейнером."
 
+msgid "Remove this address? Keys sent to it move to the server's own address."
+msgstr "Удалить адрес? Ключи, которые ведут на него, перейдут на собственный адрес сервера."
+
 msgid "Rename"
 msgstr "Переименовать"
 
@@ -2945,6 +2960,9 @@ msgstr "Не работает сервер %(server)s"
 
 msgid "Server added."
 msgstr "Сервер добавлен."
+
+msgid "Server address"
+msgstr "Адрес сервера"
 
 msgid "Server check"
 msgstr "Проверка сервера"
@@ -3529,6 +3547,9 @@ msgstr "Ключ выключен. Он снова заработает, ког�
 
 msgid "The key is shown only once: add it to the app right away."
 msgstr "Ключ показывается только один раз: сразу добавьте его в приложение."
+
+msgid "The key page lets you choose the address for a key; keys of a server group keep the address of the group."
+msgstr "Адрес для ключа выбирается на странице ключа; ключи группы серверов остаются на адресе группы."
 
 msgid "The key will be renamed in a moment."
 msgstr "Ключ будет переименован через мгновение."
@@ -4594,6 +4615,9 @@ msgstr "отменён"
 msgid "check error"
 msgstr "ошибка проверки"
 
+msgid "check failed"
+msgstr "проверка не прошла"
+
 msgid "check interval, seconds"
 msgstr "интервал проверки, секунды"
 
@@ -4775,6 +4799,9 @@ msgstr "ведущий"
 msgid "leading server"
 msgstr "ведущий сервер"
 
+msgid "leads to the server"
+msgstr "ведёт на сервер"
+
 msgid "leave failed"
 msgstr "выход не удался"
 
@@ -4862,6 +4889,9 @@ msgstr "без ограничения"
 
 msgid "no server reachable"
 msgstr "ни один сервер не доступен"
+
+msgid "not checked"
+msgstr "не проверен"
 
 msgid "not checked yet"
 msgstr "ещё не проверялся"

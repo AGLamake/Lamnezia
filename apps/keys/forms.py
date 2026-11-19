@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.models import User
 from apps.keys.models import AccessKey, KeyStatus
+from apps.keys.services.address import KeyAddress
 from apps.keys.services.zone import KeyZone
 
 QUOTA_REACHED = _("Your users hold as many keys as your quota allows.")
@@ -65,6 +66,24 @@ class KeyAssignForm(forms.Form):
     def __init__(self, *args: Any, zone: KeyZone, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.fields["user"].queryset = zone.owners()  # type: ignore[attr-defined]
+
+
+class KeyAddressForm(forms.Form):
+    """The server address the profile of the key sends clients to."""
+
+    host = forms.ChoiceField(
+        label=_("Server address"),
+        help_text=_(
+            "Another address of the server for a user whose provider blocks its own one. "
+            "The owner imports the key again."
+        ),
+    )
+
+    def __init__(self, *args: Any, address: KeyAddress, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        field = self.fields["host"]
+        field.initial = address.current
+        field.choices = [(host, host) for host in address.choices]  # type: ignore[attr-defined]
 
 
 class KeyBulkForm(forms.Form):

@@ -55,8 +55,14 @@ fetch the link, see [Devices](Portal.md#devices).
   its status back.
 - **Give to a user** — for keys without an owner (for example imported ones); the owner is also
   written to `clientsTable` on the server.
+- **Server address** — if the server has checked
+  [other addresses](Servers-and-import.md#other-addresses-of-a-server), the key can send its client
+  to one of them: the address goes to the `Endpoint` of the config and to the `hostName` of the
+  `vpn://` link. The peer on the server stays as it is, the owner gets the **Keys must be imported
+  again** notification, and the change is written to the audit log (`keys.change_address`). A
+  reissued key keeps the chosen address. Keys of a server group have no choice.
 
-Every action is a background operation and appears in **Operations**.
+Every action but the address change is a background operation and appears in **Operations**.
 
 **Disable**, **Enable** and **Revoke** also work on several keys at once: tick them in **Keys**,
 choose the action above the table and press **Apply**. Each key gets its own operation, and the

@@ -44,6 +44,9 @@ class AccessKey(models.Model):
     imported = models.BooleanField(_("imported"), default=False)
     # Server half of the client profile at issue time (address, port, AWG parameters, keys).
     profile = EncryptedTextField(_("profile"), blank=True)
+    # Another address of the server the profile sends clients to; empty: the address of the
+    # instance. Taken only from the checked addresses of the server (`Instance.addresses`).
+    address = models.CharField(_("server address"), max_length=255, blank=True)
     client_ip = models.GenericIPAddressField(
         _("IP address"), protocol="IPv4", null=True, blank=True
     )

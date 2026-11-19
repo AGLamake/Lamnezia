@@ -106,6 +106,7 @@ def _new_key(old: AccessKey) -> AccessKey:
         user=old.user,
         source=old.source,
         name=old.name,
+        address=old.address,
         public_key=public_key,
         private_key=private_key,
     )

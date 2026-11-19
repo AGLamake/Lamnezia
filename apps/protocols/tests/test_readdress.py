@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 from django.test import Client
+from django.utils import timezone
 
 from apps.accounts.tests.factories import UserFactory
 from apps.audit.models import AuditEvent
@@ -149,3 +150,28 @@ def test_changing_the_address_without_keys_goes_to_the_card(
     response = admin_client.post(f"/servers/{server.pk}/edit/", form_data(host=OLD))
 
     assert response["Location"] == f"/servers/{server.pk}/"
+
+
+SECOND = "198.51.100.7"
+
+
+def test_a_key_on_a_checked_address_keeps_it(instance: ProtocolInstance) -> None:
+    instance.server.addresses.create(host=SECOND, verified_at=timezone.now())
+    issued(instance, SECOND, address=SECOND)
+
+    assert not ServerReaddress(instance.server).pending
+
+
+def test_keys_of_a_removed_address_move_to_the_server_address(
+    admin_client: Client, instance: ProtocolInstance
+) -> None:
+    server = instance.server
+    address = server.addresses.create(host=SECOND, verified_at=timezone.now())
+    key = issued(instance, SECOND, address=SECOND)
+
+    response = admin_client.post(f"/servers/{server.pk}/addresses/{address.pk}/remove/")
+
+    assert response["Location"] == f"/protocols/readdress/{server.pk}/"
+    admin_client.post(response["Location"], {})
+    assert host_of(key) == NEW
+    assert key.address == ""

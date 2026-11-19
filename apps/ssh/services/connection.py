@@ -1,6 +1,7 @@
 """SSH connection on paramiko: login, host key check, commands with timeouts."""
 
 import io
+import socket
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -141,6 +142,23 @@ class SshConnection(CommandRunner):
         except (OSError, paramiko.SSHException, EOFError) as exc:
             raise _command_error(exc) from exc
         return channel
+
+
+def read_host_key(host: str, port: int, timeout: float) -> tuple[str, str]:
+    """The type and fingerprint of the SSH host key served at `host`:`port`, without a login."""
+    try:
+        sock = socket.create_connection((host, port), timeout=timeout)
+    except OSError as exc:
+        raise _connection_error(exc) from exc
+    transport = paramiko.Transport(sock)
+    try:
+        transport.start_client(timeout=timeout)
+        key = transport.get_remote_server_key()
+    except (paramiko.SSHException, OSError) as exc:
+        raise _connection_error(exc) from exc
+    finally:
+        transport.close()
+    return key.get_name(), key.fingerprint
 
 
 class _VerifyingPolicy(paramiko.MissingHostKeyPolicy):

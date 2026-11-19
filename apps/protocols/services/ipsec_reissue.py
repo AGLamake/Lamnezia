@@ -158,7 +158,8 @@ class IpsecProfiles:
         keys = []
         for key in self._issued_keys():
             profile = IpsecKeyProfile.from_json(key.profile)
-            moved = replace(profile, host=instance.server.host, server_ip=server_ip)
+            host = key.address or instance.server.host
+            moved = replace(profile, host=host, server_ip=server_ip)
             if moved != profile:
                 key.profile = moved.to_json()
                 key.save(update_fields=["profile"])

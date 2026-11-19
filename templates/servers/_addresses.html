@@ -1,0 +1,39 @@
+{% load i18n ui %}
+<details class="disclosure">
+  <summary>{% icon "globe" "icon-sm text-muted" %}<span>{% translate "Other addresses" %}</span>
+    <span class="disclosure-meta">{% with count=addresses|length %}{% if count %}<span class="badge badge-muted">{{ count }}</span>{% endif %}{% endwith %}</span>
+  </summary>
+  <div class="disclosure-body">
+    <p class="help-text">{% translate "If a provider blocks the server address for some users, give their keys another IP or domain of the server. The panel checks that the address leads to this server: it compares the SSH key shown there with the server's." %}</p>
+    {% if addresses %}
+      <ul class="divide-y divide-border">
+        {% for address in addresses %}
+          <li class="flex flex-wrap items-center justify-between gap-2 py-2">
+            <div class="min-w-0 space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono break-all">{{ address.host }}</span>
+                {% if address.verified %}<span class="badge badge-success">{% translate "leads to the server" %}</span>
+                {% elif address.error %}<span class="badge badge-danger">{% translate "check failed" %}</span>
+                {% else %}<span class="badge badge-muted">{% translate "not checked" %}</span>{% endif %}
+              </div>
+              {% if address.error %}<p class="help-text">{{ address.error }}</p>{% endif %}
+            </div>
+            <div class="flex gap-2">
+              <form method="post" action="{% url 'servers:address-check' server.pk address.pk %}">{% csrf_token %}<button type="submit" class="btn btn-ghost">{% icon "refresh" "icon-sm" %}{% translate "Check" %}</button></form>
+              <form method="post" action="{% url 'servers:address-remove' server.pk address.pk %}" data-confirm="{% translate "Remove this address? Keys sent to it move to the server's own address." %}">{% csrf_token %}<button type="submit" class="btn btn-ghost">{% icon "trash" "icon-sm" %}<span class="sr-only">{% translate "Remove" %}</span></button></form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <form method="post" action="{% url 'servers:address-add' server.pk %}" class="flex flex-wrap items-end gap-2">
+      {% csrf_token %}
+      <label class="min-w-0 flex-1 space-y-1">
+        <span class="help-text">{{ address_form.host.label }}</span>
+        <input type="text" name="{{ address_form.host.html_name }}" maxlength="255" required class="input w-full font-mono" autocomplete="off" spellcheck="false">
+      </label>
+      <button type="submit" class="btn btn-secondary">{% icon "plus" "icon-sm" %}{% translate "Add" %}</button>
+    </form>
+    <p class="help-text">{{ address_form.host.help_text }} {% translate "The key page lets you choose the address for a key; keys of a server group keep the address of the group." %}</p>
+  </div>
+</details>

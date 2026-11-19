@@ -61,6 +61,17 @@
         </form>
       </section>
 
+      {% if address_form %}
+        <section class="card space-y-3">
+          <h2 class="section-title flex items-center gap-2">{% icon "globe" "icon-sm text-muted" %}{% translate "Server address" %}</h2>
+          <form method="post" action="{% url 'keys:address' key.pk %}" class="grid gap-4">
+            {% csrf_token %}
+            {{ address_form }}
+            <div><button type="submit" class="btn btn-secondary">{% translate "Change address" %}</button></div>
+          </form>
+        </section>
+      {% endif %}
+
       <section class="card space-y-3">
         <h2 class="section-title flex items-center gap-2">{% icon "warning" "icon-sm text-muted" %}{% translate "Careful" %}</h2>
         {% if key.first_viewed_at %}

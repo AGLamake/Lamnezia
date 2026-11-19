@@ -309,6 +309,46 @@ class LoadAlert(models.Model):
         return f"{self.server_id} {self.resource}"
 
 
+class ServerAddress(models.Model):
+    """Another IP or domain of a server that keys may send clients to instead of its own address.
+
+    Keys may take it only once the check found the SSH key the panel trusts for the server at
+    this address: a second IP at the hosting provider, or a domain on one of its IPs.
+    """
+
+    server = models.ForeignKey(Server, on_delete=models.CASCADE, related_name="addresses")
+    host = models.CharField(_("address"), max_length=255)
+    verified_at = models.DateTimeField(_("checked at"), null=True, blank=True)
+    # Why the latest check failed; empty after a successful one.
+    error = models.CharField(_("check error"), max_length=500, blank=True)
+    created_at = models.DateTimeField(_("added at"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("server address")
+        verbose_name_plural = _("server addresses")
+        ordering = ("host",)
+        constraints = (
+            models.UniqueConstraint(
+                fields=["server", "host"],
+                name="servers_address_unique_host",
+                violation_error_message=_("The server already has this address."),
+            ),
+        )
+
+    def __str__(self) -> str:
+        return self.host
+
+    @property
+    def verified(self) -> bool:
+        return self.verified_at is not None
+
+    def record_check(self, error: str = "") -> None:
+        """A check passed without `error`; a failed one leaves the address unusable."""
+        self.verified_at = None if error else timezone.now()
+        self.error = error[:500]
+        self.save(update_fields=["verified_at", "error"])
+
+
 def _used_percent(total: int | None, free: int | None) -> float | None:
     if not total or free is None:
         return None

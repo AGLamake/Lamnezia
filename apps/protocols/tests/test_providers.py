@@ -10,8 +10,9 @@ from django.urls import reverse
 from apps.accounts.models import Role
 from apps.accounts.tests.factories import UserFactory
 from apps.backups.tests.helpers import access_key, awg_instance
+from apps.groups.models import GroupMember, ServerGroup
 from apps.keys.services.instances import instances
-from apps.servers.models import Server
+from apps.servers.models import Server, ServerAddress
 from apps.servers.tests.factories import PRIVATE_KEY, ServerFactory
 from apps.ssh.encryption import SecretCipher
 
@@ -89,3 +90,21 @@ def test_a_server_under_maintenance_is_not_offered_for_new_keys(client: Client) 
     assert instances.get(closed.source).maintenance
     assert open_source in choices and closed.source not in choices
     assert "maintenance" in servers
+
+
+def test_keys_may_choose_only_checked_addresses_of_their_server() -> None:
+    instance = awg_instance()
+    ServerAddress.objects.create(server=instance.server, host="vpn2.example.com")
+    checked = ServerAddress.objects.create(server=instance.server, host="198.51.100.7")
+    checked.record_check()
+
+    assert instances.get(instance.source).addresses == ("198.51.100.7",)
+
+
+def test_keys_of_a_group_get_no_other_address() -> None:
+    instance = awg_instance()
+    ServerAddress.objects.create(server=instance.server, host="198.51.100.7").record_check()
+    group = ServerGroup.objects.create(name="Europe", port=40001)
+    GroupMember.objects.create(group=group, instance=instance, priority=0, leading=True)
+
+    assert instances.get(instance.source).addresses == ()

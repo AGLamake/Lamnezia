@@ -37,6 +37,9 @@ msgstr "Добавить в панель"
 msgid "Added in the Amnezia app"
 msgstr "Добавлен в приложении Amnezia"
 
+msgid "Another address of the server for a user whose provider blocks its own one. The owner imports the key again."
+msgstr "Другой адрес сервера для пользователя, у которого провайдер блокирует основной. Владелец импортирует ключ заново."
+
 msgid "Any"
 msgstr "Любой"
 
@@ -55,6 +58,9 @@ msgstr "Проверьте сервер ещё раз и выберите дей
 
 msgid "Choose a user to give the key to."
 msgstr "Выберите пользователя, которому передать ключ."
+
+msgid "Choose one of the server addresses."
+msgstr "Выберите один из адресов сервера."
 
 msgid "Compare keys with the server"
 msgstr "Сверка ключей с сервером"
@@ -231,6 +237,9 @@ msgstr "Сохранить ключи"
 msgid "Server"
 msgstr "Сервер"
 
+msgid "Server address"
+msgstr "Адрес сервера"
+
 msgid "Sign the client certificate"
 msgstr "Подписать сертификат клиента"
 
@@ -281,6 +290,10 @@ msgstr "Ключ уже не активен."
 
 msgid "The key is no longer disabled by the limits."
 msgstr "Ключ уже не отключён по лимиту."
+
+#, python-format
+msgid "The key now sends clients to %(host)s."
+msgstr "Теперь ключ ведёт клиентов на %(host)s."
 
 msgid "The owner can open the key again."
 msgstr "Владелец снова может открыть ключ."
@@ -440,6 +453,9 @@ msgstr "отозван"
 
 msgid "revoking"
 msgstr "отзывается"
+
+msgid "server address"
+msgstr "адрес сервера"
 
 msgid "status"
 msgstr "статус"

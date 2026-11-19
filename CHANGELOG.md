@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Another server address for a key**: a server takes other IPs or domains, and a background
+  check compares the SSH key shown at each with the server's. A key can send its client to a
+  checked address: it goes to the `Endpoint` of the config and the `hostName` of `vpn://`, the
+  peer on the server stays, and the owner is told to import the key again. A reissued key keeps
+  the address; keys of a server group are not offered other addresses. Removing an address moves
+  its keys back to the server's own one.
 - **Speed limit of the server**: the settings of an AmneziaWG or WireGuard protocol take a total
   download and upload limit. Inside it the speed is shared equally between those who download
   now, and the speed limits of plans work inside it. The limit is shown on the server card; in a

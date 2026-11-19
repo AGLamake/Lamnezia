@@ -5,6 +5,7 @@ from apps.keys.views import (
     DriftListView,
     DriftResolveView,
     KeyActionView,
+    KeyAddressView,
     KeyAssignView,
     KeyBulkView,
     KeyDetailView,
@@ -28,6 +29,7 @@ urlpatterns = [
     path("<int:pk>/show/", KeyRevealView.as_view(), name="reveal"),
     path("<int:pk>/file/<slug:extension>/", KeyFileView.as_view(), name="file"),
     path("<int:pk>/assign/", KeyAssignView.as_view(), name="assign"),
+    path("<int:pk>/address/", KeyAddressView.as_view(), name="address"),
     path("<int:pk>/reset-view/", KeyResetFirstViewView.as_view(), name="reset-view"),
     path("<int:pk>/<str:action>/", KeyActionView.as_view(), name="action"),
 ]

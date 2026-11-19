@@ -140,6 +140,30 @@ class ProbeForm(forms.Form):
         return port
 
 
+class ServerAddressForm(forms.Form):
+    """Another IP or domain of the server for keys; not its own address, nor one it has."""
+
+    host = forms.CharField(
+        label=_("IP or domain"),
+        max_length=255,
+        help_text=_("A second IP of the server or a domain pointing to one of its IPs."),
+    )
+
+    def __init__(self, *args: Any, server: Server, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._server = server
+
+    def clean_host(self) -> str:
+        host: str = self.cleaned_data["host"].strip().strip("[]").lower()
+        if not _HOST.match(host):
+            raise forms.ValidationError(
+                _("Enter a host name or an IP address, without a user name, port or protocol.")
+            )
+        if host == self._server.host.lower() or self._server.addresses.filter(host=host).exists():
+            raise forms.ValidationError(_("The server already has this address."))
+        return host
+
+
 class ServerFilterForm(forms.Form):
     """Search of the server list by name, address or location, and its status; kept in the URL."""
 

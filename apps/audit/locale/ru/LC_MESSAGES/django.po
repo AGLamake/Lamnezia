@@ -15,6 +15,9 @@ msgstr "Вызов API отключённым токеном"
 msgid "Action"
 msgstr "Действие"
 
+msgid "Add server address"
+msgstr "Добавление адреса сервера"
+
 msgid "Allow showing key again"
 msgstr "Разрешение повторного показа ключа"
 
@@ -41,6 +44,9 @@ msgstr "Изменение канала уведомлений"
 
 msgid "Change plan of users"
 msgstr "Смена тарифа пользователям"
+
+msgid "Change server address of key"
+msgstr "Смена адреса сервера у ключа"
 
 msgid "Change server group"
 msgstr "Изменение группы серверов"
@@ -164,6 +170,9 @@ msgstr "Вернуть оплату"
 
 msgid "Reject registration"
 msgstr "Отклонение регистрации"
+
+msgid "Remove server address"
+msgstr "Удаление адреса сервера"
 
 msgid "Restart bot"
 msgstr "Перезапуск бота"
