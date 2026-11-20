@@ -566,11 +566,17 @@ msgstr "Вы уверены?"
 msgid "Article suggestions"
 msgstr "Предложения статей"
 
+msgid "Articles"
+msgstr "Статьи"
+
 msgid "Articles and fixes the users sent for the guides: read, accept or decline."
 msgstr "Статьи и правки инструкций от пользователей: прочитайте, примите или отклоните."
 
 msgid "Articles on other sites that we picked and checked. Each one opens on its own site."
 msgstr "Статьи на других сайтах, которые мы отобрали и проверили. Каждая открывается на своём сайте."
+
+msgid "Articles sections"
+msgstr "Разделы статей"
 
 msgid "As on the device"
 msgstr "Как на устройстве"
@@ -678,6 +684,9 @@ msgstr "Боты"
 msgid "Breadcrumbs"
 msgstr "Навигационная цепочка"
 
+msgid "Broken link"
+msgstr "Битая ссылка"
+
 msgid "Browsers signed in to your account. Only the browser, the system and the sign-in time are kept."
 msgstr "Браузеры, в которых выполнен вход в ваш аккаунт. Хранятся только браузер, система и время входа."
 
@@ -687,6 +696,9 @@ msgstr "Браузеров с уведомлениями: <span data-push-count>
 
 msgid "Build the relay image"
 msgstr "Собрать образ ретранслятора"
+
+msgid "Built-in entries deleted here never come back on their own. Restoring one brings it back as this version of the panel ships it."
+msgstr "Удалённые встроенные записи сами не возвращаются. Восстановленная запись возвращается такой, какой её поставляет эта версия панели."
 
 msgid "Buttons"
 msgstr "Кнопки"
@@ -1065,6 +1077,9 @@ msgstr "Удалить этот архив с панели?"
 msgid "Delete this channel?"
 msgstr "Удалить этот канал?"
 
+msgid "Delete this entry? A built-in one can be restored later."
+msgstr "Удалить запись? Встроенную потом можно восстановить."
+
 msgid "Delete this invite?"
 msgstr "Удалить этот инвайт?"
 
@@ -1077,8 +1092,14 @@ msgstr "Удалить этот снимок? Сервер не затрагив
 msgid "Delete this template?"
 msgstr "Удалить этот шаблон?"
 
+msgid "Deleted built-in"
+msgstr "Удалённые встроенные"
+
 msgid "Deleted built-in FAQ articles and materials"
 msgstr "Удалённые встроенные статьи FAQ и материалы"
+
+msgid "Deleted."
+msgstr "Удалено."
 
 msgid "Delivery log"
 msgstr "Журнал доставки"
@@ -1146,6 +1167,9 @@ msgstr "Домен"
 
 msgid "Done"
 msgstr "Готово"
+
+msgid "Down"
+msgstr "Ниже"
 
 msgid "Download"
 msgstr "Скачать"
@@ -1279,6 +1303,9 @@ msgstr "статья FAQ"
 
 msgid "FAQ articles"
 msgstr "статьи FAQ"
+
+msgid "FAQ articles and useful materials of the portal guides."
+msgstr "Статьи FAQ и полезные материалы инструкций портала."
 
 msgid "Failed"
 msgstr "С ошибкой"
@@ -1456,6 +1483,12 @@ msgstr "Передано %(since)s назад."
 
 msgid "Help text under fields."
 msgstr "Подсказка под полем."
+
+msgid "Hidden"
+msgstr "Скрыто"
+
+msgid "Hide"
+msgstr "Скрыть"
 
 msgid "Hide until tomorrow"
 msgstr "Скрыть до завтра"
@@ -2134,6 +2167,9 @@ msgstr "Архивов пока нет."
 msgid "No articles yet."
 msgstr "Статей пока нет."
 
+msgid "No built-in entry is deleted."
+msgstr "Удалённых встроенных записей нет."
+
 msgid "No channels yet."
 msgstr "Каналов пока нет."
 
@@ -2324,6 +2360,9 @@ msgstr "На сегодня больше ничего не ждёт вас."
 #, python-format
 msgid "Nothing found for «%(text)s»."
 msgstr "По запросу «%(text)s» ничего не найдено."
+
+msgid "Nothing here yet."
+msgstr "Здесь пока пусто."
 
 msgid "Nothing is changed. Check that the servers of the group are online, then try again."
 msgstr "Ничего не изменено. Проверьте, что серверы группы в сети, и повторите."
@@ -2893,6 +2932,9 @@ msgstr "Сначала восстановите протокол в карточ
 
 msgid "Restore the selected entries"
 msgstr "Вернуть выбранные записи"
+
+msgid "Restored."
+msgstr "Восстановлено."
 
 msgid "Retry"
 msgstr "Повторить"
@@ -3902,6 +3944,9 @@ msgstr "Порт группы занят AmneziaWG на сервере ретр�
 msgid "The port of the group is taken on the server."
 msgstr "Порт группы на сервере занят."
 
+msgid "The portal shows the published entries in this order."
+msgstr "Портал показывает опубликованные записи в этом порядке."
+
 msgid "The ports of the groups are published on the server as UDP; a port another program uses is refused before the installation. Ports 80 and 443 belong to the panel."
 msgstr "Порты групп публикуются на сервере как UDP; порт, занятый другой программой, отклоняется до установки. Порты 80 и 443 принадлежат панели."
 
@@ -4245,6 +4290,9 @@ msgstr "Этот сервер вам недоступен."
 msgid "This version is not the latest release newer than the panel."
 msgstr "Эта версия — не последний релиз новее панели."
 
+msgid "This version of the panel no longer ships this entry."
+msgstr "Эта версия панели больше не поставляет эту запись."
+
 #, python-format
 msgid "Through the proxy %(proxy)s"
 msgstr "Через прокси %(proxy)s"
@@ -4415,6 +4463,9 @@ msgstr "Отвязать этот аккаунт?"
 
 msgid "Unlinked."
 msgstr "Отвязано."
+
+msgid "Up"
+msgstr "Выше"
 
 msgid "Update"
 msgstr "Обновить"

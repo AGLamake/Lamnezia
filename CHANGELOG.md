@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Articles in the panel**: administrators edit FAQ articles and useful materials under
+  **Articles** without the Django admin. They can add, edit, delete, publish or hide entries,
+  order them, preview the Markdown and restore deleted built-in entries. Every change goes to the
+  audit log.
 - **Counters on the inbox tabs**: the **Requests** and **Chats** tabs show how many unread
   messages of their kind wait in the staff member's zone and update live, like the menu counter.
 - **Telegram route in the Bots block**: the Telegram card in Settings → Integrations shows the

@@ -1,0 +1,24 @@
+{% extends "layouts/admin.html" %}
+{% load i18n static %}
+{% block title %}{% if entry %}{{ entry }}{% else %}{% translate "Add" %}{% endif %} · {{ shelf.title }} · {{ site_name }}{% endblock %}
+{% block head %}<script src="{% static 'js/markdown-preview.js' %}" defer></script>{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="articles" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'guides:staff' 'faq' %}">{% translate "Articles" %}</a></li><li><a href="{% url 'guides:staff' shelf.slug %}">{{ shelf.title }}</a></li><li aria-current="page">{% if entry %}{{ entry }}{% else %}{% translate "Add" %}{% endif %}</li>{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% if entry %}{% translate "Edit" %}: {{ entry }}{% else %}{% translate "Add" %}: {{ shelf.title }}{% endif %}</h1>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  {% for field in form %}{{ field.as_field_group }}{% endfor %}
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+</form>
+
+{% if entry %}
+  <form method="post" action="{% url 'guides:staff-delete' shelf.slug entry.pk %}" data-confirm="{% translate "Delete this entry? A built-in one can be restored later." %}">
+    {% csrf_token %}<button class="btn btn-danger">{% translate "Delete" %}</button>
+  </form>
+{% endif %}
+{% endblock %}

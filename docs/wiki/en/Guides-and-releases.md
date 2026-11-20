@@ -27,7 +27,10 @@ A link to a chosen APK can be sent to someone: `/guides/android/?android=9-10&ab
 
 The question list is at `/guides/faq/`, an article at `/guides/faq/<address>/`.
 
-Articles are edited in the Django admin: **Guides → FAQ articles**.
+An administrator edits the articles in the panel: **Articles** in the menu, the **FAQ** tab. It
+lists the articles and lets you add, edit and delete them, order them with **Up** and **Down**,
+and **Hide** or **Publish** them. Every action goes to the audit log. The Django admin section
+**Guides → FAQ articles** still works.
 
 A starter set (installing on each platform, adding a key, "cannot connect", "the protocol is
 blocked", "a port below 10000", "no internet", "slow", "slow upload through the VPN", "key not
@@ -38,9 +41,9 @@ accepted", app updates) is built in: it appears on the first start, see
   **Preview** under each text shows it as the public page will, without saving.
 - An article has two languages. If the title or text is empty in the visitor's language, the other
   language is shown. Filling in one is enough.
-- "position" sets the order (lower comes first); unticking "published" hides the article.
-- "address" (slug) is part of the article link; it is filled in from the English title and can be
-  edited.
+- **Up** and **Down** set the order; a new article goes to the end. A hidden article stays in the
+  panel but is gone from the portal.
+- "address" (slug) is part of the article link: Latin letters, digits and hyphens.
 
 ## Useful materials
 
@@ -48,7 +51,8 @@ The `/guides/materials/` page lists articles on other sites by topic: installati
 blocking, security, devices. The text of those articles is not copied: each material has only a
 title, link, language, source and our own short description in Russian and English.
 
-Materials are edited in the Django admin: **Guides → Useful materials**. The starter set (Amnezia
+Materials are edited in the same place, on the **Useful materials** tab of **Articles**: the same
+actions as for the FAQ, plus a mark on a broken link. The starter set (Amnezia
 documentation, articles on AmneziaWG and getting around blocking, device setup, speed
 troubleshooting) is built in, like the FAQ.
 
@@ -64,9 +68,10 @@ adds the built-in FAQ articles and useful materials this panel has never had, ma
   remembers every built-in address it has offered once;
 - restarts add nothing twice.
 
-Deleted built-in entries are listed in the admin under **Guides → Built-in entries**. Select them
-and run **Restore the selected entries**: they come back with the text of the current version. An
-entry whose address is taken again, or one this version no longer ships, is skipped.
+Deleted built-in entries are listed in the panel on the **Deleted built-in** tab of **Articles**.
+**Restore** brings an entry back with the text of the current version. An entry this version no
+longer ships cannot be restored. The Django admin does the same under
+**Guides → Built-in entries**.
 
 To bring back the original text of a built-in article you edited, load the full set by hand; it overwrites
 the built-in articles by address and leaves the ones you added alone:

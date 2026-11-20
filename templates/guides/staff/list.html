@@ -1,0 +1,51 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{{ shelf.title }} · {% translate "Articles" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="articles" %}{% endblock %}
+
+{% block content %}
+{% include "guides/staff/_tabs.html" with tab=shelf.slug %}
+<div class="flex flex-wrap items-center justify-between gap-2">
+  <p class="help-text">{% translate "The portal shows the published entries in this order." %}</p>
+  <a href="{% url 'guides:staff-add' shelf.slug %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add" %}</a>
+</div>
+{% if entries %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead><tr><th>{% translate "Title" %}</th><th>{% translate "Address" %}</th><th>{% translate "State" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr></thead>
+      <tbody>
+        {% for entry in entries %}
+          <tr>
+            <td class="cell-title font-medium"><a href="{% url 'guides:staff-edit' shelf.slug entry.pk %}" class="hover:underline">{{ entry }}</a></td>
+            <td data-label="{% translate 'Address' %}"><code>{{ entry.slug }}</code></td>
+            <td data-label="{% translate 'State' %}">
+              {% if entry.is_published %}<span class="badge badge-success">{% translate "Published" %}</span>{% else %}<span class="badge badge-muted">{% translate "Hidden" %}</span>{% endif %}
+              {% if entry.is_broken %}<span class="badge badge-danger" title="{{ entry.check_error }}">{% translate "Broken link" %}</span>{% endif %}
+            </td>
+            <td class="whitespace-nowrap sm:text-right">
+              <form method="post" action="{% url 'guides:staff-move' shelf.slug entry.pk %}" class="inline">
+                {% csrf_token %}
+                {% translate "Up" as up %}{% translate "Down" as down %}
+                <button name="direction" value="up" class="btn btn-ghost btn-icon" title="{{ up }}"{% if forloop.first %} disabled{% endif %}>{% icon "arrow-up" label=up %}</button>
+                <button name="direction" value="down" class="btn btn-ghost btn-icon" title="{{ down }}"{% if forloop.last %} disabled{% endif %}>{% icon "arrow-down" label=down %}</button>
+              </form>
+              <form method="post" action="{% url 'guides:staff-publish' shelf.slug entry.pk %}" class="inline">
+                {% csrf_token %}
+                {% if entry.is_published %}
+                  {% translate "Hide" as hide %}<button name="published" value="0" class="btn btn-ghost btn-icon" title="{{ hide }}">{% icon "eye-off" label=hide %}</button>
+                {% else %}
+                  {% translate "Publish" as publish %}<button name="published" value="1" class="btn btn-ghost btn-icon" title="{{ publish }}">{% icon "eye" label=publish %}</button>
+                {% endif %}
+              </form>
+              {% translate "Edit" as edit %}<a href="{% url 'guides:staff-edit' shelf.slug entry.pk %}" class="btn btn-ghost btn-icon" title="{{ edit }}">{% icon "pencil" label=edit %}</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% translate "Nothing here yet." as empty_title %}
+  {% include "components/empty_state.html" with icon="book" title=empty_title %}
+{% endif %}
+{% endblock %}

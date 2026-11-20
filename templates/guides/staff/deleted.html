@@ -1,0 +1,32 @@
+{% extends "layouts/admin.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Deleted built-in" %} · {% translate "Articles" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="articles" %}{% endblock %}
+
+{% block content %}
+{% include "guides/staff/_tabs.html" with tab="deleted" %}
+<p class="help-text">{% translate "Built-in entries deleted here never come back on their own. Restoring one brings it back as this version of the panel ships it." %}</p>
+{% if deleted %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead><tr><th>{% translate "Address" %}</th><th>{% translate "Kind" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr></thead>
+      <tbody>
+        {% for offered, kind in deleted %}
+          <tr>
+            <td class="cell-title"><code>{{ offered.slug }}</code></td>
+            <td data-label="{% translate 'Kind' %}">{{ kind }}</td>
+            <td class="sm:text-right">
+              <form method="post" action="{% url 'guides:staff-restore' offered.pk %}">
+                {% csrf_token %}<button class="btn btn-secondary btn-sm">{% icon "refresh" %}{% translate "Restore" %}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% translate "No built-in entry is deleted." as empty_title %}
+  {% include "components/empty_state.html" with icon="book" title=empty_title %}
+{% endif %}
+{% endblock %}

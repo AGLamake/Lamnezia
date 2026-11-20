@@ -1,14 +1,19 @@
-// Markdown preview of FAQ articles in the admin: a button under each text field asks the panel
-// to render the text as the public page will, cleaned the same way. Nothing is saved.
+// Markdown preview of FAQ articles in the panel and in the Django admin: a button under each text
+// field asks the panel to render the text as the public page will, cleaned the same way. Nothing
+// is saved. `data-preview-button` and `data-preview-output` give the classes of the panel's look.
 (() => {
   function attach(field) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "button";
+    button.className = field.dataset.previewButton || "button";
     button.textContent = field.dataset.previewLabel;
     const output = document.createElement("div");
     output.hidden = true;
-    output.style.cssText = "margin-top: 8px; padding: 8px 12px; border: 1px solid var(--hairline-color, #ccc); max-width: 60em;";
+    if (field.dataset.previewOutput) {
+      output.className = field.dataset.previewOutput;
+    } else {
+      output.style.cssText = "margin-top: 8px; padding: 8px 12px; border: 1px solid var(--hairline-color, #ccc); max-width: 60em;";
+    }
     button.addEventListener("click", () => {
       const token = field.form.querySelector("[name=csrfmiddlewaretoken]").value;
       fetch(field.dataset.markdownPreview, {

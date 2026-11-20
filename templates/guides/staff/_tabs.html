@@ -1,0 +1,13 @@
+{% load i18n %}{# Articles sections; `tab` is the current one: a shelf slug or "deleted". #}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Articles" %}</h1>
+    <p class="page-lead">{% translate "FAQ articles and useful materials of the portal guides." %}</p>
+  </div>
+</div>
+<nav class="tabs" aria-label="{% translate 'Articles sections' %}">
+  {% for item in shelves %}
+    <a href="{% url 'guides:staff' item.slug %}" class="tab"{% if tab == item.slug %} aria-current="page"{% endif %}>{{ item.title }}</a>
+  {% endfor %}
+  <a href="{% url 'guides:staff-deleted' %}" class="tab"{% if tab == 'deleted' %} aria-current="page"{% endif %}>{% translate "Deleted built-in" %}{% if deleted_count %}<span class="nav-count">{{ deleted_count }}</span>{% endif %}</a>
+</nav>

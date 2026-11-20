@@ -1,10 +1,13 @@
-"""Forms of the guides: a user's suggestion and the staff's publish and decline forms."""
+"""Forms of the guides: a user's suggestion, the staff's publish and decline forms and the
+panel's article and material forms.
+"""
 
 from typing import Any, ClassVar
 from urllib.parse import urlsplit
 
 from django import forms
 from django.db import models
+from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -31,7 +34,7 @@ class SuggestionForm(forms.ModelForm):  # type: ignore[type-arg]
 class MaterialPublishForm(forms.ModelForm):  # type: ignore[type-arg]
     class Meta:
         model = UsefulMaterial
-        fields = (
+        fields: tuple[str, ...] = (
             "slug",
             "title",
             "url",
@@ -47,7 +50,7 @@ class MaterialPublishForm(forms.ModelForm):  # type: ignore[type-arg]
 class ArticlePublishForm(forms.ModelForm):  # type: ignore[type-arg]
     class Meta:
         model = FaqArticle
-        fields = ("slug", "title_ru", "body_ru", "title_en", "body_en", "credit")
+        fields: tuple[str, ...] = ("slug", "title_ru", "body_ru", "title_en", "body_en", "credit")
         widgets: ClassVar = {
             "body_ru": forms.Textarea(attrs={"rows": 12}),
             "body_en": forms.Textarea(attrs={"rows": 12}),
@@ -95,6 +98,41 @@ def publish_form(
     body = suggestion.body or f"[{suggestion.title}]({suggestion.url})"
     initial |= {f"title_{suffix}": suggestion.title, f"body_{suffix}": body}
     return ArticlePublishForm(data, initial=initial)
+
+
+class ArticleForm(ArticlePublishForm):
+    """An FAQ article edited in the panel; its texts get the Markdown preview button."""
+
+    class Meta(ArticlePublishForm.Meta):
+        fields = (*ArticlePublishForm.Meta.fields, "is_published")
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        for name in ("body_ru", "body_en"):
+            self.fields[name].widget.attrs.update(
+                {
+                    "data-markdown-preview": reverse("guides:staff-preview"),
+                    "data-preview-label": _("Preview"),
+                    "data-preview-error": _("The preview failed. Save the article to see it."),
+                    "data-preview-button": "btn btn-secondary btn-sm mt-2",
+                    "data-preview-output": "markdown card mt-2",
+                }
+            )
+
+
+class MaterialForm(MaterialPublishForm):
+    """A useful material edited in the panel."""
+
+    class Meta(MaterialPublishForm.Meta):
+        fields = (*MaterialPublishForm.Meta.fields, "is_published")
+
+
+EntryForm = ArticleForm | MaterialForm
+
+
+def entry_form(model: type[models.Model]) -> type[EntryForm]:
+    """The panel's form for an FAQ article or a useful material."""
+    return ArticleForm if model is FaqArticle else MaterialForm
 
 
 class RejectForm(forms.Form):

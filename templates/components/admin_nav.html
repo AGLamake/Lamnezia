@@ -18,6 +18,7 @@
 <p class="nav-group">{% translate "Support" %}</p>
 {% inbox_unread as unread %}<a href="{% url 'support:inbox' %}" class="nav-link"{% if active == 'inbox' %} aria-current="page"{% endif %}>{% icon "inbox" %}<span class="nav-text">{% translate "Inbox" %}</span>{% url 'support:inbox-unread' as unread_url %}{% include "support/_badge.html" %}</a>
 <a href="{% url 'guides:moderation' %}" class="nav-link"{% if active == 'suggestions' %} aria-current="page"{% endif %}>{% icon "file-text" %}<span class="nav-text">{% translate "Article suggestions" %}</span>{% if todo.suggestions %}<span class="nav-count" title="{% translate 'Waiting for review' %}">{{ todo.suggestions }}</span>{% endif %}</a>
+{% if user.is_admin %}<a href="{% url 'guides:staff' 'faq' %}" class="nav-link"{% if active == 'articles' %} aria-current="page"{% endif %}>{% icon "book" %}<span class="nav-text">{% translate "Articles" %}</span></a>{% endif %}
 
 {% if user.is_admin %}
   <p class="nav-group">{% translate "System" %}</p>

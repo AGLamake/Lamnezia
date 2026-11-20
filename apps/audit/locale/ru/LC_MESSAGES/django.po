@@ -69,6 +69,9 @@ msgstr "Изменение лимитов пользователя"
 msgid "Create API token"
 msgstr "Создание токена API"
 
+msgid "Create FAQ article"
+msgstr "Создание статьи FAQ"
+
 msgid "Create invitation"
 msgstr "Создание приглашения"
 
@@ -84,8 +87,14 @@ msgstr "Создание шаблона ответа"
 msgid "Create server group"
 msgstr "Создание группы серверов"
 
+msgid "Create useful material"
+msgstr "Создание полезного материала"
+
 msgid "Decline article suggestion"
 msgstr "Отказ в предложенной статье"
+
+msgid "Delete FAQ article"
+msgstr "Удаление статьи FAQ"
 
 msgid "Delete invitation"
 msgstr "Удаление приглашения"
@@ -117,6 +126,9 @@ msgstr "Удаление группы серверов"
 msgid "Delete subscription link"
 msgstr "Удалить ссылку-подписку"
 
+msgid "Delete useful material"
+msgstr "Удаление полезного материала"
+
 msgid "Disable API token"
 msgstr "Отключение токена API"
 
@@ -126,11 +138,17 @@ msgstr "Отключение ключей пользователей"
 msgid "Download panel archive"
 msgstr "Скачивание архива панели"
 
+msgid "Edit FAQ article"
+msgstr "Изменение статьи FAQ"
+
 msgid "Edit plan"
 msgstr "Изменение тарифа"
 
 msgid "Edit reply template"
 msgstr "Изменение шаблона ответа"
+
+msgid "Edit useful material"
+msgstr "Изменение полезного материала"
 
 msgid "End sessions"
 msgstr "Завершение сеансов"
@@ -146,6 +164,12 @@ msgstr "Забыть устройство подписки"
 
 msgid "From"
 msgstr "С"
+
+msgid "Hide FAQ article"
+msgstr "Скрытие статьи FAQ"
+
+msgid "Hide useful material"
+msgstr "Скрытие полезного материала"
 
 msgid "IP address"
 msgstr "IP-адрес"
@@ -165,14 +189,26 @@ msgstr "Сервер оставлен в группе после неудачн�
 msgid "Link messenger"
 msgstr "Привязка мессенджера"
 
+msgid "Move FAQ article"
+msgstr "Перемещение статьи FAQ"
+
 msgid "Move keys to the new server address"
 msgstr "Перенос ключей на новый адрес сервера"
+
+msgid "Move useful material"
+msgstr "Перемещение полезного материала"
 
 msgid "Object"
 msgstr "Объект"
 
+msgid "Publish FAQ article"
+msgstr "Публикация статьи FAQ"
+
 msgid "Publish article suggestion"
 msgstr "Публикация предложенной статьи"
+
+msgid "Publish useful material"
+msgstr "Публикация полезного материала"
 
 msgid "Receive payment"
 msgstr "Получение оплаты"
@@ -188,6 +224,9 @@ msgstr "Удаление адреса сервера"
 
 msgid "Restart bot"
 msgstr "Перезапуск бота"
+
+msgid "Restore built-in article or material"
+msgstr "Восстановление встроенной статьи или материала"
 
 msgid "Show Telegram proxy links"
 msgstr "Показ ссылок прокси Telegram"
