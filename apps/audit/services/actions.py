@@ -81,6 +81,8 @@ _LABELS: dict[str, Promise] = {
     "relays.split_source_delete": _("Delete network list source"),
     "relays.split_entry_add": _("Add own entry of split routing"),
     "relays.split_entry_delete": _("Delete own entry of split routing"),
+    "servers.delete": _("Delete server"),
+    "servers.leave": _("Leave server list"),
     "servers.forget_host_key": _("Forget server host key"),
     "servers.add_address": _("Add server address"),
     "servers.remove_address": _("Remove server address"),

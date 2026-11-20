@@ -2,6 +2,7 @@ from typing import Any
 
 from django.conf import settings
 from django.contrib import messages
+from django.db.models import QuerySet
 from django.http import FileResponse, Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext as _
@@ -32,7 +33,8 @@ class ProtocolRestoreView(SectionRequiredMixin, View):
     section = Section.BACKUPS
 
     def post(self, request: HttpRequest, instance_pk: int) -> HttpResponse:
-        instance = get_object_or_404(ProtocolInstance, pk=instance_pk)
+        instances = self.zone.narrow(ProtocolInstance.objects.all(), server="server")
+        instance = get_object_or_404(instances, pk=instance_pk)
         start_restore(instance, self.member, self.client_ip)
         return redirect("servers:detail", pk=instance.server_id)
 
@@ -43,20 +45,25 @@ class ServiceRestoreView(SectionRequiredMixin, View):
     section = Section.BACKUPS
 
     def post(self, request: HttpRequest, service_pk: int) -> HttpResponse:
-        service = get_object_or_404(ServiceInstance, pk=service_pk)
+        services = self.zone.narrow(ServiceInstance.objects.all(), server="server")
+        service = get_object_or_404(services, pk=service_pk)
         start_service_restore(service, self.member, self.client_ip)
         return redirect("servers:detail", pk=service.server_id)
 
 
-class SnapshotRestoreView(SectionRequiredMixin, View):
-    """Start putting the files of a snapshot back on its server; refused while in a group."""
-
+class _SnapshotView(SectionRequiredMixin, View):
     section = Section.BACKUPS
 
+    def snapshots(self) -> QuerySet[ProtocolSnapshot]:
+        snapshots = ProtocolSnapshot.objects.select_related("instance")
+        return self.zone.narrow(snapshots, server="instance__server")
+
+
+class SnapshotRestoreView(_SnapshotView):
+    """Start putting the files of a snapshot back on its server; refused while in a group."""
+
     def post(self, request: HttpRequest, snapshot_pk: int) -> HttpResponse:
-        snapshot = get_object_or_404(
-            ProtocolSnapshot.objects.select_related("instance"), pk=snapshot_pk
-        )
+        snapshot = get_object_or_404(self.snapshots(), pk=snapshot_pk)
         try:
             start_snapshot_restore(snapshot, self.member, self.client_ip)
         except RestoreError as error:
@@ -64,15 +71,11 @@ class SnapshotRestoreView(SectionRequiredMixin, View):
         return redirect("servers:detail", pk=snapshot.instance.server_id)
 
 
-class SnapshotDeleteView(SectionRequiredMixin, View):
+class SnapshotDeleteView(_SnapshotView):
     """Delete a snapshot from the panel; the server is not touched."""
 
-    section = Section.BACKUPS
-
     def post(self, request: HttpRequest, snapshot_pk: int) -> HttpResponse:
-        snapshot = get_object_or_404(
-            ProtocolSnapshot.objects.select_related("instance"), pk=snapshot_pk
-        )
+        snapshot = get_object_or_404(self.snapshots(), pk=snapshot_pk)
         delete_snapshot(snapshot, self.member, self.client_ip)
         messages.success(request, _("The snapshot is deleted."))
         return redirect("servers:detail", pk=snapshot.instance.server_id)

@@ -11,10 +11,8 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 
-from apps.accounts.models import User
 from apps.accounts.permissions import SectionRequiredMixin
 from apps.accounts.services.access import Section
-from apps.accounts.services.zone import Zone
 from apps.audit.services import journal as audit
 from apps.plans.forms import PlanForm, UserLimitsForm, UserLookupForm
 from apps.plans.models import Plan, UserLimits
@@ -28,14 +26,22 @@ class PlanListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg]
     context_object_name = "plans"
 
     def get_queryset(self) -> QuerySet[Plan]:
-        return Plan.objects.annotate(users=Count("subscriptions"))
+        return self.zone.plans().annotate(users=Count("subscriptions"))
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(lookup_form=UserLookupForm(), **kwargs)
 
 
-class PlanCreateView(SectionRequiredMixin, CreateView):  # type: ignore[type-arg]
+class _PlanFormMixin(SectionRequiredMixin):
     section = Section.PLANS
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        return {**super().get_form_kwargs(), "zone": self.zone}  # type: ignore[misc]
+
+
+class PlanCreateView(_PlanFormMixin, CreateView):  # type: ignore[type-arg]
+    """A new plan; a member who does not answer for the whole panel staffs it."""
+
     model = Plan
     form_class = PlanForm
     template_name = "plans/form.html"
@@ -43,17 +49,20 @@ class PlanCreateView(SectionRequiredMixin, CreateView):  # type: ignore[type-arg
 
     def form_valid(self, form: "ModelForm[Plan]") -> HttpResponse:
         response = super().form_valid(form)
+        if not self.zone.is_whole:
+            form.instance.staff.add(self.member)
         audit.log_request(self.request, "plans.create", form.instance)
         return response
 
 
-class PlanUpdateView(SectionRequiredMixin, UpdateView):  # type: ignore[type-arg]
-    section = Section.PLANS
-    model = Plan
+class PlanUpdateView(_PlanFormMixin, UpdateView):  # type: ignore[type-arg]
     form_class = PlanForm
     template_name = "plans/form.html"
     context_object_name = "plan"
     success_url = reverse_lazy("plans:list")
+
+    def get_queryset(self) -> QuerySet[Plan]:
+        return self.zone.plans()
 
     def form_valid(self, form: "ModelForm[Plan]") -> HttpResponse:
         response = super().form_valid(form)
@@ -66,7 +75,7 @@ class PlanDeleteView(SectionRequiredMixin, View):
     section = Section.PLANS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        plan = get_object_or_404(Plan, pk=pk)
+        plan = get_object_or_404(self.zone.plans(), pk=pk)
         try:
             with transaction.atomic():
                 audit.log_request(request, "plans.delete", plan)
@@ -95,7 +104,7 @@ class UserLookupView(SectionRequiredMixin, View):
         form = UserLookupForm(request.GET)
         user = None
         if form.is_valid():
-            user = User.objects.filter(username__iexact=form.cleaned_data["username"]).first()
+            user = self.zone.users().filter(username__iexact=form.cleaned_data["username"]).first()
         if user is None:
             messages.error(request, _("No user with this name."))
             return redirect("plans:list")
@@ -113,9 +122,12 @@ class UserLimitsView(SectionRequiredMixin, UpdateView):  # type: ignore[type-arg
     context_object_name = "limits"
 
     def get_object(self, queryset: QuerySet[UserLimits] | None = None) -> UserLimits:
-        user = get_object_or_404(Zone(self.member).users(), pk=self.kwargs["pk"])
+        user = get_object_or_404(self.zone.users(), pk=self.kwargs["pk"])
         limits, _created = UserLimits.objects.get_or_create(user=user)
         return limits
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        return {**super().get_form_kwargs(), "zone": self.zone}
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         limits: UserLimits = self.object

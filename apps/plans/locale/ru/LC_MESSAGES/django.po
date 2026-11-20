@@ -63,6 +63,9 @@ msgstr "Тариф удалён."
 msgid "The plan was paid for and stays for the record. Clear its price to stop selling it."
 msgstr "За тариф платили, поэтому он остаётся в истории. Чтобы снять его с продажи, очистите цену."
 
+msgid "The plan works on the servers chosen here."
+msgstr "Тариф действует на выбранных здесь серверах."
+
 msgid "Traffic in total"
 msgstr "Трафик всего"
 

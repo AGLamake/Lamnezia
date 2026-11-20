@@ -74,7 +74,7 @@ class StaffReport:
             .count(),
             "url": settings.SITE_URL.rstrip("/") + reverse("dashboard:index"),
         }
-        if self._member.is_admin:
+        if Zone(self._member).is_whole:
             data |= self._administrators()
         return data
 
@@ -164,9 +164,10 @@ class StaffReports:
 
     @staticmethod
     def _moderators() -> list[User]:
-        """Moderators the report reaches: a personal notification needs an email."""
+        """Moderators and server administrators the report reaches: a personal notification
+        needs an email."""
         moderators = User.objects.filter(
-            role=Role.MODERATOR, status=Status.ACTIVE, is_active=True
+            role__in=[Role.MODERATOR, Role.OWNER], status=Status.ACTIVE, is_active=True
         ).exclude(email="")
         return list(moderators.order_by("pk"))
 

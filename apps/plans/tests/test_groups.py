@@ -5,7 +5,9 @@ import importlib
 import pytest
 from django.apps import apps
 
-from apps.accounts.models import User
+from apps.accounts.models import Role, User
+from apps.accounts.services.zone import Zone
+from apps.accounts.tests.factories import UserFactory
 from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.groups.services.membership import delete_group
 from apps.groups.tests import conftest as groups
@@ -104,7 +106,7 @@ def test_the_form_offers_groups_and_not_their_servers(
 ) -> None:
     standalone = ServerFactory()
 
-    form = PlanForm()
+    form = PlanForm(zone=Zone(UserFactory(role=Role.ADMIN)))
 
     assert list(form.fields["servers"].queryset) == [standalone]  # type: ignore[attr-defined]
     assert list(form.fields["groups"].queryset) == [group]  # type: ignore[attr-defined]

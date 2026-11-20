@@ -53,11 +53,11 @@ from apps.relays.models import Relay
 from apps.relays.services.health import GroupHealth
 from apps.relays.services.routing import start_routing
 from apps.relays.services.switch import last_switch, start_switch
-from apps.servers.models import Server
 
 
 class GroupListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg]
     section = Section.SERVERS
+    whole_zone_only = True
     template_name = "groups/list.html"
     context_object_name = "groups"
 
@@ -67,6 +67,7 @@ class GroupListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg]
 
 class GroupCreateView(SectionRequiredMixin, CreateView):  # type: ignore[type-arg]
     section = Section.SERVERS
+    whole_zone_only = True
     form_class = GroupForm
     template_name = "groups/form.html"
 
@@ -88,6 +89,7 @@ class GroupEditView(SectionRequiredMixin, UpdateView):  # type: ignore[type-arg]
     """The name, domain and relay of a group; its keys follow a new address."""
 
     section = Section.SERVERS
+    whole_zone_only = True
 
     model = ServerGroup
     form_class = GroupEditForm
@@ -123,6 +125,7 @@ class GroupDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-ar
     """
 
     section = Section.SERVERS
+    whole_zone_only = True
 
     model = ServerGroup
     template_name = "groups/detail.html"
@@ -206,9 +209,10 @@ def _seen_by_relay(
 
 class GroupJoinView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int, instance_pk: int) -> HttpResponse:
-        group = get_object_or_404(ServerGroup, pk=pk)
+        group = get_object_or_404(self.zone.groups(), pk=pk)
         instance = get_object_or_404(ProtocolInstance, pk=instance_pk)
         try:
             start_join(group, instance, user=self.member, ip=self.client_ip)
@@ -219,10 +223,11 @@ class GroupJoinView(SectionRequiredMixin, View):
 
 class GroupInstallView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int, server_pk: int) -> HttpResponse:
-        group = get_object_or_404(ServerGroup, pk=pk)
-        server = get_object_or_404(Server, pk=server_pk)
+        group = get_object_or_404(self.zone.groups(), pk=pk)
+        server = get_object_or_404(self.zone.servers(), pk=server_pk)
         try:
             start_install(group, server, user=self.member, ip=self.client_ip)
         except GroupError as error:
@@ -232,6 +237,7 @@ class GroupInstallView(SectionRequiredMixin, View):
 
 class GroupJoinRetryView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
@@ -244,6 +250,7 @@ class GroupJoinRetryView(SectionRequiredMixin, View):
 
 class GroupJoinCancelView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
@@ -256,6 +263,7 @@ class GroupJoinCancelView(SectionRequiredMixin, View):
 
 class GroupLeaveView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
@@ -272,6 +280,7 @@ class GroupLeaveView(SectionRequiredMixin, View):
 
 class GroupLeaveRetryView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
@@ -284,6 +293,7 @@ class GroupLeaveRetryView(SectionRequiredMixin, View):
 
 class GroupStayView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
@@ -301,6 +311,7 @@ class GroupStayView(SectionRequiredMixin, View):
 
 class GroupHandoverView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
@@ -315,6 +326,7 @@ class GroupSwitchView(SectionRequiredMixin, View):
     """The relay sends the clients of the group to the member, for maintenance of the active one."""
 
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
@@ -329,9 +341,10 @@ class GroupRoutingView(SectionRequiredMixin, View):
     """Moves the group between forward and split routing on its relay, in the background."""
 
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        group = get_object_or_404(ServerGroup, pk=pk)
+        group = get_object_or_404(self.zone.groups(), pk=pk)
         routing = request.POST.get("routing", "")
         if routing not in GroupRouting.values:
             return redirect("groups:detail", pk=group.pk)
@@ -344,9 +357,10 @@ class GroupRoutingView(SectionRequiredMixin, View):
 
 class GroupDeleteView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        group = get_object_or_404(ServerGroup, pk=pk)
+        group = get_object_or_404(self.zone.groups(), pk=pk)
         try:
             delete_group(group, actor=self.member, ip=self.client_ip)
         except GroupError as error:
@@ -360,13 +374,14 @@ class GroupSettingsView(SectionRequiredMixin, FormView):  # type: ignore[type-ar
     """The protocol settings of every member of a group; saving starts the operation."""
 
     section = Section.SERVERS
+    whole_zone_only = True
 
     template_name = "groups/settings.html"
     form_class = GroupSettingsForm
 
     @cached_property
     def group(self) -> ServerGroup:
-        return get_object_or_404(ServerGroup, pk=self.kwargs["pk"])
+        return get_object_or_404(self.zone.groups(), pk=self.kwargs["pk"])
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         return self._without_leader(request) or super().get(request, *args, **kwargs)

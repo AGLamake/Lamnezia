@@ -10,7 +10,6 @@ from django.views.generic import DetailView, ListView
 
 from apps.accounts.permissions import SectionRequiredMixin
 from apps.accounts.services.access import Section
-from apps.accounts.services.zone import Zone
 from apps.core.paging import PageSizeMixin
 from apps.operations.forms import OperationFilterForm
 from apps.operations.models import Operation, OperationQuerySet, StepStatus
@@ -18,15 +17,16 @@ from apps.operations.services.launcher import OperationNotRetryableError, retry
 
 
 class _OperationsView(SectionRequiredMixin):
-    """The whole zone sees every operation; anyone else only the ones they started."""
+    """The whole zone sees every operation; anyone else only the ones started by their team:
+    a moderator by themselves, an owner by themselves and their moderators."""
 
     section = Section.OPERATIONS
 
     def operations(self) -> OperationQuerySet:
         operations = Operation.objects.all()
-        if Zone(self.member).is_whole:
+        if self.zone.is_whole:
             return operations
-        return operations.filter(created_by=self.member)
+        return operations.filter(created_by__in=self.zone.team())
 
 
 class OperationListView(PageSizeMixin, _OperationsView, ListView):  # type: ignore[type-arg]

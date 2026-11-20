@@ -127,6 +127,9 @@ msgstr "Приватный ключ"
 msgid "Remove the probe container"
 msgstr "Удалить контейнер проверки"
 
+msgid "Remove the protocols and services of the server first."
+msgstr "Сначала удалите протоколы и сервисы сервера."
+
 msgid "Remove the reachability probe"
 msgstr "Удаление проверки доступности"
 
@@ -185,6 +188,12 @@ msgstr "Ответчик не отвечает из интернета."
 msgid "The server already has this address."
 msgstr "У сервера уже есть этот адрес."
 
+msgid "The server has other owners: leave its list instead."
+msgstr "У сервера есть другие владельцы: вместо удаления выйдите из его списка."
+
+msgid "The server is deleted from the panel."
+msgstr "Сервер удалён из панели."
+
 msgid "This port is used by SSH or a protocol on the server."
 msgstr "Этот порт занят SSH или протоколом на сервере."
 
@@ -202,6 +211,12 @@ msgstr "Дождаться других операций на сервере"
 
 msgid "Where to pay for the VPS: the hosting provider's site or its billing page."
 msgstr "Где платить за VPS: сайт хостера или его страница оплаты."
+
+msgid "You are the only owner of the server."
+msgstr "Вы единственный владелец сервера."
+
+msgid "You no longer answer for the server."
+msgstr "Вы больше не отвечаете за сервер."
 
 msgid "added at"
 msgstr "добавлен"

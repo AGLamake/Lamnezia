@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Server administrator**: a new staff role that runs its own servers whole — adds them, installs
+  protocols, changes settings, restores backups — and creates plans on them; it sees the orders,
+  statistics, dashboard and audit log of its zone only, and gives section levels to its
+  moderators. Anything of another server administrator answers 404 and is not counted anywhere. A
+  server is deleted from the panel by an administrator or its only server administrator, once it
+  has no protocols or services; a server administrator of a shared server can leave its list. Two-
+  factor login is required for the role, like for administrators. Server groups and relays stay
+  with administrators. Upgrading needs only the migrations.
 - **Access to sections**: each section of the admin interface has a level for a staff member —
   none, view or manage. The menu, the inbox tabs, the buttons and the quick search (Ctrl+K) show
   only what the member may open; on "view" pages have no action buttons and no key secrets, and

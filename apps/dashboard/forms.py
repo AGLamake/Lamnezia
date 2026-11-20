@@ -57,9 +57,10 @@ class UserFilterForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, zone: Zone, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        plans = [(str(plan.pk), plan.name) for plan in Plan.objects.all()]
+        self.fields["server"].queryset = zone.servers().order_by("name")  # type: ignore[attr-defined]
+        plans = [(str(plan.pk), plan.name) for plan in zone.offered_plans()]
         cast(forms.ChoiceField, self.fields["plan"]).choices = [
             ("", _("Any")),
             (NO_PLAN, _("No plan")),
@@ -124,9 +125,10 @@ class UserBatchForm(forms.Form):
     )
     plan = forms.ModelChoiceField(label=_("Plan"), queryset=Plan.objects.all(), required=False)
 
-    def __init__(self, *args: Any, users: QuerySet[User], **kwargs: Any) -> None:
+    def __init__(self, *args: Any, zone: Zone, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.fields["users"].queryset = users  # type: ignore[attr-defined]
+        self.fields["users"].queryset = zone.users()  # type: ignore[attr-defined]
+        self.fields["plan"].queryset = zone.offered_plans()  # type: ignore[attr-defined]
 
     def clean(self) -> dict[str, Any]:
         data = super().clean() or {}

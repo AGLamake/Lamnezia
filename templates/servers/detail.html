@@ -20,6 +20,11 @@
       {% csrf_token %}
       <button type="submit" class="btn btn-primary">{% icon "refresh" %}{% translate "Check again" %}</button>
     </form>
+    {% if staff.may_leave %}<form method="post" action="{% url 'servers:leave' server.pk %}" data-confirm="{% translate "Leave the list of the server? The other owners keep it, and it disappears from your panel." %}">
+      {% csrf_token %}<button type="submit" class="btn btn-secondary">{% translate "Leave" %}</button>
+    </form>{% elif staff.may_delete %}<form method="post" action="{% url 'servers:delete' server.pk %}" data-confirm="{% translate "Delete the server from the panel? Nothing on the server is touched; remove its protocols and services first." %}">
+      {% csrf_token %}<button type="submit" class="btn btn-danger">{% icon "trash" %}{% translate "Delete" %}</button>
+    </form>{% endif %}
   </div>{% endif %}
 </div>
 
@@ -215,6 +220,6 @@
 
   {% include "servers/_addresses.html" %}
 
-  {% include "relays/_card.html" %}
+  {% whole_zone as whole %}{% if whole %}{% include "relays/_card.html" %}{% endif %}
 </div>{% endif %}
 {% endblock %}

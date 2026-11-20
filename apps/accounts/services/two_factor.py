@@ -10,10 +10,11 @@ from django_otp import verify_token
 from django_otp.models import Device
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
-from apps.accounts.models import User
+from apps.accounts.models import Role, User
 from apps.accounts.services.backup_codes import BackupCodes, looks_like_backup_code
 
 _QR_SCALE = 5
+_SERVER_RUNNERS = frozenset({Role.ADMIN, Role.OWNER})
 
 
 @dataclass(frozen=True)
@@ -36,7 +37,8 @@ class TwoFactor:
 
     @property
     def required(self) -> bool:
-        return self._user.is_admin and settings.REQUIRE_ADMIN_2FA
+        """The administrator and server administrators sign in with a code."""
+        return self._user.role in _SERVER_RUNNERS and settings.REQUIRE_ADMIN_2FA
 
     def enrollment(self) -> Enrollment:
         device = self._pending_device()

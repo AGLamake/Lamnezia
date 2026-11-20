@@ -28,7 +28,7 @@ from apps.dashboard.services.batch import BatchReport, UserBatchActions
 from apps.dashboard.services.users import UserCard, UserRow, users_for_list
 from apps.keys.services.subscription import MySubscription
 from apps.keys.services.subscription_devices import SubscriptionDevices
-from apps.plans.models import Plan
+from apps.keys.services.zone import KeyZone
 
 
 class ZoneUsersMixin(SectionRequiredMixin):
@@ -42,7 +42,7 @@ class UserListView(PageSizeMixin, ZoneUsersMixin, ListView):  # type: ignore[typ
     template_name = "dashboard/users/list.html"
 
     def get_queryset(self) -> QuerySet[User]:
-        self.filter_form = UserFilterForm(self.request.GET or None)
+        self.filter_form = UserFilterForm(self.request.GET or None, zone=Zone(self.member))
         return self.filter_form.filter(users_for_list().filter(pk__in=self.zone_users()))
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -52,7 +52,7 @@ class UserListView(PageSizeMixin, ZoneUsersMixin, ListView):  # type: ignore[typ
             "filter_form": self.filter_form,
             "rows": UserRow.rows(context["object_list"]),
             "actions": BatchAction.choices,
-            "plans": Plan.objects.all(),
+            "plans": Zone(self.member).offered_plans(),
             "filters": self.request.GET.urlencode(),
         }
 
@@ -65,7 +65,7 @@ class UserDetailView(ZoneUsersMixin, TemplateView):
         subscription = MySubscription(user)
         token = subscription.token() if subscription.available else None
         return super().get_context_data(
-            card=UserCard.load(user, timezone.now()),
+            card=UserCard.load(user, timezone.now(), KeyZone(self.member)),
             offers_subscription=subscription.available,
             subscription_devices=SubscriptionDevices(user).all() if token else [],
             subscription_url=self.request.build_absolute_uri(
@@ -107,7 +107,7 @@ class UserBatchView(ZoneUsersMixin, View):
     """Starts a bulk action and opens its report; a mistake in the form goes back to the list."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        form = UserBatchForm(request.POST, users=self.zone_users())
+        form = UserBatchForm(request.POST, zone=Zone(self.member))
         if not form.is_valid():
             for errors in form.errors.values():
                 messages.error(request, str(errors[0]))

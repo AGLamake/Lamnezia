@@ -52,7 +52,7 @@
 | `LAMNEZIA_MATERIALS_PROXY` | пусто | Прокси для еженедельной проверки ссылок полезных материалов, как `LAMNEZIA_TELEGRAM_PROXY`: сайт, заблокированный там, где стоит панель, не считается битой ссылкой. |
 | `LAMNEZIA_AMNEZIA_APP_STORE_URL` | Amnezia в App Store | Ссылка для iOS в инструкциях. |
 | `LAMNEZIA_AMNEZIA_GOOGLE_PLAY_URL` | Amnezia в Google Play | Ссылка на Google Play в инструкциях. |
-| `LAMNEZIA_REQUIRE_ADMIN_2FA` | `True` | Администраторы входят с кодом из приложения-аутентификатора. |
+| `LAMNEZIA_REQUIRE_ADMIN_2FA` | `True` | Администраторы и администраторы серверов входят с кодом из приложения-аутентификатора. |
 | `LAMNEZIA_LOGIN_FAILURE_LIMIT` | `5` | Сколько неверных паролей подряд, прежде чем вход в учётную запись с одного адреса приостановится. |
 | `LAMNEZIA_LOGIN_LOCKOUT_MINUTES` | `15` | На сколько минут вход приостанавливается. |
 | `LAMNEZIA_REGISTRATION_RATE_LIMIT` | `5` | Сколько открытых регистраций в час принимается с одного адреса. `0` снимает ограничение. |

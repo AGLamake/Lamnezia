@@ -47,11 +47,11 @@ class _KeysStaffView(SectionRequiredMixin):
     kwargs: dict[str, Any]
 
     @cached_property
-    def zone(self) -> KeyZone:
+    def key_zone(self) -> KeyZone:
         return KeyZone(self.member)
 
     def get_key(self) -> AccessKey:
-        return get_object_or_404(self.zone.keys(), pk=self.kwargs["pk"])
+        return get_object_or_404(self.key_zone.keys(), pk=self.kwargs["pk"])
 
     @property
     def actions(self) -> KeyActions:
@@ -67,19 +67,19 @@ class KeyListView(PageSizeMixin, _KeysStaffView, ListView):  # type: ignore[type
     context_object_name = "keys"
 
     def get_queryset(self) -> Any:
-        self.filter_form = KeyFilterForm(self.request.GET or None, zone=self.zone)
-        keys = self.zone.keys().select_related("user").order_by("-created_at")
+        self.filter_form = KeyFilterForm(self.request.GET or None, zone=self.key_zone)
+        keys = self.key_zone.keys().select_related("user").order_by("-created_at")
         return self.filter_form.filter(keys)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(
             filter_form=self.filter_form,
-            bulk_form=KeyBulkForm(zone=self.zone),
-            drift_count=self.zone.drifts().count(),
+            bulk_form=KeyBulkForm(zone=self.key_zone),
+            drift_count=self.key_zone.drifts().count(),
             **kwargs,
         )
         # "Server · protocol" instead of the internal instance id; a gone one keeps its id.
-        titles = self.zone.titles()
+        titles = self.key_zone.titles()
         context["rows"] = [(key, titles.get(key.source, key.source)) for key in context["keys"]]
         return context
 
@@ -89,12 +89,14 @@ class KeyIssueView(_KeysStaffView, FormView):  # type: ignore[type-arg]
     form_class = KeyIssueForm
 
     def get_form_kwargs(self) -> dict[str, Any]:
-        return {**super().get_form_kwargs(), "zone": self.zone}
+        return {**super().get_form_kwargs(), "zone": self.key_zone}
 
     def form_valid(self, form: KeyIssueForm) -> HttpResponse:
         data = form.cleaned_data
         try:
-            operation = self.zone.issue(self.actions, data["source"], data["name"], data["user"])
+            operation = self.key_zone.issue(
+                self.actions, data["source"], data["name"], data["user"]
+            )
         except KeyQuotaReachedError:
             form.add_error(None, QUOTA_REACHED)
             return self.form_invalid(form)
@@ -111,7 +113,7 @@ class KeyDetailView(_KeysStaffView, DetailView):  # type: ignore[type-arg]
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         address = KeyAddress(self.object, self.member, self.client_ip)
         return super().get_context_data(
-            assign_form=KeyAssignForm(zone=self.zone),
+            assign_form=KeyAssignForm(zone=self.key_zone),
             address_form=KeyAddressForm(address=address) if address.choices else None,
             instance_title=instances.titles().get(self.object.source, self.object.source),
             profile_pending=request_profiles([self.object]),
@@ -137,7 +139,7 @@ class KeyBulkView(_KeysStaffView, View):
     """
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        form = KeyBulkForm(request.POST, zone=self.zone)
+        form = KeyBulkForm(request.POST, zone=self.key_zone)
         if not form.is_valid():
             messages.error(request, _("Tick the keys and choose what to do with them."))
             return redirect("keys:list")
@@ -166,7 +168,7 @@ class KeyBulkView(_KeysStaffView, View):
 class KeyAssignView(_KeysStaffView, View):
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         key = self.get_key()
-        form = KeyAssignForm(request.POST, zone=self.zone)
+        form = KeyAssignForm(request.POST, zone=self.key_zone)
         if not form.is_valid() or key.is_gone:
             messages.error(request, _("Choose a user to give the key to."))
             return redirect("keys:detail", pk=key.pk)
@@ -271,8 +273,8 @@ class DriftListView(_KeysStaffView, TemplateView):
     read_level = Level.MANAGE
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        drifts = self.zone.drifts().select_related("key")
-        titles = self.zone.titles()
+        drifts = self.key_zone.drifts().select_related("key")
+        titles = self.key_zone.titles()
         groups = [
             {
                 "source": source,
@@ -302,14 +304,14 @@ class DriftListView(_KeysStaffView, TemplateView):
 class DriftCheckView(_KeysStaffView, View):
     def post(self, request: HttpRequest) -> HttpResponse:
         source = request.POST.get("source", "")
-        if source not in self.zone.titles():
+        if source not in self.key_zone.titles():
             raise Http404
         return _to_operation(self.drift_actions.check(source))
 
 
 class DriftResolveView(_KeysStaffView, View):
     def post(self, request: HttpRequest, pk: int, action: str) -> HttpResponse:
-        drift = get_object_or_404(self.zone.drifts(), pk=pk)
+        drift = get_object_or_404(self.key_zone.drifts(), pk=pk)
         if action not in ALLOWED_ACTIONS[drift.kind]:
             raise Http404
         return _to_operation(self.drift_actions.resolve(drift, DriftAction(action)))

@@ -120,6 +120,9 @@ msgstr "Удаление снимка протокола"
 msgid "Delete reply template"
 msgstr "Удаление шаблона ответа"
 
+msgid "Delete server"
+msgstr "Удаление сервера"
+
 msgid "Delete server group"
 msgstr "Удаление группы серверов"
 
@@ -185,6 +188,9 @@ msgstr "Выдать ссылку-подписку"
 
 msgid "Keep server in group after failed leave"
 msgstr "Сервер оставлен в группе после неудачного выхода"
+
+msgid "Leave server list"
+msgstr "Выход из списка сервера"
 
 msgid "Link messenger"
 msgstr "Привязка мессенджера"

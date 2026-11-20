@@ -52,7 +52,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_MATERIALS_PROXY` | empty | A proxy for the weekly check of the useful material links, like `LAMNEZIA_TELEGRAM_PROXY`, so a site blocked where the panel runs is not marked broken. |
 | `LAMNEZIA_AMNEZIA_APP_STORE_URL` | Amnezia in App Store | iOS download link in the guides. |
 | `LAMNEZIA_AMNEZIA_GOOGLE_PLAY_URL` | Amnezia in Google Play | Google Play link in the guides. |
-| `LAMNEZIA_REQUIRE_ADMIN_2FA` | `True` | Administrators must sign in with a code from an authenticator app. |
+| `LAMNEZIA_REQUIRE_ADMIN_2FA` | `True` | Administrators and server administrators must sign in with a code from an authenticator app. |
 | `LAMNEZIA_LOGIN_FAILURE_LIMIT` | `5` | Wrong passwords in a row before signing in to an account from one address is paused. |
 | `LAMNEZIA_LOGIN_LOCKOUT_MINUTES` | `15` | How long the pause lasts. |
 | `LAMNEZIA_REGISTRATION_RATE_LIMIT` | `5` | Open registrations an hour from one address. `0` turns the limit off. |

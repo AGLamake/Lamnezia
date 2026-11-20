@@ -7,11 +7,12 @@ from typing import Any, cast
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest, HttpResponseBase
+from django.http import Http404, HttpRequest, HttpResponseBase
 from django.views.generic.edit import ProcessFormView
 
 from apps.accounts.models import STAFF_ROLES, Role, User
 from apps.accounts.services.access import Access, Level, Section
+from apps.accounts.services.zone import Zone
 from apps.audit.services import journal as audit
 
 View = Callable[..., HttpResponseBase]
@@ -59,20 +60,21 @@ class AdminRequiredMixin(RoleRequiredMixin):
 class SectionRequiredMixin(StaffRequiredMixin):
     """A staff member with `read_level` in `section` opens the view; a request that may change
     something (any method but GET and HEAD) needs `write_level`. A form page is an action itself,
-    so it opens with `write_level` too."""
+    so it opens with `write_level` too. A view of `whole_zone_only` (objects nobody but the
+    administrator answers for, such as server groups) does not exist for anyone else."""
 
     section: Section
     read_level = Level.VIEW
     write_level = Level.MANAGE
+    whole_zone_only = False
 
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         member = request.user
-        if (
-            isinstance(member, User)
-            and member.is_staff_member
-            and not Access(member).allows(self.section, self._needed_level(request))
-        ):
-            raise PermissionDenied
+        if isinstance(member, User) and member.is_staff_member:
+            if not Access(member).allows(self.section, self._needed_level(request)):
+                raise PermissionDenied
+            if self.whole_zone_only and not Zone(member).is_whole:
+                raise Http404
         return super().dispatch(request, *args, **kwargs)
 
     def _needed_level(self, request: HttpRequest) -> Level:
@@ -83,6 +85,11 @@ class SectionRequiredMixin(StaffRequiredMixin):
     @cached_property
     def access(self) -> Access:
         return Access(self.member)
+
+    @cached_property
+    def zone(self) -> Zone:
+        """Whose objects the member sees; anything outside it answers 404."""
+        return Zone(self.member)
 
 
 def role_required(*roles: str) -> Callable[[View], View]:

@@ -180,7 +180,7 @@ class IncidentListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg
     paginate_by = _PAGE_SIZE
 
     def get_queryset(self) -> QuerySet[Incident]:
-        return incidents()
+        return self.zone.narrow(incidents(), server="server")
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(close_form=CloseIncidentForm(), **kwargs)
@@ -190,7 +190,8 @@ class IncidentCloseView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        incident = get_object_or_404(Incident.objects.select_related("server"), pk=pk)
+        found = self.zone.narrow(Incident.objects.select_related("server"), server="server")
+        incident = get_object_or_404(found, pk=pk)
         form = CloseIncidentForm(request.POST)
         if incident.is_open and form.is_valid():
             close_incident(incident, self.member, form.cleaned_data["text"])

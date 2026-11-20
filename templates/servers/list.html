@@ -3,14 +3,14 @@
 {% block title %}{% translate "Servers" %} · Lamnezia{% endblock %}
 
 {% block content %}
-{% can "servers" "manage" as manage %}
+{% can "servers" "manage" as manage %}{% whole_zone as whole %}
 <div class="page-header">
   <div>
     <h1 class="page-title">{% translate "Servers" %}</h1>
     <p class="page-lead">{% translate "The VPS the panel manages: their state, payment and quick actions." %}</p>
   </div>
   <div class="flex flex-wrap gap-2">
-    <a href="{% url 'groups:list' %}" class="btn btn-secondary">{% icon "layers" %}{% translate "Server groups" %}</a>
+    {% if whole %}<a href="{% url 'groups:list' %}" class="btn btn-secondary">{% icon "layers" %}{% translate "Server groups" %}</a>{% endif %}
     {% if manage %}<a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>{% endif %}
   </div>
 </div>

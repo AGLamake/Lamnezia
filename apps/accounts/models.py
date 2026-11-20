@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy as _
 
 class Role(models.TextChoices):
     ADMIN = "admin", _("Administrator")
+    OWNER = "owner", _("Server administrator")
     MODERATOR = "moderator", _("Moderator")
     USER = "user", _("User")
 
@@ -36,7 +37,7 @@ class NotifyVia(models.TextChoices):
 
 
 # Roles that work in the admin interface of the panel.
-STAFF_ROLES = frozenset({Role.ADMIN, Role.MODERATOR})
+STAFF_ROLES = frozenset({Role.ADMIN, Role.OWNER, Role.MODERATOR})
 
 
 class AccountManager(UserManager["User"]):
@@ -87,7 +88,7 @@ class User(AbstractUser):
     )
     moderated_servers = models.ManyToManyField(
         "servers.Server",
-        verbose_name=_("servers of the moderator"),
+        verbose_name=_("servers of the staff member"),
         blank=True,
         related_name="moderators",
     )
@@ -143,7 +144,7 @@ class User(AbstractUser):
 
     @property
     def is_staff_member(self) -> bool:
-        """Administrator or moderator."""
+        """Administrator, server administrator or moderator."""
         return self.role in STAFF_ROLES
 
     @property
@@ -173,7 +174,7 @@ class Management(models.Model):
         verbose_name=_("staff member"),
         on_delete=models.CASCADE,
         related_name="+",
-        limit_choices_to={"role": Role.MODERATOR},
+        limit_choices_to={"role__in": [Role.OWNER, Role.MODERATOR]},
     )
     via_plan = models.BooleanField(_("from the plan"), default=False)
 

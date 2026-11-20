@@ -91,18 +91,18 @@ class Attention:
         return self.failed_since(self._now - _FAILED_WITHIN)
 
     def failed_since(self, start: datetime) -> int:
-        """Operations failed since `start`; a moderator counts only the ones they started."""
+        """Operations failed since `start`; outside the whole zone only the team's count."""
         if not self._access.allows(Section.OPERATIONS):
             return 0
         failed = Operation.objects.filter(status=OperationStatus.FAILED, created_at__gte=start)
         if not self._zone.is_whole:
-            failed = failed.filter(created_by=self._member)
+            failed = failed.filter(created_by__in=self._zone.team())
         return failed.count()
 
     @cached_property
     def broken_links(self) -> int:
         # Materials are edited in the admin site, which only administrators open.
-        return UsefulMaterial.objects.broken().count() if self._member.is_admin else 0
+        return UsefulMaterial.objects.broken().count() if self._zone.is_whole else 0
 
     @cached_property
     def relays(self) -> list[Relay]:
@@ -150,7 +150,7 @@ class Attention:
     @cached_property
     def panel_release(self) -> PanelRelease | None:
         """A release newer than the running panel; updating the panel is an administrator's."""
-        if not self._member.is_admin:
+        if not self._zone.is_whole:
             return None
         return PanelUpdate.from_settings().offer().release
 

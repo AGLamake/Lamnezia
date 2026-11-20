@@ -13,6 +13,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.models import Role, User
+from apps.accounts.services.zone import Zone
 
 
 class Section(models.TextChoices):
@@ -61,8 +62,25 @@ def _grants(**levels: tuple[Level, Level]) -> dict[str, Grant]:
 
 _NONE, _VIEW, _MANAGE = Level.NONE, Level.VIEW, Level.MANAGE
 
-# The moderator's defaults are exactly what a moderator could do in 1.0.0.
+# The moderator's defaults are exactly what a moderator could do in 1.0.0. An owner runs their
+# own servers whole, sees the orders and the audit log of their zone, and may be given articles.
 POLICIES: dict[str, dict[str, Grant]] = {
+    Role.OWNER: _grants(
+        overview=(_MANAGE, _MANAGE),
+        stats=(_MANAGE, _MANAGE),
+        servers=(_MANAGE, _MANAGE),
+        backups=(_MANAGE, _MANAGE),
+        operations=(_MANAGE, _MANAGE),
+        users=(_MANAGE, _MANAGE),
+        keys=(_MANAGE, _MANAGE),
+        registration=(_MANAGE, _MANAGE),
+        plans=(_MANAGE, _MANAGE),
+        orders=(_VIEW, _VIEW),
+        inbox=(_MANAGE, _MANAGE),
+        articles=(_NONE, _MANAGE),
+        audit=(_VIEW, _VIEW),
+        staff=(_MANAGE, _MANAGE),
+    ),
     Role.MODERATOR: _grants(
         overview=(_VIEW, _VIEW),
         stats=(_VIEW, _VIEW),
@@ -106,7 +124,7 @@ class Access:
 
     def grant(self, target: User, section: str, level: Level) -> None:
         """Give `target` the `level` in `section`; not above the ceiling of their role, not above
-        what the member has, and only to another staff member the member may manage."""
+        what the member has, and only to one of the member's moderators (`Zone.moderators`)."""
         if section not in Section.values:
             raise NotAllowedError(section)
         if not self._can_manage(target):
@@ -119,9 +137,9 @@ class Access:
     def _can_manage(self, target: User) -> bool:
         return (
             target.pk != self._member.pk
-            and target.is_staff_member
             and not target.is_admin
             and self.allows(Section.STAFF, Level.MANAGE)
+            and Zone(self._member).moderators().filter(pk=target.pk).exists()
         )
 
     def _grant(self, section: str) -> Grant:

@@ -8,8 +8,10 @@ from apps.servers.views import (
     ServerAddressRemoveView,
     ServerCheckView,
     ServerCreateView,
+    ServerDeleteView,
     ServerDetailView,
     ServerHostKeyForgetView,
+    ServerLeaveView,
     ServerListView,
     ServerUpdateView,
 )
@@ -22,6 +24,8 @@ urlpatterns = [
     path("<int:pk>/", ServerDetailView.as_view(), name="detail"),
     path("<int:pk>/edit/", ServerUpdateView.as_view(), name="edit"),
     path("<int:pk>/check/", ServerCheckView.as_view(), name="check"),
+    path("<int:pk>/delete/", ServerDeleteView.as_view(), name="delete"),
+    path("<int:pk>/leave/", ServerLeaveView.as_view(), name="leave"),
     path("<int:pk>/host-key/forget/", ServerHostKeyForgetView.as_view(), name="forget-host-key"),
     path("<int:pk>/addresses/", ServerAddressAddView.as_view(), name="address-add"),
     path(

@@ -11,13 +11,11 @@ from django.views import View
 from apps.accounts.permissions import SectionRequiredMixin
 from apps.accounts.services.access import Section
 from apps.audit.services import journal as audit
-from apps.groups.models import ServerGroup
 from apps.relays.errors import RelayError
 from apps.relays.forms import RelaySettingsForm, SplitEntryForm, SplitSourceForm
 from apps.relays.models import Relay, SplitEntry, SplitSource
 from apps.relays.services.deployment import INSTALL_KIND, REMOVE_KIND, UPDATE_KIND, start
 from apps.relays.services.split_lists import update_soon
-from apps.servers.models import Server
 
 # The block of the network list on the group page.
 _LISTS = "#split-lists"
@@ -25,10 +23,11 @@ _LISTS = "#split-lists"
 
 class RelayActionView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
     kind = ""
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        server = get_object_or_404(Server, pk=pk)
+        server = get_object_or_404(self.zone.servers(), pk=pk)
         try:
             operation = start(self.kind, server, user=self.member, ip=self.client_ip)
         except RelayError as error:
@@ -41,6 +40,7 @@ class RelaySettingsView(SectionRequiredMixin, View):
     """Save the agent settings and write them to the relay by a background update."""
 
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         relay = get_object_or_404(Relay, server_id=pk, installed_at__isnull=False)
@@ -83,9 +83,10 @@ class SplitSourceAddView(SectionRequiredMixin, View):
     """Add a list to the group and download it in the background at once."""
 
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        group = get_object_or_404(ServerGroup, pk=pk)
+        group = get_object_or_404(self.zone.groups(), pk=pk)
         form = SplitSourceForm(request.POST, group=group)
         if not form.is_valid():
             _report(request, form)
@@ -101,6 +102,7 @@ class SplitSourceToggleView(SectionRequiredMixin, View):
     """Turn a list off, or on again; a list turned on is downloaded at once."""
 
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         source = get_object_or_404(SplitSource, pk=pk)
@@ -115,6 +117,7 @@ class SplitSourceToggleView(SectionRequiredMixin, View):
 
 class SplitSourceDeleteView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         source = get_object_or_404(SplitSource, pk=pk)
@@ -126,9 +129,10 @@ class SplitSourceDeleteView(SectionRequiredMixin, View):
 
 class SplitEntryAddView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        group = get_object_or_404(ServerGroup, pk=pk)
+        group = get_object_or_404(self.zone.groups(), pk=pk)
         form = SplitEntryForm(request.POST, group=group)
         if not form.is_valid():
             _report(request, form)
@@ -147,6 +151,7 @@ class SplitEntryAddView(SectionRequiredMixin, View):
 
 class SplitEntryDeleteView(SectionRequiredMixin, View):
     section = Section.SERVERS
+    whole_zone_only = True
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         entry = get_object_or_404(SplitEntry, pk=pk)

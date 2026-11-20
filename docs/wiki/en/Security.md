@@ -9,6 +9,7 @@ has to take care of. Vulnerabilities are reported privately: see
 | Role | Access |
 |---|---|
 | **Administrator** | Everything, including the panel settings and the Django admin site `/admin/`. |
+| **Server administrator** | Their own servers whole — protocols, settings, backups, operations — and their own plans, users and moderators; orders and the audit log of their zone. Never the settings, server groups, relays or the Django admin site. |
 | **Moderator** | The sections of the admin interface their access opens (see below), narrowed to their zone; never the settings or the Django admin site. |
 | **User** | The client portal: own keys, guides, support. |
 
@@ -41,7 +42,42 @@ defaults are exactly what a moderator could do in 1.0.0:
 | Operations, users, keys, registration, inbox | manage | manage |
 | Orders, articles, audit log, staff | none | none |
 
+A server administrator's defaults:
+
+| Section | Default | Ceiling |
+|---|---|---|
+| Overview, statistics, servers, backups, operations, users, keys, registration, inbox, plans, staff | manage | manage |
+| Orders, audit log | view | view |
+| Articles | none | manage |
+
 The start page `/` leads to the first section of the menu the member may open.
+
+### Server administrator's zone
+
+A server administrator runs their own servers, like a separate panel inside the panel. Their zone
+is the servers they added or were given, the plans they staff, the users they serve and the
+moderators who share their servers or plans. Anything else answers 404 and is left out of every
+list, counter, **Needs attention**, statistics and the quick search (Ctrl+K):
+
+- **Servers**: a server they add is theirs at once (they join its staff members). They install
+  protocols, change settings, restore backups and see the operations of their servers.
+- **Plans**: a plan they create is theirs; it takes only their servers, and at least one must be
+  chosen (a plan with no servers works on all of them). Servers of the plan outside their zone stay
+  in it untouched. Their users are given only their plans.
+- **Orders**: the orders of their plans, view only.
+- **Audit log** and **operations**: their own actions and those of their moderators.
+- **Users**: a user served by two server administrators is seen by both, each with only the keys
+  on their own servers.
+- **Staff**: they give section levels only to their moderators, never above their own.
+
+Server groups, relays and split lists join servers across the panel, so they belong to
+administrators only; a moderator or a server administrator does not see them. Payment details and
+articles stay shared across the panel.
+
+**Deleting a server.** The server page has **Delete** for an administrator and for the only server
+administrator of the server. The panel forgets the server and touches nothing on it, so the server
+must have no protocols or services left. A server shared by several server administrators cannot be
+deleted by one of them: each of them can **Leave** its list instead, and it stays with the others.
 
 ### Moderator's zone
 
@@ -88,9 +124,9 @@ For scripts, pass the password on standard input: `echo "$PASSWORD" | ... create
 
 ## Two-factor login
 
-With `LAMNEZIA_REQUIRE_ADMIN_2FA=True` (the default) an administrator connects an authenticator app
-(Google Authenticator, Aegis, 2FAS and others) on the first sign-in and then enters a code from it
-after the password; until then no page of the panel opens. Moderators and users can turn it on in
+With `LAMNEZIA_REQUIRE_ADMIN_2FA=True` (the default) an administrator or a server administrator
+connects an authenticator app (Google Authenticator, Aegis, 2FAS and others) on the first sign-in
+and then enters a code from it after the password; until then no page of the panel opens. Moderators and users can turn it on in
 the **Two-factor** section of the **Profile** (the user name in the menu).
 
 ### Backup codes

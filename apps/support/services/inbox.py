@@ -55,8 +55,9 @@ class Inbox:
         self._member = member
 
     def visible(self) -> QuerySet[Conversation]:
-        conversations = Zone(self._member).narrow(Conversation.objects.all(), user="user")
-        if self._member.is_admin:
+        zone = Zone(self._member)
+        conversations = zone.narrow(Conversation.objects.all(), user="user")
+        if zone.is_whole:
             return conversations
         return conversations.filter(Q(assignee=self._member) | Q(assignee=None))
 
@@ -140,7 +141,7 @@ class Inbox:
 
     def assign(self, conversation: Conversation, assignee: User | None) -> None:
         """Only an administrator hands conversations out; `None` takes the assignee off."""
-        if not self._member.is_admin:
+        if not Zone(self._member).is_whole:
             raise NotAllowedError
         conversation.assignee = assignee
         conversation.save(update_fields=["assignee"])

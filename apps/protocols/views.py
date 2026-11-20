@@ -1,6 +1,7 @@
-from typing import Any
+from typing import Any, cast
 
 from django.contrib import messages
+from django.db.models import QuerySet
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseBase
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -19,8 +20,10 @@ from amnezia_core.proxies import (
     TPROXY_CONTAINER,
 )
 from amnezia_core.xray import XRAY_CONTAINER
+from apps.accounts.models import User
 from apps.accounts.permissions import SectionRequiredMixin
 from apps.accounts.services.access import Section
+from apps.accounts.services.zone import Zone
 from apps.audit.services import journal as audit
 from apps.groups.models import ServerGroup
 from apps.keys.services.counts import InstanceKeyCount
@@ -112,13 +115,18 @@ _METADATA_KINDS = {
 }
 
 
+def _services(zone: Zone) -> QuerySet[ServiceInstance]:
+    """Services on the servers of the zone; any other service answers 404."""
+    return zone.narrow(ServiceInstance.objects.select_related("server"), server="server")
+
+
 class ServerImportView(SectionRequiredMixin, View):
     """Start reading the server's containers and clients; the server card shows the progress."""
 
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, server_pk: int) -> HttpResponse:
-        server = get_object_or_404(Server, pk=server_pk)
+        server = get_object_or_404(self.zone.servers(), pk=server_pk)
         start_import(server, self.member)
         return redirect("servers:detail", pk=server.pk)
 
@@ -134,7 +142,7 @@ class ServerInstallView(SectionRequiredMixin, FormView):  # type: ignore[type-ar
     # Looked up after the role check of the view, so a guest cannot tell which servers exist.
     @cached_property
     def server(self) -> Server:
-        return get_object_or_404(Server, pk=self.kwargs["server_pk"])
+        return get_object_or_404(self.zone.servers(), pk=self.kwargs["server_pk"])
 
     @cached_property
     def choices(self) -> list[InstallChoice]:
@@ -159,7 +167,7 @@ class OffloadView(SectionRequiredMixin, View):
     def post(self, request: HttpRequest, server_pk: int, action: str) -> HttpResponse:
         if action not in _OFFLOAD_KINDS:
             raise Http404
-        server = get_object_or_404(Server, pk=server_pk)
+        server = get_object_or_404(self.zone.servers(), pk=server_pk)
         offload.start(_OFFLOAD_KINDS[action], server, self.member, ip=self.client_ip)
         return redirect("servers:detail", pk=server.pk)
 
@@ -172,7 +180,7 @@ class MetadataBlockView(SectionRequiredMixin, View):
     def post(self, request: HttpRequest, server_pk: int, action: str) -> HttpResponse:
         if action not in _METADATA_KINDS:
             raise Http404
-        server = get_object_or_404(Server, pk=server_pk)
+        server = get_object_or_404(self.zone.servers(), pk=server_pk)
         metadata_block.start(_METADATA_KINDS[action], server, self.member, ip=self.client_ip)
         return redirect("servers:detail", pk=server.pk)
 
@@ -191,7 +199,7 @@ class SpeedTestView(SectionRequiredMixin, FormView):  # type: ignore[type-arg]
 
     @cached_property
     def server(self) -> Server:
-        return get_object_or_404(Server, pk=self.kwargs["server_pk"])
+        return get_object_or_404(self.zone.servers(), pk=self.kwargs["server_pk"])
 
     def get_form_kwargs(self) -> dict[str, Any]:
         return {**super().get_form_kwargs(), "server": self.server}
@@ -222,7 +230,7 @@ class SpeedTestStopView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, server_pk: int) -> HttpResponse:
-        server = get_object_or_404(Server, pk=server_pk)
+        server = get_object_or_404(self.zone.servers(), pk=server_pk)
         operation = speed_test.stop(server, self.member, ip=self.client_ip)
         return redirect("operations:detail", pk=operation.pk)
 
@@ -239,7 +247,10 @@ class InstanceMixin:
 
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         # Runs after the role check of the view, so a guest cannot tell which instances exist.
-        instances = ProtocolInstance.objects.select_related("server")
+        member = cast(User, request.user)
+        instances = Zone(member).narrow(
+            ProtocolInstance.objects.select_related("server"), server="server"
+        )
         if not self.allow_removed:
             instances = instances.filter(container_removed_at__isnull=True)
         self.instance = get_object_or_404(instances, pk=kwargs["pk"], container__in=self.containers)
@@ -378,7 +389,8 @@ class ServiceSettingsView(SectionRequiredMixin, FormView):  # type: ignore[type-
     def service(self) -> ServiceInstance:
         # Looked up after the role check of the view, so a guest cannot tell which services exist.
         return get_object_or_404(
-            ServiceInstance.objects.select_related("server"), pk=self.kwargs["pk"]
+            _services(self.zone),
+            pk=self.kwargs["pk"],
         )
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -420,7 +432,10 @@ class ServiceRemoveView(SectionRequiredMixin, View):
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         # Looked up after the role check of the view, so a guest cannot tell which services exist.
-        service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
+        service = get_object_or_404(
+            _services(self.zone),
+            pk=pk,
+        )
         operation = start_service_removal(service, self.member, ip=self.client_ip)
         return redirect("operations:detail", pk=operation.pk)
 
@@ -431,7 +446,10 @@ class ServiceSecretView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
+        service = get_object_or_404(
+            _services(self.zone),
+            pk=pk,
+        )
         if not renews_secret(service):
             raise Http404
         operation = start_secret_renewal(service, self.member, ip=self.client_ip)
@@ -447,7 +465,10 @@ class _ServiceRevealView(SectionRequiredMixin, View):
     template_name: str
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
+        service = get_object_or_404(
+            _services(self.zone),
+            pk=pk,
+        )
         context = self.reveal(service)
         if context is None:
             raise Http404
@@ -490,7 +511,10 @@ class ServiceLogDeletionView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
+        service = get_object_or_404(
+            _services(self.zone),
+            pk=pk,
+        )
         if not service.is_socks5:
             raise Http404
         operation = start_log_deletion(service, self.member, ip=self.client_ip)
@@ -503,7 +527,10 @@ class DnsRebuildView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
+        service = get_object_or_404(
+            _services(self.zone),
+            pk=pk,
+        )
         if not service.is_dns:
             raise Http404
         operation = start_dns_rebuild(service, self.member, ip=self.client_ip)
@@ -518,7 +545,10 @@ class ServiceActionView(SectionRequiredMixin, View):
     def post(self, request: HttpRequest, pk: int, action: str) -> HttpResponse:
         if action not in _SERVICE_ACTION_KINDS:
             raise Http404
-        service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
+        service = get_object_or_404(
+            _services(self.zone),
+            pk=pk,
+        )
         operation = start_service_action(_SERVICE_ACTION_KINDS[action], service, self.member)
         return redirect("operations:detail", pk=operation.pk)
 
@@ -533,7 +563,7 @@ class ReaddressView(SectionRequiredMixin, FormView):  # type: ignore[type-arg]
 
     @cached_property
     def server(self) -> Server:
-        return get_object_or_404(Server, pk=self.kwargs["server_pk"])
+        return get_object_or_404(self.zone.servers(), pk=self.kwargs["server_pk"])
 
     @cached_property
     def readdress(self) -> ServerReaddress:
@@ -639,7 +669,8 @@ class IpsecReissueView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        instance = get_object_or_404(ProtocolInstance, pk=pk, container_removed_at__isnull=True)
+        instances = self.zone.narrow(ProtocolInstance.objects.all(), server="server")
+        instance = get_object_or_404(instances, pk=pk, container_removed_at__isnull=True)
         identity = IpsecIdentity.of(instance.server)
         if identity is None or identity.instance != instance:
             raise Http404

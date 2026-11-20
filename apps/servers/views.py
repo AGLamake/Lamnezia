@@ -2,6 +2,7 @@ from typing import Any
 
 from django.conf import settings
 from django.contrib import messages
+from django.db.models import QuerySet
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -34,6 +35,7 @@ from apps.servers.services.host_key import (
     trusted_host_key,
 )
 from apps.servers.services.monitor import daily_history
+from apps.servers.services.staff import ServerStaff, ServerStaffError
 
 
 class ServerListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg]
@@ -43,11 +45,11 @@ class ServerListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg]
 
     def get_queryset(self) -> Any:
         self.filter_form = ServerFilterForm(self.request.GET or None)
-        return self.filter_form.filter(Server.objects.select_related("latest_sample"))
+        return self.filter_form.filter(self.zone.servers().select_related("latest_sample"))
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(
-            filter_form=self.filter_form, has_servers=Server.objects.exists(), **kwargs
+            filter_form=self.filter_form, has_servers=self.zone.servers().exists(), **kwargs
         )
 
 
@@ -56,14 +58,17 @@ class ServerDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-a
 
     section = Section.SERVERS
 
-    model = Server
     template_name = "servers/detail.html"
     context_object_name = "server"
+
+    def get_queryset(self) -> QuerySet[Server]:
+        return self.zone.servers()
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         server: Server = self.object
         latest = latest_operation(server)
         return super().get_context_data(
+            staff=ServerStaff(server, self.member),
             warnings=[CheckWarning(code).label for code in server.warnings],
             containers=server_containers(server),
             history=daily_history(server, settings.MONITOR_HISTORY_DAYS),
@@ -85,16 +90,19 @@ class ServerCreateView(SectionRequiredMixin, CreateView):  # type: ignore[type-a
 
     def form_valid(self, form: "ModelForm[Server]") -> HttpResponse:
         server = form.save()
+        ServerStaff(server, self.member).join()
         start_check(server, self.member)
         return HttpResponseRedirect(reverse("servers:detail", args=[server.pk]))
 
 
 class ServerUpdateView(SectionRequiredMixin, UpdateView):  # type: ignore[type-arg]
     section = Section.SERVERS
-    model = Server
     form_class = ServerForm
     template_name = "servers/form.html"
     context_object_name = "server"
+
+    def get_queryset(self) -> QuerySet[Server]:
+        return self.zone.servers()
 
     def form_valid(self, form: "ModelForm[Server]") -> HttpResponse:
         """A new address forgets the old SSH fingerprint; the keys and IPsec may need updating."""
@@ -113,11 +121,45 @@ def _readdress_pending(server: Server) -> bool:
     return ServerReaddress(server).pending or IpsecIdentity.of(server) is not None
 
 
+class _StaffView(SectionRequiredMixin, View):
+    """Deleting the server or leaving its list; a refusal is told on the server page."""
+
+    section = Section.SERVERS
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        server = get_object_or_404(self.zone.servers(), pk=pk)
+        try:
+            self.act(ServerStaff(server, self.member))
+        except ServerStaffError as error:
+            messages.error(request, error.message)
+            return redirect("servers:detail", pk=pk)
+        return redirect("servers:list")
+
+    def act(self, staff: ServerStaff) -> None:
+        raise NotImplementedError
+
+
+class ServerDeleteView(_StaffView):
+    """The panel forgets the server; nothing on the server is touched."""
+
+    def act(self, staff: ServerStaff) -> None:
+        staff.delete(self.client_ip)
+        messages.success(self.request, _("The server is deleted from the panel."))
+
+
+class ServerLeaveView(_StaffView):
+    """An owner of a shared server stops answering for it; the other owners keep it."""
+
+    def act(self, staff: ServerStaff) -> None:
+        staff.leave(self.client_ip)
+        messages.success(self.request, _("You no longer answer for the server."))
+
+
 class ServerCheckView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        server = get_object_or_404(Server, pk=pk)
+        server = get_object_or_404(self.zone.servers(), pk=pk)
         start_check(server, self.member)
         return redirect("servers:detail", pk=server.pk)
 
@@ -128,7 +170,7 @@ class ServerHostKeyForgetView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        server = get_object_or_404(Server, pk=pk)
+        server = get_object_or_404(self.zone.servers(), pk=pk)
         if forget_host_key(server, self.member, ip=self.client_ip):
             messages.success(
                 request, _("The SSH fingerprint is forgotten: the check saves the new one.")
@@ -141,7 +183,7 @@ class ProbeInstallView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        server = get_object_or_404(Server, pk=pk)
+        server = get_object_or_404(self.zone.servers(), pk=pk)
         form = ProbeForm(request.POST, server=server)
         if form.is_valid():
             probe.start_install(server, form.cleaned_data["port"], self.member)
@@ -155,7 +197,7 @@ class ProbeRemoveView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
-        server = get_object_or_404(Server, pk=pk)
+        server = get_object_or_404(self.zone.servers(), pk=pk)
         probe.start_remove(server, self.member)
         return redirect("servers:detail", pk=server.pk)
 
@@ -166,7 +208,9 @@ class _AddressView(SectionRequiredMixin, View):
     section = Section.SERVERS
 
     def addresses(self, pk: int) -> ServerAddresses:
-        return ServerAddresses(get_object_or_404(Server, pk=pk), self.member, self.client_ip)
+        return ServerAddresses(
+            get_object_or_404(self.zone.servers(), pk=pk), self.member, self.client_ip
+        )
 
     def address(self, server: Server, address_pk: int) -> ServerAddress:
         return get_object_or_404(server.addresses, pk=address_pk)

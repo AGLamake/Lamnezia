@@ -69,12 +69,13 @@ def take_incident(incident: Incident, by: User) -> int:
     ones go into work, so each reporter hears that someone is on it. Returns how many; with any
     taken, the incident is marked as theirs.
 
-    A moderator takes only the requests of their zone that nobody else has, as their inbox
-    shows them.
+    A member without the whole zone takes only the requests of their zone that nobody else
+    has, as their inbox shows them.
     """
     requests = incident.conversations.filter(status__in=OPEN_STATUSES)
-    if not by.is_admin:
-        requests = Zone(by).narrow(requests, user="user").filter(Q(assignee=by) | Q(assignee=None))
+    zone = Zone(by)
+    if not zone.is_whole:
+        requests = zone.narrow(requests, user="user").filter(Q(assignee=by) | Q(assignee=None))
     taken = 0
     with transaction.atomic():
         for conversation in requests:

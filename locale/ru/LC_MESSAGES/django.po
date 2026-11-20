@@ -1068,6 +1068,9 @@ msgstr "Удалить журнал"
 msgid "Delete the plan"
 msgstr "Удалить тариф"
 
+msgid "Delete the server from the panel? Nothing on the server is touched; remove its protocols and services first."
+msgstr "Удалить сервер из панели? На самом сервере ничего не меняется; сначала удалите его протоколы и сервисы."
+
 msgid "Delete the subscription link?"
 msgstr "Удалить ссылку-подписку?"
 
@@ -1858,6 +1861,9 @@ msgstr "Выход из группы серверов"
 
 msgid "Leave the group"
 msgstr "Выйти из группы"
+
+msgid "Leave the list of the server? The other owners keep it, and it disappears from your panel."
+msgstr "Выйти из списка сервера? Он останется у других владельцев и пропадёт из вашей панели."
 
 #, python-format
 msgid "Leave the service peer of %(group)s for later"
@@ -3116,6 +3122,9 @@ msgstr "Сервер добавлен."
 
 msgid "Server address"
 msgstr "Адрес сервера"
+
+msgid "Server administrator"
+msgstr "Администратор серверов"
 
 msgid "Server check"
 msgstr "Проверка сервера"
@@ -5472,8 +5481,8 @@ msgstr "группы серверов"
 msgid "servers missing"
 msgstr "нет серверов"
 
-msgid "servers of the moderator"
-msgstr "серверы модератора"
+msgid "servers of the staff member"
+msgstr "серверы сотрудника"
 
 msgid "service peer"
 msgstr "служебный пир"

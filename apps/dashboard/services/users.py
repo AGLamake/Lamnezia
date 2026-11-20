@@ -11,6 +11,7 @@ from apps.accounts.services.linking import links_by_code
 from apps.core.services.site_settings import cached_settings
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.instances import instances
+from apps.keys.services.zone import KeyZone
 from apps.plans.models import Plan, UserLimits
 from apps.plans.services.limits import NO_PLAN, PLAN_SERVERS, EffectiveLimits
 from apps.protocols.models import ProtocolInstance
@@ -102,7 +103,8 @@ class UserCard:
     messengers: list[MessengerSlot]
 
     @classmethod
-    def load(cls, user: User, now: datetime) -> "UserCard":
+    def load(cls, user: User, now: datetime, zone: KeyZone) -> "UserCard":
+        """`zone` keeps out the keys of the user on servers the member does not answer for."""
         limits = (
             UserLimits.objects.select_related("plan")
             .prefetch_related(*PLAN_SERVERS)
@@ -114,7 +116,7 @@ class UserCard:
         titles = instances.titles()
         keys = [
             (key, titles.get(key.source, key.source))
-            for key in user.access_keys.order_by("status", "-created_at")
+            for key in zone.keys().filter(user=user).order_by("status", "-created_at")
         ]
         usage = Usage(period, total, effective.current_period_start(now))
         return cls(user, limits, effective, usage, keys, MessengerSlot.slots(user))
