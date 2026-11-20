@@ -240,7 +240,9 @@ def split_group() -> RelayGroup:
         awg_params={"Jc": "6"},
     )
     clone = Clone(CLONE_KEY.private_key, IPv4Interface("10.8.1.0/24"), {"Jc": "6", "S1": "12"})
-    return RelayGroup(55424, (A, B), service(), Routing.SPLIT, SplitRouting(clone, uplink))
+    dns = (IPv4Address("1.1.1.1"), IPv4Address("1.0.0.1"))
+    split = SplitRouting(clone, uplink, dns=dns)
+    return RelayGroup(55424, (A, B), service(), Routing.SPLIT, split)
 
 
 class TestSplitRouting:
@@ -258,6 +260,15 @@ class TestSplitRouting:
         assert group["split"]["kind"] == "awg"
         assert group["split"]["clone"]["address"] == "10.8.1.0/24"
         assert group["split"]["uplink"]["address"] == "10.8.1.253/32"
+        assert group["split"]["dns"] == ["1.1.1.1", "1.0.0.1"]
+
+    def test_a_split_group_of_an_older_panel_has_no_dns(self) -> None:
+        data = json.loads(RelayConfig((split_group(),)).to_json())
+        data["groups"][0]["split"].pop("dns")
+
+        split = RelayConfig.from_json(json.dumps(data)).groups[0].split
+
+        assert split is not None and split.dns == ()
 
     def test_a_config_of_an_older_panel_forwards(self) -> None:
         data = config_data()
@@ -307,6 +318,8 @@ class TestSplitRouting:
             lambda group: group["split"]["clone"].update(address="10.8.1.1/33"),
             lambda group: group["split"]["clone"].update(private_key="nope"),
             lambda group: group["split"].pop("uplink"),
+            lambda group: group["split"].update(dns="1.1.1.1"),
+            lambda group: group["split"].update(dns=["one.one"]),
         ],
     )
     def test_rejects_a_spoiled_group(self, spoil: Any) -> None:

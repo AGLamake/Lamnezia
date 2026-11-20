@@ -160,17 +160,23 @@ class Clone:
 @dataclass(frozen=True)
 class SplitRouting:
     """What a split group needs on the relay: its clone and the uplink peer, a client of the
-    group that the relay connects to the active member with."""
+    group that the relay connects to the active member with.
+
+    `dns` are the DNS addresses of the group's keys: the relay answers the clients' queries to
+    them with its own resolver, so Russian names resolve to Russian addresses.
+    """
 
     clone: Clone
     uplink: ServicePeer
     kind: UplinkKind = UplinkKind.AWG
+    dns: tuple[IPv4Address, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "kind": str(self.kind),
             "clone": self.clone.to_dict(),
             "uplink": self.uplink.to_dict(),
+            "dns": [str(address) for address in self.dns],
         }
 
     @classmethod
@@ -179,6 +185,7 @@ class SplitRouting:
             clone=Clone.from_dict(_object(data, "clone")),
             uplink=ServicePeer.from_dict(_object(data, "uplink")),
             kind=_choice(UplinkKind, data.get("kind", UplinkKind.AWG), "uplink kind"),
+            dns=_addresses(data, "dns"),
         )
 
 
@@ -606,6 +613,16 @@ def _address(data: Mapping[str, Any], key: str, default: IPv4Address) -> IPv4Add
         return IPv4Address(_string(data, key))
     except ValueError as error:
         raise RelayFormatError(f"{key!r} is not an IPv4 address: {error}") from error
+
+
+def _addresses(data: Mapping[str, Any], key: str) -> tuple[IPv4Address, ...]:
+    values = data.get(key, [])
+    if not isinstance(values, list):
+        raise RelayFormatError(f"{key!r} must be a list.")
+    try:
+        return tuple(IPv4Address(str(value)) for value in values)
+    except ValueError as error:
+        raise RelayFormatError(f"{key!r} has a bad IPv4 address: {error}") from error
 
 
 def _params(data: Mapping[str, Any]) -> dict[str, str]:

@@ -243,6 +243,22 @@ list straight out and everything else abroad over the uplink (a "black list" of 
 A list or entry change reaches the relay within seconds; the relay applies the networks and
 addresses in one nftables transaction.
 
+#### DNS
+
+In split routing the relay answers the DNS queries of the group's clients itself. A query (UDP or
+TCP, port 53) from a client to the DNS addresses of the group's keys goes to a resolver in the
+relay container, which asks Cloudflare (1.1.1.1, 1.0.0.1) over DNS-over-TLS straight from the
+relay. The answers are those for the relay's country, and the network between sees no names: only
+DNS-over-TLS leaves the relay. The resolver writes no log of queries or answers, not even to the
+container output, and answers no one but the clients of split groups. Keys do not change.
+
+The resolver runs only while some group is split. In forwarding, and while a split group has
+fallen back to forwarding, the queries are not intercepted and go to the servers as before. A
+resolver that does not start or stops is started again after a minute; until then the queries go
+where the keys send them. Only the keys' DNS addresses are intercepted: a DNS server set by hand on
+a device is not. The resolver comes with the new relay image: use **Reinstall** on the relay card
+once.
+
 ## Keys of a group behind the relay
 
 Once the relay of a group is installed, the `vpn://` links and `.conf` files of its keys carry the

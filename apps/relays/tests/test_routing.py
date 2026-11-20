@@ -78,6 +78,7 @@ def test_split_gives_every_member_the_uplink_and_the_relay_a_clone(  # noqa: PLR
     assert group["split"]["clone"]["address"] == "10.8.1.0/24"
     assert group["split"]["clone"]["private_key"] == leader.private_key
     assert group["split"]["uplink"]["private_key"] == peer.private_key
+    assert group["split"]["dns"] == list(leader.dns)
     assert f"PublicKey = {key.public_key}" in relay_fake.files[PEERS].decode()
 
 

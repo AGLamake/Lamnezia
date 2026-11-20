@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+from dataclasses import dataclass, field
 from ipaddress import IPv4Address, IPv4Interface
 from pathlib import Path
 
@@ -24,6 +25,7 @@ from apps.relays.agent.relay_agent import (
     MARK_BASE,
     Agent,
     Backend,
+    Resolver,
     Settings,
     SplitRoute,
     parse_networks,
@@ -32,6 +34,45 @@ from apps.relays.agent.relay_agent import (
 from apps.relays.tests.test_agent import PORT, A, B, C, Clock, FakeNetwork, core, service
 
 SUBNET = "10.8.1.0/24"
+DNS = ("1.1.1.1", "1.0.0.1")
+
+
+@dataclass
+class FakeProcess:
+    """A resolver process: runs until `code` is set."""
+
+    code: int | None = None
+
+    def poll(self) -> int | None:
+        return self.code
+
+    def terminate(self) -> None:
+        self.code = 0
+
+    def kill(self) -> None:
+        self.code = -9
+
+    def wait(self, timeout: float | None = None) -> int:
+        return self.code or 0
+
+
+@dataclass
+class Unbound:
+    """Starts fake resolver processes with the config they got; raises while `missing`."""
+
+    missing: bool = False
+    started: list[tuple[str, FakeProcess]] = field(default_factory=list)
+
+    def __call__(self, config: Path) -> FakeProcess:
+        if self.missing:
+            raise FileNotFoundError("unbound-checkconf")
+        process = FakeProcess()
+        self.started.append((config.read_text(), process))
+        return process
+
+    @property
+    def running(self) -> list[FakeProcess]:
+        return [process for _, process in self.started if process.code is None]
 
 
 def group(routing: Routing = Routing.SPLIT) -> RelayGroup:
@@ -46,7 +87,8 @@ def group(routing: Routing = Routing.SPLIT) -> RelayGroup:
         awg_params={"Jc": "4"},
     )
     clone = Clone(KeyPair.generate().private_key, IPv4Interface("10.8.1.1/24"), {"Jc": "4"})
-    return RelayGroup(PORT, backends, service(), routing, SplitRouting(clone, uplink))
+    dns = tuple(map(IPv4Address, DNS))
+    return RelayGroup(PORT, backends, service(), routing, SplitRouting(clone, uplink, dns=dns))
 
 
 def write_config(folder: Path, routing: Routing = Routing.SPLIT, moment: int = 1) -> None:
@@ -71,8 +113,10 @@ def network() -> FakeNetwork:
     return FakeNetwork(alive={A, B, C})
 
 
-def started(network: FakeNetwork, folder: Path) -> Agent:
-    agent = Agent(network, folder, clock=Clock(), log=lambda line: None)
+def started(network: FakeNetwork, folder: Path, unbound: Unbound | None = None) -> Agent:
+    clock, log = Clock(), lambda line: None
+    resolver = Resolver(folder, clock, log, unbound if unbound is not None else Unbound())
+    agent = Agent(network, folder, clock=clock, log=log, resolver=resolver)
     agent.tick()
     return agent
 
@@ -280,6 +324,13 @@ def test_split_ruleset_marks_all_but_the_list_and_local_networks() -> None:
     assert "dnat" not in rules
 
 
+def test_split_ruleset_redirects_dns_only_with_addresses() -> None:
+    redirect = f'iifname "lg{PORT}" ip daddr {{ 1.1.1.1, 1.0.0.1 }} udp dport 53 redirect to :53'
+
+    assert redirect in ruleset({}, [SplitRoute(PORT, SUBNET, dns=DNS)])
+    assert "dport 53" not in ruleset({}, [SplitRoute(PORT, SUBNET)])
+
+
 def test_split_ruleset_with_an_empty_list_sends_everything_over_the_uplink() -> None:
     rules = ruleset({}, [SplitRoute(PORT, SUBNET)])
 
@@ -323,7 +374,9 @@ NFT_KEYWORDS = frozenset(
 
 
 def mixed_ruleset() -> str:
-    split = SplitRoute(9733, SUBNET, ("5.8.0.0/15",), ("93.184.215.14",), ("5.8.1.1", "5.8.1.2"))
+    split = SplitRoute(
+        9733, SUBNET, ("5.8.0.0/15",), ("93.184.215.14",), ("5.8.1.1", "5.8.1.2"), DNS
+    )
     return ruleset({PORT: A, 51820: None}, [split])
 
 
@@ -366,6 +419,7 @@ def test_settings_read_a_split_group() -> None:
 
     split = settings.groups[0].split
     assert split is not None and split.subnet == SUBNET
+    assert split.dns == DNS
     assert settings.uplink_check == "9.9.9.9"
     assert settings.groups[0].mark == MARK_BASE + PORT
     assert settings.groups[0].backends[0] == Backend(A.host, A.port)

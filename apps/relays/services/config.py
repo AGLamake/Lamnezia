@@ -79,7 +79,8 @@ class RelayPlan:
             leader = members[0]
             split = None
             if group.routing == GroupRouting.SPLIT and uplink is not None:
-                split = SplitRouting(_clone(leader), _core_peer(uplink, leader))
+                dns = tuple(map(IPv4Address, leader.instance.dns))
+                split = SplitRouting(_clone(leader), _core_peer(uplink, leader), dns=dns)
             groups.append(
                 RelayGroup(
                     group.port,

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **DNS resolver of split routing**: in split routing the relay intercepts the DNS queries of the
+  group's clients to the keys' DNS addresses and answers them with its own resolver, which asks
+  1.1.1.1 over DNS-over-TLS straight from the relay. The resolver logs no queries or answers and
+  runs only while some group is split; forwarding intercepts nothing. Keys do not change; the
+  relay needs **Reinstall** once for the new image.
 - **Network list of split routing**: the group page of a split group shows its network list. A
   group gets the RIPE NCC delegations to Russia as its first source; more sources are added by
   address in one of three formats (networks one per line, the site list of the Amnezia

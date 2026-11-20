@@ -162,7 +162,7 @@ def network() -> FakeNetwork:
 
 def agent(network: FakeNetwork, folder: Path, resolver: Resolver, log: list[str]) -> Agent:
     clock = Clock()
-    started = Agent(network, folder, clock, log.append, domains(resolver, clock))
+    started = Agent(network, folder, clock, log.append, domains=domains(resolver, clock))
     started.tick()
     return started
 

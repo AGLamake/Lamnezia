@@ -26,6 +26,11 @@ clients' sessions stay. When the uplink fails on every live member, the group fa
 forwarding (`Lane`). The own domains of a split group are resolved here, in the background every
 few minutes (`Domains`): their addresses go straight out or always over the uplink. The names
 and addresses are not logged.
+
+The clients of a split group ask its keys' DNS addresses; the relay answers those queries with
+its own resolver (`Resolver`), which asks 1.1.1.1 over DNS-over-TLS straight from the relay: the
+answers are those for Russia, and the network does not see the names. The resolver writes no
+log of queries or answers, and runs only while some group is split.
 """
 
 import functools
@@ -73,6 +78,15 @@ LOCAL_NETWORKS = (
 # Seconds between lookups of the own domains of split groups, and lookups at a time.
 RESOLVE_INTERVAL = 600
 RESOLVE_WORKERS = 8
+
+# The resolver of the split groups' clients: unbound asking Cloudflare over DNS-over-TLS.
+RESOLVER_CONFIG = "resolver.conf"
+RESOLVER_UPSTREAMS = ("1.1.1.1@853#cloudflare-dns.com", "1.0.0.1@853#cloudflare-dns.com")
+RESOLVER_CERTIFICATES = "/etc/ssl/certs/ca-certificates.crt"
+# Seconds before a resolver that did not start or stopped is started again.
+RESOLVER_RETRY = 60
+RESOLVER_STOP_TIMEOUT = 5
+DNS_PORT = 53
 # Directions of an own domain (`amnezia_core.split_lists.Direction`).
 LOCAL = "local"
 ABROAD = "abroad"
@@ -110,6 +124,7 @@ class Split:
     clone: Mapping[str, Any]
     uplink: Mapping[str, Any]
     kind: str = "awg"
+    dns: tuple[str, ...] = ()
 
     @property
     def subnet(self) -> str:
@@ -119,7 +134,8 @@ class Split:
     def from_dict(cls, data: Any) -> "Split":
         if not isinstance(data, dict):
             raise ValueError("split must be an object")
-        split = cls(dict(data["clone"]), dict(data["uplink"]), str(data.get("kind", "awg")))
+        dns = tuple(str(ipaddress.IPv4Address(address)) for address in data.get("dns", []))
+        split = cls(dict(data["clone"]), dict(data["uplink"]), str(data.get("kind", "awg")), dns)
         if split.kind not in UPLINK_KINDS:
             raise ValueError(f"unknown uplink kind {split.kind!r}")
         ipaddress.IPv4Interface(split.clone["address"])
@@ -399,14 +415,16 @@ class Lane:
 
 @dataclass(frozen=True)
 class SplitRoute:
-    """The nftables part of a split group: its clone's subnet, the networks sent directly and the
-    addresses of its own domains, sent directly (`local`) or always over the uplink (`abroad`)."""
+    """The nftables part of a split group: its clone's subnet, the networks sent directly, the
+    addresses of its own domains, sent directly (`local`) or always over the uplink (`abroad`),
+    and the DNS addresses whose queries the relay's resolver answers."""
 
     port: int
     subnet: str
     networks: tuple[str, ...] = ()
     local: tuple[str, ...] = ()
     abroad: tuple[str, ...] = ()
+    dns: tuple[str, ...] = ()
 
 
 def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] = ()) -> str:
@@ -417,7 +435,9 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
     and a new network list with it. Masquerade keeps the relay in the path: without it the
     member answers the client directly. A packet from a split group's clone to an address out of
     its list, its local domains and the private networks gets the group's mark, which routes it
-    into the uplink; so does one to an address of its abroad domains, even one in the list.
+    into the uplink; so does one to an address of its abroad domains, even one in the list. A
+    DNS query from the clone to one of the group's DNS addresses is redirected to the relay's
+    resolver; the local routing table comes before the mark, so the query stays on the relay.
     """
     ports = sorted({*routes, *(split.port for split in splits)})
     counters = [
@@ -442,6 +462,13 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
         )
     for split in sorted(splits, key=lambda item: item.port):
         port, clone, uplink = split.port, f"lg{split.port}", f"lu{split.port}"
+        if split.dns:
+            servers = "{ " + ", ".join(split.dns) + " }"
+            dnat += [
+                f'\t\tiifname "{clone}" ip daddr {servers} {proto} dport {DNS_PORT} '
+                f"redirect to :{DNS_PORT}"
+                for proto in ("udp", "tcp")
+            ]
         sets += _set(f"ru_{port}", split.networks)
         sets += _set(f"dl_{port}", split.local)
         sets += _set(f"da_{port}", split.abroad)
@@ -664,6 +691,139 @@ class Domains:
         return any(self.addresses(port) != addresses for port, addresses in before.items())
 
 
+def resolver_config(subnets: Iterable[str]) -> str:
+    """The unbound config: answers the clients of these subnets only, asks the upstreams over
+    DNS-over-TLS and logs nothing of the queries and answers, not even to the standard output.
+    """
+    allowed = [f"\taccess-control: {subnet} allow" for subnet in sorted(set(subnets))]
+    upstreams = [f"\tforward-addr: {upstream}" for upstream in RESOLVER_UPSTREAMS]
+    lines = [
+        "server:",
+        "\tinterface-automatic: yes",
+        f"\tport: {DNS_PORT}",
+        "\tdo-ip6: no",
+        '\tusername: "unbound"',
+        '\tchroot: ""',
+        "\tdo-daemonize: no",
+        "\tuse-syslog: no",
+        '\tlogfile: "/dev/null"',
+        "\tverbosity: 0",
+        "\tlog-queries: no",
+        "\tlog-replies: no",
+        "\tlog-servfail: no",
+        "\tlog-local-actions: no",
+        "\tval-log-level: 0",
+        "\tstatistics-interval: 0",
+        "\thide-identity: yes",
+        "\thide-version: yes",
+        '\tmodule-config: "iterator"',
+        f'\ttls-cert-bundle: "{RESOLVER_CERTIFICATES}"',
+        "\taccess-control: 0.0.0.0/0 refuse",
+        *allowed,
+        "forward-zone:",
+        '\tname: "."',
+        "\tforward-tls-upstream: yes",
+        *upstreams,
+    ]
+    return "\n".join(lines) + "\n"
+
+
+class Process(Protocol):
+    def poll(self) -> int | None: ...
+
+    def terminate(self) -> None: ...
+
+    def kill(self) -> None: ...
+
+    def wait(self, timeout: float | None = None) -> int: ...
+
+
+def start_unbound(config: Path) -> Process:
+    """unbound in the foreground with no pid file and its output dropped; OSError if it is not
+    installed or the config is bad."""
+    check = subprocess.run(
+        ["unbound-checkconf", str(config)], capture_output=True, text=True, check=False
+    )
+    if check.returncode != 0:
+        raise OSError(f"bad config: {(check.stdout + check.stderr).strip()}")
+    return subprocess.Popen(
+        ["unbound", "-d", "-p", "-c", str(config)],
+        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )  # fmt: skip
+
+
+class Resolver:
+    """The DNS resolver of the split groups' clients, running while some group is split.
+
+    A resolver that did not start or stopped is started again after `RESOLVER_RETRY` seconds;
+    until then the queries are not redirected and go where the keys send them. An old relay
+    image has no unbound: the clients' DNS stays as it was.
+    """
+
+    def __init__(
+        self,
+        folder: Path,
+        clock: Callable[[], float],
+        log: Callable[[str], None],
+        start: Callable[[Path], Process] = start_unbound,
+    ) -> None:
+        self._config = folder / RESOLVER_CONFIG
+        self._clock = clock
+        self._log = log
+        self._start = start
+        self._process: Process | None = None
+        self._text: str | None = None
+        self._wanted = False
+        self._retry_at = 0.0
+        self._failure: str | None = None
+
+    def serve(self, subnets: Sequence[str]) -> bool:
+        """Answer the clients of these subnets, or stop for none; True while it runs."""
+        self._wanted = bool(subnets)
+        if not subnets:
+            self.stop()
+            return False
+        text = resolver_config(subnets)
+        if self._process is not None and text == self._text:
+            return True
+        self.stop()
+        if self._clock() < self._retry_at:
+            return False
+        _write_secret(self._config, text)
+        try:
+            self._process = self._start(self._config)
+        except OSError as error:
+            self._fail(f"resolver not started: {error}")
+            return False
+        self._text, self._failure = text, None
+        return True
+
+    def stale(self) -> bool:
+        """True when it stopped by itself or is due to start again: the rules change."""
+        if self._process is not None and (code := self._process.poll()) is not None:
+            self._process = self._text = None
+            self._fail(f"resolver stopped with code {code}")
+            return True
+        return self._wanted and self._process is None and self._clock() >= self._retry_at
+
+    def stop(self) -> None:
+        process, self._process, self._text = self._process, None, None
+        if process is None or process.poll() is not None:
+            return
+        process.terminate()
+        try:
+            process.wait(RESOLVER_STOP_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+
+    def _fail(self, message: str) -> None:
+        self._retry_at = self._clock() + RESOLVER_RETRY
+        if message != self._failure:
+            self._log(message)
+        self._failure = message
+
+
 class Agent:
     """One pass of `tick` reads a changed config, probes every group and writes the state.
 
@@ -673,13 +833,15 @@ class Agent:
     empty: the panel removed it.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913  the domains and the resolver are replaced in tests
         self,
         network: Network,
         folder: Path = FOLDER,
         clock: Callable[[], float] = time.time,
         log: Callable[[str], None] = print,
+        *,
         domains: Domains | None = None,
+        resolver: Resolver | None = None,
     ) -> None:
         self._network = network
         self._folder = folder
@@ -694,6 +856,7 @@ class Agent:
         self._lanes: dict[int, Lane] = {}
         self._networks: dict[int, tuple[str, ...]] = {}
         self._domains = domains if domains is not None else Domains(clock)
+        self._resolver = resolver if resolver is not None else Resolver(folder, clock, log)
         # Modification times of the split groups' files as last taken.
         self._seen: dict[str, float | None] = {}
         # Ports whose routing changed: their clients' conntrack entries go with the new rules.
@@ -706,7 +869,7 @@ class Agent:
     def tick(self) -> None:
         self._reload()
         self._take_split_files()
-        if self._domains.poll():
+        if self._domains.poll() or self._resolver.stale():
             self._dirty = True
         now = int(self._clock())
         moved = set(self._rerouted)
@@ -878,17 +1041,23 @@ class Agent:
         return reroute
 
     def _rules(self) -> str:
+        """The rules of every group; the resolver runs before its queries are redirected."""
         routes: dict[int, Backend | None] = {}
-        splits: list[SplitRoute] = []
+        split: dict[int, Split] = {}
         for port, watch in self._watches.items():
-            lane, split = self._lanes.get(port), watch.group.split
-            if lane is not None and lane.split and split is not None:
-                networks = self._networks.get(port, ())
-                local, abroad = self._domains.addresses(port)
-                splits.append(SplitRoute(port, split.subnet, networks, local, abroad))
+            lane = self._lanes.get(port)
+            if lane is not None and lane.split and watch.group.split is not None:
+                split[port] = watch.group.split
             else:
                 routes[port] = watch.active
+        serving = self._resolver.serve([group.subnet for group in split.values()])
+        splits = [self._split_route(port, group, serving) for port, group in split.items()]
         return ruleset(routes, splits)
+
+    def _split_route(self, port: int, split: Split, serving: bool) -> SplitRoute:
+        local, abroad = self._domains.addresses(port)
+        dns = split.dns if serving else ()
+        return SplitRoute(port, split.subnet, self._networks.get(port, ()), local, abroad, dns)
 
     def _take_request(self) -> tuple[str, int, Backend] | None:
         """The switch request of the panel, removed so it is done once; a bad one is dropped."""
