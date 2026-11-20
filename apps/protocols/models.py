@@ -271,3 +271,30 @@ class OffloadWorkaround(models.Model):
 
     def __str__(self) -> str:
         return f"{self.server} · TSO/GSO"
+
+
+class MetadataBlock(models.Model):
+    """Whether the VPN clients of a server are kept from the cloud metadata service.
+
+    `enabled` is the latest reading: the rule of services/metadata_scripts.py is in place and its
+    timer runs. `turned_off` is the choice of an administrator: install and import then leave the
+    server open, for a client that needs the local services of the hoster on 169.254.0.0/16.
+    """
+
+    server = models.OneToOneField(
+        "servers.Server",
+        verbose_name=_("server"),
+        on_delete=models.CASCADE,
+        related_name="metadata_block",
+    )
+    enabled = models.BooleanField(_("metadata service closed"), default=False)
+    turned_off = models.BooleanField(_("turned off by an administrator"), default=False)
+    bridges = models.JSONField(_("closed bridges"), default=list, blank=True)
+    checked_at = models.DateTimeField(_("checked at"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("cloud metadata block")
+        verbose_name_plural = _("cloud metadata blocks")
+
+    def __str__(self) -> str:
+        return f"{self.server} · 169.254.0.0/16"

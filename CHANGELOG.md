@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **VPN clients cannot reach the cloud metadata service**: a rule in the `DOCKER-USER` chain of the
+  server drops traffic from the Docker bridges of the Amnezia containers to `169.254.0.0/16`, where
+  clouds serve the server's data and the tokens of its service account; the host itself still
+  reaches it, and the containers do not change. A systemd timer puts the rule back after reboots.
+  An install closes the server on its own, an import starts a separate operation for it; the server
+  card shows the state and can open the service for a hoster whose local services clients need.
+  **Upgrade**: a migration; servers already in the panel are closed by their next install or
+  import, or by *Close* on the card.
 - **Several moderators per user**: a user may be served by several moderators (Django admin,
   **Staff members of the user**) and is then in the zone of each; all of them see the user's
   requests, and a request can be assigned to any of them or to an administrator. The user quota

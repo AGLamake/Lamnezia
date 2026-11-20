@@ -193,6 +193,36 @@ while you keep those backups.
 - SSH commands run only in background operations, never during a web request; every operation is in
   **Operations** with its log.
 
+### Cloud metadata service
+
+A cloud server answers on `169.254.169.254` with its own data and the tokens of its service account
+(AWS, GCP, Azure, Yandex Cloud and others). A VPN client goes out to the network through the
+server, so it could ask that service too. The panel closes the whole link-local range
+`169.254.0.0/16` to the Amnezia containers:
+
+- the rule is in the `DOCKER-USER` chain of the server (its own chain `LAMNEZIA-METADATA`) and drops
+  traffic that comes from the Docker bridges of the containers: the default `bridge` (`docker0`)
+  and `amnezia-dns-net`. It covers every protocol and service, AmneziaWG and XRay included; the
+  containers and their configs do not change;
+- the server itself still reaches the metadata service: its own traffic does not pass that chain;
+- a systemd timer `lamnezia-metadata.timer` puts the rule back within a minute after a reboot, a
+  Docker restart or a firewall reload. The script and the units are in `/opt/lamnezia/metadata/`
+  and `/etc/systemd/system/`.
+
+An install closes the server on its own after the container is set up. An import changes nothing
+on the server itself and starts a separate operation, **Close the cloud metadata service after the
+import**. A server without systemd is left open, and the operation log says how to add the rule by
+hand.
+
+The server card has **Cloud metadata service for VPN clients**: the state, *Check*, *Close* and
+*Open*. Open it only if VPN clients need a local service of the hoster in `169.254.0.0/16` (for
+example a DNS resolver of the cloud on `169.254.169.253`). The choice is kept: later installs and
+imports leave such a server open until it is closed on the card again.
+
+Not covered: the IPv6 metadata address of some clouds (`fd00:ec2::254`) and a Docker set up with its
+native nftables backend, which has no `DOCKER-USER` chain (the rule is then not added and the card
+shows the service as open).
+
 ## Firewall of the panel host
 
 The panel needs only HTTP and HTTPS from the internet; PostgreSQL, Redis and the `web` container

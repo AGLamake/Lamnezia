@@ -47,6 +47,7 @@ class SetupErrorCode(StrEnum):
     TPROXY_HTTP_PORT_BUSY = "tproxy_http_port_busy"
     NO_SYSTEMD = "no_systemd"
     OFFLOAD_TOOLS_FAILED = "offload_tools_failed"
+    METADATA_NO_SYSTEMD = "metadata_no_systemd"
     SPEED_TEST_PORT_BUSY = "speed_test_port_busy"
     SPEED_TEST_FAILED = "speed_test_failed"
     MIGRATION_TARGET_REMOVED = "migration_target_removed"
@@ -250,6 +251,13 @@ SETUP_ERRORS: dict[SetupErrorCode, ErrorDescription] = {
     SetupErrorCode.OFFLOAD_TOOLS_FAILED: ErrorDescription(
         _("ethtool could not be installed for the TSO/GSO workaround."),
         _("See the step log. Check that the server has internet access, then try again."),
+    ),
+    SetupErrorCode.METADATA_NO_SYSTEMD: ErrorDescription(
+        _("The server has no systemd: the cloud metadata service cannot be kept closed."),
+        _(
+            "Add the rule by hand after every reboot: "
+            "iptables -I DOCKER-USER -i docker0 -d 169.254.0.0/16 -j DROP."
+        ),
     ),
     SetupErrorCode.SPEED_TEST_PORT_BUSY: ErrorDescription(
         _("One of the speed test ports is already used by another program on the server."),

@@ -1,5 +1,5 @@
 {% extends "servers/base.html" %}
-{% load backups i18n masking offload operations servers speed_limit ui %}
+{% load backups i18n masking metadata_block offload operations servers speed_limit ui %}
 {% block title %}{{ server.name }} · Lamnezia{% endblock %}
 
 {% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li aria-current="page">{{ server.name }}</li>{% endblock %}
@@ -177,6 +177,7 @@
   {% protocol_backups server %}
 
   {% offload_card server %}
+  {% metadata_card server %}
 
   <details class="disclosure"{% if server.probe_down %} open{% endif %}>
     <summary>{% icon "radar" "icon-sm text-muted" %}<span>{% translate "Reachability probe" %}</span>

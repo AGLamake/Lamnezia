@@ -20,6 +20,7 @@ from apps.protocols.models import CONTAINER_TITLES, InstanceOrigin, ProtocolInst
 from apps.protocols.providers import traffic_targets
 from apps.protocols.services.importer import IMPORT_KIND, start_import
 from apps.protocols.services.inventory import server_containers
+from apps.protocols.tests.fake_metadata_host import amnezia_writes, without_metadata_block
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
 from apps.ssh.services import CommandResult, RemoteHost
@@ -142,8 +143,10 @@ def test_import_changes_nothing_on_the_server(app_server: AppServer, imported: S
         AWG_PSK_PATH: f"{PSK}\n",
     }
 
-    assert app_server.files == files_before
-    assert not [c for c in app_server.commands if "target=" in c or "syncconf" in c]
+    # The operation started after the import closes the cloud metadata service on its own.
+    assert without_metadata_block(app_server.files) == files_before
+    assert not amnezia_writes(app_server.commands)
+    assert not [c for c in app_server.commands if "syncconf" in c]
     assert not app_server.lock.locked()
 
 

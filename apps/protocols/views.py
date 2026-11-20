@@ -42,7 +42,7 @@ from apps.protocols.service_settings_forms import (
     Socks5SettingsForm,
     TProxySettingsForm,
 )
-from apps.protocols.services import offload, speed_test
+from apps.protocols.services import metadata_block, offload, speed_test
 from apps.protocols.services.awg_migration import (
     MigrationState,
     can_migrate,
@@ -104,6 +104,11 @@ _OFFLOAD_KINDS = {
     "enable": offload.ENABLE_KIND,
     "disable": offload.DISABLE_KIND,
 }
+_METADATA_KINDS = {
+    "check": metadata_block.CHECK_KIND,
+    "enable": metadata_block.ENABLE_KIND,
+    "disable": metadata_block.DISABLE_KIND,
+}
 
 
 class ServerImportView(AdminRequiredMixin, View):
@@ -149,6 +154,17 @@ class OffloadView(AdminRequiredMixin, View):
             raise Http404
         server = get_object_or_404(Server, pk=server_pk)
         offload.start(_OFFLOAD_KINDS[action], server, self.member, ip=self.client_ip)
+        return redirect("servers:detail", pk=server.pk)
+
+
+class MetadataBlockView(AdminRequiredMixin, View):
+    """Check the cloud metadata block, or close or open the service; the card shows it."""
+
+    def post(self, request: HttpRequest, server_pk: int, action: str) -> HttpResponse:
+        if action not in _METADATA_KINDS:
+            raise Http404
+        server = get_object_or_404(Server, pk=server_pk)
+        metadata_block.start(_METADATA_KINDS[action], server, self.member, ip=self.client_ip)
         return redirect("servers:detail", pk=server.pk)
 
 

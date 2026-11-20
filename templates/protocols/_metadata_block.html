@@ -1,0 +1,30 @@
+{% load i18n ui %}
+{% if shown %}
+<details class="disclosure">
+  <summary>{% icon "shield" "icon-sm text-muted" %}<span>{% translate "Cloud metadata service for VPN clients" %}</span>
+    <span class="disclosure-meta">{% if block.enabled %}<span class="badge badge-success">{% translate "closed" %}</span>{% elif block.turned_off %}<span class="badge badge-muted">{% translate "opened by an administrator" %}</span>{% else %}<span class="badge badge-muted">{% translate "open" %}</span>{% endif %}</span>
+  </summary>
+  <div class="disclosure-body">
+    <p class="help-text">{% blocktranslate %}A cloud server answers on 169.254.169.254 with its own data and the tokens of its service account (AWS, GCP, Azure, Yandex Cloud). A VPN client goes out through the server and could ask it too. A rule on the server drops traffic from the Amnezia containers to {{ network }}; a systemd timer puts it back after reboots. The server itself still reaches the service; configs and keys do not change.{% endblocktranslate %}</p>
+    <p class="help-text">{% blocktranslate %}Open it only if VPN clients need a local service of the hoster in {{ network }}. Installs and imports then leave the server open.{% endblocktranslate %}</p>
+    <p>
+      {% if block.checked_at %}<span class="help-text">{% blocktranslate with date=block.checked_at|date:"SHORT_DATETIME_FORMAT" %}Checked {{ date }}.{% endblocktranslate %}</span>{% else %}<span class="help-text">{% translate "Not checked yet." %}</span>{% endif %}
+      {% if block.bridges %}<span class="help-text">{% blocktranslate with bridges=block.bridges|join:", " %}Closed for: {{ bridges }}.{% endblocktranslate %}</span>{% endif %}
+    </p>
+    <div class="flex flex-wrap gap-2">
+      <form method="post" action="{% url 'protocols:metadata_block' server.pk 'check' %}">
+        {% csrf_token %}<button type="submit" class="btn btn-secondary">{% translate "Check" %}</button>
+      </form>
+      {% if block.enabled %}
+        <form method="post" action="{% url 'protocols:metadata_block' server.pk 'disable' %}" data-confirm="{% translate "Open the cloud metadata service to VPN clients? The rule and its timer are removed from the server." %}">
+          {% csrf_token %}<button type="submit" class="btn btn-secondary">{% translate "Open" %}</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'protocols:metadata_block' server.pk 'enable' %}">
+          {% csrf_token %}<button type="submit" class="btn btn-primary">{% translate "Close" %}</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</details>
+{% endif %}

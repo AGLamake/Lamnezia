@@ -7,6 +7,10 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #, python-format
+msgid "%(bridge)s: %(network)s closed."
+msgstr "%(bridge)s: %(network)s закрыта."
+
+#, python-format
 msgid "%(file)s already exists and is kept."
 msgstr "%(file)s уже есть и сохранён без изменений."
 
@@ -47,6 +51,9 @@ msgstr "Прокси для приложений и браузеров с под
 
 msgid "Add an A record of the domain with the IP address of the server and try again."
 msgstr "Добавьте домену A-запись с IP-адресом сервера и попробуйте снова."
+
+msgid "Add the rule by hand after every reboot: iptables -I DOCKER-USER -i docker0 -d 169.254.0.0/16 -j DROP."
+msgstr "Добавляйте правило вручную после каждой перезагрузки: iptables -I DOCKER-USER -i docker0 -d 169.254.0.0/16 -j DROP."
 
 msgid "Additional client configuration commands"
 msgstr "Дополнительные команды конфигурации клиента"
@@ -184,6 +191,9 @@ msgstr "Проверка systemd"
 msgid "Check the DNS record of the server, or give the server by its IP address."
 msgstr "Проверьте DNS-запись сервера или укажите сервер по IP-адресу."
 
+msgid "Check the cloud metadata block"
+msgstr "Проверить закрытие метаданных облака"
+
 msgid "Check the container log: docker logs amnezia-awg2."
 msgstr "Посмотрите лог контейнера: docker logs amnezia-awg2."
 
@@ -237,6 +247,15 @@ msgstr "Подсеть клиентов: %(old)s → %(new)s."
 #, python-format
 msgid "Clients in the configuration: %(peers)d, named in clientsTable: %(named)d."
 msgstr "Клиентов в конфигурации: %(peers)d, с именем в clientsTable: %(named)d."
+
+msgid "Close the cloud metadata service after the import"
+msgstr "Закрыть метаданные облака после импорта"
+
+msgid "Close the cloud metadata service to VPN clients"
+msgstr "Закрыть метаданные облака для клиентов VPN"
+
+msgid "Close the cloud metadata service to the VPN clients"
+msgstr "Закрыть метаданные облака для клиентов VPN"
 
 msgid "Compare the container and the same name with -previous in `docker ps -a`, remove the one that is not needed and try again."
 msgstr "Сравните в `docker ps -a` контейнер и одноимённый с суффиксом -previous, удалите ненужный и повторите."
@@ -515,6 +534,9 @@ msgstr "Ключей к перевыпуску: %(count)d."
 msgid "Leave empty for the port in the table below: a free port up to 9999 for AmneziaWG, the port of the Amnezia app for the others."
 msgstr "Оставьте пустым — возьмётся порт из таблицы ниже: для AmneziaWG свободный порт до 9999, для остальных — порт приложения Amnezia."
 
+msgid "Leave the cloud metadata service open"
+msgstr "Оставить метаданные облака открытыми"
+
 msgid "Let's Encrypt gives the certificate only to the server the domain points at. Set the A record of the domain to the IP address of the server; behind the proxy of Cloudflare, turn the proxy off for this record."
 msgstr "Let's Encrypt выдаёт сертификат только серверу, на который указывает домен. Укажите в A-записи домена IP-адрес сервера; если домен за прокси Cloudflare, отключите прокси для этой записи."
 
@@ -600,6 +622,12 @@ msgstr "Только латинские буквы, цифры и подчёрк
 
 msgid "Only the client profiles get it: the server is not restarted for it."
 msgstr "Попадает только в профили клиентов: сервер ради этого не перезапускается."
+
+msgid "Open the cloud metadata service to VPN clients"
+msgstr "Открыть метаданные облака для клиентов VPN"
+
+msgid "Open the cloud metadata service to the VPN clients"
+msgstr "Открыть метаданные облака для клиентов VPN"
 
 msgid "OpenVPN did not start in the container."
 msgstr "OpenVPN не запустился в контейнере."
@@ -920,6 +948,10 @@ msgid "Telegram WEB proxy (tproxy-server)"
 msgstr "Прокси Telegram WEB (tproxy-server)"
 
 #, python-format
+msgid "The %(unit)s timer puts the rule back after a reboot."
+msgstr "Таймер %(unit)s возвращает правило после перезагрузки."
+
+#, python-format
 msgid "The %(unit)s timer turns them off again after a container restart."
 msgstr "Таймер %(unit)s снова выключает их после перезапуска контейнера."
 
@@ -971,6 +1003,12 @@ msgstr "Центр сертификации не перенёсся в новы�
 
 msgid "The certificate authority of the container is kept."
 msgstr "Центр сертификации контейнера сохранён."
+
+msgid "The cloud metadata service is closed to the VPN clients."
+msgstr "Служба метаданных облака закрыта для клиентов VPN."
+
+msgid "The cloud metadata service is open to the VPN clients."
+msgstr "Служба метаданных облака открыта для клиентов VPN."
 
 msgid "The commands cannot contain $, ` or \\ or a line EOF."
 msgstr "Команды не могут содержать $, ` или \\ и строку EOF."
@@ -1088,6 +1126,9 @@ msgstr "Этого контейнера на сервере уже нет."
 
 msgid "The server has no systemd: the TSO/GSO workaround cannot be kept on."
 msgstr "На сервере нет systemd: обход TSO/GSO не удержится после перезапуска."
+
+msgid "The server has no systemd: the cloud metadata service cannot be kept closed."
+msgstr "На сервере нет systemd: закрытие метаданных облака не удержится после перезагрузки."
 
 msgid "The server is in a server group: its settings are those of the group."
 msgstr "Сервер входит в группу серверов: его параметры — это параметры группы."
@@ -1273,6 +1314,15 @@ msgstr "certutil не смог выпустить или удалить серт
 msgid "checked at"
 msgstr "проверено"
 
+msgid "closed bridges"
+msgstr "закрытые мосты"
+
+msgid "cloud metadata block"
+msgstr "закрытие метаданных облака"
+
+msgid "cloud metadata blocks"
+msgstr "закрытия метаданных облака"
+
 msgid "configure_container.sh could not configure the proxy."
 msgstr "configure_container.sh не смог настроить прокси."
 
@@ -1330,6 +1380,9 @@ msgstr "старый AmneziaWG"
 
 msgid "login"
 msgstr "логин"
+
+msgid "metadata service closed"
+msgstr "метаданные закрыты"
 
 msgid "move to AmneziaWG 3.1"
 msgstr "перевод на AmneziaWG 3.1"
@@ -1413,6 +1466,9 @@ msgstr "подсеть"
 
 msgid "supported"
 msgstr "поддерживается"
+
+msgid "turned off by an administrator"
+msgstr "выключено администратором"
 
 msgid "upload limit"
 msgstr "предел отдачи"

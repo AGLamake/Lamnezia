@@ -247,6 +247,10 @@ msgstr "3proxy.log приложения: %(size)s"
 msgid "7 days"
 msgstr "Неделя"
 
+#, python-format
+msgid "A cloud server answers on 169.254.169.254 with its own data and the tokens of its service account (AWS, GCP, Azure, Yandex Cloud). A VPN client goes out through the server and could ask it too. A rule on the server drops traffic from the Amnezia containers to %(network)s; a systemd timer puts it back after reboots. The server itself still reaches the service; configs and keys do not change."
+msgstr "Облачный сервер отвечает на 169.254.169.254 своими данными и токенами сервисного аккаунта (AWS, GCP, Azure, Yandex Cloud). Клиент VPN выходит в сеть через сервер и тоже мог бы туда обратиться. Правило на сервере отбрасывает трафик контейнеров Amnezia к %(network)s, а таймер systemd возвращает его после перезагрузок. Сам сервер по-прежнему достаёт метаданные; конфигурации и ключи не меняются."
+
 msgid "A copy left by an earlier move is removed."
 msgstr "Копия, оставшаяся от прошлого переноса, удаляется."
 
@@ -865,8 +869,15 @@ msgstr "Закрыть меню"
 msgid "Close the incident"
 msgstr "Закрыть инцидент"
 
+#, python-format
+msgid "Closed for: %(bridges)s."
+msgstr "Закрыто для: %(bridges)s."
+
 msgid "Closes every request of the incident and tells the users the server works again."
 msgstr "Закрывает все обращения инцидента и сообщает пользователям, что сервер снова работает."
+
+msgid "Cloud metadata service for VPN clients"
+msgstr "Метаданные облака для клиентов VPN"
 
 msgid "Code for the bot"
 msgstr "Код для бота"
@@ -2405,6 +2416,10 @@ msgstr "Открыть в Google Play"
 msgid "Open in the panel"
 msgstr "Открыть в панели"
 
+#, python-format
+msgid "Open it only if VPN clients need a local service of the hoster in %(network)s. Installs and imports then leave the server open."
+msgstr "Открывайте, только если клиентам VPN нужна локальная служба хостера в %(network)s. Установки и импорт тогда оставят сервер открытым."
+
 msgid "Open menu"
 msgstr "Открыть меню"
 
@@ -2425,6 +2440,9 @@ msgstr "Откройте приложение-аутентификатор на 
 
 msgid "Open the bot and press Start. The link works once."
 msgstr "Откройте бота и нажмите «Старт». Ссылка работает один раз."
+
+msgid "Open the cloud metadata service to VPN clients? The rule and its timer are removed from the server."
+msgstr "Открыть метаданные облака для клиентов VPN? Правило и его таймер будут удалены с сервера."
 
 msgid "Open the link while signed in to the account. Until then the old email stays."
 msgstr "Откройте ссылку, войдя в аккаунт. До тех пор остаётся старая почта."
@@ -4778,6 +4796,9 @@ msgstr "проверен"
 msgid "clients get no answer"
 msgstr "клиенты без ответа"
 
+msgid "closed"
+msgstr "закрыты"
+
 #, python-format
 msgid "closed at %(at)s"
 msgstr "закрыт %(at)s"
@@ -5166,6 +5187,9 @@ msgstr "онлайн"
 
 msgid "open"
 msgstr "открыт"
+
+msgid "opened by an administrator"
+msgstr "открыты администратором"
 
 msgid "operation"
 msgstr "операция"

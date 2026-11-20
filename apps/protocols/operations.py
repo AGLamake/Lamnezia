@@ -18,7 +18,7 @@ from apps.operations.services.registry import operations
 from apps.operations.services.subjects import subjects
 from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.protocols.models import InstanceOrigin, ProtocolInstance, ServiceInstance
-from apps.protocols.services import offload, speed_test
+from apps.protocols.services import metadata_block, offload, speed_test
 from apps.protocols.services.awg_migration import (
     FINISH_KIND,
     MIGRATE_KIND,
@@ -49,6 +49,7 @@ from apps.protocols.services.lifecycle import (
     ContainerLifecycle,
     RemovedInstance,
 )
+from apps.protocols.services.metadata_block import MetadataBlocker
 from apps.protocols.services.offload import OffloadFix
 from apps.protocols.services.openvpn_settings import (
     OPENVPN_SETTINGS_KIND,
@@ -96,14 +97,15 @@ def import_server(ctx: OperationContext) -> None:
         with ctx.step(_("Connect to the server")):
             host = stack.enter_context(connect(server))
         ServerImporter(server, host, ctx).run()
+    metadata_block.close_after_import(server, ctx.user)
 
 
 @operations.register(INSTALL_KIND, gettext_lazy("Install on the server"))
 def install(ctx: OperationContext) -> None:
     """Install the container, then read the server back so the panel knows what is there.
 
-    The TSO/GSO workaround of a WireGuard-family container comes last: the protocol is already
-    in the panel if it fails, and the server card turns it on again.
+    The cloud metadata block and the TSO/GSO workaround of a WireGuard-family container come
+    last: the protocol is already in the panel if they fail, and the server card turns them on.
     """
     server = Server.objects.get(pk=ctx.params["server_id"])
     container = ctx.params["container"]
@@ -113,6 +115,7 @@ def install(ctx: OperationContext) -> None:
             host = stack.enter_context(connect(server))
         installer.from_params(host, ctx, ctx.params).run()
         ServerImporter(server, host, ctx, origin=InstanceOrigin.INSTALLED).run()
+        MetadataBlocker(server, host, ctx).ensure()
         if ctx.params.get("offload") and container in WG_CONTAINERS:
             OffloadFix(server, host, ctx).enable()
 
@@ -133,6 +136,36 @@ def enable_offload(ctx: OperationContext) -> None:
 def disable_offload(ctx: OperationContext) -> None:
     with _offload(ctx) as fix:
         fix.disable()
+
+
+@operations.register(metadata_block.CHECK_KIND, gettext_lazy("Check the cloud metadata block"))
+def check_metadata_block(ctx: OperationContext) -> None:
+    with _metadata_blocker(ctx) as blocker:
+        blocker.check()
+
+
+@operations.register(
+    metadata_block.ENABLE_KIND, gettext_lazy("Close the cloud metadata service to VPN clients")
+)
+def enable_metadata_block(ctx: OperationContext) -> None:
+    with _metadata_blocker(ctx) as blocker:
+        blocker.enable()
+
+
+@operations.register(
+    metadata_block.ENSURE_KIND, gettext_lazy("Close the cloud metadata service after the import")
+)
+def ensure_metadata_block(ctx: OperationContext) -> None:
+    with _metadata_blocker(ctx) as blocker:
+        blocker.ensure()
+
+
+@operations.register(
+    metadata_block.DISABLE_KIND, gettext_lazy("Open the cloud metadata service to VPN clients")
+)
+def disable_metadata_block(ctx: OperationContext) -> None:
+    with _metadata_blocker(ctx) as blocker:
+        blocker.disable()
 
 
 @operations.register(speed_test.START_KIND, gettext_lazy("Start the port speed test"))
@@ -404,6 +437,15 @@ def _offload(ctx: OperationContext) -> Iterator[OffloadFix]:
         with ctx.step(_("Connect to the server")):
             host = stack.enter_context(connect(server))
         yield OffloadFix(server, host, ctx)
+
+
+@contextmanager
+def _metadata_blocker(ctx: OperationContext) -> Iterator[MetadataBlocker]:
+    server = Server.objects.get(pk=ctx.params["server_id"])
+    with ExitStack() as stack:
+        with ctx.step(_("Connect to the server")):
+            host = stack.enter_context(connect(server))
+        yield MetadataBlocker(server, host, ctx)
 
 
 @contextmanager

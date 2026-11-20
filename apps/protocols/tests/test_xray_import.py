@@ -33,6 +33,7 @@ from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import InstanceOrigin, ProtocolInstance
 from apps.protocols.services.importer import start_import
 from apps.protocols.services.inventory import server_containers
+from apps.protocols.tests.fake_metadata_host import amnezia_writes, without_metadata_block
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
 from apps.ssh.services import CommandResult, RemoteHost
@@ -244,9 +245,10 @@ def test_a_build_under_way_is_not_started_twice(imported: Server, admin_client: 
 
 
 def test_import_changes_nothing_on_the_server(app_server: XrayAppServer, imported: Server) -> None:
-    assert app_server.files == app_files()
+    # The operation started after the import closes the cloud metadata service on its own.
+    assert without_metadata_block(app_server.files) == app_files()
     assert app_server.restarts == 0
-    assert not [c for c in app_server.commands if "target=" in c]
+    assert not amnezia_writes(app_server.commands)
 
 
 def test_import_again_adds_only_new_clients(
