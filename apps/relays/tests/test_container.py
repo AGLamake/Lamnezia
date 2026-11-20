@@ -34,7 +34,7 @@ def check(server: FakeRelayServer, *ports: int) -> None:
 def installed(server: FakeRelayServer, *ports: int) -> RelayContainer:
     container = relay(server)
     container.install(set(ports))
-    container.apply(set(ports), CONFIG)
+    container.apply(set(ports), CONFIG, {})
     return container
 
 
@@ -88,7 +88,7 @@ def test_an_update_with_the_same_ports_keeps_the_container(server: FakeRelayServ
     container = installed(server, PORT)
     server.docker_calls.clear()
 
-    container.apply({PORT}, b'{"version": 1, "groups": []}')
+    container.apply({PORT}, b'{"version": 1, "groups": []}', {})
 
     assert "run" not in server.docker_calls and "restart" not in server.docker_calls
     assert server.files[f"{FOLDER}/config.json"] == b'{"version": 1, "groups": []}'
@@ -97,7 +97,7 @@ def test_an_update_with_the_same_ports_keeps_the_container(server: FakeRelayServ
 def test_a_new_port_starts_the_container_again(server: FakeRelayServer) -> None:
     container = installed(server, PORT)
 
-    container.apply({PORT, 51820}, CONFIG)
+    container.apply({PORT, 51820}, CONFIG, {})
 
     assert server.ports == {PORT, 51820}
     assert server.files[f"{FOLDER}/agent.py"] == agent_source()
@@ -108,7 +108,7 @@ def test_a_new_port_keeps_the_agent_state(server: FakeRelayServer) -> None:
     state = b'{"version": 1, "groups": [{"port": 55424, "active": {"host": "b"}}]}'
     server.files[f"{FOLDER}/state.json"] = state
 
-    container.apply({PORT, 51820}, CONFIG)
+    container.apply({PORT, 51820}, CONFIG, {})
 
     assert server.ports == {PORT, 51820}
     assert server.files[f"{FOLDER}/state.json"] == state
@@ -118,14 +118,37 @@ def test_a_changed_agent_is_restarted(server: FakeRelayServer) -> None:
     container = installed(server, PORT)
     server.files[f"{FOLDER}/agent.py"] = b"old agent"
 
-    container.apply({PORT}, CONFIG)
+    container.apply({PORT}, CONFIG, {})
 
     assert server.docker_calls[-1] == "restart"
 
 
+def test_clone_peers_go_before_the_config_and_stale_ones_go(server: FakeRelayServer) -> None:
+    container = installed(server, PORT, 51820)
+    server.files[f"{FOLDER}/peers-51820.conf"] = b"[Peer]\nPublicKey = old\n"
+    del server.files[f"{FOLDER}/config.json"]
+
+    container.apply({PORT, 51820}, CONFIG, {f"peers-{PORT}.conf": "[Peer]\nPublicKey = a\n"})
+
+    assert server.files[f"{FOLDER}/peers-{PORT}.conf"] == b"[Peer]\nPublicKey = a\n"
+    assert f"{FOLDER}/peers-51820.conf" not in server.files
+    names = list(server.files)
+    assert names.index(f"{FOLDER}/peers-{PORT}.conf") < names.index(f"{FOLDER}/config.json")
+
+
+def test_writing_only_the_peers_keeps_the_other_files(server: FakeRelayServer) -> None:
+    container = installed(server, PORT, 51820)
+    server.files[f"{FOLDER}/peers-51820.conf"] = b"kept"
+
+    container.write_peers({f"peers-{PORT}.conf": ""})
+
+    assert server.files[f"{FOLDER}/peers-{PORT}.conf"] == b""
+    assert server.files[f"{FOLDER}/peers-51820.conf"] == b"kept"
+
+
 def test_an_update_needs_the_container(server: FakeRelayServer) -> None:
     with pytest.raises(RelayError) as error:
-        relay(server).apply({PORT}, CONFIG)
+        relay(server).apply({PORT}, CONFIG, {})
 
     assert error.value.code == RelayErrorCode.NOT_INSTALLED
 

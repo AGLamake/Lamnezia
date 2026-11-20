@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   download and upload limit. Inside it the speed is shared equally between those who download
   now, and the speed limits of plans work inside it. The limit is shown on the server card; in a
   group it is set on the leading server.
+- **Split routing of a group**: the group page switches a group behind an installed relay between
+  forwarding and split routing, as a background operation. It reads the traffic counters of the
+  members first, gives every member a second service peer for the uplink by the protocol of
+  changes (members that do not answer catch up later) and writes the clone of the leading server
+  and the peers of the group's keys to the relay; each client makes one new handshake. Issuing,
+  revoking and editing keys of a split group reach the clone too. Going back to forwarding takes
+  the uplink peer off the members after the relay stops using it.
 - **Split routing in the relay agent**: a group of the relay can run split instead of forwarding
   its port. The relay answers the clients with a copy of the group's interface, sends traffic to
   the networks of the group's list and to private networks out directly and the rest to the

@@ -105,7 +105,8 @@ class FakeRelayServer(FakeDebianServer):
             self.files[_target(script)] = stdin
             return result()
         if script.startswith("rm -f -- "):
-            self.files.pop(script.removeprefix("rm -f -- "), None)
+            for path in shlex.split(script.removeprefix("rm -f -- ")):
+                self.files.pop(path, None)
             return result()
         if "cat -- " in script:
             content = self.files.get(script.rsplit("cat -- ", 1)[1])

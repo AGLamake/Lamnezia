@@ -3,7 +3,8 @@
 The panel writes the result to the relay as config.json (docs/FALLBACK.md section 5); the
 digest of the written file and the published ports tells a sync whether the relay got the groups
 as they are now. The file holds resolved addresses, so a member name that moves to another IP
-changes the digest too.
+changes the digest too. A split group also has its clone and uplink there, and the peers of
+its clone in a file of their own (services/clone.py).
 """
 
 import hashlib
@@ -16,14 +17,19 @@ from amnezia_core.relay import (
     DEFAULT_CHECK_INTERVAL,
     DEFAULT_FAILURES,
     Backend,
+    Clone,
     RelayConfig,
     RelayGroup,
+    Routing,
+    SplitRouting,
+    clone_peers_file,
 )
 from amnezia_core.relay import ServicePeer as CoreServicePeer
-from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.models import GroupMember, GroupRouting, ServerGroup
 from apps.groups.services.replication import backends
 from apps.protocols.services.installer import ipv4_addresses
-from apps.relays.models import Relay, ServicePeer
+from apps.relays.models import PeerRole, Relay, ServicePeer
+from apps.relays.services.clone import clone_peers
 from apps.servers.models import Server
 
 
@@ -56,21 +62,41 @@ class RelayPlan:
         return hashlib.sha256(json.dumps(data).encode()).hexdigest()
 
     def config(self) -> RelayConfig:
-        """The agent config; a group without members or a service peer is left out.
+        """The agent config; a group without members or a probe peer is left out.
 
-        Raises OSError when the name of a member server does not resolve.
+        A split group without its uplink peer yet is forwarded: its clients keep working and
+        the next update splits it. Raises OSError when the name of a member server does not
+        resolve.
         """
         groups = []
         for group, members in self.groups:
-            peer = ServicePeer.objects.filter(group=group).first()
-            if not members or peer is None:
+            peers = {peer.role: peer for peer in ServicePeer.objects.filter(group=group)}
+            probe, uplink = peers.get(PeerRole.PROBE), peers.get(PeerRole.UPLINK)
+            if not members or probe is None:
                 continue
+            leader = members[0]
+            split = None
+            if group.routing == GroupRouting.SPLIT and uplink is not None:
+                split = SplitRouting(_clone(leader), _core_peer(uplink, leader))
             groups.append(
                 RelayGroup(
-                    group.port, tuple(map(member_backend, members)), _core_peer(peer, members[0])
+                    group.port,
+                    tuple(map(member_backend, members)),
+                    _core_peer(probe, leader),
+                    Routing.SPLIT if split else Routing.FORWARD,
+                    split,
                 )
             )
         return RelayConfig(tuple(groups), self.check_interval, self.failures)
+
+    def clone_peers(self, config: RelayConfig) -> dict[str, str]:
+        """The peers file of each split group of `config`, by its name in the agent folder."""
+        split = {group.port for group in config.groups if group.split is not None}
+        return {
+            clone_peers_file(group.port): clone_peers(members[0].instance).to_text()
+            for group, members in self.groups
+            if group.port in split
+        }
 
 
 def members_on_relay(server: Server) -> list[GroupMember]:
@@ -90,6 +116,12 @@ def member_backend(member: GroupMember) -> Backend:
     if not found:
         raise OSError(f"{instance.server.host} has no IPv4 address")
     return Backend(IPv4Address(found[0]), instance.port)
+
+
+def _clone(leader: GroupMember) -> Clone:
+    """The group server as the members have it: the key, the address and the parameters."""
+    instance = leader.instance
+    return Clone.of_server(instance.private_key, instance.subnet, instance.params)
 
 
 def _core_peer(peer: ServicePeer, leader: GroupMember) -> CoreServicePeer:

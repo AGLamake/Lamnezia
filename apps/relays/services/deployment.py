@@ -1,11 +1,14 @@
 """Installing, updating and removing the relay of a server, and the periodic sync of relays.
 
-An update gives every group of the relay its service peer on the members first, then writes
-the members in order to the agent; a removal takes the peers off again. The relay server is
-locked only for its own container: a member on the same server takes the same lock for its peers.
+An update gives every group of the relay its service peers on the members first, then writes
+the clone peers of the split groups and the members in order to the agent, and only then takes
+the uplink peer off the groups that are forwarded again; a removal takes the peers off. A key
+change of a split group needs only its clone peers: a lighter operation writes just them. The
+relay server is locked only for its own container: a member on the same server takes the same
+lock for its peers.
 """
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import ExitStack, contextmanager
 
 from django.db import transaction
@@ -15,13 +18,15 @@ from django.utils.translation import gettext as _
 from amnezia_core.relay import RelayConfig
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
+from apps.groups.models import GroupRouting
 from apps.groups.services.addressing import GroupKeyAddress
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.operations.services.launcher import launch
 from apps.protocols.services.host_setup import HostSetup
 from apps.relays.errors import RelayError, RelayErrorCode
-from apps.relays.models import SKIP_DETAIL_LENGTH, Relay, SyncSkip
+from apps.relays.models import SKIP_DETAIL_LENGTH, PeerRole, Relay, ServicePeer, SyncSkip
+from apps.relays.services.clone import peers_digest
 from apps.relays.services.config import RelayPlan, members_on_relay
 from apps.relays.services.container import RESERVED_PORTS, RelayContainer
 from apps.relays.services.service_peers import ServicePeerPlacement
@@ -32,7 +37,10 @@ from apps.ssh.services import RemoteHost
 INSTALL_KIND = "relays.install"
 UPDATE_KIND = "relays.update"
 REMOVE_KIND = "relays.remove"
-KINDS = (INSTALL_KIND, UPDATE_KIND, REMOVE_KIND)
+PEERS_KIND = "relays.peers"
+# Set by services/routing.py: the change of a group's routing runs an update of its own.
+ROUTING_KIND = "relays.routing"
+KINDS = (INSTALL_KIND, UPDATE_KIND, REMOVE_KIND, PEERS_KIND, ROUTING_KIND)
 
 
 class RelayDeployment:
@@ -52,15 +60,17 @@ class RelayDeployment:
             self._place_service_peers()
             plan = RelayPlan.of(self._relay.server)
             config = self._config(plan)
+            peers = plan.clone_peers(config)
             with self._lock(host):
                 setup.prepare()
                 container = RelayContainer(host, self._ctx)
                 with self._ctx.step(_("Check the ports of the groups")):
                     container.check_ports(plan.ports)
                 container.install(plan.ports)
-                container.apply(plan.ports, config.to_json().encode())
+                container.apply(plan.ports, config.to_json().encode(), peers)
         self._relay.installed_at = timezone.now()
-        self._synced(plan, config)
+        self._synced(plan, config, peers)
+        self._withdraw_uplinks(plan)
 
     def update(self) -> None:
         """Write the groups and members of now; new ports are checked before they are published."""
@@ -71,12 +81,30 @@ class RelayDeployment:
             plan = RelayPlan.of(self._relay.server)
             _refuse(plan, self._relay.server)
             config = self._config(plan)
+            peers = plan.clone_peers(config)
             with self._lock(host):
                 container = RelayContainer(host, self._ctx)
                 with self._ctx.step(_("Check the ports of the groups")):
                     container.check_ports(plan.ports)
-                container.apply(plan.ports, config.to_json().encode())
-        self._synced(plan, config)
+                container.apply(plan.ports, config.to_json().encode(), peers)
+        self._synced(plan, config, peers)
+        self._withdraw_uplinks(plan)
+
+    def write_peers(self) -> None:
+        """Write the clone peers of the split groups after a key change; nothing else changes.
+
+        Peers files of groups the panel forwards now stay: the agent may split them still,
+        and only an update that also writes its config takes them away.
+        """
+        plan = RelayPlan.of(self._relay.server)
+        config = self._config(plan)
+        peers = plan.clone_peers(config)
+        with ExitStack() as stack:
+            host = self._connect(stack)
+            with self._lock(host):
+                RelayContainer(host, self._ctx).write_peers(peers)
+        self._relay.peers_synced = peers_digest(peers)
+        self._relay.save(update_fields=["peers_synced"])
 
     def remove(self) -> None:
         """Drop the container and the service peers of its groups from their members; the keys
@@ -104,17 +132,30 @@ class RelayDeployment:
             yield
 
     def _place_service_peers(self) -> None:
-        """A group whose leading server does not answer is left for the next sync; a failure on
-        an answering leader fails the operation, so the relay keeps the members it has."""
+        """Every group gets its probe and a split group its uplink too. A group whose leading
+        server does not answer is left for the next sync; a failure on an answering leader
+        fails the operation, so the relay keeps the members it has."""
         for group, _members in RelayPlan.of(self._relay.server).groups:
+            roles = [PeerRole.PROBE]
+            if group.routing == GroupRouting.SPLIT:
+                roles.append(PeerRole.UPLINK)
             try:
-                ServicePeerPlacement(group, self._ctx).place()
+                ServicePeerPlacement(group, self._ctx).place(roles)
             except RelayError as error:
                 if error.code != RelayErrorCode.LEADER_UNREACHABLE:
                     raise
                 title = _("Leave the service peer of %(group)s for later") % {"group": group.name}
                 with self._ctx.step(title):
                     self._ctx.log(error.message)
+
+    def _withdraw_uplinks(self, plan: RelayPlan) -> None:
+        """Take the uplink off the members of the groups forwarded again, now that the agent
+        no longer uses it; with the leading server down it stays for the next update."""
+        for group, _members in plan.groups:
+            forwarded = group.routing == GroupRouting.FORWARD
+            uplink = ServicePeer.objects.filter(group=group, role=PeerRole.UPLINK)
+            if forwarded and uplink.exists():
+                ServicePeerPlacement(group, self._ctx).withdraw([PeerRole.UPLINK])
 
     def _config(self, plan: RelayPlan) -> RelayConfig:
         with self._ctx.step(_("Prepare the list of members")):
@@ -124,17 +165,25 @@ class RelayDeployment:
                 raise RelayError(RelayErrorCode.HOST_NOT_RESOLVED, str(error)) from error
             for group in config.groups:
                 members = ", ".join(str(backend) for backend in group.backends)
-                self._ctx.log(f"{group.port}/udp → {members}")
+                self._ctx.log(f"{group.port}/udp → {members} ({group.routing})")
             return config
 
-    def _synced(self, plan: RelayPlan, config: RelayConfig) -> None:
+    def _synced(self, plan: RelayPlan, config: RelayConfig, peers: Mapping[str, str]) -> None:
         """Save what the relay runs; the keys of its groups now send clients to it."""
         with self._ctx.step(_("Save the relay state")):
             self._relay.synced = plan.digest(config)
+            self._relay.peers_synced = peers_digest(peers)
             self._relay.synced_at = timezone.now()
             self._relay.sync_skipped = SyncSkip.NONE
             self._relay.sync_skipped_detail = ""
-            fields = ["installed_at", "synced", "synced_at", "sync_skipped", "sync_skipped_detail"]
+            fields = [
+                "installed_at",
+                "synced",
+                "peers_synced",
+                "synced_at",
+                "sync_skipped",
+                "sync_skipped_detail",
+            ]
             self._relay.save(update_fields=fields)
             moves = [GroupKeyAddress(group) for group, _members in plan.groups]
         self._move_keys(moves, _("Move the keys of the groups to the relay address"))
@@ -198,18 +247,22 @@ def _sync(relay: Relay) -> None:
         return
     plan = RelayPlan.of(relay.server)
     try:
-        digest = plan.digest(plan.config())
+        config = plan.config()
     except OSError as error:
         _skip(relay, SyncSkip.HOST_NOT_RESOLVED, str(error))
         return
     _skip(relay, SyncSkip.NONE, "")
-    if digest == relay.synced:
+    if plan.digest(config) != relay.synced:
+        kind = UPDATE_KIND
+    elif peers_digest(plan.clone_peers(config)) != relay.peers_synced:
+        kind = PEERS_KIND
+    else:
         return
     with transaction.atomic():
         # A sync by the minute and one by a change must not start two updates.
         Relay.objects.select_for_update().filter(pk=relay.pk).first()
         if not _busy(relay):
-            launch(UPDATE_KIND, {"server_id": relay.server_id}, subject=str(relay.server))
+            launch(kind, {"server_id": relay.server_id}, subject=str(relay.server))
 
 
 def _skip(relay: Relay, reason: SyncSkip, detail: str) -> None:
@@ -222,6 +275,7 @@ def _skip(relay: Relay, reason: SyncSkip, detail: str) -> None:
 
 
 def _busy(relay: Relay) -> bool:
+    """An operation on the relay runs or waits: a sync would race with it."""
     return Operation.objects.filter(
         kind__in=KINDS,
         status__in=(OperationStatus.PENDING, OperationStatus.RUNNING),

@@ -13,6 +13,7 @@ from apps.groups.views import (
     GroupLeaveRetryView,
     GroupLeaveView,
     GroupListView,
+    GroupRoutingView,
     GroupSettingsView,
     GroupStayView,
     GroupSwitchView,
@@ -36,4 +37,5 @@ urlpatterns = [
     path("members/<int:member_pk>/stay/", GroupStayView.as_view(), name="stay"),
     path("members/<int:member_pk>/lead/", GroupHandoverView.as_view(), name="lead"),
     path("members/<int:member_pk>/switch/", GroupSwitchView.as_view(), name="switch"),
+    path("<int:pk>/routing/", GroupRoutingView.as_view(), name="routing"),
 ]

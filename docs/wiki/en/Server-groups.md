@@ -198,8 +198,26 @@ the group falls back to plain forwarding to that member; after a few good uplink
 sites of the list keep working. A network list that is empty or has a bad line is not applied; the
 group keeps its previous list. The mode the group is in is part of the state the agent writes.
 
-The panel settings for split routing come in a later version. The agent needs the new relay image:
-use **Reinstall** on the relay card once they are there.
+The group page shows the routing of a group behind an installed relay and switches it:
+**Switch to split routing** and **Switch to forwarding**. The switch is a background operation:
+
+1. The panel reads the traffic counters of the members, so the traffic of the old path is counted
+   up to the switch.
+2. For split routing, every member gets a second service peer, "Lamnezia uplink", by the usual
+   protocol of changes: the leading server first. If the leading server does not answer, the
+   operation fails and nothing changes. A member that does not answer falls behind and gets the
+   peer on its catch-up.
+3. The panel saves the routing and updates the relay: it writes the clone (the key, address and
+   parameters of the group's leading server) and the peers of the group's keys, then the config.
+   Each client makes one new handshake.
+
+When the group goes back to forwarding, the relay stops using the clone first, and only then the
+uplink peer is taken off the members. While a group is split, issuing, revoking and editing its
+keys reaches the clone too: the relay gets the new peers within seconds, and the sync by the minute
+catches what was missed. The clone has the keys the panel knows; peers added on the server by hand
+are not copied. The switch is refused while another operation on the relay runs. The agent needs
+the new relay image: use **Reinstall** on the relay card once. The network list of a split group is
+set in a later version.
 
 ## Keys of a group behind the relay
 

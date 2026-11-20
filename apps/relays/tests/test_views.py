@@ -13,7 +13,7 @@ from apps.accounts.tests.factories import UserFactory
 from apps.groups.models import GroupMember, ServerGroup
 from apps.operations.models import Operation, OperationStatus
 from apps.relays.models import Relay, SyncSkip
-from apps.relays.services.deployment import INSTALL_KIND, UPDATE_KIND
+from apps.relays.services.deployment import INSTALL_KIND, ROUTING_KIND, UPDATE_KIND
 from apps.relays.services.switch import SWITCH_KIND
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
@@ -233,6 +233,36 @@ def test_a_group_never_switched_by_hand_shows_no_planned_switch(
     page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
 
     assert "Last planned switch" not in page
+
+
+def test_the_group_page_offers_the_other_routing(browser: Client, watched: Relay) -> None:
+    group = watched.server.relayed_groups.get()
+
+    page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert reverse("groups:routing", args=[group.pk]) in page
+    assert 'name="routing" value="split"' in page
+    assert "one new handshake" in page
+
+
+def test_routing_starts_an_operation(browser: Client, watched: Relay) -> None:
+    group = watched.server.relayed_groups.get()
+
+    response = browser.post(reverse("groups:routing", args=[group.pk]), {"routing": "split"})
+
+    assert response.url == reverse("groups:detail", args=[group.pk])  # type: ignore[attr-defined]
+    params = Operation.objects.get(kind=ROUTING_KIND).params
+    assert (params["group_id"], params["routing"]) == (group.pk, "split")
+
+
+def test_the_same_routing_says_why(browser: Client, watched: Relay) -> None:
+    group = watched.server.relayed_groups.get()
+
+    url = reverse("groups:routing", args=[group.pk])
+    response = browser.post(url, {"routing": "forward"}, follow=True)
+
+    assert not Operation.objects.filter(kind=ROUTING_KIND).exists()
+    assert "already has this routing" in response.content.decode()
 
 
 def test_the_card_shows_settings_the_panel_did_not_write(browser: Client, watched: Relay) -> None:

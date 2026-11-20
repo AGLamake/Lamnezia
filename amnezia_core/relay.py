@@ -21,6 +21,7 @@ from enum import StrEnum
 from ipaddress import IPv4Address, IPv4Interface, IPv4Network, collapse_addresses
 from typing import Any
 
+from amnezia_core.awg import AWG_INTERFACE_PARAMS, SPECIAL_JUNK, Peer
 from amnezia_core.errors import AmneziaFormatError, RelayFormatError
 from amnezia_core.keys import decode_key
 
@@ -117,7 +118,11 @@ class UplinkKind(StrEnum):
 @dataclass(frozen=True)
 class Clone:
     """The group's server on the relay: its key, its address in the group subnet and the
-    obfuscation parameters of the group's awg0.conf. It listens on the group port."""
+    obfuscation parameters of the group's awg0.conf. It listens on the group port.
+
+    The address is the one awg0.conf of the members has: Amnezia gives the server the network
+    address of the subnet (`10.8.1.0/24`) and clients the hosts from `.1`.
+    """
 
     private_key: str = field(repr=False)
     address: IPv4Interface
@@ -125,9 +130,19 @@ class Clone:
 
     def __post_init__(self) -> None:
         decode_key(self.private_key)
-        network = self.address.network
-        if self.address.ip in (network.network_address, network.broadcast_address):
-            raise RelayFormatError(f"Clone address {self.address} is not a host in its subnet.")
+        if self.address.ip == self.address.network.broadcast_address:
+            raise RelayFormatError(f"Clone address {self.address} is the broadcast address.")
+
+    @classmethod
+    def of_server(cls, private_key: str, subnet: str, params: Mapping[str, str]) -> "Clone":
+        """The clone of a group server: its key, its `Address` and the parameters of its
+        [Interface]. The server does not use I1-I5, upstream keeps them as comments."""
+        server_params = {
+            name: value
+            for name in AWG_INTERFACE_PARAMS
+            if name not in SPECIAL_JUNK and (value := str(params.get(name, "")))
+        }
+        return cls(private_key, IPv4Interface(subnet), server_params)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -266,6 +281,24 @@ def networks_file(port: int) -> str:
 def clone_peers_file(port: int) -> str:
     """Name of the file with the `[Peer]` sections of a split group's clone in the agent folder."""
     return f"peers-{port}.conf"
+
+
+@dataclass(frozen=True)
+class ClonePeers:
+    """The `[Peer]` sections of a split group's clone: the key peers of the group, written as
+    awg0.conf has them. The agent appends them to the clone's `[Interface]`."""
+
+    peers: tuple[Peer, ...]
+
+    def __post_init__(self) -> None:
+        keys = [peer.public_key for peer in self.peers]
+        if len(set(keys)) != len(keys):
+            raise RelayFormatError("A clone lists a peer twice.")
+        for key in keys:
+            decode_key(key)
+
+    def to_text(self) -> str:
+        return "".join("\n".join(peer.to_section().lines) + "\n" for peer in self.peers)
 
 
 @dataclass(frozen=True)

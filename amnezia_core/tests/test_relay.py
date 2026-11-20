@@ -5,11 +5,13 @@ from typing import Any
 
 import pytest
 
-from amnezia_core.errors import RelayFormatError
+from amnezia_core.awg import Peer
+from amnezia_core.errors import InvalidKeyError, RelayFormatError
 from amnezia_core.keys import KeyPair
 from amnezia_core.relay import (
     Backend,
     Clone,
+    ClonePeers,
     NetworkList,
     RelayConfig,
     RelayGroup,
@@ -237,7 +239,7 @@ def split_group() -> RelayGroup:
         preshared_key=PSK,
         awg_params={"Jc": "6"},
     )
-    clone = Clone(CLONE_KEY.private_key, IPv4Interface("10.8.1.1/24"), {"Jc": "6", "S1": "12"})
+    clone = Clone(CLONE_KEY.private_key, IPv4Interface("10.8.1.0/24"), {"Jc": "6", "S1": "12"})
     return RelayGroup(55424, (A, B), service(), Routing.SPLIT, SplitRouting(clone, uplink))
 
 
@@ -254,7 +256,7 @@ class TestSplitRouting:
         assert (data["recovery"], data["uplink_check"]) == (6, "1.1.1.1")
         assert group["routing"] == "split"
         assert group["split"]["kind"] == "awg"
-        assert group["split"]["clone"]["address"] == "10.8.1.1/24"
+        assert group["split"]["clone"]["address"] == "10.8.1.0/24"
         assert group["split"]["uplink"]["address"] == "10.8.1.253/32"
 
     def test_a_config_of_an_older_panel_forwards(self) -> None:
@@ -275,10 +277,22 @@ class TestSplitRouting:
     def test_repr_hides_the_clone_key(self) -> None:
         assert CLONE_KEY.private_key not in repr(split_group())
 
-    @pytest.mark.parametrize("address", ["10.8.1.0/24", "10.8.1.255/24"])
-    def test_clone_address_is_a_host_of_its_subnet(self, address: str) -> None:
+    def test_clone_address_is_not_the_broadcast(self) -> None:
         with pytest.raises(RelayFormatError):
-            Clone(CLONE_KEY.private_key, IPv4Interface(address), {})
+            Clone(CLONE_KEY.private_key, IPv4Interface("10.8.1.255/24"), {})
+
+    def test_clone_of_a_server_drops_special_junk_and_empty_params(self) -> None:
+        params = {"Jc": "4", "S1": "", "H1": "1020325451-1025713284", "I1": "<r 2>", "X": "1"}
+
+        clone = Clone.of_server(CLONE_KEY.private_key, "10.8.1.0/24", params)
+
+        assert clone.awg_params == {"Jc": "4", "H1": "1020325451-1025713284"}
+        assert str(clone.address) == "10.8.1.0/24"
+
+    def test_clone_takes_the_server_address_of_amnezia(self) -> None:
+        clone = Clone(CLONE_KEY.private_key, IPv4Interface("10.8.1.0/24"), {})
+
+        assert str(clone.address) == "10.8.1.0/24"
 
     def test_recovery_must_be_positive(self) -> None:
         with pytest.raises(RelayFormatError):
@@ -313,6 +327,30 @@ class TestSplitRouting:
             "networks-55424.txt",
             "peers-55424.conf",
         )
+
+
+class TestClonePeers:
+    def test_sections_as_amnezia_writes_them(self) -> None:
+        first, second = KeyPair.generate().public_key, KeyPair.generate().public_key
+        peers = ClonePeers((Peer(first, ("10.8.1.1/32",), PSK), Peer(second, ("10.8.1.2/32",))))
+
+        assert peers.to_text() == (
+            f"[Peer]\nPublicKey = {first}\nPresharedKey = {PSK}\nAllowedIPs = 10.8.1.1/32\n\n"
+            f"[Peer]\nPublicKey = {second}\nAllowedIPs = 10.8.1.2/32\n\n"
+        )
+
+    def test_no_peers_is_an_empty_file(self) -> None:
+        assert ClonePeers(()).to_text() == ""
+
+    def test_rejects_a_peer_listed_twice(self) -> None:
+        key = KeyPair.generate().public_key
+
+        with pytest.raises(RelayFormatError):
+            ClonePeers((Peer(key, ("10.8.1.1/32",)), Peer(key, ("10.8.1.2/32",))))
+
+    def test_rejects_a_broken_key(self) -> None:
+        with pytest.raises(InvalidKeyError):
+            ClonePeers((Peer("nope", ("10.8.1.1/32",)),))
 
 
 class TestNetworkList:

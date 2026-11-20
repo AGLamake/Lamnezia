@@ -13,6 +13,13 @@ class GroupProtocol(models.TextChoices):
     AWG3 = "awg3", _("AmneziaWG 3.1")
 
 
+class GroupRouting(models.TextChoices):
+    """How the relay carries the group (docs/SPLIT.md): forwards the port or splits the traffic."""
+
+    FORWARD = "forward", _("forward")
+    SPLIT = "split", _("split")
+
+
 class ServerGroup(models.Model):
     """Servers with one identity: the server key, [Interface], subnet, port and peers of the leader.
 
@@ -37,6 +44,9 @@ class ServerGroup(models.Model):
         null=True,
         blank=True,
         related_name="relayed_groups",
+    )
+    routing = models.CharField(
+        _("routing"), max_length=16, choices=GroupRouting, default=GroupRouting.FORWARD
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
 

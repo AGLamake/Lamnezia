@@ -19,7 +19,7 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Upd
 from apps.accounts.permissions import AdminRequiredMixin
 from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.forms import GroupEditForm, GroupForm, GroupSettingsForm
-from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.models import GroupMember, GroupRouting, ServerGroup
 from apps.groups.services.addressing import DomainCheck, client_host
 from apps.groups.services.handover import key_operations, start_handover
 from apps.groups.services.membership import (
@@ -49,6 +49,7 @@ from apps.protocols.models import ProtocolInstance
 from apps.relays.errors import RelayError
 from apps.relays.models import Relay
 from apps.relays.services.health import GroupHealth
+from apps.relays.services.routing import start_routing
 from apps.relays.services.switch import last_switch, start_switch
 from apps.servers.models import Server
 
@@ -291,6 +292,21 @@ class GroupSwitchView(AdminRequiredMixin, View):
         except RelayError as error:
             messages.error(request, f"{error.message} {error.hint}")
         return redirect("groups:detail", pk=member.group_id)
+
+
+class GroupRoutingView(AdminRequiredMixin, View):
+    """Moves the group between forward and split routing on its relay, in the background."""
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        group = get_object_or_404(ServerGroup, pk=pk)
+        routing = request.POST.get("routing", "")
+        if routing not in GroupRouting.values:
+            return redirect("groups:detail", pk=group.pk)
+        try:
+            start_routing(group, GroupRouting(routing), user=self.member, ip=self.client_ip)
+        except RelayError as error:
+            messages.error(request, f"{error.message} {error.hint}")
+        return redirect("groups:detail", pk=group.pk)
 
 
 class GroupDeleteView(AdminRequiredMixin, View):

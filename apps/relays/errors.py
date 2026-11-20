@@ -21,6 +21,8 @@ class RelayErrorCode(StrEnum):
     SWITCH_UNREACHABLE = "switch_unreachable"
     SWITCH_OUTDATED = "switch_outdated"
     SWITCH_NO_ANSWER = "switch_no_answer"
+    ROUTING_SAME = "routing_same"
+    RELAY_BUSY = "relay_busy"
 
 
 RELAY_ERRORS: dict[RelayErrorCode, ErrorDescription] = {
@@ -95,6 +97,14 @@ RELAY_ERRORS: dict[RelayErrorCode, ErrorDescription] = {
             "The agent may be of an older release or stopped: update the relay on the server "
             "card, then switch again. The clients stay where they are."
         ),
+    ),
+    RelayErrorCode.ROUTING_SAME: ErrorDescription(
+        _("The group already has this routing."),
+        _("Nothing to change."),
+    ),
+    RelayErrorCode.RELAY_BUSY: ErrorDescription(
+        _("Another operation on the relay is running."),
+        _("Wait for it to finish, see the operations page, then try again."),
     ),
 }
 

@@ -1,10 +1,11 @@
 """A relay sync right after a change of what the relays forward, not at the next minute.
 
-The members of a group, the group port or relay, the service peer, the address of a member
-server, or the port, keys and parameters of a member: a change of any of them names the relays
-of the groups it touches. A transaction queues one sync for all the relays it named, once it
-commits, and the sync updates only them. The sync compares digests, so a change that is not on a
-relay costs nothing; the sync by the minute stays for what no signal sees, such as DNS.
+The members of a group, the group port, relay or routing, the service peers, the address of a
+member server, or the port, keys and parameters of a member: a change of any of them names the
+relays of the groups it touches. So does a key of a split group, whose peer the clone on the
+relay has. A transaction queues one sync for all the relays it named, once it commits, and the
+sync updates only them. The sync compares digests, so a change that is not on a relay costs
+nothing; the sync by the minute stays for what no signal sees, such as DNS.
 """
 
 from collections.abc import Iterable
@@ -14,14 +15,20 @@ from django.db import transaction
 from django.db.models import Model, QuerySet
 from django.db.models.signals import post_delete, post_save, pre_save
 
-from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.models import GroupMember, GroupRouting, ServerGroup
+from apps.keys.models import AccessKey
+from apps.keys.signals import keys_written
 from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay, ServicePeer
 from apps.servers.models import Server
 
 # Fields of a member server and its instance that reach the config of a relay.
 _SERVER_FIELDS = frozenset({"host"})
-_INSTANCE_FIELDS = frozenset({"port", "public_key", "preshared_key", "params"})
+_INSTANCE_FIELDS = frozenset(
+    {"port", "public_key", "private_key", "preshared_key", "params", "subnet"}
+)
+# Fields of a key that reach the clone peers of a split group.
+_KEY_FIELDS = frozenset({"status", "client_ip", "public_key", "profile"})
 
 
 class SyncBatch:
@@ -110,6 +117,32 @@ def on_instance_saved(
         request_sync(_relays_of(ServerGroup.objects.filter(members__instance=instance)))
 
 
+def _split_relays(source: str) -> list[int | None]:
+    """The relays of the split groups whose keys are those of `source`: its leading server."""
+    instance_id = ProtocolInstance.pk_of(source)
+    if instance_id is None:
+        return []
+    groups = ServerGroup.objects.filter(
+        routing=GroupRouting.SPLIT, members__instance_id=instance_id, members__leading=True
+    )
+    return _relays_of(groups)
+
+
+def on_keys_written(sender: object, source: str, **kwargs: Any) -> None:
+    request_sync(_split_relays(source))
+
+
+def on_key_saved(
+    sender: type[AccessKey],
+    instance: AccessKey,
+    update_fields: Iterable[str] | None = None,
+    **kwargs: Any,
+) -> None:
+    """A key saved with a field the clone has, or deleted."""
+    if _touches(update_fields, _KEY_FIELDS):
+        request_sync(_split_relays(instance.source))
+
+
 def connect() -> None:
     uid = "relays.sync.ServerGroup"
     pre_save.connect(on_group_saving, sender=ServerGroup, dispatch_uid=f"{uid}.saving")
@@ -123,3 +156,6 @@ def connect() -> None:
     post_save.connect(
         on_instance_saved, sender=ProtocolInstance, dispatch_uid="relays.sync.ProtocolInstance"
     )
+    keys_written.connect(on_keys_written, dispatch_uid="relays.sync.keys_written")
+    post_save.connect(on_key_saved, sender=AccessKey, dispatch_uid="relays.sync.AccessKey")
+    post_delete.connect(on_key_saved, sender=AccessKey, dispatch_uid="relays.sync.AccessKey.delete")

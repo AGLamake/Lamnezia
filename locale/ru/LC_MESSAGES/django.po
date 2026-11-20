@@ -393,6 +393,10 @@ msgstr "Сначала добавьте машину как сервер: пер
 msgid "Add the service peer on %(server)s"
 msgstr "Добавить служебный пир на %(server)s"
 
+#, python-format
+msgid "Add the uplink peer on %(server)s"
+msgstr "Добавить пир канала на %(server)s"
+
 msgid "Added"
 msgstr "Добавлен"
 
@@ -501,6 +505,9 @@ msgstr "Обновление уже запрошено или идёт."
 
 msgid "Android version"
 msgstr "Версия Android"
+
+msgid "Another operation on the relay is running."
+msgstr "На ретрансляторе уже идёт другая операция."
 
 msgid "Another program or container listens on it, see the step log. Free the port."
 msgstr "Его слушает другая программа или контейнер, см. журнал шага. Освободите порт."
@@ -717,6 +724,9 @@ msgstr "Сменить почту"
 
 msgid "Change the protocol settings of a group"
 msgstr "Смена настроек протокола группы"
+
+msgid "Change the routing of a group"
+msgstr "Смена маршрутизации группы"
 
 msgid "Changes apply within five minutes."
 msgstr "Изменения применятся в течение пяти минут."
@@ -1269,6 +1279,9 @@ msgstr "Поиск группы"
 msgid "Find the relay"
 msgstr "Найти ретранслятор"
 
+msgid "Find the relay and the group"
+msgstr "Найти ретранслятор и группу"
+
 msgid "Find the relay and the member"
 msgstr "Найти ретранслятор и участника"
 
@@ -1644,6 +1657,10 @@ msgstr "Оставить в группе"
 #, python-format
 msgid "Keep the service peer of %(group)s"
 msgstr "Оставить служебный пир группы %(group)s"
+
+#, python-format
+msgid "Keep the uplink peer of %(group)s"
+msgstr "Оставить пир канала группы %(group)s"
 
 msgid "Key"
 msgstr "Ключ"
@@ -2258,6 +2275,9 @@ msgstr "По запросу «%(text)s» ничего не найдено."
 msgid "Nothing is changed. Check that the servers of the group are online, then try again."
 msgstr "Ничего не изменено. Проверьте, что серверы группы в сети, и повторите."
 
+msgid "Nothing to change."
+msgstr "Менять нечего."
+
 msgid "Nothing was sent yet."
 msgstr "Пока ничего не отправлялось."
 
@@ -2644,6 +2664,9 @@ msgstr "Прочитать состояние ретранслятора"
 msgid "Read the server files"
 msgstr "Прочитать файлы сервера"
 
+msgid "Read the traffic counters of the members"
+msgstr "Снять счётчики трафика участников"
+
 msgid "Ready answers the staff put into a reply with one click."
 msgstr "Готовые ответы, которые сотрудники вставляют в ответ одним щелчком."
 
@@ -2739,6 +2762,10 @@ msgstr "Удалить служебный пир с %(server)s"
 msgid "Remove the service? What it keeps on the server is deleted with the container."
 msgstr "Удалить сервис? Всё, что он хранит на сервере, удалится вместе с контейнером."
 
+#, python-format
+msgid "Remove the uplink peer from %(server)s"
+msgstr "Удалить пир канала с %(server)s"
+
 msgid "Remove this address? Keys sent to it move to the server's own address."
 msgstr "Удалить адрес? Ключи, которые ведут на него, перейдут на собственный адрес сервера."
 
@@ -2831,6 +2858,10 @@ msgstr "Отозвать ключ? Он сразу перестанет рабо
 msgid "Routing"
 msgstr "Маршруты"
 
+#, python-format
+msgid "Routing: %(routing)s."
+msgstr "Маршрутизация: %(routing)s."
+
 msgid "Rows"
 msgstr "Строк"
 
@@ -2879,6 +2910,10 @@ msgstr "Сохранить состояние ретранслятора"
 
 msgid "Save the result in the panel"
 msgstr "Сохранить результат в панели"
+
+#, python-format
+msgid "Save the routing of %(group)s"
+msgstr "Сохранить маршрутизацию группы %(group)s"
 
 #
 msgid "Save the settings"
@@ -3149,6 +3184,10 @@ msgstr "Предел скорости сервера"
 msgid "Speed test by port"
 msgstr "Замер скорости по портам"
 
+#, python-format
+msgid "Split groups: %(count)d."
+msgstr "Групп с раздельной маршрутизацией: %(count)d."
+
 msgid "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced. Users who had keys on it get keys of the group."
 msgstr "Отдельные серверы AmneziaWG 3.1 на порту группы. Вступающий сервер получает файлы группы: его ключ, настройки и клиенты заменяются. Пользователи, у которых были ключи на нём, получают ключи группы."
 
@@ -3237,6 +3276,12 @@ msgstr "Переключить ретранслятор на участника"
 
 msgid "Switch the theme and narrow the window: every block must stay readable from 360 px."
 msgstr "Переключите тему и сузьте окно: каждый блок должен читаться от 360 px."
+
+msgid "Switch to forwarding"
+msgstr "Перейти на проброс"
+
+msgid "Switch to split routing"
+msgstr "Перейти на раздельную маршрутизацию"
 
 msgid "Switch to this server"
 msgstr "Переключить на этот сервер"
@@ -3448,6 +3493,9 @@ msgstr "Файлы панели дошли до новой машины повр
 
 msgid "The form is out of date"
 msgstr "Форма устарела"
+
+msgid "The group already has this routing."
+msgstr "У группы уже такая маршрутизация."
 
 msgid "The group has no leading server."
 msgstr "У группы нет ведущего сервера."
@@ -3674,6 +3722,9 @@ msgstr "Панели не удалось прочитать настройки �
 msgid "The panel could not read the traffic counters there, so the traffic of their keys is unknown (not zero) and the limits do not grow. Counting resumes by itself after the cause is fixed."
 msgstr "Панель не смогла прочитать там счётчики трафика, поэтому трафик их ключей неизвестен (а не равен нулю) и лимиты не растут. Учёт возобновится сам, когда причина будет устранена."
 
+msgid "The panel first reads the traffic counters of the members, then moves the tunnels of the clients. Every client of the group makes one new handshake. Continue?"
+msgstr "Панель сначала снимет счётчики трафика участников, затем перенесёт туннели клиентов. Каждый клиент группы сделает один новый handshake. Продолжить?"
+
 msgid "The panel has no backup of this protocol yet. It copies the container files before removing it; if the copy fails, the keys cannot work again, even if the protocol is installed anew."
 msgstr "В панели пока нет бэкапа этого протокола. Перед удалением она скопирует файлы контейнера; если копия не получится, ключи больше не заработают, даже если установить протокол заново."
 
@@ -3798,6 +3849,12 @@ msgstr "Ретранслятор ещё не знает этого участн�
 msgid "The relay does not send clients to this server."
 msgstr "Ретранслятор не отправляет клиентов на этот сервер."
 
+msgid "The relay ends the tunnels of the clients on a clone of the leading server and sends their traffic to the active member through the uplink."
+msgstr "Ретранслятор завершает туннели клиентов на клоне ведущего сервера и отправляет их трафик активному участнику через пир канала."
+
+msgid "The relay forwards the UDP port of the group to the active member as it is."
+msgstr "Ретранслятор пробрасывает UDP-порт группы активному участнику как есть."
+
 msgid "The relay forwards to an IPv4 address: check the DNS name of the server."
 msgstr "Ретранслятор пересылает на IPv4-адрес: проверьте DNS-имя сервера."
 
@@ -3806,6 +3863,9 @@ msgstr "После установки ретранслятор на новой �
 
 msgid "The relay on the server has other settings than the panel wrote: clients of the groups may not get through."
 msgstr "На сервере у ретранслятора другие настройки, не те, что записала панель: клиенты групп могут не проходить."
+
+msgid "The relay or the group is gone: nothing to do."
+msgstr "Ретранслятора или группы больше нет: делать нечего."
 
 msgid "The relay or the member is gone: nothing to do."
 msgstr "Ретранслятора или участника больше нет: делать нечего."
@@ -4341,6 +4401,9 @@ msgstr "Версия %(version)s от %(date)s."
 msgid "Versions"
 msgstr "Версии"
 
+msgid "Wait for it to finish, see the operations page, then try again."
+msgstr "Дождитесь её окончания на странице операций и повторите."
+
 msgid "Wait for it to finish, see the operations page."
 msgstr "Дождитесь его окончания, см. страницу операций."
 
@@ -4469,6 +4532,12 @@ msgstr "Записать файлы группы"
 #
 msgid "Write the files of the snapshot"
 msgstr "Записать файлы снимка"
+
+msgid "Write the peers of the clones"
+msgstr "Записать пиры клонов"
+
+msgid "Write the peers of the clones to the relay"
+msgstr "Запись пиров клонов на ретранслятор"
 
 msgid "Write the relay configuration"
 msgstr "Записать настройки ретранслятора"
@@ -4695,6 +4764,9 @@ msgstr "неудач до переключения"
 
 msgid "fetched at"
 msgstr "получено"
+
+msgid "forward"
+msgstr "проброс"
 
 msgid "found, not supported"
 msgstr "найден, не поддерживается"
@@ -5040,6 +5112,9 @@ msgstr "приоритет"
 msgid "private key"
 msgstr "приватный ключ"
 
+msgid "probe"
+msgstr "проверка"
+
 msgid "problems"
 msgstr "проблемы"
 
@@ -5131,6 +5206,9 @@ msgstr "роль"
 msgid "rolled back"
 msgstr "откачено"
 
+msgid "routing"
+msgstr "маршрутизация"
+
 msgid "running"
 msgstr "идёт"
 
@@ -5184,6 +5262,9 @@ msgstr "с %(date)s"
 msgid "source"
 msgstr "источник"
 
+msgid "split"
+msgstr "раздельная"
+
 msgid "started at"
 msgstr "начат"
 
@@ -5229,6 +5310,9 @@ msgstr "синхронизирован"
 
 msgid "synced digest"
 msgstr "отпечаток синхронизации"
+
+msgid "synced peers digest"
+msgstr "отпечаток записанных пиров"
 
 msgid "text"
 msgstr "текст"
@@ -5297,6 +5381,9 @@ msgstr "до %(date)s"
 
 msgid "updated at"
 msgstr "обновлена"
+
+msgid "uplink"
+msgstr "канал"
 
 #, python-format
 msgid "upload %(mbit)s Mbit/s"

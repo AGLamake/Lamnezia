@@ -1,7 +1,8 @@
-"""The relay role of a server and the service peer of a group (docs/FALLBACK.md section 5).
+"""The relay role of a server and the service peers of a group (docs/FALLBACK.md section 5).
 
 A relay forwards the UDP port of every group that names its server to the live member of the
-group; its agent probes the members with the service peer of the group.
+group; its agent probes the members with the probe peer of the group. A split group also has
+an uplink peer (docs/SPLIT.md).
 """
 
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -39,6 +40,8 @@ class Relay(models.Model):
     # Digest of the groups and backends the relay last got; a sync compares it with the panel.
     synced = models.CharField(_("synced digest"), max_length=64, blank=True)
     synced_at = models.DateTimeField(_("synced at"), null=True, blank=True)
+    # Digest of the clone peers of the split groups the relay last got (services/clone.py).
+    peers_synced = models.CharField(_("synced peers digest"), max_length=64, blank=True)
     # The agent state as the monitor last read it, with the members matched (services/health.py).
     health = models.JSONField(_("health"), default=dict, blank=True)
     read_at = models.DateTimeField(_("state read at"), null=True, blank=True)
@@ -101,18 +104,28 @@ class Relay(models.Model):
         return next((group for group in self.groups_health if group.port == port), None)
 
 
-class ServicePeer(models.Model):
-    """The client of a group the relay probes its members with; it is never given to a user.
+class PeerRole(models.TextChoices):
+    """What a service peer of a group is for; neither is ever given to a user."""
 
-    Every member has it as a peer, like the keys of the group.
+    PROBE = "probe", _("probe")
+    UPLINK = "uplink", _("uplink")
+
+
+class ServicePeer(models.Model):
+    """A client of a group that the relay holds; every member has it as a peer, like the keys.
+
+    The probe is how the agent checks the members. The uplink carries the traffic of a split
+    group from the clone on the relay to the active member (docs/SPLIT.md 4.7). A group has at
+    most one of each.
     """
 
-    group = models.OneToOneField(
+    group = models.ForeignKey(
         "groups.ServerGroup",
         verbose_name=_("group"),
         on_delete=models.CASCADE,
-        related_name="service_peer",
+        related_name="service_peers",
     )
+    role = models.CharField(_("role"), max_length=16, choices=PeerRole, default=PeerRole.PROBE)
     private_key = EncryptedTextField(_("private key"))
     public_key = models.CharField(_("public key"), max_length=64, unique=True)
     address = models.GenericIPAddressField(_("tunnel address"), protocol="IPv4")
@@ -120,9 +133,12 @@ class ServicePeer(models.Model):
     class Meta:
         verbose_name = _("service peer")
         verbose_name_plural = _("service peers")
+        constraints = (
+            models.UniqueConstraint(fields=("group", "role"), name="service_peer_role_unique"),
+        )
 
     def __str__(self) -> str:
-        return f"{self.group} · {self.address}"
+        return f"{self.group} · {self.role} · {self.address}"
 
 
 class RelaySample(models.Model):

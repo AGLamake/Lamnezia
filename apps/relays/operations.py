@@ -3,16 +3,19 @@
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from apps.groups.models import GroupMember
+from apps.groups.models import GroupMember, GroupRouting, ServerGroup
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
 from apps.relays.models import Relay
 from apps.relays.services.deployment import (
     INSTALL_KIND,
+    PEERS_KIND,
     REMOVE_KIND,
+    ROUTING_KIND,
     UPDATE_KIND,
     RelayDeployment,
 )
+from apps.relays.services.routing import RoutingChange
 from apps.relays.services.switch import SWITCH_KIND, RelaySwitch
 
 
@@ -35,6 +38,28 @@ def remove_relay(ctx: OperationContext) -> None:
     deployment = _deployment(ctx)
     if deployment is not None:
         deployment.remove()
+
+
+@operations.register(PEERS_KIND, gettext_lazy("Write the peers of the clones to the relay"))
+def write_clone_peers(ctx: OperationContext) -> None:
+    deployment = _deployment(ctx)
+    if deployment is not None:
+        deployment.write_peers()
+
+
+@operations.register(ROUTING_KIND, gettext_lazy("Change the routing of a group"))
+def change_routing(ctx: OperationContext) -> None:
+    """A group deleted or moved to another relay since leaves nothing to do."""
+    with ctx.step(_("Find the relay and the group")):
+        relay = Relay.objects.select_related("server").filter(server_id=ctx.params["server_id"])
+        found_relay = relay.first()
+        group = ServerGroup.objects.filter(
+            pk=ctx.params["group_id"], relay_id=ctx.params["server_id"]
+        ).first()
+        if found_relay is None or group is None:
+            ctx.log(_("The relay or the group is gone: nothing to do."))
+    if found_relay is not None and group is not None:
+        RoutingChange(found_relay, group, GroupRouting(ctx.params["routing"]), ctx).run()
 
 
 def _deployment(ctx: OperationContext) -> RelayDeployment | None:
