@@ -17,7 +17,8 @@ from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.accounts.models import User
-from apps.accounts.permissions import StaffRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
 from apps.accounts.services.zone import Zone
 from apps.audit.services import journal as audit
 from apps.core.paging import PageSizeMixin
@@ -30,7 +31,9 @@ from apps.keys.services.subscription_devices import SubscriptionDevices
 from apps.plans.models import Plan
 
 
-class ZoneUsersMixin(StaffRequiredMixin):
+class ZoneUsersMixin(SectionRequiredMixin):
+    section = Section.USERS
+
     def zone_users(self) -> QuerySet[User]:
         return Zone(self.member).users()
 
@@ -127,14 +130,16 @@ class UserBatchView(ZoneUsersMixin, View):
         return actions.disable(users)
 
 
-class BatchDetailView(StaffRequiredMixin, DetailView):  # type: ignore[type-arg]
+class BatchDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-arg]
     """The report reloads itself over HTMX while key operations are still running."""
+
+    section = Section.USERS
 
     template_name = "dashboard/users/batch.html"
 
     def get_queryset(self) -> QuerySet[UserBatch]:
         batches = UserBatch.objects.all()
-        return batches if self.member.is_admin else batches.filter(created_by=self.member)
+        return batches if Zone(self.member).is_whole else batches.filter(created_by=self.member)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(

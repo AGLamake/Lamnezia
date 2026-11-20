@@ -16,7 +16,9 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import TemplateView
 
-from apps.accounts.permissions import AdminRequiredMixin, StaffRequiredMixin
+from apps.accounts.permissions import AdminRequiredMixin, SectionRequiredMixin, StaffRequiredMixin
+from apps.accounts.services.access import Level, Section
+from apps.accounts.services.zone import Zone
 from apps.dashboard.forms import ShowcaseForm
 from apps.dashboard.services.attention import Attention
 from apps.dashboard.services.overview import Overview
@@ -33,8 +35,10 @@ _DEMO_SERIES = {
 }
 
 
-class DashboardView(StaffRequiredMixin, TemplateView):
+class DashboardView(SectionRequiredMixin, TemplateView):
     """The overview: key numbers, what needs attention, the week's traffic and the servers."""
+
+    section = Section.OVERVIEW
 
     template_name = "dashboard/index.html"
 
@@ -49,6 +53,7 @@ class DashboardView(StaffRequiredMixin, TemplateView):
             notices=notices,
             hidden_notices=hidden,
             overview=overview,
+            whole_zone=Zone(self.member).is_whole,
             chart={
                 "labels": [date_format(point.at, "D") for point in week],
                 "series": [[point.tx for point in week], [point.rx for point in week]],
@@ -58,8 +63,11 @@ class DashboardView(StaffRequiredMixin, TemplateView):
         )
 
 
-class NoticeHideView(StaffRequiredMixin, View):
+class NoticeHideView(SectionRequiredMixin, View):
     """Hides one notice of the overview until tomorrow."""
+
+    section = Section.OVERVIEW
+    write_level = Level.VIEW  # the member's own view of the page, nothing shared changes
 
     def post(self, request: HttpRequest) -> HttpResponse:
         key = request.POST.get("key", "")
@@ -69,8 +77,11 @@ class NoticeHideView(StaffRequiredMixin, View):
         return redirect("dashboard:index")
 
 
-class NoticeShowView(StaffRequiredMixin, View):
+class NoticeShowView(SectionRequiredMixin, View):
     """Shows the notices hidden today again."""
+
+    section = Section.OVERVIEW
+    write_level = Level.VIEW  # the member's own view of the page, nothing shared changes
 
     def post(self, request: HttpRequest) -> HttpResponse:
         _snooze(request).show_all()

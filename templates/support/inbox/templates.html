@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% load i18n ui %}
+{% load access i18n ui %}{% can "articles" "manage" as manage %}
 {% block title %}{% translate "Reply templates" %} · {{ site_name }}{% endblock %}
 {% block nav %}{% include "components/admin_nav.html" with active="inbox" %}{% endblock %}
 
@@ -7,13 +7,13 @@
 {% include "support/inbox/_tabs.html" with tab="templates" %}
 <div class="flex flex-wrap items-center justify-between gap-2">
   <p class="help-text">{% translate "Ready answers the staff put into a reply with one click." %}</p>
-  <a href="{% url 'support:template-add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a template" %}</a>
+  {% if manage %}<a href="{% url 'support:template-add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a template" %}</a>{% endif %}
 </div>
 {% if templates %}
   <ul class="space-y-3">
     {% for template in templates %}
       <li class="card space-y-1">
-        <a href="{% url 'support:template-edit' template.pk %}" class="font-medium hover:underline">{{ template.title }}</a>
+        {% if manage %}<a href="{% url 'support:template-edit' template.pk %}" class="font-medium hover:underline">{{ template.title }}</a>{% else %}<span class="font-medium">{{ template.title }}</span>{% endif %}
         <p class="help-text whitespace-pre-line break-words">{{ template.text|truncatechars:200 }}</p>
       </li>
     {% endfor %}

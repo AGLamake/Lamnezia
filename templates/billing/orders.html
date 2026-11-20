@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% load i18n %}
+{% load access i18n %}
 {% block title %}{% translate "Orders" %} · Lamnezia{% endblock %}
 
 {% block nav %}{% include "components/admin_nav.html" with active="orders" %}{% endblock %}
@@ -43,10 +43,10 @@
             <td data-label="{% translate 'Status' %}">{% include "billing/_status.html" %}{% if order.paid_at %} <span class="help-text">{{ order.paid_at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}</td>
             <td>
               {% if order.status == "paid" and order.provider in refundable %}
-                <form method="post" action="{% url 'billing:refund' order.number %}" data-confirm="{% translate "Return the money of this order? The plan of the user stays as it is." %}">
+                {% can "orders" "manage" as manage %}{% if manage %}<form method="post" action="{% url 'billing:refund' order.number %}" data-confirm="{% translate "Return the money of this order? The plan of the user stays as it is." %}">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-ghost btn-sm">{% translate "Refund" %}</button>
-                </form>
+                </form>{% endif %}
               {% endif %}
             </td>
           </tr>

@@ -9,10 +9,39 @@ has to take care of. Vulnerabilities are reported privately: see
 | Role | Access |
 |---|---|
 | **Administrator** | Everything, including the panel settings and the Django admin site `/admin/`. |
-| **Moderator** | The admin interface of the panel without the settings and the Django admin site, narrowed to their zone (see below). |
+| **Moderator** | The sections of the admin interface their access opens (see below), narrowed to their zone; never the settings or the Django admin site. |
 | **User** | The client portal: own keys, guides, support. |
 
 The role is set in **Admin → Users**.
+
+### Access to sections
+
+Each section of the admin interface has one of three levels for a staff member:
+
+- **none** — the section is not in the menu, the tabs or the quick search (Ctrl+K), and its pages
+  answer 403;
+- **view** — the pages open, but without action buttons and without key secrets (no key display,
+  no `vpn://`, no files, no subscription link); any change answers 403 and touches nothing;
+- **manage** — everything the section can do.
+
+Sections: overview, statistics, servers (with groups, relays, protocols and incidents), backups,
+operations, users, keys, registration, plans, orders, inbox (with article suggestions), articles
+(with reply templates), audit log and staff. The settings, integrations, API tokens, updates and
+the panel move stay with administrators whatever the levels. An administrator manages every
+section.
+
+A section with no chosen level gets the default of the role, and no level goes above the ceiling
+of the role. A staff member never gives anyone more than they have themselves. The moderator's
+defaults are exactly what a moderator could do in 1.0.0:
+
+| Section | Default | Ceiling |
+|---|---|---|
+| Overview, statistics | view | view |
+| Servers, backups, plans | none | view |
+| Operations, users, keys, registration, inbox | manage | manage |
+| Orders, articles, audit log, staff | none | none |
+
+The start page `/` leads to the first section of the menu the member may open.
 
 ### Moderator's zone
 

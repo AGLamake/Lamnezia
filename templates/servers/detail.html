@@ -1,10 +1,11 @@
 {% extends "servers/base.html" %}
-{% load backups i18n masking metadata_block offload operations servers speed_limit ui %}
+{% load access backups i18n masking metadata_block offload operations servers speed_limit ui %}
 {% block title %}{{ server.name }} · Lamnezia{% endblock %}
 
 {% block breadcrumbs %}<li><a href="{% url 'servers:list' %}">{% translate "Servers" %}</a></li><li aria-current="page">{{ server.name }}</li>{% endblock %}
 
 {% block content %}
+{% can "servers" "manage" as manage %}{% can "keys" as keys_view %}
 <div class="page-header">
   <div class="min-w-0">
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -13,13 +14,13 @@
     </div>
     <p class="page-lead">{% if server.location %}{{ server.location }} · {% endif %}{{ server.host }}</p>
   </div>
-  <div class="page-actions">
+  {% if manage %}<div class="page-actions">
     <a href="{% url 'servers:edit' server.pk %}" class="btn btn-secondary">{% icon "pencil" %}{% translate "Edit" %}</a>
     <form method="post" action="{% url 'servers:check' server.pk %}">
       {% csrf_token %}
       <button type="submit" class="btn btn-primary">{% icon "refresh" %}{% translate "Check again" %}</button>
     </form>
-  </div>
+  </div>{% endif %}
 </div>
 
 {% for warning in warnings %}{% include "components/alert.html" with level="warning" text=warning %}{% endfor %}
@@ -71,10 +72,10 @@
       <div><dt>{% translate "Added" %}</dt><dd>{{ server.created_at|date:"SHORT_DATE_FORMAT" }}</dd></div>
       <div class="block! space-y-1"><dt>{% translate "SSH fingerprint" %}</dt>
         <dd class="text-left!">{% if host_key %}<code class="block font-mono text-xs break-all">{{ host_key.key_type }} {{ host_key.fingerprint }}</code>
-          <form method="post" action="{% url 'servers:forget-host-key' server.pk %}" data-confirm="{% translate "Forget the SSH fingerprint? Do it only if the server was reinstalled: the next connection trusts whatever key the server shows." %}">
+          {% if manage %}<form method="post" action="{% url 'servers:forget-host-key' server.pk %}" data-confirm="{% translate "Forget the SSH fingerprint? Do it only if the server was reinstalled: the next connection trusts whatever key the server shows." %}">
             {% csrf_token %}<button type="submit" class="link-danger text-sm">{% translate "Forget" %}</button>
-          </form>{% else %}—{% endif %}</dd></div>
-      {% if ipsec %}
+          </form>{% endif %}{% else %}—{% endif %}</dd></div>
+      {% if ipsec and manage %}
       <div class="block! space-y-1"><dt>{% translate "IPsec server certificate" %}</dt>
         <dd class="text-left!"><form method="post" action="{% url 'protocols:ipsec-reissue' ipsec.instance.pk %}" class="space-y-1" data-confirm="{% translate "Reissue the IPsec server certificate for the server IP? IPsec restarts, and the clients import their keys again." %}">
           {% csrf_token %}
@@ -90,14 +91,14 @@
 <section class="card card-flush" aria-labelledby="server-protocols">
   <div class="card-head flex-wrap">
     <h2 id="server-protocols" class="card-title">{% icon "layers" "icon-sm" %}{% translate "Protocols and services" %}</h2>
-    <div class="flex flex-wrap gap-2">
+    {% if manage %}<div class="flex flex-wrap gap-2">
       <a href="{% url 'protocols:speed-test' server.pk %}" class="btn btn-ghost btn-sm">{% icon "zap" "icon-sm" %}{% translate "Speed test by port" %}</a>
       <form method="post" action="{% url 'protocols:import' server.pk %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-secondary btn-sm">{% icon "download" "icon-sm" %}{% translate "Import from the server" %}</button>
       </form>
       <a href="{% url 'protocols:install' server.pk %}" class="btn btn-primary btn-sm">{% icon "plus" "icon-sm" %}{% translate "Install" %}</a>
-    </div>
+    </div>{% endif %}
   </div>
   {% if containers %}
     {% regroup containers by group as groups %}
@@ -118,21 +119,21 @@
               {% if row.instance.removed %}
                 <p class="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span class="badge badge-muted">{% translate "container removed" %}</span>
-                  <a href="{% url 'keys:list' %}?source={{ row.instance.source|urlencode }}" class="text-link hover:underline">{% blocktranslate count keys=row.keys %}{{ keys }} key{% plural %}{{ keys }} keys{% endblocktranslate %}</a>
+                  {% if keys_view %}<a href="{% url 'keys:list' %}?source={{ row.instance.source|urlencode }}" class="text-link hover:underline">{% endif %}{% blocktranslate count keys=row.keys %}{{ keys }} key{% plural %}{{ keys }} keys{% endblocktranslate %}{% if keys_view %}</a>{% endif %}
                 </p>
                 <p class="help-text">{% translate "The keys and the backup are kept: restore the protocol in the Backup section." %}
-                  <a href="{% url 'protocols:remove' row.instance.pk %}" class="link-danger">{% translate "Delete all backups" %}</a></p>
+                  {% if manage %}<a href="{% url 'protocols:remove' row.instance.pk %}" class="link-danger">{% translate "Delete all backups" %}</a>{% endif %}</p>
               {% elif row.instance %}
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <a href="{% url 'keys:list' %}?source={{ row.instance.source|urlencode }}" class="font-medium text-link hover:underline">{% blocktranslate count keys=row.keys %}{{ keys }} key{% plural %}{{ keys }} keys{% endblocktranslate %}</a>
-                  <a href="{% url 'protocols:settings' row.instance.pk %}" class="text-link hover:underline">{% translate "Settings" %}</a>
+                  {% if keys_view %}<a href="{% url 'keys:list' %}?source={{ row.instance.source|urlencode }}" class="font-medium text-link hover:underline">{% endif %}{% blocktranslate count keys=row.keys %}{{ keys }} key{% plural %}{{ keys }} keys{% endblocktranslate %}{% if keys_view %}</a>{% endif %}
+                  {% if manage %}<a href="{% url 'protocols:settings' row.instance.pk %}" class="text-link hover:underline">{% translate "Settings" %}</a>
                   <span class="flex flex-wrap gap-x-3 gap-y-1 help-text">
                     {% include "protocols/_container_actions.html" with action_url="protocols:container" pk=row.instance.pk %}
                     <a href="{% url 'protocols:remove' row.instance.pk %}" class="link-danger">{% translate "Remove" %}</a>
-                  </span>
+                  </span>{% endif %}
                 </div>
                 {% speed_limit_line row.instance %}
-                {% if row.awg_upgrade %}
+                {% if not manage %}{% elif row.awg_upgrade %}
                   <p class="help-text">{% translate "The Amnezia app calls AmneziaWG 2.0 outdated and offers to reinstall the container, which removes all its clients. Move it to 3.1 here instead: the keys stay." %}</p>
                   <form method="post" action="{% url 'protocols:awg-upgrade' row.instance.pk %}" class="flex flex-wrap items-center gap-x-3 gap-y-1 help-text" data-confirm="{% translate "Move the server to AmneziaWG 3.1? The container is rebuilt, clients are cut off for a few minutes and then import their keys again. If something fails, the server stays on 2.0." %}">
                     {% csrf_token %}
@@ -146,18 +147,18 @@
                     <button type="submit" class="text-link hover:underline">{% translate "Move to AmneziaWG 3.1" %}</button>
                   </form>
                 {% endif %}
-                {% with waiting=row.xray_waiting %}{% if waiting %}
+                {% with waiting=row.xray_waiting %}{% if waiting and manage %}
                   <form method="post" action="{% url 'protocols:xray-profiles' row.instance.pk %}" class="flex flex-wrap items-center gap-x-3 gap-y-1 help-text">
                     {% csrf_token %}
                     <span>{% blocktranslate count keys=waiting %}{{ keys }} imported key is not ready to be shown yet.{% plural %}{{ keys }} imported keys are not ready to be shown yet.{% endblocktranslate %}</span>
                     <button type="submit" class="text-link hover:underline">{% translate "Prepare all imported keys" %}</button>
                   </form>
                 {% endif %}{% endwith %}
-                {% with migration=row.awg_migration %}{% if migration %}
+                {% with migration=row.awg_migration %}{% if migration and manage %}
                   {% include "protocols/_awg_migration.html" with instance=row.instance %}
                 {% endif %}{% endwith %}
               {% elif row.service %}
-                {% include "protocols/_service.html" with service=row.service row=row %}
+                {% if manage %}{% include "protocols/_service.html" with service=row.service row=row %}{% endif %}
               {% elif row.supported %}
                 <span class="badge badge-muted">{% translate "not imported yet" %}</span>
               {% else %}
@@ -173,9 +174,9 @@
   {% endif %}
 </section>
 
-<div class="space-y-3">
-  {% protocol_backups server %}
-
+{% can "backups" as backups_view %}
+{% if backups_view %}<div class="mb-3">{% protocol_backups server %}</div>{% endif %}
+{% if manage %}<div class="space-y-3">
   {% offload_card server %}
   {% metadata_card server %}
 
@@ -215,5 +216,5 @@
   {% include "servers/_addresses.html" %}
 
   {% include "relays/_card.html" %}
-</div>
+</div>{% endif %}
 {% endblock %}

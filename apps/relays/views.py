@@ -8,7 +8,8 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 
-from apps.accounts.permissions import AdminRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
 from apps.audit.services import journal as audit
 from apps.groups.models import ServerGroup
 from apps.relays.errors import RelayError
@@ -22,7 +23,8 @@ from apps.servers.models import Server
 _LISTS = "#split-lists"
 
 
-class RelayActionView(AdminRequiredMixin, View):
+class RelayActionView(SectionRequiredMixin, View):
+    section = Section.SERVERS
     kind = ""
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
@@ -35,8 +37,10 @@ class RelayActionView(AdminRequiredMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class RelaySettingsView(AdminRequiredMixin, View):
+class RelaySettingsView(SectionRequiredMixin, View):
     """Save the agent settings and write them to the relay by a background update."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         relay = get_object_or_404(Relay, server_id=pk, installed_at__isnull=False)
@@ -75,8 +79,10 @@ def _report(request: HttpRequest, form: "ModelForm[SplitSource] | ModelForm[Spli
         messages.error(request, " ".join(map(str, errors)))
 
 
-class SplitSourceAddView(AdminRequiredMixin, View):
+class SplitSourceAddView(SectionRequiredMixin, View):
     """Add a list to the group and download it in the background at once."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         group = get_object_or_404(ServerGroup, pk=pk)
@@ -91,8 +97,10 @@ class SplitSourceAddView(AdminRequiredMixin, View):
         return _to_lists(group.pk)
 
 
-class SplitSourceToggleView(AdminRequiredMixin, View):
+class SplitSourceToggleView(SectionRequiredMixin, View):
     """Turn a list off, or on again; a list turned on is downloaded at once."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         source = get_object_or_404(SplitSource, pk=pk)
@@ -105,7 +113,9 @@ class SplitSourceToggleView(AdminRequiredMixin, View):
         return _to_lists(source.group_id)
 
 
-class SplitSourceDeleteView(AdminRequiredMixin, View):
+class SplitSourceDeleteView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         source = get_object_or_404(SplitSource, pk=pk)
         with transaction.atomic():
@@ -114,7 +124,9 @@ class SplitSourceDeleteView(AdminRequiredMixin, View):
         return _to_lists(source.group_id)
 
 
-class SplitEntryAddView(AdminRequiredMixin, View):
+class SplitEntryAddView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         group = get_object_or_404(ServerGroup, pk=pk)
         form = SplitEntryForm(request.POST, group=group)
@@ -133,7 +145,9 @@ class SplitEntryAddView(AdminRequiredMixin, View):
         return _to_lists(group.pk)
 
 
-class SplitEntryDeleteView(AdminRequiredMixin, View):
+class SplitEntryDeleteView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         entry = get_object_or_404(SplitEntry, pk=pk)
         with transaction.atomic():

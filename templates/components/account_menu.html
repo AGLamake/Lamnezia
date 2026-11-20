@@ -16,7 +16,7 @@
       {% if area == "admin" %}
         <a href="{% url 'portal:index' %}" class="menu-item" role="menuitem">{% icon "key" %}{% translate "My access" %}</a>
       {% else %}
-        <a href="{% url 'dashboard:index' %}" class="menu-item" role="menuitem">{% icon "dashboard" %}{% translate "Control panel" %}</a>
+        <a href="{% url 'home' %}" class="menu-item" role="menuitem">{% icon "dashboard" %}{% translate "Control panel" %}</a>
       {% endif %}
       <div class="divider my-1" role="separator"></div>
     {% endif %}

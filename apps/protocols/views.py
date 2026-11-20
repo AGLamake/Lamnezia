@@ -19,7 +19,8 @@ from amnezia_core.proxies import (
     TPROXY_CONTAINER,
 )
 from amnezia_core.xray import XRAY_CONTAINER
-from apps.accounts.permissions import AdminRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
 from apps.audit.services import journal as audit
 from apps.groups.models import ServerGroup
 from apps.keys.services.counts import InstanceKeyCount
@@ -111,8 +112,10 @@ _METADATA_KINDS = {
 }
 
 
-class ServerImportView(AdminRequiredMixin, View):
+class ServerImportView(SectionRequiredMixin, View):
     """Start reading the server's containers and clients; the server card shows the progress."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, server_pk: int) -> HttpResponse:
         server = get_object_or_404(Server, pk=server_pk)
@@ -120,8 +123,10 @@ class ServerImportView(AdminRequiredMixin, View):
         return redirect("servers:detail", pk=server.pk)
 
 
-class ServerInstallView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
+class ServerInstallView(SectionRequiredMixin, FormView):  # type: ignore[type-arg]
     """What can be installed on the server; the choice starts the install operation."""
+
+    section = Section.SERVERS
 
     template_name = "protocols/install.html"
     form_class = InstallForm
@@ -146,8 +151,10 @@ class ServerInstallView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
         return redirect("operations:detail", pk=operation.pk)
 
 
-class OffloadView(AdminRequiredMixin, View):
+class OffloadView(SectionRequiredMixin, View):
     """Check TSO/GSO of the containers, or turn the workaround on or off; the card shows it."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, server_pk: int, action: str) -> HttpResponse:
         if action not in _OFFLOAD_KINDS:
@@ -157,8 +164,10 @@ class OffloadView(AdminRequiredMixin, View):
         return redirect("servers:detail", pk=server.pk)
 
 
-class MetadataBlockView(AdminRequiredMixin, View):
+class MetadataBlockView(SectionRequiredMixin, View):
     """Check the cloud metadata block, or close or open the service; the card shows it."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, server_pk: int, action: str) -> HttpResponse:
         if action not in _METADATA_KINDS:
@@ -168,12 +177,14 @@ class MetadataBlockView(AdminRequiredMixin, View):
         return redirect("servers:detail", pk=server.pk)
 
 
-class SpeedTestView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
+class SpeedTestView(SectionRequiredMixin, FormView):  # type: ignore[type-arg]
     """The speed test by port: the running test (measured here or with iperf3), or a new one.
 
     A browser test lets this page's scripts reach exactly its ports (CSP `connect-src`); the
     page holds the session's secret path, so it is never cached.
     """
+
+    section = Section.SERVERS
 
     template_name = "protocols/speed_test.html"
     form_class = SpeedTestForm
@@ -205,8 +216,10 @@ class SpeedTestView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
         return redirect("operations:detail", pk=operation.pk)
 
 
-class SpeedTestStopView(AdminRequiredMixin, View):
+class SpeedTestStopView(SectionRequiredMixin, View):
     """Remove the iperf3 container before its time is up."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, server_pk: int) -> HttpResponse:
         server = get_object_or_404(Server, pk=server_pk)
@@ -233,8 +246,10 @@ class InstanceMixin:
         return super().dispatch(request, *args, **kwargs)  # type: ignore[misc, no-any-return]
 
 
-class ProtocolSettingsView(AdminRequiredMixin, InstanceMixin, FormView):  # type: ignore[type-arg]
+class ProtocolSettingsView(SectionRequiredMixin, InstanceMixin, FormView):  # type: ignore[type-arg]
     """The settings of a protocol on its own form; saving starts the operation that applies them."""
+
+    section = Section.SERVERS
 
     template_name = "protocols/settings.html"
 
@@ -288,8 +303,10 @@ class ProtocolSettingsView(AdminRequiredMixin, InstanceMixin, FormView):  # type
         return redirect("operations:detail", pk=operation.pk)
 
 
-class SpeedLimitView(AdminRequiredMixin, InstanceMixin, View):
+class SpeedLimitView(SectionRequiredMixin, InstanceMixin, View):
     """Saves the total speed limit of the protocol; the traffic app applies it on the server."""
+
+    section = Section.SERVERS
 
     containers = tuple(WG_CONTAINERS)
 
@@ -312,8 +329,10 @@ class SpeedLimitView(AdminRequiredMixin, InstanceMixin, View):
         return redirect("protocols:settings", pk=pk)
 
 
-class ContainerActionView(AdminRequiredMixin, InstanceMixin, View):
+class ContainerActionView(SectionRequiredMixin, InstanceMixin, View):
     """Restart or stop the container, or read its log; the operation page shows the result."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int, action: str) -> HttpResponse:
         if action not in _ACTION_KINDS:
@@ -322,8 +341,10 @@ class ContainerActionView(AdminRequiredMixin, InstanceMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class ContainerRemoveView(AdminRequiredMixin, InstanceMixin, FormView):  # type: ignore[type-arg]
+class ContainerRemoveView(SectionRequiredMixin, InstanceMixin, FormView):  # type: ignore[type-arg]
     """Removal of the container, confirmed by typing the server name."""
+
+    section = Section.SERVERS
 
     template_name = "protocols/remove.html"
     form_class = RemoveContainerForm
@@ -346,8 +367,10 @@ class ContainerRemoveView(AdminRequiredMixin, InstanceMixin, FormView):  # type:
         return redirect("operations:detail", pk=operation.pk)
 
 
-class ServiceSettingsView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
+class ServiceSettingsView(SectionRequiredMixin, FormView):  # type: ignore[type-arg]
     """The settings of a proxy; a service the app has no settings for shows what it has."""
+
+    section = Section.SERVERS
 
     template_name = "protocols/service_settings.html"
 
@@ -390,8 +413,10 @@ def _settings_info(
     return render(request, "protocols/settings_info.html", context)
 
 
-class ServiceRemoveView(AdminRequiredMixin, View):
+class ServiceRemoveView(SectionRequiredMixin, View):
     """Removal of a service container, confirmed on the server card."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         # Looked up after the role check of the view, so a guest cannot tell which services exist.
@@ -400,8 +425,10 @@ class ServiceRemoveView(AdminRequiredMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class ServiceSecretView(AdminRequiredMixin, View):
+class ServiceSecretView(SectionRequiredMixin, View):
     """A new secret of a Telegram proxy, confirmed on the server card: old links stop working."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
@@ -411,8 +438,10 @@ class ServiceSecretView(AdminRequiredMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class _ServiceRevealView(AdminRequiredMixin, View):
+class _ServiceRevealView(SectionRequiredMixin, View):
     """A secret of a service, sent only on request, not cached; every look goes to the journal."""
+
+    section = Section.SERVERS
 
     action: str
     template_name: str
@@ -455,8 +484,10 @@ class ServiceLinksView(_ServiceRevealView):
         return {"links": links} if links else None
 
 
-class ServiceLogDeletionView(AdminRequiredMixin, View):
+class ServiceLogDeletionView(SectionRequiredMixin, View):
     """Deletes the 3proxy.log the app left in SOCKS5, confirmed on the server card."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
@@ -466,8 +497,10 @@ class ServiceLogDeletionView(AdminRequiredMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class DnsRebuildView(AdminRequiredMixin, View):
+class DnsRebuildView(SectionRequiredMixin, View):
     """Rebuilds AmneziaDNS the app installed with the panel's config, confirmed on the card."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         service = get_object_or_404(ServiceInstance.objects.select_related("server"), pk=pk)
@@ -477,8 +510,10 @@ class DnsRebuildView(AdminRequiredMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class ServiceActionView(AdminRequiredMixin, View):
+class ServiceActionView(SectionRequiredMixin, View):
     """Restart or stop a service container, or read its log; the operation page shows it."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int, action: str) -> HttpResponse:
         if action not in _SERVICE_ACTION_KINDS:
@@ -488,8 +523,10 @@ class ServiceActionView(AdminRequiredMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class ReaddressView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
+class ReaddressView(SectionRequiredMixin, FormView):  # type: ignore[type-arg]
     """After the server address changes: keys move to the new address, their owners are told."""
+
+    section = Section.SERVERS
 
     template_name = "protocols/readdress.html"
     form_class = ReaddressForm
@@ -531,8 +568,10 @@ class ReaddressView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
         return redirect("servers:detail", pk=self.server.pk)
 
 
-class AwgUpgradeView(AdminRequiredMixin, InstanceMixin, View):
+class AwgUpgradeView(SectionRequiredMixin, InstanceMixin, View):
     """Start the move of AmneziaWG 2.0 to 3.1; the operation page shows how it goes."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         if not can_upgrade(self.instance):
@@ -549,8 +588,10 @@ class AwgUpgradeView(AdminRequiredMixin, InstanceMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class AwgMigrationView(AdminRequiredMixin, InstanceMixin, View):
+class AwgMigrationView(SectionRequiredMixin, InstanceMixin, View):
     """Start the move of the clients of a legacy AmneziaWG to amnezia-awg2 on 3.1."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         if not can_migrate(self.instance):
@@ -568,8 +609,10 @@ class AwgMigrationView(AdminRequiredMixin, InstanceMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class AwgMigrationFinishView(AdminRequiredMixin, InstanceMixin, View):
+class AwgMigrationFinishView(SectionRequiredMixin, InstanceMixin, View):
     """Finish the move: the old container is removed, its keys are revoked."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         if not can_migrate(self.instance) or not MigrationState.of(self.instance).can_finish:
@@ -578,8 +621,10 @@ class AwgMigrationFinishView(AdminRequiredMixin, InstanceMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class XrayProfilesView(AdminRequiredMixin, InstanceMixin, View):
+class XrayProfilesView(SectionRequiredMixin, InstanceMixin, View):
     """Prepare every imported XRay key for showing by one operation."""
+
+    section = Section.SERVERS
 
     containers = (XRAY_CONTAINER,)
 
@@ -588,8 +633,10 @@ class XrayProfilesView(AdminRequiredMixin, InstanceMixin, View):
         return redirect("operations:detail", pk=operation.pk)
 
 
-class IpsecReissueView(AdminRequiredMixin, View):
+class IpsecReissueView(SectionRequiredMixin, View):
     """Start reissuing the IPsec server certificate for the server IP."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         instance = get_object_or_404(ProtocolInstance, pk=pk, container_removed_at__isnull=True)

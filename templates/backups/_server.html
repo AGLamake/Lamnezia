@@ -1,4 +1,5 @@
-{% load i18n backups ui %}
+{% load access i18n backups ui %}
+{% can "backups" "manage" as manage %}
 {% if instances or services %}
 <details class="disclosure">
   <summary>{% icon "database" "icon-sm text-muted" %}<span>{% translate "Backup" %}</span></summary>
@@ -21,7 +22,7 @@
             <p class="help-text">{% blocktranslate with ip=identity.issued_for %}The IPsec server certificate is issued for {{ ip }}. On a VPS with another IP, reissue it on this card after the restore, or IPsec clients are refused.{% endblocktranslate %}</p>
           {% endif %}{% endwith %}
         </div>
-        {% if instance|restorable %}
+        {% if manage and instance|restorable %}
         <form method="post" action="{% url 'backups:restore' instance.pk %}" data-confirm="{% translate "Install the protocol on this server with the saved keys?" %}">
           {% csrf_token %}
           <button type="submit" class="btn btn-secondary">{% translate "Restore on this server" %}</button>
@@ -39,7 +40,7 @@
               {% with config=snapshot|snapshot_config %}
               <p class="help-text">{{ snapshot.taken_at|date:"SHORT_DATETIME_FORMAT" }} · {{ snapshot.get_reason_display }} · {% blocktranslate count clients=config.peers|length with port=config.listen_port|default:"—" %}port {{ port }}, {{ clients }} client{% plural %}port {{ port }}, {{ clients }} clients{% endblocktranslate %}</p>
               {% endwith %}
-              <div class="flex flex-wrap gap-2">
+              {% if manage %}<div class="flex flex-wrap gap-2">
                 {% if not instance|in_group %}
                 <form method="post" action="{% url 'backups:restore-snapshot' snapshot.pk %}" data-confirm="{% if snapshot.holds_group_files %}{% translate "Put the group files back on this server? The server runs with the group key again; keys of the group stay with the group, the other peers come back as keys of this server. Keys issued since then stop working." %}{% else %}{% translate "Put the files of this snapshot back on the server? Keys issued since then stop working." %}{% endif %}">
                   {% csrf_token %}
@@ -50,7 +51,7 @@
                   {% csrf_token %}
                   <button type="submit" class="btn btn-ghost">{% translate "Delete" %}</button>
                 </form>
-              </div>
+              </div>{% endif %}
             </div>
           {% endfor %}
         </div>
@@ -79,7 +80,7 @@
           {% endif %}
             {% endwith %}
         </div>
-        {% if service|service_restorable %}
+        {% if manage and service|service_restorable %}
         <form method="post" action="{% url 'backups:restore-service' service.pk %}" data-confirm="{% translate "Install the service on this server from the saved copy?" %}">
           {% csrf_token %}
           <button type="submit" class="btn btn-secondary">{% translate "Restore on this server" %}</button>

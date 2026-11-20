@@ -16,7 +16,8 @@ from django.utils.translation import ngettext
 from django.views import View
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
 
-from apps.accounts.permissions import AdminRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
 from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.forms import GroupEditForm, GroupForm, GroupSettingsForm
 from apps.groups.models import GroupMember, GroupRouting, ServerGroup
@@ -55,7 +56,8 @@ from apps.relays.services.switch import last_switch, start_switch
 from apps.servers.models import Server
 
 
-class GroupListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
+class GroupListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg]
+    section = Section.SERVERS
     template_name = "groups/list.html"
     context_object_name = "groups"
 
@@ -63,7 +65,8 @@ class GroupListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
         return ServerGroup.objects.prefetch_related("members__instance__server").order_by("name")
 
 
-class GroupCreateView(AdminRequiredMixin, CreateView):  # type: ignore[type-arg]
+class GroupCreateView(SectionRequiredMixin, CreateView):  # type: ignore[type-arg]
+    section = Section.SERVERS
     form_class = GroupForm
     template_name = "groups/form.html"
 
@@ -81,8 +84,10 @@ class GroupCreateView(AdminRequiredMixin, CreateView):  # type: ignore[type-arg]
         return redirect("groups:detail", pk=group.pk)
 
 
-class GroupEditView(AdminRequiredMixin, UpdateView):  # type: ignore[type-arg]
+class GroupEditView(SectionRequiredMixin, UpdateView):  # type: ignore[type-arg]
     """The name, domain and relay of a group; its keys follow a new address."""
+
+    section = Section.SERVERS
 
     model = ServerGroup
     form_class = GroupEditForm
@@ -107,7 +112,7 @@ class GroupEditView(AdminRequiredMixin, UpdateView):  # type: ignore[type-arg]
         return redirect("groups:detail", pk=self.object.pk)
 
 
-class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
+class GroupDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-arg]
     """The members of a group, the standalone servers that may join it and those without AWG.
 
     The operations under way that a change of the group waits for are listed with links: joins
@@ -116,6 +121,8 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
     network list with the moment a list was last taken. `?leader_leaves=1` (after a leading
     server was asked to leave) offers to hand the lead to another member first.
     """
+
+    section = Section.SERVERS
 
     model = ServerGroup
     template_name = "groups/detail.html"
@@ -197,7 +204,9 @@ def _seen_by_relay(
     return health.reachable(member.pk), active, active and health.unanswered
 
 
-class GroupJoinView(AdminRequiredMixin, View):
+class GroupJoinView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int, instance_pk: int) -> HttpResponse:
         group = get_object_or_404(ServerGroup, pk=pk)
         instance = get_object_or_404(ProtocolInstance, pk=instance_pk)
@@ -208,7 +217,9 @@ class GroupJoinView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=group.pk)
 
 
-class GroupInstallView(AdminRequiredMixin, View):
+class GroupInstallView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int, server_pk: int) -> HttpResponse:
         group = get_object_or_404(ServerGroup, pk=pk)
         server = get_object_or_404(Server, pk=server_pk)
@@ -219,7 +230,9 @@ class GroupInstallView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=group.pk)
 
 
-class GroupJoinRetryView(AdminRequiredMixin, View):
+class GroupJoinRetryView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
         try:
@@ -229,7 +242,9 @@ class GroupJoinRetryView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=member.group_id)
 
 
-class GroupJoinCancelView(AdminRequiredMixin, View):
+class GroupJoinCancelView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
         try:
@@ -239,7 +254,9 @@ class GroupJoinCancelView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=member.group_id)
 
 
-class GroupLeaveView(AdminRequiredMixin, View):
+class GroupLeaveView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
         try:
@@ -253,7 +270,9 @@ class GroupLeaveView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=member.group_id)
 
 
-class GroupLeaveRetryView(AdminRequiredMixin, View):
+class GroupLeaveRetryView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
         try:
@@ -263,7 +282,9 @@ class GroupLeaveRetryView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=member.group_id)
 
 
-class GroupStayView(AdminRequiredMixin, View):
+class GroupStayView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
         try:
@@ -278,7 +299,9 @@ class GroupStayView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=member.group_id)
 
 
-class GroupHandoverView(AdminRequiredMixin, View):
+class GroupHandoverView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
         try:
@@ -288,8 +311,10 @@ class GroupHandoverView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=member.group_id)
 
 
-class GroupSwitchView(AdminRequiredMixin, View):
+class GroupSwitchView(SectionRequiredMixin, View):
     """The relay sends the clients of the group to the member, for maintenance of the active one."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, member_pk: int) -> HttpResponse:
         member = get_object_or_404(GroupMember, pk=member_pk)
@@ -300,8 +325,10 @@ class GroupSwitchView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=member.group_id)
 
 
-class GroupRoutingView(AdminRequiredMixin, View):
+class GroupRoutingView(SectionRequiredMixin, View):
     """Moves the group between forward and split routing on its relay, in the background."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         group = get_object_or_404(ServerGroup, pk=pk)
@@ -315,7 +342,9 @@ class GroupRoutingView(AdminRequiredMixin, View):
         return redirect("groups:detail", pk=group.pk)
 
 
-class GroupDeleteView(AdminRequiredMixin, View):
+class GroupDeleteView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         group = get_object_or_404(ServerGroup, pk=pk)
         try:
@@ -327,8 +356,10 @@ class GroupDeleteView(AdminRequiredMixin, View):
         return redirect("groups:list")
 
 
-class GroupSettingsView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
+class GroupSettingsView(SectionRequiredMixin, FormView):  # type: ignore[type-arg]
     """The protocol settings of every member of a group; saving starts the operation."""
+
+    section = Section.SERVERS
 
     template_name = "groups/settings.html"
     form_class = GroupSettingsForm

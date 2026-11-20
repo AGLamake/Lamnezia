@@ -2,13 +2,15 @@ from typing import Any
 
 from django.views.generic import ListView
 
-from apps.accounts.permissions import AdminRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
 from apps.audit.forms import AuditFilterForm
 from apps.audit.models import AuditEvent
 from apps.core.paging import PageSizeMixin
 
 
-class AuditListView(PageSizeMixin, AdminRequiredMixin, ListView):  # type: ignore[type-arg]
+class AuditListView(PageSizeMixin, SectionRequiredMixin, ListView):  # type: ignore[type-arg]
+    section = Section.AUDIT
     template_name = "audit/list.html"
     context_object_name = "events"
 

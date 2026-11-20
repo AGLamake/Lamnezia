@@ -10,7 +10,8 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from apps.accounts.permissions import AdminRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
 from apps.operations.views import progress_context
 from apps.protocols.services.inventory import server_containers
 from apps.protocols.services.ipsec_reissue import IpsecIdentity
@@ -35,7 +36,8 @@ from apps.servers.services.host_key import (
 from apps.servers.services.monitor import daily_history
 
 
-class ServerListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
+class ServerListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg]
+    section = Section.SERVERS
     template_name = "servers/list.html"
     context_object_name = "servers"
 
@@ -49,8 +51,10 @@ class ServerListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
         )
 
 
-class ServerDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
+class ServerDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-arg]
     """Server card: its containers and the progress or result of its latest operation."""
+
+    section = Section.SERVERS
 
     model = Server
     template_name = "servers/detail.html"
@@ -73,7 +77,8 @@ class ServerDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg
         )
 
 
-class ServerCreateView(AdminRequiredMixin, CreateView):  # type: ignore[type-arg]
+class ServerCreateView(SectionRequiredMixin, CreateView):  # type: ignore[type-arg]
+    section = Section.SERVERS
     model = Server
     form_class = ServerForm
     template_name = "servers/form.html"
@@ -84,7 +89,8 @@ class ServerCreateView(AdminRequiredMixin, CreateView):  # type: ignore[type-arg
         return HttpResponseRedirect(reverse("servers:detail", args=[server.pk]))
 
 
-class ServerUpdateView(AdminRequiredMixin, UpdateView):  # type: ignore[type-arg]
+class ServerUpdateView(SectionRequiredMixin, UpdateView):  # type: ignore[type-arg]
+    section = Section.SERVERS
     model = Server
     form_class = ServerForm
     template_name = "servers/form.html"
@@ -107,15 +113,19 @@ def _readdress_pending(server: Server) -> bool:
     return ServerReaddress(server).pending or IpsecIdentity.of(server) is not None
 
 
-class ServerCheckView(AdminRequiredMixin, View):
+class ServerCheckView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         server = get_object_or_404(Server, pk=pk)
         start_check(server, self.member)
         return redirect("servers:detail", pk=server.pk)
 
 
-class ServerHostKeyForgetView(AdminRequiredMixin, View):
+class ServerHostKeyForgetView(SectionRequiredMixin, View):
     """Forget the SSH fingerprint of a reinstalled server; the check trusts its new key."""
+
+    section = Section.SERVERS
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         server = get_object_or_404(Server, pk=pk)
@@ -127,7 +137,9 @@ class ServerHostKeyForgetView(AdminRequiredMixin, View):
         return redirect("servers:detail", pk=server.pk)
 
 
-class ProbeInstallView(AdminRequiredMixin, View):
+class ProbeInstallView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         server = get_object_or_404(Server, pk=pk)
         form = ProbeForm(request.POST, server=server)
@@ -139,15 +151,19 @@ class ProbeInstallView(AdminRequiredMixin, View):
         return redirect("servers:detail", pk=server.pk)
 
 
-class ProbeRemoveView(AdminRequiredMixin, View):
+class ProbeRemoveView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         server = get_object_or_404(Server, pk=pk)
         probe.start_remove(server, self.member)
         return redirect("servers:detail", pk=server.pk)
 
 
-class _AddressView(AdminRequiredMixin, View):
+class _AddressView(SectionRequiredMixin, View):
     """Changes of the other addresses of a server; the server page shows the result."""
+
+    section = Section.SERVERS
 
     def addresses(self, pk: int) -> ServerAddresses:
         return ServerAddresses(get_object_or_404(Server, pk=pk), self.member, self.client_ip)

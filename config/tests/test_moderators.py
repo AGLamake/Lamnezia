@@ -392,8 +392,9 @@ class TestInvites:
         waiting = UserFactory(status=Status.PENDING)
         signed_in(client, anna.moderator)
 
+        # Applicants wait for no staff member yet, so they are outside a moderator's zone.
         for name in ("accounts:registration-approve", "accounts:registration-reject"):
-            assert client.post(reverse(name, args=[waiting.pk])).status_code == 403
+            assert client.post(reverse(name, args=[waiting.pk])).status_code == 404
         waiting.refresh_from_db()
         assert waiting.status == Status.PENDING
 

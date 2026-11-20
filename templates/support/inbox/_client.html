@@ -1,8 +1,8 @@
-{% load i18n %}{# The chat's user as they are now: plan, access, keys and open requests. #}
+{% load access i18n %}{# The chat's user as they are now: plan, access, keys and open requests. #}
 <section class="card space-y-3" aria-labelledby="client-title">
   <h2 id="client-title" class="font-semibold">{% translate "Client" %}</h2>
   <dl class="facts">
-    <div><dt>{% translate "User" %}</dt><dd>{% if user.is_admin %}<a href="{% url 'dashboard:user' client.user.pk %}" class="link">{{ client.user.username }}</a>{% else %}{{ client.user.username }}{% endif %}</dd></div>
+    <div><dt>{% translate "User" %}</dt><dd>{% can "users" as can_users %}{% if can_users %}<a href="{% url 'dashboard:user' client.user.pk %}" class="link">{{ client.user.username }}</a>{% else %}{{ client.user.username }}{% endif %}</dd></div>
     <div><dt>{% translate "Status" %}</dt><dd>{{ client.user.get_status_display }}</dd></div>
     <div><dt>{% translate "Plan" %}</dt><dd>{{ client.plan.name|default:"—" }}</dd></div>
     {% if client.plan %}<div><dt>{% translate "Access until" %}</dt><dd>{% if client.access_until %}{{ client.access_until|date:"SHORT_DATE_FORMAT" }}{% if client.expired %} <span class="badge badge-danger">{% translate "Ended" %}</span>{% endif %}{% else %}{% translate "No end date" %}{% endif %}</dd></div>{% endif %}

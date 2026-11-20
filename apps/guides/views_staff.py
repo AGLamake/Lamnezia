@@ -11,14 +11,17 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import TemplateView
 
-from apps.accounts.permissions import AdminRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Level, Section
 from apps.guides.forms import EntryForm, entry_form
 from apps.guides.models import BuiltinEntry
 from apps.guides.services.editor import SHELVES, Entry, GuideEditor, Shelf
 from apps.guides.services.markdown import render_markdown
 
 
-class _StaffView(AdminRequiredMixin):
+class _StaffView(SectionRequiredMixin):
+    section = Section.ARTICLES
+
     def editor(self) -> GuideEditor:
         return GuideEditor(self.member, ip=self.client_ip)
 
@@ -53,6 +56,7 @@ class EntryListView(_ShelfView, TemplateView):
 class EntryFormView(_ShelfView, TemplateView):
     """A new entry without `pk`, the entry to edit with it."""
 
+    read_level = Level.MANAGE
     template_name = "guides/staff/form.html"
 
     def get(self, request: HttpRequest, shelf: str, pk: int | None = None) -> HttpResponse:

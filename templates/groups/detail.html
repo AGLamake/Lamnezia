@@ -1,16 +1,17 @@
 {% extends "groups/base.html" %}
-{% load i18n operations relays ui %}
+{% load access i18n operations relays ui %}
 {% block title %}{{ group.name }} · Lamnezia{% endblock %}
 
 {% block breadcrumbs %}<li><a href="{% url 'groups:list' %}">{% translate "Server groups" %}</a></li><li aria-current="page">{{ group.name }}</li>{% endblock %}
 
 {% block content %}
+{% can "servers" "manage" as manage %}
 <div class="page-header">
   <div>
     <h1 class="page-title">{{ group.name }}</h1>
     <p class="page-lead">{% blocktranslate with port=group.port %}AmneziaWG 3.1, UDP port {{ port }}.{% endblocktranslate %}{% if group.domain %} {{ group.domain }}{% endif %}{% if group.relay %} · {% blocktranslate with relay=group.relay.name %}relay {{ relay }}{% endblocktranslate %}{% endif %}</p>
   </div>
-  <div class="flex flex-wrap gap-2">
+  {% if manage %}<div class="flex flex-wrap gap-2">
   <a href="{% url 'groups:edit' group.pk %}" class="btn btn-secondary">{% translate "Edit" %}</a>
   <a href="{% url 'groups:settings' group.pk %}" class="btn btn-secondary">{% translate "Protocol settings" %}</a>
   {% if members|length == 1 %}
@@ -19,7 +20,7 @@
     <button type="submit" class="btn btn-secondary">{% translate "Delete the group" %}</button>
   </form>
   {% endif %}
-  </div>
+  </div>{% endif %}
 </div>
 
 {% if domain_checking %}{% blocktranslate asvar checking with domain=group.domain %}{{ domain }} is being checked: refresh the page in a minute to see whether it leads to the relay.{% endblocktranslate %}{% include "components/alert.html" with level="info" text=checking %}{% endif %}
@@ -31,7 +32,7 @@
   {% icon "error" "icon mt-px" %}
   <div class="min-w-0 flex-1 space-y-2">
     <p class="break-words">{% translate "The leading server cannot leave while other servers are in the group." %} {% translate "Make another server of the group the leading one first, then let this one leave." %}</p>
-    {% if successors %}
+    {% if successors and manage %}
     <div class="flex flex-wrap gap-2">
       {% for member in successors %}
       <form method="post" action="{% url 'groups:lead' member.pk %}">
@@ -40,7 +41,7 @@
       </form>
       {% endfor %}
     </div>
-    {% else %}
+    {% elif not successors %}
     <p class="help-text">{% translate "No other server of the group may lead it now: wait until one joins or catches up." %}</p>
     {% endif %}
   </div>
@@ -67,7 +68,7 @@
             <td data-label="{% translate 'State' %}">{{ member.get_state_display }}{% if member.lagging %} <span class="badge badge-warning" title="{% translate "The relay skips the server until the panel copies the group files onto it." %}">{% translate "lagging" %}</span>{% if member.lagging_reason %}<span class="help-text block">{{ member.get_lagging_reason_display }}</span>{% endif %}{% if catch_up %}<a href="{% url 'operations:detail' catch_up.pk %}" class="help-text block hover:underline">{% translate "Catching up" %} ({{ catch_up.get_status_display }})</a>{% endif %}{% endif %}{% if leave_failed %} <span class="badge badge-danger" title="{% translate "The leave operation failed. Run it again, or keep the server in the group." %}">{% translate "leave failed" %}</span>{% endif %}{% if join_failed %} <span class="badge badge-danger" title="{% translate "The join operation failed. Run it again, or take the server out of the group." %}">{% translate "join failed" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the relay' %}">{% if reachable is None %}<span class="text-muted">—</span>{% elif reachable %}<span class="badge badge-success">{% translate "reachable" %}</span>{% else %}<span class="badge badge-danger">{% translate "unreachable" %}</span>{% endif %}{% if active %} <span class="badge badge-info" title="{% translate "The relay sends the clients of the group to this server now." %}">{% translate "active" %}</span>{% endif %}{% if unanswered %} <span class="badge badge-danger" title="{% translate "The server answers the relay, but none of the clients gets an answer. Switch the group to another server." %}">{% translate "clients get no answer" %}</span>{% endif %}</td>
             <td data-label="{% translate 'From the panel' %}">{% with online=member.instance.server.online %}{% if online is None %}<span class="text-muted">—</span>{% elif online %}<span class="badge badge-success">{% translate "online" %}</span>{% else %}<span class="badge badge-danger">{% translate "offline" %}</span>{% endif %}{% endwith %}</td>
-            <td><div class="flex flex-wrap gap-2">
+            <td>{% if manage %}<div class="flex flex-wrap gap-2">
               {% if relay.installed_at and not active and member.state == "member" and not member.lagging %}
               <form method="post" action="{% url 'groups:switch' member.pk %}" data-confirm="{% translate "The relay sends the clients of the group to this server, if it reaches it. Every client of the group loses its connection for about 20 seconds. Continue?" %}">
                 {% csrf_token %}
@@ -112,7 +113,7 @@
                 <button type="submit" class="btn btn-secondary">{% translate "Keep in the group" %}</button>
               </form>
               {% endif %}
-            </div></td>
+            </div>{% endif %}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -127,7 +128,7 @@
   {% if relay.installed_at %}
   <div id="routing" class="flex flex-wrap items-center gap-2">
     <p class="help-text">{% blocktranslate with routing=group.get_routing_display %}Routing: {{ routing }}.{% endblocktranslate %} {% if group.routing == "split" %}{% translate "The relay ends the tunnels of the clients on a clone of the leading server and sends their traffic to the active member through the uplink." %}{% else %}{% translate "The relay forwards the UDP port of the group to the active member as it is." %}{% endif %}{% if group.routing == "split" and health.split %} {% include "relays/_mode.html" %}{% endif %}</p>
-    <form method="post" action="{% url 'groups:routing' group.pk %}" data-confirm="{% translate "The panel first reads the traffic counters of the members, then moves the tunnels of the clients. Every client of the group makes one new handshake. Continue?" %}">
+    {% if manage %}<form method="post" action="{% url 'groups:routing' group.pk %}" data-confirm="{% translate "The panel first reads the traffic counters of the members, then moves the tunnels of the clients. Every client of the group makes one new handshake. Continue?" %}">
       {% csrf_token %}
       {% if group.routing == "split" %}
       <input type="hidden" name="routing" value="forward">
@@ -136,7 +137,7 @@
       <input type="hidden" name="routing" value="split">
       <button type="submit" class="btn btn-secondary">{% translate "Switch to split routing" %}</button>
       {% endif %}
-    </form>
+    </form>{% endif %}
   </div>
   {% endif %}
   {% if last_switch %}
@@ -144,6 +145,7 @@
   {% endif %}
 </section>
 
+{% if manage %}
 {% if group.routing == "split" %}{% include "relays/_split_lists.html" %}{% endif %}
 
 <section class="card space-y-3">
@@ -185,4 +187,5 @@
     <p class="help-text">{% translate "Every server already has AmneziaWG or runs a relay." %}</p>
   {% endfor %}
 </section>
+{% endif %}
 {% endblock %}

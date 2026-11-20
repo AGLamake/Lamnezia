@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Access to sections**: each section of the admin interface has a level for a staff member —
+  none, view or manage. The menu, the inbox tabs, the buttons and the quick search (Ctrl+K) show
+  only what the member may open; on "view" pages have no action buttons and no key secrets, and
+  any change answers 403. Levels never go above the ceiling of the role or above the rights of
+  whoever gives them. A moderator's defaults are exactly their 1.0.0 access; the start page leads
+  to the first section the member may open. Upgrading needs only the migrations.
 - **Articles in the panel**: administrators edit FAQ articles and useful materials under
   **Articles** without the Django admin. They can add, edit, delete, publish or hide entries,
   order them, preview the Markdown and restore deleted built-in entries. Every change goes to the

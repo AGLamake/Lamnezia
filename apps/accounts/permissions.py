@@ -1,18 +1,22 @@
-"""Access by role for views: a guest goes to the login page, a user with another role gets 403."""
+"""Access for views by role and by section: a guest goes to the login page, others get 403."""
 
 from collections.abc import Callable, Iterable
-from functools import wraps
+from functools import cached_property, wraps
 from typing import Any, cast
 
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponseBase
+from django.views.generic.edit import ProcessFormView
 
 from apps.accounts.models import STAFF_ROLES, Role, User
+from apps.accounts.services.access import Access, Level, Section
 from apps.audit.services import journal as audit
 
 View = Callable[..., HttpResponseBase]
+
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 def check_role(request: HttpRequest, roles: Iterable[str]) -> bool:
@@ -50,6 +54,35 @@ class StaffRequiredMixin(RoleRequiredMixin):
 
 class AdminRequiredMixin(RoleRequiredMixin):
     roles = frozenset({Role.ADMIN})
+
+
+class SectionRequiredMixin(StaffRequiredMixin):
+    """A staff member with `read_level` in `section` opens the view; a request that may change
+    something (any method but GET and HEAD) needs `write_level`. A form page is an action itself,
+    so it opens with `write_level` too."""
+
+    section: Section
+    read_level = Level.VIEW
+    write_level = Level.MANAGE
+
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+        member = request.user
+        if (
+            isinstance(member, User)
+            and member.is_staff_member
+            and not Access(member).allows(self.section, self._needed_level(request))
+        ):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def _needed_level(self, request: HttpRequest) -> Level:
+        if request.method in SAFE_METHODS and not isinstance(self, ProcessFormView):
+            return self.read_level
+        return self.write_level
+
+    @cached_property
+    def access(self) -> Access:
+        return Access(self.member)
 
 
 def role_required(*roles: str) -> Callable[[View], View]:

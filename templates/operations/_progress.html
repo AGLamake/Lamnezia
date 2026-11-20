@@ -1,4 +1,4 @@
-{% load i18n operations %}{# Polls itself until the operation ends: the finished block has no hx-trigger. #}
+{% load i18n operations access %}{# Polls itself until the operation ends: the finished block has no hx-trigger. #}
 <section id="operation-progress" class="space-y-4" aria-live="polite"
          {% if not operation.is_finished %}hx-get="{% url 'operations:progress' operation.pk %}" hx-trigger="every {{ poll_seconds }}s" hx-swap="outerHTML"{% endif %}>
   <p>
@@ -8,6 +8,7 @@
     {% endif %}
   </p>
 
+  {% can "operations" "manage" as manage_operations %}
   {% if operation.error_message %}
     <div class="alert alert-error" role="alert">
       <div class="flex-1 space-y-1">
@@ -18,7 +19,7 @@
     </div>
     {% if retry %}
       <a href="{% url 'operations:detail' retry.pk %}" class="btn btn-secondary">{% translate "Open the retry" %}</a>
-    {% elif operation.can_retry %}
+    {% elif operation.can_retry and manage_operations %}
       <form method="post" action="{% url 'operations:retry' operation.pk %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-primary">{% translate "Retry" %}</button>

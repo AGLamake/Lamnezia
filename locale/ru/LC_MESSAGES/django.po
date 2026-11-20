@@ -656,6 +656,9 @@ msgstr "Резервная копия"
 msgid "Backup codes"
 msgstr "Резервные коды"
 
+msgid "Backups"
+msgstr "Резервные копии"
+
 msgid "Bad request"
 msgstr "Неверный запрос"
 
@@ -3309,6 +3312,9 @@ msgstr "Групп с раздельной маршрутизацией: %(count
 msgid "Split routing encrypts the traffic abroad once more on the relay, so it rests on the processor."
 msgstr "В раздельном режиме ретранслятор ещё раз шифрует зарубежный трафик, поэтому упирается в процессор."
 
+msgid "Staff"
+msgstr "Сотрудники"
+
 msgid "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced. Users who had keys on it get keys of the group."
 msgstr "Отдельные серверы AmneziaWG 3.1 на порту группы. Вступающий сервер получает файлы группы: его ключ, настройки и клиенты заменяются. Пользователи, у которых были ключи на нём, получают ключи группы."
 
@@ -4791,6 +4797,9 @@ msgstr "полезный материал"
 
 msgid "abroad through the uplink"
 msgstr "за рубеж через канал"
+
+msgid "access to sections"
+msgstr "доступ к разделам"
 
 msgid "account id"
 msgstr "ID аккаунта"

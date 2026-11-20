@@ -9,7 +9,8 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import TemplateView
 
-from apps.accounts.permissions import StaffRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Level, Section
 from apps.guides.forms import PublishAs, PublishForm, RejectForm, publish_form
 from apps.guides.models import Suggestion, SuggestionKind, SuggestionStatus
 from apps.guides.services.markdown import render_markdown
@@ -18,7 +19,9 @@ from apps.guides.services.suggestions import SuggestionReview
 _RECENT_DECISIONS = 20
 
 
-class _ModerationView(StaffRequiredMixin):
+class _ModerationView(SectionRequiredMixin):
+    section = Section.INBOX
+
     def pending(self, pk: int) -> Suggestion:
         """A suggestion still waiting for review: a decided one is a 404, never decided twice."""
         return get_object_or_404(Suggestion.objects.pending().select_related("author"), pk=pk)
@@ -27,7 +30,8 @@ class _ModerationView(StaffRequiredMixin):
         return SuggestionReview(self.member, ip=self.client_ip)
 
 
-class SuggestionQueueView(StaffRequiredMixin, TemplateView):
+class SuggestionQueueView(SectionRequiredMixin, TemplateView):
+    section = Section.INBOX
     template_name = "guides/moderation/queue.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -42,6 +46,7 @@ class SuggestionQueueView(StaffRequiredMixin, TemplateView):
 class SuggestionReviewView(_ModerationView, TemplateView):
     """The suggestion as the author sent it, the publish form to edit it in and the decline form."""
 
+    read_level = Level.MANAGE
     template_name = "guides/moderation/review.html"
 
     def get(self, request: HttpRequest, pk: int) -> HttpResponse:

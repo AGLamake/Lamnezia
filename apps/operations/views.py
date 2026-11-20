@@ -8,19 +8,23 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import DetailView, ListView
 
-from apps.accounts.permissions import StaffRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
+from apps.accounts.services.zone import Zone
 from apps.core.paging import PageSizeMixin
 from apps.operations.forms import OperationFilterForm
 from apps.operations.models import Operation, OperationQuerySet, StepStatus
 from apps.operations.services.launcher import OperationNotRetryableError, retry
 
 
-class _OperationsView(StaffRequiredMixin):
-    """An administrator sees every operation; a moderator only the ones they started."""
+class _OperationsView(SectionRequiredMixin):
+    """The whole zone sees every operation; anyone else only the ones they started."""
+
+    section = Section.OPERATIONS
 
     def operations(self) -> OperationQuerySet:
         operations = Operation.objects.all()
-        if self.member.is_admin:
+        if Zone(self.member).is_whole:
             return operations
         return operations.filter(created_by=self.member)
 

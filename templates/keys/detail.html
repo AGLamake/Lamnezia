@@ -1,11 +1,12 @@
 {% extends "layouts/admin.html" %}
-{% load i18n ui %}
+{% load i18n ui access %}
 {% block title %}{{ key.name }} · Lamnezia{% endblock %}
 {% block nav %}{% include "keys/_nav.html" %}{% endblock %}
 
 {% block breadcrumbs %}<li><a href="{% url 'keys:list' %}">{% translate "Keys" %}</a></li><li aria-current="page">{{ key.name }}</li>{% endblock %}
 
 {% block content %}
+{% can "stats" as can_stats %}{% can "users" as can_users %}{% can "keys" "manage" as manage %}
 <div class="page-header">
   <div class="min-w-0">
     <div class="flex flex-wrap items-center gap-2">
@@ -15,13 +16,13 @@
     <p class="page-lead">{{ key.user|default:_("No owner") }} · {{ instance_title }}</p>
   </div>
   <div class="page-actions">
-    {% if user.is_admin %}<a href="{% url 'dashboard:stats' %}?key={{ key.pk }}" class="btn btn-ghost">{% icon "chart" %}{% translate "Statistics" %}</a>{% endif %}
-    {% if key.status == "active" %}
+    {% if can_stats %}<a href="{% url 'dashboard:stats' %}?key={{ key.pk }}" class="btn btn-ghost">{% icon "chart" %}{% translate "Statistics" %}</a>{% endif %}
+    {% if not manage %}{% elif key.status == "active" %}
       <form method="post" action="{% url 'keys:action' key.pk 'disable' %}">{% csrf_token %}<button class="btn btn-secondary">{% translate "Disable" %}</button></form>
     {% elif key.is_disabled %}
       <form method="post" action="{% url 'keys:action' key.pk 'enable' %}">{% csrf_token %}<button class="btn btn-secondary">{% translate "Enable" %}</button></form>
     {% endif %}
-    {% if key.can_export %}<a href="{% url 'keys:reveal' key.pk %}" class="btn btn-primary">{% icon "key" %}{% translate "Show key" %}</a>{% endif %}
+    {% if manage and key.can_export %}<a href="{% url 'keys:reveal' key.pk %}" class="btn btn-primary">{% icon "key" %}{% translate "Show key" %}</a>{% endif %}
   </div>
 </div>
 
@@ -41,7 +42,7 @@
   <section class="card space-y-3 lg:col-span-2">
     <h2 class="section-title flex items-center gap-2">{% icon "key" "icon-sm text-muted" %}{% translate "Key" %}</h2>
     <dl class="facts">
-      <div><dt>{% translate "Owner" %}</dt><dd>{% if key.user %}<a href="{% url 'dashboard:user' key.user.pk %}" class="hover:underline">{{ key.user }}</a>{% else %}—{% endif %}</dd></div>
+      <div><dt>{% translate "Owner" %}</dt><dd>{% if key.user and can_users %}<a href="{% url 'dashboard:user' key.user.pk %}" class="hover:underline">{{ key.user }}</a>{% else %}{{ key.user|default:"—" }}{% endif %}</dd></div>
       <div><dt>{% translate "Server" %}</dt><dd>{{ instance_title }}</dd></div>
       <div><dt>{% translate "IP address" %}</dt><dd class="font-mono">{{ key.client_ip|default:"—" }}</dd></div>
       <div><dt>{% translate "Created" %}</dt><dd>{{ key.created_at|date:"SHORT_DATETIME_FORMAT" }}</dd></div>
@@ -50,7 +51,7 @@
     </dl>
   </section>
 
-  {% if not key.is_gone %}
+  {% if manage and not key.is_gone %}
     <div class="space-y-6">
       <section class="card space-y-3">
         <h2 class="section-title flex items-center gap-2">{% icon "user" "icon-sm text-muted" %}{% if key.user %}{% translate "Give to another user" %}{% else %}{% translate "Give to a user" %}{% endif %}</h2>

@@ -12,7 +12,8 @@ from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 
 from apps.accounts.models import User
-from apps.accounts.permissions import AdminRequiredMixin, StaffRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
 from apps.accounts.services.zone import Zone
 from apps.audit.services import journal as audit
 from apps.plans.forms import PlanForm, UserLimitsForm, UserLookupForm
@@ -21,7 +22,8 @@ from apps.plans.services.changes import apply_speed_if_changed, limits_changed
 from apps.plans.services.limits import EffectiveLimits
 
 
-class PlanListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
+class PlanListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg]
+    section = Section.PLANS
     template_name = "plans/list.html"
     context_object_name = "plans"
 
@@ -32,7 +34,8 @@ class PlanListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
         return super().get_context_data(lookup_form=UserLookupForm(), **kwargs)
 
 
-class PlanCreateView(AdminRequiredMixin, CreateView):  # type: ignore[type-arg]
+class PlanCreateView(SectionRequiredMixin, CreateView):  # type: ignore[type-arg]
+    section = Section.PLANS
     model = Plan
     form_class = PlanForm
     template_name = "plans/form.html"
@@ -44,7 +47,8 @@ class PlanCreateView(AdminRequiredMixin, CreateView):  # type: ignore[type-arg]
         return response
 
 
-class PlanUpdateView(AdminRequiredMixin, UpdateView):  # type: ignore[type-arg]
+class PlanUpdateView(SectionRequiredMixin, UpdateView):  # type: ignore[type-arg]
+    section = Section.PLANS
     model = Plan
     form_class = PlanForm
     template_name = "plans/form.html"
@@ -58,7 +62,9 @@ class PlanUpdateView(AdminRequiredMixin, UpdateView):  # type: ignore[type-arg]
         return response
 
 
-class PlanDeleteView(AdminRequiredMixin, View):
+class PlanDeleteView(SectionRequiredMixin, View):
+    section = Section.PLANS
+
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         plan = get_object_or_404(Plan, pk=pk)
         try:
@@ -80,8 +86,10 @@ class PlanDeleteView(AdminRequiredMixin, View):
         )
 
 
-class UserLookupView(AdminRequiredMixin, View):
+class UserLookupView(SectionRequiredMixin, View):
     """Find a user by name and open their plan and limits."""
+
+    section = Section.PLANS
 
     def get(self, request: HttpRequest) -> HttpResponse:
         form = UserLookupForm(request.GET)
@@ -94,9 +102,11 @@ class UserLookupView(AdminRequiredMixin, View):
         return redirect("plans:user", pk=user.pk)
 
 
-class UserLimitsView(StaffRequiredMixin, UpdateView):  # type: ignore[type-arg]
+class UserLimitsView(SectionRequiredMixin, UpdateView):  # type: ignore[type-arg]
     """A user's plan and overrides, with the limits that result from them; a moderator's own
     users only."""
+
+    section = Section.USERS
 
     form_class = UserLimitsForm
     template_name = "plans/user_limits.html"

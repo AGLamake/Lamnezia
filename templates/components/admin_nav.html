@@ -1,32 +1,35 @@
-{% load i18n support billing ui attention %}{# Admin sidebar grouped by task; `active` is the current section. Counters show what waits for the member. #}
+{% load i18n support billing ui attention access %}{# Admin sidebar grouped by task; `active` is the current section. Only the sections the member may open are shown; counters show what waits for them. #}
 {% attention as todo %}
-<a href="{% url 'dashboard:index' %}" class="nav-link"{% if active == 'dashboard' %} aria-current="page"{% endif %}>{% icon "dashboard" %}<span class="nav-text">{% translate "Overview" %}</span></a>
-<a href="{% url 'dashboard:stats' %}" class="nav-link"{% if active == 'stats' %} aria-current="page"{% endif %}>{% icon "chart" %}<span class="nav-text">{% translate "Statistics" %}</span></a>
+{% can "overview" as overview %}{% can "stats" as stats %}{% can "servers" as servers %}{% can "operations" as operations %}{% can "users" as users %}{% can "keys" as keys %}{% can "registration" as registration %}{% can "plans" as plans %}{% can "orders" as orders %}{% can "inbox" as inbox %}{% can "articles" as articles %}{% can "audit" as audit %}
+{% if overview %}<a href="{% url 'dashboard:index' %}" class="nav-link"{% if active == 'dashboard' %} aria-current="page"{% endif %}>{% icon "dashboard" %}<span class="nav-text">{% translate "Overview" %}</span></a>{% endif %}
+{% if stats %}<a href="{% url 'dashboard:stats' %}" class="nav-link"{% if active == 'stats' %} aria-current="page"{% endif %}>{% icon "chart" %}<span class="nav-text">{% translate "Statistics" %}</span></a>{% endif %}
 
-<p class="nav-group">{% translate "Infrastructure" %}</p>
-<a href="{% url 'servers:list' %}" class="nav-link"{% if active == 'servers' %} aria-current="page"{% endif %}>{% icon "server" %}<span class="nav-text">{% translate "Servers" %}</span>{% with offline=todo.offline|length %}{% if offline %}<span class="nav-count nav-count-danger" title="{% translate 'Not answering' %}">{{ offline }}</span>{% endif %}{% endwith %}</a>
-{% if user.is_admin %}<a href="{% url 'groups:list' %}" class="nav-link"{% if active == 'groups' %} aria-current="page"{% endif %}>{% icon "layers" %}<span class="nav-text">{% translate "Server groups" %}</span>{% if todo.group_problems %}<span class="nav-count nav-count-danger" title="{% translate 'Groups with a lagging or stuck server, or with no server answering the relay' %}">{{ todo.group_problems }}</span>{% endif %}</a>{% endif %}
-<a href="{% url 'operations:list' %}" class="nav-link"{% if active == 'operations' %} aria-current="page"{% endif %}>{% icon "activity" %}<span class="nav-text">{% translate "Operations" %}</span>{% if todo.failed_operations %}<span class="nav-count nav-count-danger" title="{% translate 'Failed in the last day' %}">{{ todo.failed_operations }}</span>{% endif %}</a>
+{% if servers or operations %}<p class="nav-group">{% translate "Infrastructure" %}</p>{% endif %}
+{% if servers %}<a href="{% url 'servers:list' %}" class="nav-link"{% if active == 'servers' %} aria-current="page"{% endif %}>{% icon "server" %}<span class="nav-text">{% translate "Servers" %}</span>{% with offline=todo.offline|length %}{% if offline %}<span class="nav-count nav-count-danger" title="{% translate 'Not answering' %}">{{ offline }}</span>{% endif %}{% endwith %}</a>
+<a href="{% url 'groups:list' %}" class="nav-link"{% if active == 'groups' %} aria-current="page"{% endif %}>{% icon "layers" %}<span class="nav-text">{% translate "Server groups" %}</span>{% if todo.group_problems %}<span class="nav-count nav-count-danger" title="{% translate 'Groups with a lagging or stuck server, or with no server answering the relay' %}">{{ todo.group_problems }}</span>{% endif %}</a>{% endif %}
+{% if operations %}<a href="{% url 'operations:list' %}" class="nav-link"{% if active == 'operations' %} aria-current="page"{% endif %}>{% icon "activity" %}<span class="nav-text">{% translate "Operations" %}</span>{% if todo.failed_operations %}<span class="nav-count nav-count-danger" title="{% translate 'Failed in the last day' %}">{{ todo.failed_operations }}</span>{% endif %}</a>{% endif %}
 
-<p class="nav-group">{% translate "Clients" %}</p>
-<a href="{% url 'dashboard:users' %}" class="nav-link"{% if active == 'users' %} aria-current="page"{% endif %}>{% icon "users" %}<span class="nav-text">{% translate "Users" %}</span></a>
-<a href="{% url 'keys:list' %}" class="nav-link"{% if active == 'keys' %} aria-current="page"{% endif %}>{% icon "key" %}<span class="nav-text">{% translate "Keys" %}</span></a>
-<a href="{% url 'accounts:registrations' %}" class="nav-link"{% if active == 'registrations' %} aria-current="page"{% endif %}>{% icon "user-plus" %}<span class="nav-text">{% translate "Registration" %}</span>{% if todo.applications %}<span class="nav-count" title="{% translate 'Waiting for approval' %}">{{ todo.applications }}</span>{% endif %}</a>
-{% if user.is_admin %}<a href="{% url 'plans:list' %}" class="nav-link"{% if active == 'plans' %} aria-current="page"{% endif %}>{% icon "tag" %}<span class="nav-text">{% translate "Plans" %}</span></a>{% endif %}
-{% if user.is_admin %}{% billing_enabled as payments %}{% if payments %}<a href="{% url 'billing:orders' %}" class="nav-link"{% if active == 'orders' %} aria-current="page"{% endif %}>{% icon "receipt" %}<span class="nav-text">{% translate "Orders" %}</span></a>{% endif %}{% endif %}
+{% billing_enabled as payments %}
+{% if users or keys or registration or plans or orders and payments %}<p class="nav-group">{% translate "Clients" %}</p>{% endif %}
+{% if users %}<a href="{% url 'dashboard:users' %}" class="nav-link"{% if active == 'users' %} aria-current="page"{% endif %}>{% icon "users" %}<span class="nav-text">{% translate "Users" %}</span></a>{% endif %}
+{% if keys %}<a href="{% url 'keys:list' %}" class="nav-link"{% if active == 'keys' %} aria-current="page"{% endif %}>{% icon "key" %}<span class="nav-text">{% translate "Keys" %}</span></a>{% endif %}
+{% if registration %}<a href="{% url 'accounts:registrations' %}" class="nav-link"{% if active == 'registrations' %} aria-current="page"{% endif %}>{% icon "user-plus" %}<span class="nav-text">{% translate "Registration" %}</span>{% if todo.applications %}<span class="nav-count" title="{% translate 'Waiting for approval' %}">{{ todo.applications }}</span>{% endif %}</a>{% endif %}
+{% if plans %}<a href="{% url 'plans:list' %}" class="nav-link"{% if active == 'plans' %} aria-current="page"{% endif %}>{% icon "tag" %}<span class="nav-text">{% translate "Plans" %}</span></a>{% endif %}
+{% if orders and payments %}<a href="{% url 'billing:orders' %}" class="nav-link"{% if active == 'orders' %} aria-current="page"{% endif %}>{% icon "receipt" %}<span class="nav-text">{% translate "Orders" %}</span></a>{% endif %}
 
-<p class="nav-group">{% translate "Support" %}</p>
-{% inbox_unread as unread %}<a href="{% url 'support:inbox' %}" class="nav-link"{% if active == 'inbox' %} aria-current="page"{% endif %}>{% icon "inbox" %}<span class="nav-text">{% translate "Inbox" %}</span>{% url 'support:inbox-unread' as unread_url %}{% include "support/_badge.html" %}</a>
-<a href="{% url 'guides:moderation' %}" class="nav-link"{% if active == 'suggestions' %} aria-current="page"{% endif %}>{% icon "file-text" %}<span class="nav-text">{% translate "Article suggestions" %}</span>{% if todo.suggestions %}<span class="nav-count" title="{% translate 'Waiting for review' %}">{{ todo.suggestions }}</span>{% endif %}</a>
-{% if user.is_admin %}<a href="{% url 'guides:staff' 'faq' %}" class="nav-link"{% if active == 'articles' %} aria-current="page"{% endif %}>{% icon "book" %}<span class="nav-text">{% translate "Articles" %}</span></a>{% endif %}
+{% if inbox or articles %}<p class="nav-group">{% translate "Support" %}</p>{% endif %}
+{% if inbox %}{% inbox_unread as unread %}<a href="{% url 'support:inbox' %}" class="nav-link"{% if active == 'inbox' %} aria-current="page"{% endif %}>{% icon "inbox" %}<span class="nav-text">{% translate "Inbox" %}</span>{% url 'support:inbox-unread' as unread_url %}{% include "support/_badge.html" %}</a>
+<a href="{% url 'guides:moderation' %}" class="nav-link"{% if active == 'suggestions' %} aria-current="page"{% endif %}>{% icon "file-text" %}<span class="nav-text">{% translate "Article suggestions" %}</span>{% if todo.suggestions %}<span class="nav-count" title="{% translate 'Waiting for review' %}">{{ todo.suggestions }}</span>{% endif %}</a>{% endif %}
+{% if articles %}<a href="{% url 'guides:staff' 'faq' %}" class="nav-link"{% if active == 'articles' %} aria-current="page"{% endif %}>{% icon "book" %}<span class="nav-text">{% translate "Articles" %}</span></a>{% endif %}
 
+{# The panel settings are not a section: they stay with the administrator. #}
+{% if user.is_admin or audit %}<p class="nav-group">{% translate "System" %}</p>{% endif %}
 {% if user.is_admin %}
-  <p class="nav-group">{% translate "System" %}</p>
   <a href="{% url 'notifications:channels' %}" class="nav-link"{% if active == 'notifications' %} aria-current="page"{% endif %}>{% icon "bell" %}<span class="nav-text">{% translate "Notifications" %}</span></a>
   <a href="{% url 'core:settings' %}" class="nav-link"{% if active == 'settings' %} aria-current="page"{% endif %}>{% icon "settings" %}<span class="nav-text">{% translate "Settings" %}</span></a>
   <a href="{% url 'api-tokens:list' %}" class="nav-link"{% if active == 'api-tokens' %} aria-current="page"{% endif %}>{% icon "key" %}<span class="nav-text">{% translate "API tokens" %}</span></a>
   <a href="{% url 'backups:panel-archives' %}" class="nav-link"{% if active == 'panel-archives' %} aria-current="page"{% endif %}>{% icon "database" %}<span class="nav-text">{% translate "Panel archive" %}</span></a>
   <a href="{% url 'relocation:move' %}" class="nav-link"{% if active == 'panel-move' %} aria-current="page"{% endif %}>{% icon "switch" %}<span class="nav-text">{% translate "Panel move" %}</span></a>
   <a href="{% url 'updates:update' %}" class="nav-link"{% if active == 'panel-update' %} aria-current="page"{% endif %}>{% icon "arrow-up" %}<span class="nav-text">{% translate "Panel update" %}</span>{% if todo.panel_release %}<span class="nav-count" title="{% translate 'A new release is out' %}">1</span>{% endif %}</a>
-  <a href="{% url 'audit:list' %}" class="nav-link"{% if active == 'audit' %} aria-current="page"{% endif %}>{% icon "history" %}<span class="nav-text">{% translate "Audit log" %}</span></a>
 {% endif %}
+{% if audit %}<a href="{% url 'audit:list' %}" class="nav-link"{% if active == 'audit' %} aria-current="page"{% endif %}>{% icon "history" %}<span class="nav-text">{% translate "Audit log" %}</span></a>{% endif %}

@@ -1,10 +1,11 @@
 {% extends "layouts/admin.html" %}
-{% load i18n %}
+{% load access i18n %}
 {% block title %}{% translate "Incidents" %} · {{ site_name }}{% endblock %}
 {% block nav %}{% include "components/admin_nav.html" with active="inbox" %}{% endblock %}
 
 {% block content %}
 {% include "support/inbox/_tabs.html" with tab="incidents" %}
+{% can "servers" "manage" as manage %}
 <p class="help-text">{% translate "Reports that a server does not work, grouped by server. While an incident is open, users see the server as having problems." %}</p>
 {% if object_list %}
   <ul class="space-y-3">
@@ -22,7 +23,7 @@
           {% endif %}
         </div>
         <a href="{% url 'support:inbox' %}?type=server_down&server={{ incident.server_id }}" class="help-text hover:underline">{% translate "Reports of the server" %}</a>
-        {% if incident.is_open %}
+        {% if incident.is_open and manage %}
           <form method="post" action="{% url 'support:incident-close' incident.pk %}" class="space-y-3">
             {% csrf_token %}
             {{ close_form }}

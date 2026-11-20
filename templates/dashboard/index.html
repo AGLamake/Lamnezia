@@ -1,23 +1,24 @@
 {% extends "layouts/admin.html" %}
-{% load i18n ui servers %}
+{% load i18n ui servers access %}
 {% block title %}{% translate "Overview" %} · Lamnezia{% endblock %}
 
 {% block nav %}{% include "components/admin_nav.html" with active="dashboard" %}{% endblock %}
 
 {% block content %}
+{% can "servers" as servers_view %}{% can "servers" "manage" as servers_manage %}{% can "keys" as keys_view %}{% can "keys" "manage" as keys_manage %}{% can "users" as users_view %}{% can "stats" as stats_view %}
 <div class="page-header">
   <div>
     <h1 class="page-title">{% translate "Overview" %}</h1>
     <p class="page-lead">{% translate "How the servers and clients are doing and what needs you now." %}</p>
   </div>
   <div class="page-actions">
-    <a href="{% url 'keys:issue' %}" class="btn btn-secondary">{% icon "key" %}{% translate "Issue a key" %}</a>
-    {% if user.is_admin %}<a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>{% endif %}
+    {% if keys_manage %}<a href="{% url 'keys:issue' %}" class="btn btn-secondary">{% icon "key" %}{% translate "Issue a key" %}</a>{% endif %}
+    {% if servers_manage %}<a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>{% endif %}
   </div>
 </div>
 
 <div class="kpis">
-  {% if user.is_admin %}
+  {% if servers_view %}
     {% with count=overview.servers %}
       <a href="{% url 'servers:list' %}" class="stat">
         <span class="stat-label">{% icon "server" "icon-sm" %}{% translate "Servers online" %}</span>
@@ -25,24 +26,24 @@
       </a>
     {% endwith %}
   {% endif %}
-  <a href="{% url 'dashboard:users' %}?status=active" class="stat">
-    <span class="stat-label">{% icon "users" "icon-sm" %}{% if user.is_admin %}{% translate "Clients" %}{% else %}{% translate "My clients" %}{% endif %}</span>
+  <{% if users_view %}a href="{% url 'dashboard:users' %}?status=active"{% else %}div{% endif %} class="stat">
+    <span class="stat-label">{% icon "users" "icon-sm" %}{% if whole_zone %}{% translate "Clients" %}{% else %}{% translate "My clients" %}{% endif %}</span>
     <span class="stat-value">{{ overview.users }}</span>
-  </a>
-  <a href="{% url 'keys:list' %}?status=active" class="stat">
+  </{% if users_view %}a{% else %}div{% endif %}>
+  <{% if keys_view %}a href="{% url 'keys:list' %}?status=active"{% else %}div{% endif %} class="stat">
     <span class="stat-label">{% icon "key" "icon-sm" %}{% translate "Active keys" %}</span>
     <span class="stat-value">{{ overview.active_keys }}</span>
-  </a>
-  {% if not user.is_admin %}
-    <a href="{% url 'dashboard:users' %}?status=active" class="stat">
+  </{% if keys_view %}a{% else %}div{% endif %}>
+  {% if not whole_zone %}
+    <{% if users_view %}a href="{% url 'dashboard:users' %}?status=active"{% else %}div{% endif %} class="stat">
       <span class="stat-label">{% icon "calendar" "icon-sm" %}{% translate "Access ends in 7 days" %}</span>
       <span class="stat-value">{{ overview.access_ending }}</span>
-    </a>
+    </{% if users_view %}a{% else %}div{% endif %}>
   {% endif %}
-  <a href="{% url 'dashboard:stats' %}?period=day" class="stat">
+  <{% if stats_view %}a href="{% url 'dashboard:stats' %}?period=day"{% else %}div{% endif %} class="stat">
     <span class="stat-label">{% icon "signal" "icon-sm" %}{% translate "Online now" %}</span>
     <span class="stat-value">{{ overview.online }}</span>
-  </a>
+  </{% if stats_view %}a{% else %}div{% endif %}>
 </div>
 
 <div class="grid gap-6 lg:grid-cols-5">
@@ -103,7 +104,7 @@
 <section class="space-y-3" aria-labelledby="overview-servers">
   <div class="section-head">
     <h2 id="overview-servers" class="section-title">{% translate "Servers" %}</h2>
-    {% if user.is_admin and servers %}<a href="{% url 'servers:list' %}" class="text-sm text-link hover:underline">{% translate "All servers" %}</a>{% endif %}
+    {% if servers_view and servers %}<a href="{% url 'servers:list' %}" class="text-sm text-link hover:underline">{% translate "All servers" %}</a>{% endif %}
   </div>
   {% if servers %}
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -111,15 +112,15 @@
         <article id="server-{{ server.pk }}" class="card space-y-4">
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
-              {% if user.is_admin %}<a href="{% url 'servers:detail' server.pk %}" class="block truncate font-semibold hover:underline">{{ server.name }}</a>{% else %}<span class="block truncate font-semibold">{{ server.name }}</span>{% endif %}
+              {% if servers_view %}<a href="{% url 'servers:detail' server.pk %}" class="block truncate font-semibold hover:underline">{{ server.name }}</a>{% else %}<span class="block truncate font-semibold">{{ server.name }}</span>{% endif %}
               <p class="help-text truncate">{{ server.location|default:server.host }}</p>
             </div>
             {% include "servers/_online.html" %}
           </div>
           {% include "servers/_meters.html" %}
           <div class="flex items-center justify-between gap-2 border-t border-border pt-3 text-xs text-muted">
-            <span class="min-w-0">{% if user.is_admin and server.paid_until %}{% translate "VPS paid until" %} {{ server.paid_until|date:"SHORT_DATE_FORMAT" }} {% include "servers/_paid_days.html" %}{% elif server.latest_sample.booted_at %}{% translate "Uptime" %} {{ server.latest_sample.booted_at|timesince:server.latest_sample.at }}{% endif %}</span>
-            {% if user.is_admin %}{% include "servers/_quick_actions.html" %}{% endif %}
+            <span class="min-w-0">{% if servers_view and server.paid_until %}{% translate "VPS paid until" %} {{ server.paid_until|date:"SHORT_DATE_FORMAT" }} {% include "servers/_paid_days.html" %}{% elif server.latest_sample.booted_at %}{% translate "Uptime" %} {{ server.latest_sample.booted_at|timesince:server.latest_sample.at }}{% endif %}</span>
+            {% if servers_manage %}{% include "servers/_quick_actions.html" %}{% endif %}
           </div>
         </article>
       {% endfor %}
@@ -128,7 +129,7 @@
     <div class="empty-state">
       <span class="empty-state-icon">{% icon "server" %}</span>
       <p>{% translate "No servers yet." %}</p>
-      {% if user.is_admin %}<a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>{% endif %}
+      {% if servers_manage %}<a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>{% endif %}
     </div>
   {% endif %}
 </section>

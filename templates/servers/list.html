@@ -1,8 +1,9 @@
 {% extends "servers/base.html" %}
-{% load i18n servers ui %}
+{% load i18n servers ui access %}
 {% block title %}{% translate "Servers" %} · Lamnezia{% endblock %}
 
 {% block content %}
+{% can "servers" "manage" as manage %}
 <div class="page-header">
   <div>
     <h1 class="page-title">{% translate "Servers" %}</h1>
@@ -10,7 +11,7 @@
   </div>
   <div class="flex flex-wrap gap-2">
     <a href="{% url 'groups:list' %}" class="btn btn-secondary">{% icon "layers" %}{% translate "Server groups" %}</a>
-    <a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>
+    {% if manage %}<a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>{% endif %}
   </div>
 </div>
 
@@ -36,7 +37,7 @@
             <td data-label="{% translate 'Address' %}" class="font-mono text-xs">{{ server.host }}:{{ server.port }}</td>
             <td data-label="{% translate 'VPS paid until' %}">{{ server.paid_until|date:"SHORT_DATE_FORMAT"|default:"—" }}{% if server.paid_until %} {% include "servers/_paid_days.html" %}{% endif %}</td>
             <td data-label="{% translate 'Status' %}"><span class="inline-flex flex-wrap justify-end gap-1">{% if server.status == "ready" %}{% include "servers/_online.html" %}{% else %}<span class="badge {{ server.status|server_badge }}">{{ server.get_status_display }}</span>{% endif %}{% if server.maintenance %}<span class="badge badge-muted">{% translate "maintenance" %}</span>{% endif %}</span></td>
-            <td>{% include "servers/_quick_actions.html" %}</td>
+            <td>{% if manage %}{% include "servers/_quick_actions.html" %}{% endif %}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -49,7 +50,7 @@
   <div class="empty-state">
     <span class="empty-state-icon">{% icon "server" %}</span>
     <p>{% translate "No servers yet. Add a VPS you can log in to over SSH as root or a user with sudo." %}</p>
-    <a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>
+    {% if manage %}<a href="{% url 'servers:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a server" %}</a>{% endif %}
   </div>
 {% endif %}
 {% endblock %}

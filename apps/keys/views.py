@@ -10,7 +10,8 @@ from django.utils.translation import gettext_lazy, ngettext
 from django.views import View
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 
-from apps.accounts.permissions import StaffRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Level, Section
 from apps.core.paging import PageSizeMixin
 from apps.keys.forms import (
     QUOTA_REACHED,
@@ -35,11 +36,13 @@ def _to_operation(operation: Operation) -> HttpResponse:
     return redirect("operations:detail", pk=operation.pk)
 
 
-class _KeysStaffView(StaffRequiredMixin):
+class _KeysStaffView(SectionRequiredMixin):
     """The services act on behalf of the signed-in staff member, from their address.
 
     Keys outside the member's zone are as good as missing.
     """
+
+    section = Section.KEYS
 
     kwargs: dict[str, Any]
 
@@ -194,7 +197,12 @@ class KeyResetFirstViewView(_KeysStaffView, View):
 
 
 class _ExportView(_KeysStaffView, View):
-    """Staff may look at any key of their zone; every look is written to the audit journal."""
+    """Staff may look at any key of their zone; every look is written to the audit journal.
+
+    The key itself is a secret, so it takes the right to manage keys, not just to view them.
+    """
+
+    read_level = Level.MANAGE
 
     @cached_property
     def key(self) -> AccessKey:
@@ -259,6 +267,8 @@ class DriftListView(_KeysStaffView, TemplateView):
     """Differences found by the latest reconciliation, grouped by instance."""
 
     template_name = "keys/drift.html"
+    # Every part of the page is an action on the servers.
+    read_level = Level.MANAGE
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         drifts = self.zone.drifts().select_related("key")

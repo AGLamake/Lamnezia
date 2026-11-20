@@ -33,6 +33,7 @@ def protocol_backups(context: dict[str, Any], server: Server) -> dict[str, Any]:
         "instances": list(instances),
         "services": list(services),
         "csrf_token": context.get("csrf_token"),
+        "request": context.get("request"),
     }
 
 

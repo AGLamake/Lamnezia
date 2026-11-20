@@ -13,7 +13,9 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from apps.accounts.models import User
-from apps.accounts.permissions import StaffRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
+from apps.accounts.services.zone import Zone
 from apps.dashboard.forms import StatsFilterForm
 from apps.dashboard.services.chart import period_links, traffic_chart
 from apps.dashboard.services.forecast import LimitForecast
@@ -38,7 +40,8 @@ def _stats(request: HttpRequest, member: User) -> tuple[StatsFilterForm, Window,
     return form, window, TrafficStats(form.scope, window, OnlineRule.from_settings())
 
 
-class StatsView(StaffRequiredMixin, TemplateView):
+class StatsView(SectionRequiredMixin, TemplateView):
+    section = Section.STATS
     template_name = "dashboard/stats.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -56,15 +59,17 @@ class StatsView(StaffRequiredMixin, TemplateView):
             inactive=inactive(keys),
             unavailable=stats.unavailable_sources(),
             forecast=LimitForecast(window.now).soonest(form.scope.users()),
-            storage=StorageReport().rows() if self.member.is_admin else [],
+            storage=StorageReport().rows() if Zone(self.member).is_whole else [],
             query=self.request.GET.urlencode(),
             periods=period_links(self.request.GET, form.selected_period),
             **kwargs,
         )
 
 
-class StatsExportView(StaffRequiredMixin, View):
+class StatsExportView(SectionRequiredMixin, View):
     """Traffic of every key of the scope over the period, one row per key."""
+
+    section = Section.STATS
 
     def get(self, request: HttpRequest) -> HttpResponse:
         form, window, stats = _stats(request, self.member)

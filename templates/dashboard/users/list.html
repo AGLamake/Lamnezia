@@ -1,15 +1,16 @@
 {% extends "layouts/admin.html" %}
-{% load i18n ui %}
+{% load access i18n ui %}
 {% block title %}{% translate "Users" %} · {{ site_name }}{% endblock %}
 {% block nav %}{% include "components/admin_nav.html" with active="users" %}{% endblock %}
 
 {% block content %}
+{% can "users" "manage" as manage %}{% can "registration" "manage" as invite %}
 <div class="page-header">
   <div>
     <h1 class="page-title">{% translate "Users" %}</h1>
     <p class="page-lead">{% translate "Clients and staff: access, plan and keys. Tick users to extend or change many at once." %}</p>
   </div>
-  <a href="{% url 'accounts:invite-add' %}" class="btn btn-primary">{% icon "user-plus" %}{% translate "Create an invite" %}</a>
+  {% if invite %}<a href="{% url 'accounts:invite-add' %}" class="btn btn-primary">{% icon "user-plus" %}{% translate "Create an invite" %}</a>{% endif %}
 </div>
 
 {% include "components/filters.html" with form=filter_form %}
@@ -18,7 +19,7 @@
   <form method="post" action="{% url 'dashboard:users-batch' %}" class="space-y-4" x-data="{ action: 'extend' }">
     {% csrf_token %}
     <input type="hidden" name="filters" value="{{ filters }}">
-    <div class="bulk-bar items-end">
+    {% if manage %}<div class="bulk-bar items-end">
       <div class="min-w-0 flex-1 sm:flex-none">
         <label for="batch-action" class="label">{% translate "With the ticked users" %}</label>
         <select id="batch-action" name="action" class="input" x-model="action">
@@ -37,7 +38,7 @@
       </div>
       <button type="submit" class="btn btn-primary">{% translate "Apply" %}</button>
       <p class="help-text w-full">{% translate "Keys change on the servers in the background; the report shows every operation." %}</p>
-    </div>
+    </div>{% endif %}
 
     <div class="table-wrap">
       <table class="table table-cards">

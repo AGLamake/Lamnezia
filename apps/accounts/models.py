@@ -103,6 +103,9 @@ class User(AbstractUser):
         blank=True,
         help_text=_("For a moderator: how many keys their users may hold. Empty: no limit."),
     )
+    # A staff member's level in each section of the panel; a section left out gets the default
+    # of the role (`apps/accounts/services/access.py`).
+    access = models.JSONField(_("access to sections"), default=dict, blank=True)
     # A portal user's choice; the staff always hear of a sign-in from a new place.
     sign_in_alerts = models.BooleanField(
         _("sign-in alerts"),

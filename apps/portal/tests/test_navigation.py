@@ -65,9 +65,12 @@ def test_a_guest_reads_the_guides_and_can_sign_in(client: Client) -> None:
 def test_the_team_switches_between_the_admin_and_the_portal(client: Client, role: Role) -> None:
     client.force_login(UserFactory(role=role))
 
-    assert 'href="/dashboard/"' in client.get("/portal/").content.decode()
+    # The switch leads to the start page: the first section of the menu the member opens.
+    assert 'href="/" class="menu-item"' in client.get("/portal/").content.decode()
     assert 'href="/portal/" class="menu-item"' in client.get("/dashboard/").content.decode()
 
 
 def test_a_client_has_no_way_into_the_admin(user_client: Client) -> None:
-    assert 'href="/dashboard/"' not in user_client.get("/portal/").content.decode()
+    html = user_client.get("/portal/").content.decode()
+    assert 'href="/dashboard/"' not in html
+    assert 'href="/" class="menu-item"' not in html

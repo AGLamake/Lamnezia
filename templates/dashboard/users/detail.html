@@ -1,11 +1,12 @@
 {% extends "layouts/admin.html" %}
-{% load i18n ui %}
+{% load access i18n ui %}
 {% block title %}{{ card.user.username }} · {{ site_name }}{% endblock %}
 {% block nav %}{% include "components/admin_nav.html" with active="users" %}{% endblock %}
 
 {% block breadcrumbs %}<li><a href="{% url 'dashboard:users' %}">{% translate "Users" %}</a></li><li aria-current="page">{{ card.user.username }}</li>{% endblock %}
 
 {% block content %}
+{% can "users" "manage" as manage %}{% can "stats" as stats_view %}{% can "keys" as keys_view %}
 {% translate "no limit" as no_limit %}{% translate "as in the plan" as as_planned %}
 <div class="page-header">
   <div class="min-w-0">
@@ -21,8 +22,8 @@
     </p>
   </div>
   <div class="page-actions">
-    <a href="{% url 'dashboard:stats' %}?user={{ card.user.pk }}" class="btn btn-ghost">{% icon "chart" %}{% translate "Statistics" %}</a>
-    <a href="{% url 'plans:user' card.user.pk %}" class="btn btn-secondary">{% icon "pencil" %}{% translate "Change" %}</a>
+    {% if stats_view %}<a href="{% url 'dashboard:stats' %}?user={{ card.user.pk }}" class="btn btn-ghost">{% icon "chart" %}{% translate "Statistics" %}</a>{% endif %}
+    {% if manage %}<a href="{% url 'plans:user' card.user.pk %}" class="btn btn-secondary">{% icon "pencil" %}{% translate "Change" %}</a>{% endif %}
   </div>
 </div>
 
@@ -60,14 +61,14 @@
         <ul class="rows border-t border-border">
           {% for key, instance in card.keys %}
             <li>
-              <a href="{% url 'keys:detail' key.pk %}" class="row">
+              <{% if keys_view %}a href="{% url 'keys:detail' key.pk %}"{% else %}div{% endif %} class="row">
                 <span class="row-lead{% if key.status == 'active' %} row-lead-success{% endif %}">{% icon "key" "icon-sm" %}</span>
                 <span class="row-main">
                   <span class="row-title">{{ key.name }}</span>
                   <span class="row-sub">{{ instance }}{% if key.client_ip %} · <span class="font-mono">{{ key.client_ip }}</span>{% endif %}</span>
                 </span>
                 <span class="badge {% if key.status == 'active' %}badge-success{% elif key.status == 'revoked' %}badge-danger{% else %}badge-muted{% endif %}">{{ key.get_status_display }}</span>
-              </a>
+              </{% if keys_view %}a{% else %}div{% endif %}>
             </li>
           {% endfor %}
         </ul>
@@ -126,13 +127,14 @@
         </div>
       {% else %}
         <p class="help-text">{% translate "No plan: the user cannot get keys." %}</p>
-        <a href="{% url 'plans:user' card.user.pk %}" class="btn btn-primary">{% icon "tag" %}{% translate "Change" %}</a>
+        {% if manage %}<a href="{% url 'plans:user' card.user.pk %}" class="btn btn-primary">{% icon "tag" %}{% translate "Change" %}</a>{% endif %}
       {% endif %}
     </section>
   </div>
 
   <div class="min-w-0 space-y-6">
-    {% if offers_subscription %}
+    {# The link hands out the keys: it is a secret, shown only to those who manage the user. #}
+    {% if offers_subscription and manage %}
     <section class="card space-y-3">
       <h2 class="section-title flex items-center gap-2">{% icon "share" "icon-sm text-muted" %}{% translate "Subscription link" %}</h2>
       <p class="help-text">{% translate "XRay clients fetch the user's XRay keys by this link and keep them up to date. Anyone with the link gets the keys." %}</p>
@@ -176,7 +178,9 @@
                   <span class="row-sub">{{ slot.account.username|default:"—" }} · ID <span class="font-mono">{{ slot.account.external_id }}</span> · {% blocktranslate with date=slot.account.linked_at|date:"SHORT_DATETIME_FORMAT" %}linked {{ date }}{% endblocktranslate %}</span>
                 {% endif %}
               </span>
-              {% if slot.account %}
+              {% if not manage %}
+                {% if not slot.account %}<span class="badge badge-muted">{% translate "not linked" %}</span>{% endif %}
+              {% elif slot.account %}
                 <form method="post" action="{% url 'dashboard:user-unlink' card.user.pk slot.messenger %}"
                       data-confirm="{% translate "Unlink this account?" %}">
                   {% csrf_token %}<button type="submit" class="btn btn-ghost-danger btn-sm">{% translate "Unlink" %}</button>
@@ -189,7 +193,7 @@
                 <span class="badge badge-muted">{% translate "not linked" %}</span>
               {% endif %}
             </div>
-            {% if not slot.account %}
+            {% if manage and not slot.account %}
               {% if invited == slot.messenger %}
                 <div class="space-y-1 rounded-control bg-surface-2 p-3 text-sm">
                   {% if slot.messenger == "telegram" %}

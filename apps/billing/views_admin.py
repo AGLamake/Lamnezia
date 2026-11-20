@@ -9,7 +9,8 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import ListView
 
-from apps.accounts.permissions import AdminRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
 from apps.billing.forms import OrderFilterForm
 from apps.billing.models import Order
 from apps.billing.services.orders import RefundRefusedError, paid_totals, refund
@@ -17,7 +18,8 @@ from apps.billing.services.providers import PaymentProviderError, payment_provid
 from apps.core.paging import PageSizeMixin
 
 
-class OrderListView(PageSizeMixin, AdminRequiredMixin, ListView):  # type: ignore[type-arg]
+class OrderListView(PageSizeMixin, SectionRequiredMixin, ListView):  # type: ignore[type-arg]
+    section = Section.ORDERS
     template_name = "billing/orders.html"
     context_object_name = "orders"
 
@@ -35,7 +37,9 @@ class OrderListView(PageSizeMixin, AdminRequiredMixin, ListView):  # type: ignor
         )
 
 
-class OrderRefundView(AdminRequiredMixin, View):
+class OrderRefundView(SectionRequiredMixin, View):
+    section = Section.ORDERS
+
     def post(self, request: HttpRequest, number: str) -> HttpResponse:
         order = get_object_or_404(Order, number=number)
         try:

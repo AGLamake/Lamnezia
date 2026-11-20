@@ -1,23 +1,24 @@
 {% extends "plans/base.html" %}
-{% load i18n ui %}
+{% load access i18n ui %}
 {% block title %}{% translate "Plans" %} · Lamnezia{% endblock %}
 
 {% block content %}
+{% can "plans" "manage" as manage %}{% can "users" "manage" as manage_users %}
 <div class="page-header">
   <div>
     <h1 class="page-title">{% translate "Plans" %}</h1>
     <p class="page-lead">{% translate "What users get: servers, protocols, traffic and how long the access lasts." %}</p>
   </div>
-  <a href="{% url 'plans:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a plan" %}</a>
+  {% if manage %}<a href="{% url 'plans:add' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add a plan" %}</a>{% endif %}
 </div>
 
-<form method="get" action="{% url 'plans:lookup' %}" class="bulk-bar">
+{% if manage_users %}<form method="get" action="{% url 'plans:lookup' %}" class="bulk-bar">
   <label for="{{ lookup_form.username.id_for_label }}" class="text-sm font-medium">{% translate "Plan of a user" %}</label>
   <div class="flex min-w-0 flex-1 gap-2 sm:flex-none">
     <div class="min-w-0 flex-1 sm:w-56">{{ lookup_form.username }}</div>
     <button type="submit" class="btn btn-secondary">{% translate "Open" %}</button>
   </div>
-</form>
+</form>{% endif %}
 
 {% if plans %}
   <div class="table-wrap">
@@ -32,7 +33,7 @@
         {% for plan in plans %}
           <tr>
             <td class="cell-title">
-              <a href="{% url 'plans:edit' plan.pk %}" class="font-medium hover:underline">{{ plan.name }}</a>
+              {% if manage %}<a href="{% url 'plans:edit' plan.pk %}" class="font-medium hover:underline">{{ plan.name }}</a>{% else %}<span class="font-medium">{{ plan.name }}</span>{% endif %}
               {% if plan.is_trial %}<span class="badge badge-muted">{% translate "trial" %}</span>{% endif %}
             </td>
             <td data-label="{% translate 'Traffic' %}">
@@ -49,7 +50,7 @@
 {% else %}
   {% translate "No plans yet." as empty_title %}
   {% translate "A plan sets the servers, protocols and limits of its users." as empty_text %}
-  {% url 'plans:add' as add_url %}{% translate "Add a plan" as add_text %}
+  {% if manage %}{% url 'plans:add' as add_url %}{% translate "Add a plan" as add_text %}{% endif %}
   {% include "components/empty_state.html" with icon="tag" title=empty_title text=empty_text action_url=add_url action_text=add_text %}
 {% endif %}
 {% endblock %}

@@ -8,7 +8,8 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import FormView
 
-from apps.accounts.permissions import AdminRequiredMixin
+from apps.accounts.permissions import AdminRequiredMixin, SectionRequiredMixin
+from apps.accounts.services.access import Section
 from apps.backups.errors import RestoreError
 from apps.backups.forms import PanelArchiveForm
 from apps.backups.models import ProtocolSnapshot
@@ -25,8 +26,10 @@ from apps.backups.services.snapshot_restore import delete_snapshot, start_snapsh
 from apps.protocols.models import ProtocolInstance, ServiceInstance
 
 
-class ProtocolRestoreView(AdminRequiredMixin, View):
+class ProtocolRestoreView(SectionRequiredMixin, View):
     """Start restoring the protocol on its server; the server card shows the progress."""
+
+    section = Section.BACKUPS
 
     def post(self, request: HttpRequest, instance_pk: int) -> HttpResponse:
         instance = get_object_or_404(ProtocolInstance, pk=instance_pk)
@@ -34,8 +37,10 @@ class ProtocolRestoreView(AdminRequiredMixin, View):
         return redirect("servers:detail", pk=instance.server_id)
 
 
-class ServiceRestoreView(AdminRequiredMixin, View):
+class ServiceRestoreView(SectionRequiredMixin, View):
     """Start restoring the service on its server from the saved copy."""
+
+    section = Section.BACKUPS
 
     def post(self, request: HttpRequest, service_pk: int) -> HttpResponse:
         service = get_object_or_404(ServiceInstance, pk=service_pk)
@@ -43,8 +48,10 @@ class ServiceRestoreView(AdminRequiredMixin, View):
         return redirect("servers:detail", pk=service.server_id)
 
 
-class SnapshotRestoreView(AdminRequiredMixin, View):
+class SnapshotRestoreView(SectionRequiredMixin, View):
     """Start putting the files of a snapshot back on its server; refused while in a group."""
+
+    section = Section.BACKUPS
 
     def post(self, request: HttpRequest, snapshot_pk: int) -> HttpResponse:
         snapshot = get_object_or_404(
@@ -57,8 +64,10 @@ class SnapshotRestoreView(AdminRequiredMixin, View):
         return redirect("servers:detail", pk=snapshot.instance.server_id)
 
 
-class SnapshotDeleteView(AdminRequiredMixin, View):
+class SnapshotDeleteView(SectionRequiredMixin, View):
     """Delete a snapshot from the panel; the server is not touched."""
+
+    section = Section.BACKUPS
 
     def post(self, request: HttpRequest, snapshot_pk: int) -> HttpResponse:
         snapshot = get_object_or_404(

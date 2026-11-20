@@ -12,7 +12,9 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import ListView
 
-from apps.accounts.permissions import AdminRequiredMixin, StaffRequiredMixin
+from apps.accounts.permissions import SectionRequiredMixin
+from apps.accounts.services.access import Section
+from apps.accounts.services.zone import Zone
 from apps.support.forms import (
     ChatFilterForm,
     CloseIncidentForm,
@@ -31,7 +33,9 @@ from apps.support.services.tickets import ClosedConversationError
 _PAGE_SIZE = 50
 
 
-class _InboxView(StaffRequiredMixin):
+class _InboxView(SectionRequiredMixin):
+    section = Section.INBOX
+
     @property
     def inbox(self) -> Inbox:
         return Inbox(self.member)
@@ -83,7 +87,7 @@ class ConversationView(_ConversationView, View):
                     "status": self.conversation.status,
                     "assignee": self.conversation.assignee,
                 },
-                can_assign=self.member.is_admin,
+                can_assign=Zone(self.member).is_whole,
                 owner=self.conversation.user,
             ),
             "client": self.client_card(),
@@ -160,7 +164,7 @@ class ManageView(_ConversationView, View):
 
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         form = ManageForm(
-            request.POST, can_assign=self.member.is_admin, owner=self.conversation.user
+            request.POST, can_assign=Zone(self.member).is_whole, owner=self.conversation.user
         )
         if form.is_valid():
             self.inbox.set_status(self.conversation, TicketStatus(form.cleaned_data["status"]))
@@ -170,7 +174,8 @@ class ManageView(_ConversationView, View):
         return redirect("support:inbox-conversation", pk=pk)
 
 
-class IncidentListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
+class IncidentListView(SectionRequiredMixin, ListView):  # type: ignore[type-arg]
+    section = Section.SERVERS
     template_name = "support/inbox/incidents.html"
     paginate_by = _PAGE_SIZE
 
@@ -181,7 +186,9 @@ class IncidentListView(AdminRequiredMixin, ListView):  # type: ignore[type-arg]
         return super().get_context_data(close_form=CloseIncidentForm(), **kwargs)
 
 
-class IncidentCloseView(AdminRequiredMixin, View):
+class IncidentCloseView(SectionRequiredMixin, View):
+    section = Section.SERVERS
+
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         incident = get_object_or_404(Incident.objects.select_related("server"), pk=pk)
         form = CloseIncidentForm(request.POST)

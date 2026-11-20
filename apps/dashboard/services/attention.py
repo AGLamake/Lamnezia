@@ -1,8 +1,9 @@
 """What needs a staff member's attention now: the counters of the admin menu and the dashboard list.
 
-Everything is counted within the member's zone; the parts only an administrator handles
-(applications, VPS payments, broken links, failed operations of others, relays and groups) are
-an administrator's.
+Everything is counted within the member's zone and only for the sections they may see
+(apps/accounts/services/access.py); what spans every server (applications, relays and groups,
+failed operations of others) needs the whole zone, and the admin site and panel updates are an
+administrator's.
 """
 
 from dataclasses import dataclass
@@ -16,6 +17,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
 from apps.accounts.models import User
+from apps.accounts.services.access import Access, Section
 from apps.accounts.services.applications import Applications
 from apps.accounts.services.zone import Zone
 from apps.groups.models import GroupMember, MemberState, ServerGroup
@@ -56,6 +58,8 @@ class Attention:
     def __init__(self, member: User, now: datetime | None = None) -> None:
         self._member = member
         self._now = now or timezone.now()
+        self._access = Access(member)
+        self._zone = Zone(member)
 
     @cached_property
     def servers(self) -> list[Server]:
@@ -64,18 +68,22 @@ class Attention:
             .prefetch_related("load_alerts", "interface_repairs")
             .order_by("name")
         )
-        return list(Zone(self._member).narrow(servers, server="pk"))
+        return list(self._zone.narrow(servers, server="pk"))
 
     @cached_property
     def unread(self) -> int:
-        return Inbox(self._member).unread()
+        return Inbox(self._member).unread() if self._access.allows(Section.INBOX) else 0
 
     @cached_property
     def applications(self) -> int:
-        return Applications.waiting().count() if self._member.is_admin else 0
+        if not (self._access.allows(Section.REGISTRATION) and self._zone.is_whole):
+            return 0
+        return Applications.waiting().count()
 
     @cached_property
     def suggestions(self) -> int:
+        if not self._access.allows(Section.INBOX):
+            return 0
         return Suggestion.objects.pending().count()
 
     @cached_property
@@ -84,8 +92,10 @@ class Attention:
 
     def failed_since(self, start: datetime) -> int:
         """Operations failed since `start`; a moderator counts only the ones they started."""
+        if not self._access.allows(Section.OPERATIONS):
+            return 0
         failed = Operation.objects.filter(status=OperationStatus.FAILED, created_at__gte=start)
-        if not self._member.is_admin:
+        if not self._zone.is_whole:
             failed = failed.filter(created_by=self._member)
         return failed.count()
 
@@ -96,8 +106,8 @@ class Attention:
 
     @cached_property
     def relays(self) -> list[Relay]:
-        """Installed relays; groups and relays are an administrator's."""
-        if not self._member.is_admin:
+        """Installed relays; they serve groups across servers, so they need the whole zone."""
+        if not self._sees_every_server:
             return []
         relays = (
             Relay.objects.filter(installed_at__isnull=False)
@@ -123,7 +133,7 @@ class Attention:
     def group_problems(self) -> int:
         """Groups to look at: no member answers the relay, or a member lags or is stuck joining
         or leaving."""
-        if not self._member.is_admin:
+        if not self._sees_every_server:
             return 0
         troubled = {group.pk for group in self.groups_down()}
         troubled.update(
@@ -152,7 +162,7 @@ class Attention:
         return [server for server in self.servers if server.online and server.overloads]
 
     def payment_due(self) -> list[Server]:
-        if not self._member.is_admin:
+        if not self._access.allows(Section.SERVERS):
             return []
         return [
             server
@@ -315,7 +325,11 @@ class Attention:
             server.payment_url,
         )
 
+    @cached_property
+    def _sees_every_server(self) -> bool:
+        return self._access.allows(Section.SERVERS) and self._zone.is_whole
+
     def _server_url(self, server: Server) -> str:
-        if self._member.is_admin:
+        if self._access.allows(Section.SERVERS):
             return reverse("servers:detail", args=[server.pk])
         return reverse("dashboard:index") + f"#server-{server.pk}"

@@ -1,18 +1,19 @@
 {% extends "layouts/admin.html" %}
-{% load i18n ui %}
+{% load access i18n ui %}
 {% block title %}{% translate "Keys" %} · Lamnezia{% endblock %}
 {% block nav %}{% include "keys/_nav.html" %}{% endblock %}
 
 {% block content %}
+{% can "keys" "manage" as manage %}
 <div class="page-header">
   <div>
     <h1 class="page-title">{% translate "Keys" %}</h1>
     <p class="page-lead">{% translate "Devices of the users on the servers. Tick keys to change many at once." %}</p>
   </div>
-  <div class="page-actions">
+  {% if manage %}<div class="page-actions">
     <a href="{% url 'keys:drift' %}" class="btn btn-secondary">{% icon "switch" %}{% translate "Differences with servers" %}{% if drift_count %} <span class="nav-count nav-count-danger">{{ drift_count }}</span>{% endif %}</a>
     <a href="{% url 'keys:issue' %}" class="btn btn-primary">{% icon "plus" %}{% translate "Issue a key" %}</a>
-  </div>
+  </div>{% endif %}
 </div>
 
 {% include "components/filters.html" with form=filter_form %}
@@ -20,14 +21,14 @@
 {% if keys %}
   <form method="post" action="{% url 'keys:bulk' %}" class="space-y-4" data-confirm="{% translate 'Apply the action to the ticked keys?' %}" data-confirm-button="{% translate 'Apply' %}">
     {% csrf_token %}
-    <div class="bulk-bar">
+    {% if manage %}<div class="bulk-bar">
       <label for="{{ bulk_form.action.id_for_label }}" class="text-sm font-medium">{{ bulk_form.action.label }}</label>
       <div class="flex min-w-0 flex-1 gap-2 sm:flex-none">
         <div class="min-w-0 flex-1 sm:w-48">{{ bulk_form.action }}</div>
         <button type="submit" class="btn btn-primary">{% translate "Apply" %}</button>
       </div>
       <p class="help-text w-full">{% translate "Each key changes on its server in a separate operation; the operations list shows their progress." %}</p>
-    </div>
+    </div>{% endif %}
     <div class="table-wrap">
       <table class="table table-cards">
         <thead>

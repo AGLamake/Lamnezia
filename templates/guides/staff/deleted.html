@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% load i18n ui %}
+{% load access i18n ui %}{% can "articles" "manage" as manage %}
 {% block title %}{% translate "Deleted built-in" %} · {% translate "Articles" %} · {{ site_name }}{% endblock %}
 {% block nav %}{% include "components/admin_nav.html" with active="articles" %}{% endblock %}
 
@@ -16,9 +16,9 @@
             <td class="cell-title"><code>{{ offered.slug }}</code></td>
             <td data-label="{% translate 'Kind' %}">{{ kind }}</td>
             <td class="sm:text-right">
-              <form method="post" action="{% url 'guides:staff-restore' offered.pk %}">
+              {% if manage %}<form method="post" action="{% url 'guides:staff-restore' offered.pk %}">
                 {% csrf_token %}<button class="btn btn-secondary btn-sm">{% icon "refresh" %}{% translate "Restore" %}</button>
-              </form>
+              </form>{% endif %}
             </td>
           </tr>
         {% endfor %}

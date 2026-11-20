@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% load i18n ui %}
+{% load access i18n ui %}{% can "articles" "manage" as manage %}
 {% block title %}{{ shelf.title }} · {% translate "Articles" %} · {{ site_name }}{% endblock %}
 {% block nav %}{% include "components/admin_nav.html" with active="articles" %}{% endblock %}
 
@@ -7,7 +7,7 @@
 {% include "guides/staff/_tabs.html" with tab=shelf.slug %}
 <div class="flex flex-wrap items-center justify-between gap-2">
   <p class="help-text">{% translate "The portal shows the published entries in this order." %}</p>
-  <a href="{% url 'guides:staff-add' shelf.slug %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add" %}</a>
+  {% if manage %}<a href="{% url 'guides:staff-add' shelf.slug %}" class="btn btn-primary">{% icon "plus" %}{% translate "Add" %}</a>{% endif %}
 </div>
 {% if entries %}
   <div class="table-wrap">
@@ -16,13 +16,13 @@
       <tbody>
         {% for entry in entries %}
           <tr>
-            <td class="cell-title font-medium"><a href="{% url 'guides:staff-edit' shelf.slug entry.pk %}" class="hover:underline">{{ entry }}</a></td>
+            <td class="cell-title font-medium">{% if manage %}<a href="{% url 'guides:staff-edit' shelf.slug entry.pk %}" class="hover:underline">{{ entry }}</a>{% else %}{{ entry }}{% endif %}</td>
             <td data-label="{% translate 'Address' %}"><code>{{ entry.slug }}</code></td>
             <td data-label="{% translate 'State' %}">
               {% if entry.is_published %}<span class="badge badge-success">{% translate "Published" %}</span>{% else %}<span class="badge badge-muted">{% translate "Hidden" %}</span>{% endif %}
               {% if entry.is_broken %}<span class="badge badge-danger" title="{{ entry.check_error }}">{% translate "Broken link" %}</span>{% endif %}
             </td>
-            <td class="whitespace-nowrap sm:text-right">
+            <td class="whitespace-nowrap sm:text-right">{% if manage %}
               <form method="post" action="{% url 'guides:staff-move' shelf.slug entry.pk %}" class="inline">
                 {% csrf_token %}
                 {% translate "Up" as up %}{% translate "Down" as down %}
@@ -38,7 +38,7 @@
                 {% endif %}
               </form>
               {% translate "Edit" as edit %}<a href="{% url 'guides:staff-edit' shelf.slug entry.pk %}" class="btn btn-ghost btn-icon" title="{{ edit }}">{% icon "pencil" label=edit %}</a>
-            </td>
+            {% endif %}</td>
           </tr>
         {% endfor %}
       </tbody>

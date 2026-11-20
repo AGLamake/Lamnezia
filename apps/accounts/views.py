@@ -22,6 +22,7 @@ from django_otp.plugins.otp_static.models import StaticDevice
 from apps.accounts.forms import SignInCodeForm, TokenForm
 from apps.accounts.middleware import session_verified
 from apps.accounts.models import User
+from apps.accounts.services.access import Access, Section
 from apps.accounts.services.backup_codes import BackupCodes
 from apps.accounts.services.messengers import telegram_login_url
 from apps.accounts.services.two_factor import TwoFactor
@@ -30,13 +31,32 @@ from apps.audit.services import journal as audit
 from apps.core.mail import mail_configured
 from apps.core.services.site_settings import cached_settings
 
+# The sections of the admin menu in its order, with their first page.
+_START_PAGES = (
+    (Section.OVERVIEW, "dashboard:index"),
+    (Section.STATS, "dashboard:stats"),
+    (Section.SERVERS, "servers:list"),
+    (Section.OPERATIONS, "operations:list"),
+    (Section.USERS, "dashboard:users"),
+    (Section.KEYS, "keys:list"),
+    (Section.REGISTRATION, "accounts:registrations"),
+    (Section.PLANS, "plans:list"),
+    (Section.INBOX, "support:inbox"),
+    (Section.AUDIT, "audit:list"),
+)
+
 
 def home(request: HttpRequest) -> HttpResponse:
-    """Start page: guests sign in, the team goes to the dashboard, clients to their portal."""
+    """Start page: guests sign in, the team goes to the first section of the menu they may open,
+    clients and staff without a section to their portal."""
     user = request.user
     if not isinstance(user, User):
         return redirect("accounts:login")
-    return redirect("dashboard:index" if user.is_staff_member else "portal:index")
+    access = Access(user)
+    for section, page in _START_PAGES:
+        if access.allows(section):
+            return redirect(page)
+    return redirect("portal:index")
 
 
 def set_language(request: HttpRequest) -> HttpResponse:
