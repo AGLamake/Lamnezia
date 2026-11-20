@@ -7,6 +7,7 @@ from django.utils import timezone
 from apps.core.models import Cleanup
 from apps.notifications.services import reminders
 from apps.notifications.services.dispatcher import Dispatcher
+from apps.notifications.services.first_connection import FirstConnections
 from apps.notifications.services.retention import StuckDeliveries, prune_deliveries
 
 
@@ -26,6 +27,11 @@ def warn_expiring() -> None:
 @shared_task(name="notifications.warn_traffic")
 def warn_traffic() -> None:
     reminders.TrafficWarnings.from_settings(timezone.now()).warn_all()
+
+
+@shared_task(name="notifications.tell_first_connections")
+def tell_first_connections() -> int:
+    return FirstConnections().tell_all(timezone.now())
 
 
 @shared_task(name="notifications.recover_stuck")

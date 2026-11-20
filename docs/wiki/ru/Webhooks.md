@@ -40,6 +40,7 @@
 | `interface_lost` | Контейнер WireGuard-семейства на сервере работает, а его VPN-интерфейса нет несколько замеров подряд; панель перезапускает контейнер. Один раз, пока интерфейс не вернётся. | `server` — имя, `host`, `container`, `since` — первый замер без интерфейса, `attempts` — сделанные перезапуски |
 | `interface_restored` | Интерфейс из `interface_lost` вернулся. Один раз. | как у `interface_lost` |
 | `interface_repair_failed` | Перезапуски после `interface_lost` не вернули интерфейс; панель больше не перезапускает. Один раз. | как у `interface_lost` |
+| `key_connected` | Новый ключ впервые подключился после выдачи; один раз на ключ, без повтора после перевыдачи того же устройства. | `user`, `key` — имя устройства, `key_id`, `server`, `url` — ключ в портале |
 | `limit_reached` | Ключи пользователя отключены по лимиту. | `user`, `reason`: `traffic`, `total_traffic` или `expired` |
 | `access_expiring` | Срок доступа пользователя кончается в ближайшие три дня. Один раз на срок. | `user`, `until` — дата `YYYY-MM-DD` |
 | `traffic_low` | Пользователь израсходовал долю лимита трафика, заданную в **Настройках** (по умолчанию 80%). Один раз за период этого лимита; после достижения лимита не приходит. Приходит и самому пользователю. | `user`, `percent` — израсходованная доля, `used`, `limit_bytes` — байты, `limit` (`of the period`, `of the plan`), `incomplete` — трафик части ключей сейчас не считается, `note`, `url` — страница расхода в портале |
@@ -107,6 +108,8 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/interface_restored"}}}},
     {"if": {"properties": {"event": {"const": "interface_repair_failed"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/interface_repair_failed"}}}},
+    {"if": {"properties": {"event": {"const": "key_connected"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/key_connected"}}}},
     {"if": {"properties": {"event": {"const": "limit_reached"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
@@ -253,6 +256,15 @@
         "container": {"type": "string"},
         "since": {"type": "string", "format": "date-time"},
         "attempts": {"type": "integer"}
+      }
+    },
+    "key_connected": {
+      "type": "object",
+      "required": ["user", "key", "key_id", "server", "url"],
+      "properties": {
+        "user": {"type": "string"}, "key": {"type": "string"},
+        "key_id": {"type": "integer"}, "server": {"type": "string"},
+        "url": {"type": "string", "format": "uri"}
       }
     },
     "limit_reached": {

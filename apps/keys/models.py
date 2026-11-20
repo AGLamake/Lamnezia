@@ -55,6 +55,8 @@ class AccessKey(models.Model):
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     first_viewed_at = models.DateTimeField(_("first viewed at"), null=True, blank=True)
+    # The first reading that saw the key in use after its issue (`key_connected`).
+    connected_at = models.DateTimeField(_("first connected at"), null=True, blank=True)
     revoked_at = models.DateTimeField(_("revoked at"), null=True, blank=True)
 
     class Meta:

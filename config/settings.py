@@ -349,6 +349,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "notifications.warn_traffic",
         "schedule": TRAFFIC_INTERVAL,
     },
+    # As often as traffic is read: a new key is seen in use no sooner.
+    "notifications-tell-first-connections": {
+        "task": "notifications.tell_first_connections",
+        "schedule": TRAFFIC_INTERVAL,
+    },
     "notifications-recover-stuck": {"task": "notifications.recover_stuck", "schedule": 10 * 60},
     "servers-thin-history": {"task": "servers.thin_history", "schedule": 60 * 60},
     "relays-thin-history": {"task": "relays.thin_history", "schedule": 60 * 60},

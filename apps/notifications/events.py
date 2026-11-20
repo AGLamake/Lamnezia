@@ -34,6 +34,7 @@ class Event(StrEnum):
     INTERFACE_LOST = "interface_lost"
     INTERFACE_RESTORED = "interface_restored"
     INTERFACE_REPAIR_FAILED = "interface_repair_failed"
+    KEY_CONNECTED = "key_connected"
     LIMIT_REACHED = "limit_reached"
     ACCESS_EXPIRING = "access_expiring"
     TRAFFIC_LOW = "traffic_low"
@@ -221,6 +222,13 @@ EVENTS: dict[Event, EventType] = {
             "its VPN interface back; missing since {since}. The panel stops restarting it: check "
             "the container log and the free memory of the server."
         ),
+    ),
+    # Once per key, at the first reading that saw it in use after its issue.
+    Event.KEY_CONNECTED: EventType(
+        _("Key connected"),
+        _("Your key {key} works"),
+        _("The key {key} of {user} on {server} has connected for the first time: it works."),
+        to_user=True,
     ),
     Event.LIMIT_REACHED: EventType(
         _("Limit reached"),

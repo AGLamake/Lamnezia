@@ -45,6 +45,7 @@ channels hear each event.
 | VPN interface lost | `interface_lost` | `server`, `host`, `container`, `since`, `attempts` |
 | VPN interface restored | `interface_restored` | `server`, `host`, `container`, `since`, `attempts` |
 | VPN interface not restored | `interface_repair_failed` | `server`, `host`, `container`, `since`, `attempts` |
+| Key connected | `key_connected` | `user`, `key`, `key_id`, `server`, `url` |
 | Limit reached | `limit_reached` | `user`, `reason` (`traffic`, `total_traffic`, `expired`) |
 | Access ends soon | `access_expiring` | `user`, `until` (date) |
 | Traffic runs out soon | `traffic_low` | `user`, `percent`, `used`, `limit_bytes`, `limit`, `incomplete`, `note`, `url` |
@@ -100,6 +101,13 @@ of the same plan keeps the period and does not. A reached limit is not warned of
 hears of `limit_reached`. When the traffic of some of the user's keys is not counted now (a
 server does not answer), the message says that the real share may be higher. The message
 links to the usage page of the portal and is written in the user's language.
+
+**Key connected** (`key_connected`): the owner of a new key hears once that it works — at the
+first traffic reading after the issue that sees the key in use: a handshake or, for protocols
+without one, counters that grew. In a server group a connection to any member counts. A key
+reissued for the same device does not tell again once an earlier key of that device has
+connected; imported keys and keys issued before the update never tell. The message links to the
+key in the portal. Administrators get it only when they route it to a channel (off by default).
 
 A letter to a user, like one to an email channel, is plain text with an HTML version in the
 panel's style: the event's title, its text and the link to its page as an **Open in the panel**

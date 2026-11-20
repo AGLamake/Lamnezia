@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Notification that a key works**: the owner of a new key hears once (`key_connected`) when the
+  first traffic reading after the issue sees it in use — a handshake or counters that grew, on any
+  member of a server group. A key reissued for the same device does not tell again; imported keys
+  do not tell. Administrators get it only when they route it to a channel. **Upgrade**: a
+  migration; keys issued before it count as connected and do not tell.
 - **Restart of a WireGuard-family container that lost its interface**: the monitor reading now
   checks the VPN interface inside running AmneziaWG, legacy AmneziaWG and WireGuard containers.
   After 3 readings in a row without it, the panel restarts the container with a background

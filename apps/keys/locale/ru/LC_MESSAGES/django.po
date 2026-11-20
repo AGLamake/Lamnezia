@@ -403,6 +403,9 @@ msgstr "отключён"
 msgid "disabled by limit"
 msgstr "отключён по лимиту"
 
+msgid "first connected at"
+msgstr "впервые подключён"
+
 msgid "first seen"
 msgstr "первый запрос"
 

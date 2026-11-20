@@ -138,6 +138,9 @@ msgstr "Инцидент на {server} закрыт"
 msgid "Incident opened"
 msgstr "Открыт инцидент"
 
+msgid "Key connected"
+msgstr "Ключ подключился"
+
 msgid "Keys moved to AmneziaWG 3.1"
 msgstr "Ключи переведены на AmneziaWG 3.1"
 
@@ -414,6 +417,10 @@ msgid "The incident on {server} is closed."
 msgstr "Инцидент на {server} закрыт."
 
 #, python-brace-format
+msgid "The key {key} of {user} on {server} has connected for the first time: it works."
+msgstr "Ключ {key} пользователя {user} на {server} впервые подключился: всё работает."
+
+#, python-brace-format
 msgid "The keys of {user} are turned off: {reason}."
 msgstr "Ключи пользователя {user} отключены: {reason}."
 
@@ -545,6 +552,10 @@ msgstr "Ваши ключи VPN на {server} переведены на AmneziaW
 #, python-brace-format
 msgid "Your VPN keys on {server} are updated"
 msgstr "Ваши ключи VPN на {server} обновлены"
+
+#, python-brace-format
+msgid "Your key {key} works"
+msgstr "Ваш ключ {key} работает"
 
 #, python-brace-format
 msgid "Your request: {topic}"
