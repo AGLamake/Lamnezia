@@ -31,6 +31,9 @@ The clients of a split group ask its keys' DNS addresses; the relay answers thos
 its own resolver (`Resolver`), which asks 1.1.1.1 over DNS-over-TLS straight from the relay: the
 answers are those for Russia, and the network does not see the names. The resolver writes no
 log of queries or answers, and runs only while some group is split.
+
+The speed limits of the keys of a split group are a tc script the panel writes next to the
+clone peers; the agent runs it on the clone after every change of the clone or of the script.
 """
 
 import functools
@@ -565,6 +568,9 @@ class Network(Protocol):
     def unclone(self, port: int) -> None:
         """Remove the clone, the uplink and their route: the group is forwarded again."""
 
+    def limit(self, script: Path) -> None:
+        """Run the tc script with the speed limits of a clone."""
+
     def point(self, group: Group, backend: Backend) -> None:
         """Point the uplink at the member; only its endpoint changes."""
 
@@ -967,13 +973,18 @@ class Agent:
         """Apply a changed peers file, network list or domain list of each split group."""
         for port, lane in self._lanes.items():
             group = self._watches[port].group
+            cloned = False
             if self._changed(_peers_file(port)):
                 try:
                     self._network.clone(group)
+                    cloned = True
                     if lane.endpoint is not None:
                         self._network.point(group, lane.endpoint)
                 except (OSError, subprocess.SubprocessError) as error:
                     self._log(f"group {port}: clone not applied: {error}")
+            # A clone created anew has no tc rules: the limits go on again after every clone.
+            if self._changed(_speed_file(port)) or cloned:
+                self._take_speed(port)
             if self._changed(_networks_file(port)):
                 self._take_networks(port)
             if self._changed(_domains_file(port)):
@@ -988,6 +999,15 @@ class Agent:
             return False
         self._seen[name] = moment
         return True
+
+    def _take_speed(self, port: int) -> None:
+        script = self._folder / _speed_file(port)
+        if not script.exists():
+            return
+        try:
+            self._network.limit(script)
+        except (OSError, subprocess.SubprocessError) as error:
+            self._log(f"group {port}: speed limits not applied: {error}")
 
     def _take_networks(self, port: int) -> None:
         try:
@@ -1141,6 +1161,10 @@ def _peers_file(port: int) -> str:
     return f"peers-{port}.conf"
 
 
+def _speed_file(port: int) -> str:
+    return f"speed-{port}.sh"
+
+
 def _networks_file(port: int) -> str:
     return f"networks-{port}.txt"
 
@@ -1275,10 +1299,14 @@ class Shell:
 
     def unclone(self, port: int) -> None:
         _ok("ip", "link", "del", f"lg{port}")
+        _ok("ip", "link", "del", f"ifb_lg{port}")
         for uplink in self._uplinks.values():
             uplink.close(port)
         mark = str(MARK_BASE + port)
         _ok("ip", "rule", "del", "fwmark", mark, "lookup", mark)
+
+    def limit(self, script: Path) -> None:
+        _run("sh", str(script))
 
     def point(self, group: Group, backend: Backend) -> None:
         self._uplinks[_split_of(group).kind].point(group, backend)

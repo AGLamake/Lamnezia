@@ -12,10 +12,13 @@ A WireGuard-family instance is limited again when the poll finds its container s
 since the latest operation: a container re-created by the app or by a change of its settings
 has lost the tc rules and the script that brings them back. After a plain restart start.sh has
 already put them back, and the new operation only writes the same rules again.
+
+The clone of a split group on its relay carries the clients of the leading instance; its
+script has the same rules (`clone_speed_script`), and the relay deployment writes it.
 """
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from ipaddress import IPv4Address
 from typing import Any
 
@@ -29,8 +32,9 @@ from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
 from apps.plans.models import UserLimits
 from apps.plans.services.limits import PLAN_SERVERS, EffectiveLimits
+from apps.protocols.models import ProtocolInstance
 from apps.traffic.models import TrafficSource
-from apps.traffic.services.shaping import SpeedRule, TotalSpeed
+from apps.traffic.services.shaping import SpeedRule, TotalSpeed, speed_script
 from apps.traffic.services.xray_shaping import XraySpeedRule
 
 SPEED_APPLY = "traffic.apply_speed"
@@ -117,6 +121,17 @@ class SpeedLimiter:
         if isinstance(instance.container, XrayContainer):
             return _statistics_lost(instance.source, after=latest)
         return bool(latest.params.get("started") != params["started"])
+
+
+def clone_speed_script(
+    interface: str, leader: ProtocolInstance, wanted: Mapping[str, RulesJson]
+) -> str:
+    """The limits of the keys of `leader` and its total for another interface with its clients;
+    `wanted` is `SpeedLimiter.wanted_rules()`. The script itself finds out whether the host
+    has the ifb module."""
+    rules = [SpeedRule.from_json(rule) for rule in wanted.get(leader.source, [])]
+    total = TotalSpeed(leader.download_limit, leader.upload_limit)
+    return speed_script(interface, rules, total, ifb=None)
 
 
 def _total_of(instance: Instance) -> TotalSpeed:

@@ -1,8 +1,10 @@
 """The change of a group's routing between forward and split (docs/SPLIT.md 6, step 2).
 
-A background operation: it reads the client counters of the members first, so the traffic of
-the old path is counted up to the change, gives a split group its uplink on every member,
-saves the routing and updates the relay. The agent then moves the tunnel of the clients to
+A background operation: it reads the client counters of the members and of the clone first,
+so the traffic of the old path is counted up to the change, gives a split group its uplink on
+every member, saves the routing and updates the relay. The clone counts the keys from their
+first byte, and a group forwarded again leaves its clone counters at zero
+(services/traffic.py). The agent then moves the tunnel of the clients to
 the clone or back; each client makes one new handshake. A group that goes back to forward
 loses its uplink only after the agent stops using it.
 """
@@ -22,6 +24,11 @@ from apps.relays.models import PeerRole, Relay
 from apps.relays.services.deployment import KINDS, ROUTING_KIND, RelayDeployment
 from apps.relays.services.service_peers import ServicePeerPlacement
 from apps.relays.services.split_lists import add_default_source, update_soon
+from apps.relays.services.traffic import (
+    expect_group_on_clone,
+    relay_target_name,
+    reset_clone,
+)
 from apps.ssh.errors import SshError
 from apps.traffic.services.poller import TrafficPoller
 from apps.traffic.services.targets import poll_targets
@@ -73,21 +80,26 @@ class RoutingChange:
         """A split group whose leading server does not answer fails before anything changes;
         a relay that does not answer after the routing is saved gets it on the next sync."""
         self._read_counters()
-        if self._routing == GroupRouting.SPLIT:
+        split = self._routing == GroupRouting.SPLIT
+        if split:
             ServicePeerPlacement(self._group, self._ctx).place([PeerRole.PROBE, PeerRole.UPLINK])
+            expect_group_on_clone(self._group)
         title = _("Save the routing of %(group)s") % {"group": self._group.name}
         with self._ctx.step(title):
             self._group.routing = self._routing
             self._group.save(update_fields=["routing"])
             self._ctx.log(self._group.get_routing_display())
+        if not split:
+            # Read just before, and no longer polled: the routing is saved.
+            reset_clone(self._group)
         RelayDeployment(self._relay, self._ctx).update()
 
     def _read_counters(self) -> None:
-        """Count the traffic of the members up to the change; one that does not answer is
-        counted on the next reading, as when it is down."""
+        """Count the traffic of the members and the clones of the relay up to the change; one
+        that does not answer is counted on the next reading, as when it is down."""
         with self._ctx.step(_("Read the traffic counters of the members")):
-            for member in backends(self._group):
-                name = member.instance.server.name
+            names = [member.instance.server.name for member in backends(self._group)]
+            for name in [*names, relay_target_name(self._relay.server)]:
                 target = poll_targets.get(name)
                 if target is None:
                     continue

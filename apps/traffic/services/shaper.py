@@ -48,7 +48,7 @@ _INSTALL_TC = (
 # The containers are privileged, so they create their own IFB device once it is loaded.
 _IFB_MODULE_FILE = "/etc/modules-load.d/lamnezia-ifb.conf"
 _IFB_OPTIONS_FILE = "/etc/modprobe.d/lamnezia-ifb.conf"
-_LOAD_IFB = (
+LOAD_IFB = (
     "modprobe ifb numifbs=0 2>/dev/null || [ -d /sys/module/ifb ] || exit 1\n"
     f"echo ifb > {_IFB_MODULE_FILE}\n"
     f"echo 'options ifb numifbs=0' > {_IFB_OPTIONS_FILE}\n"
@@ -114,7 +114,7 @@ class SpeedShaper:
                 with self._steps.step(_("Install tc in the container")):
                     self._steps.log(self._container.run(_INSTALL_TC).strip())
                 with self._steps.step(_("Load the ifb module on the host")):
-                    ifb = self._host.sh(_LOAD_IFB).ok
+                    ifb = self._host.sh(LOAD_IFB).ok
                     self._steps.log("ifb: loaded" if ifb else "ifb: missing, upload is policed")
             with self._steps.step(_("Apply the speed limits")):
                 script = speed_script(self._kind.interface, rules, total, ifb=ifb)

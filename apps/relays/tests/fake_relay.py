@@ -34,6 +34,7 @@ class FakeRelayServer(FakeDebianServer):
     host_files: dict[str, bytes] = field(default_factory=dict)
     has_image: bool = False
     docker_calls: list[str] = field(default_factory=list)
+    ifb_loaded: bool = False
 
     def run(
         self, command: str, *, stdin: bytes = b"", timeout: float | None = None
@@ -44,6 +45,9 @@ class FakeRelayServer(FakeDebianServer):
         if words and words[1] in _VERBS:
             self.docker_calls.append(words[1])
             return self._docker(words, stdin)
+        if script.startswith("modprobe ifb"):
+            self.ifb_loaded = True
+            return result()
         if script.startswith("lsof "):
             return result(stdout=self.port_users.encode())
         if "target=" in script:

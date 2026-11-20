@@ -296,6 +296,16 @@ def clone_peers_file(port: int) -> str:
     return f"peers-{port}.conf"
 
 
+def speed_file(port: int) -> str:
+    """Name of the tc script with the speed limits of a split group's clone in the agent folder."""
+    return f"speed-{port}.sh"
+
+
+def clone_interface(port: int) -> str:
+    """Name of the interface of a split group's clone in the relay container."""
+    return f"lg{port}"
+
+
 @dataclass(frozen=True)
 class ClonePeers:
     """The `[Peer]` sections of a split group's clone: the key peers of the group, written as

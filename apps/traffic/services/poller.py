@@ -8,14 +8,14 @@ from datetime import datetime
 
 from django.utils import timezone
 
-from amnezia_core.awg_dump import parse_dump
+from amnezia_core.awg_dump import PeerStats, parse_dump
 from amnezia_core.errors import DumpFormatError
 from amnezia_core.xray import XRAY_CONTAINER
 from amnezia_core.xray_stats import STATS_COMMAND, parse_stats
 from apps.ssh.errors import SshError
 from apps.ssh.services import RemoteHost
 from apps.traffic.services.recorder import Reading, TrafficRecorder
-from apps.traffic.services.targets import PollTarget
+from apps.traffic.services.targets import PollTarget, peer_owners
 
 logger = logging.getLogger(__name__)
 
@@ -42,17 +42,43 @@ def reader_for(container: str) -> CounterReader:
     return _XRAY if container == XRAY_CONTAINER else _WG
 
 
-def dump_script(containers: Iterable[str]) -> str:
+@dataclass(frozen=True)
+class Channel:
+    """A container to read and, when it has several interfaces of different sources, the one."""
+
+    container: str
+    interface: str = ""
+
+    @property
+    def label(self) -> str:
+        """The name of its dump in the output of `dump_script`."""
+        return f"{self.container}@{self.interface}" if self.interface else self.container
+
+
+def dump_script(channels: Iterable[str | Channel]) -> str:
     """Print the counters of every container after a marker with the exit code of its command
     and the container's start time, which tells a restart between two readings.
+
+    The start time of an interface also has its index, which changes when the interface is
+    created again: its peers then count from zero, though the container ran on.
     """
-    return "".join(
-        f"out=$(docker exec {shlex.quote(name)} sh -c {shlex.quote(reader_for(name).command)}"
-        " 2>&1); code=$?\n"
-        f"started=$(docker inspect -f '{{{{.State.StartedAt}}}}' {shlex.quote(name)}"
-        " 2>/dev/null)\n"
-        f'printf "{_MARKER} %s %s %s\\n%s\\n" {shlex.quote(name)} "$code" "$started" "$out"\n'
-        for name in containers
+    return "".join(map(_channel_script, channels))
+
+
+def _channel_script(channel: str | Channel) -> str:
+    if isinstance(channel, str):
+        channel = Channel(channel)
+    name = shlex.quote(channel.container)
+    command = shlex.quote(reader_for(channel.container).command)
+    started = f"$(docker inspect -f '{{{{.State.StartedAt}}}}' {name} 2>/dev/null)"
+    if channel.interface:
+        index = shlex.quote(f"/sys/class/net/{channel.interface}/ifindex")
+        started += f"/$(docker exec {name} cat {index} 2>/dev/null)"
+    return (
+        f"out=$(docker exec {name} sh -c {command} 2>&1); code=$?\n"
+        f'started="{started}"\n'
+        f'printf "{_MARKER} %s %s %s\\n%s\\n" {shlex.quote(channel.label)} "$code" "$started"'
+        ' "$out"\n'
     )
 
 
@@ -66,7 +92,7 @@ class Dump:
 
 
 def split_dumps(output: str) -> dict[str, Dump]:
-    """Container name -> its dump, from the output of `dump_script`."""
+    """Channel label -> its dump, from the output of `dump_script`."""
     heads: dict[str, tuple[int, str, list[str]]] = {}
     lines: list[str] = []
     for line in output.splitlines():
@@ -100,7 +126,7 @@ class TrafficPoller:
 
     def poll(self, target: PollTarget) -> None:
         with target.connect() as host:
-            self.read(host, target.name, target.containers, target.key_sources)
+            self.read(host, target.name, target.containers, target.key_sources, target.interfaces)
 
     def read(
         self,
@@ -108,26 +134,47 @@ class TrafficPoller:
         server: str,
         containers: Mapping[str, str],
         key_sources: Mapping[str, str] | None = None,
+        interfaces: Mapping[str, str] | None = None,
     ) -> None:
         """Read and store the counters of `containers` (source -> container) of one server.
 
         A container that gives no reading marks its source unavailable: its traffic is unknown.
-        `key_sources` names whose keys the peers of a source are, as `PollTarget` has it.
+        `key_sources` and `interfaces` are as `PollTarget` has them. An interface that is not
+        there gives an empty reading: its peers are gone, not unknown.
         """
-        key_sources = key_sources or {}
-        output = host.run(dump_script(containers.values()))
+        key_sources, interfaces = key_sources or {}, interfaces or {}
+        channels = {
+            source: Channel(container, interfaces.get(source, ""))
+            for source, container in containers.items()
+        }
+        output = host.run(dump_script(dict.fromkeys(channels.values())))
         at = self._clock()
         dumps = split_dumps(output)
-        for source, container in containers.items():
-            dump = dumps.get(container, Dump(-1, ""))
+        owners = dict(peer_owners)
+        for source, channel in channels.items():
+            dump = dumps.get(channel.label, Dump(-1, ""))
             if dump.code != 0:
-                logger.warning("no counters from %s on %s: exit %s", container, server, dump.code)
+                logger.warning(
+                    "no counters from %s on %s: exit %s", channel.label, server, dump.code
+                )
                 self._recorder.unavailable(source, at)
                 continue
             try:
-                readings = reader_for(container).parse(dump.text)
+                readings = _of_interface(reader_for(channel.container).parse(dump.text), channel)
             except DumpFormatError as error:
-                logger.warning("bad counters from %s on %s: %s", container, server, error)
+                logger.warning("bad counters from %s on %s: %s", channel.label, server, error)
                 self._recorder.unavailable(source, at)
                 continue
-            self._recorder.record(source, readings, at, dump.started, key_sources.get(source, ""))
+            self._recorder.record(
+                source, readings, at, dump.started, key_sources.get(source, ""), owners=owners
+            )
+
+
+def _of_interface(readings: Sequence[Reading], channel: Channel) -> Sequence[Reading]:
+    if not channel.interface:
+        return readings
+    return [
+        peer
+        for peer in readings
+        if isinstance(peer, PeerStats) and peer.interface == channel.interface
+    ]

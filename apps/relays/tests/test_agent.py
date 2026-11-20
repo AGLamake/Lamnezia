@@ -78,6 +78,9 @@ class FakeNetwork:
     def unclone(self, port: int) -> None:
         self.calls.append(("unclone", port))
 
+    def limit(self, script: Path) -> None:
+        self.calls.append(("limit", script.name))
+
     def point(self, group: Group, backend: Backend) -> None:
         self.calls.append(("point", backend))
         self.endpoint = backend

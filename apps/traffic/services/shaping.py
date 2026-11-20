@@ -3,6 +3,7 @@
 Download (server to client) is shaped with HTB on the egress of the interface. Upload is shaped
 the same way on an IFB device the ingress of the interface is redirected to; without the ifb
 module on the host it is policed on the ingress instead, which drops what goes over the limit.
+A script that cannot know the host tries the IFB device when it runs and polices without it.
 Rules match the address of the peer.
 
 A personal limit alone gives the peer its own class right under the root, and the traffic of
@@ -83,6 +84,9 @@ class TotalSpeed:
 
 NO_TOTAL = TotalSpeed()
 
+# The line of a script that tries the IFB device when it runs (`speed_script` with `ifb=None`).
+_TRY_IFB = 'if ip link add "$ifb" type ifb 2>/dev/null; then'
+
 
 def speed_script_path(kind: WgContainer) -> str:
     return f"{kind.directory}/{SPEED_SCRIPT_NAME}"
@@ -97,16 +101,22 @@ def needs_shaping(rules: Iterable[SpeedRule], total: TotalSpeed) -> bool:
     return bool(total) or any(rule.mbit for rule in rules)
 
 
+def tries_ifb(script: str) -> bool:
+    """Whether the script shapes upload on an IFB device if the host has the ifb module."""
+    return _TRY_IFB in script
+
+
 def speed_script(
     interface: str,
     rules: Iterable[SpeedRule],
     total: TotalSpeed = NO_TOTAL,
     *,
-    ifb: bool = False,
+    ifb: bool | None = False,
 ) -> str:
     """A script that replaces every tc rule of the interface with these limits; safe to run again.
 
-    `ifb` says the host has the ifb module, so upload is shaped rather than policed.
+    `ifb` says the host has the ifb module, so upload is shaped rather than policed; None leaves
+    it to the script, which shapes upload if it can create the IFB device.
     """
     rules = sorted(rules, key=lambda rule: rule.address)
     lines = [
@@ -120,20 +130,31 @@ def speed_script(
         'ip link del "$ifb" 2>/dev/null || true',
     ]
     lines += _HtbTree('"$dev"', "dst", rules, total.download).lines()
-    if ifb:
-        upload = _HtbTree('"$ifb"', "src", rules, total.upload)
+    upload = _HtbTree('"$ifb"', "src", rules, total.upload)
+    if ifb is None and upload.limited:
+        police = _police_lines(rules) or [":"]
+        lines += [_TRY_IFB, *_indented(_ifb_lines(upload)), "else", *_indented(police), "fi"]
+    elif ifb:
         if upload.limited:
-            lines += [
-                'ip link add "$ifb" type ifb',
-                'ip link set "$ifb" up',
-                'tc qdisc add dev "$dev" handle ffff: ingress',
-                'tc filter add dev "$dev" parent ffff: protocol all prio 1 u32'
-                ' match u32 0 0 action mirred egress redirect dev "$ifb"',
-                *upload.lines(),
-            ]
+            lines += ['ip link add "$ifb" type ifb', *_ifb_lines(upload)]
     else:
         lines += _police_lines(rules)
     return "\n".join(lines) + "\n"
+
+
+def _ifb_lines(upload: "_HtbTree") -> list[str]:
+    """Upload shaped on the IFB device, once it is created."""
+    return [
+        'ip link set "$ifb" up',
+        'tc qdisc add dev "$dev" handle ffff: ingress',
+        'tc filter add dev "$dev" parent ffff: protocol all prio 1 u32'
+        ' match u32 0 0 action mirred egress redirect dev "$ifb"',
+        *upload.lines(),
+    ]
+
+
+def _indented(lines: list[str]) -> list[str]:
+    return [f"  {line}" for line in lines]
 
 
 class _HtbTree:

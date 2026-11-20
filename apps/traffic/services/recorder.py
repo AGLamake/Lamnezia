@@ -1,6 +1,7 @@
 """Turning raw peer counters into traffic deltas and hourly totals (DESIGN.md 3.4, 5.5)."""
 
-from collections.abc import Sequence
+from collections import defaultdict
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
@@ -57,38 +58,43 @@ class TrafficRecorder:
 
     A clone in a server group keeps its own counters, but the traffic they add belongs to the
     keys of the leading server (`key_source`): a key counts on every member of its group.
+    A peer that is not a key counts for the source its owner names (`targets.PeerOwners`).
     """
 
-    def expect_peer(self, source: str, public_key: str, at: datetime) -> None:
+    def expect_peer(self, source: str, public_key: str, at: datetime, key_source: str = "") -> None:
         TrafficCounter.objects.get_or_create(
             source=source,
             public_key=public_key,
-            defaults={"collected_at": at, "key_source": source},
+            defaults={"collected_at": at, "key_source": key_source or source},
         )
 
-    def record(
+    def record(  # noqa: PLR0913  a reading, its moment and whose traffic it is
         self,
         source: str,
         peers: Sequence[Reading],
         at: datetime,
         started: str = "",
         key_source: str = "",
+        *,
+        owners: Mapping[str, str] | None = None,
     ) -> bool:
         """Apply a reading taken at `at`; False if a newer reading is already stored.
 
         `started` is the container's start time, empty when unknown. `key_source` is the source
-        of the keys the peers belong to when it is not `source`.
+        of the keys the peers belong to when it is not `source`. `owners` maps the public key of
+        a peer that is not a key to the source its traffic counts for.
         """
         key_source = key_source or source
+        sources = _Owners(key_source, owners or {})
         with transaction.atomic():
             # Row locks serialize readings of one source, so overlapping runs never add twice.
             state, _created = TrafficSource.objects.select_for_update().get_or_create(
                 source=source, defaults={"checked_at": at}
             )
-            if key_source != source:
-                # Members of a group are read in parallel and add to the same hourly rows.
+            # Members of a group are read in parallel and add to the same hourly rows.
+            for shared in sources.shared(source, peers):
                 TrafficSource.objects.select_for_update().get_or_create(
-                    source=key_source, defaults={"checked_at": at}
+                    source=shared, defaults={"checked_at": at}
                 )
             counters = {
                 c.public_key: c
@@ -98,9 +104,10 @@ class TrafficRecorder:
                 return False
             restarted = bool(state.started and started and state.started != started)
             deltas = self._update_counters(
-                source, key_source, peers, counters, at, restarted=restarted
+                source, sources, peers, counters, at, restarted=restarted
             )
-            self._add_hourly(key_source, deltas, at)
+            for owner, owned in sources.split(deltas).items():
+                self._add_hourly(owner, owned, at)
             state.available, state.checked_at = True, at
             state.started = started or state.started
             state.save(update_fields=["available", "checked_at", "started"])
@@ -115,7 +122,7 @@ class TrafficRecorder:
     @staticmethod
     def _update_counters(  # noqa: PLR0913 - the counters of a reading and whose keys they count
         source: str,
-        key_source: str,
+        sources: "_Owners",
         peers: Sequence[Reading],
         counters: dict[str, TrafficCounter],
         at: datetime,
@@ -125,12 +132,15 @@ class TrafficRecorder:
         deltas: dict[str, Delta] = {}
         seen, created = [], []
         for known in counters.values():
-            known.key_source = key_source  # a server joins or leaves a group between readings
+            # A server joins or leaves a group between readings.
+            known.key_source = sources.of(known.public_key)
         for peer in peers:
             counter = counters.pop(peer.public_key, None)
             if counter is None:
                 counter = TrafficCounter(
-                    source=source, key_source=key_source, public_key=peer.public_key
+                    source=source,
+                    key_source=sources.of(peer.public_key),
+                    public_key=peer.public_key,
                 )
                 created.append(counter)
             else:
@@ -167,8 +177,6 @@ class TrafficRecorder:
 
     @staticmethod
     def _add_hourly(source: str, deltas: dict[str, Delta], at: datetime) -> None:
-        if not deltas:
-            return
         hour = at.replace(minute=0, second=0, microsecond=0)
         rows = {
             row.public_key: row
@@ -184,3 +192,26 @@ class TrafficRecorder:
             [r for r in rows.values() if r.pk], ["rx_bytes", "tx_bytes"]
         )
         TrafficHourly.objects.bulk_create([r for r in rows.values() if not r.pk])
+
+
+@dataclass(frozen=True)
+class _Owners:
+    """Whose traffic each peer of a reading is: the keys of `key_source`, or another owner."""
+
+    key_source: str
+    owners: Mapping[str, str]
+
+    def of(self, public_key: str) -> str:
+        return self.owners.get(public_key, self.key_source)
+
+    def shared(self, source: str, peers: Sequence[Reading]) -> list[str]:
+        """The sources other than `source` the reading adds to, in a fixed order for the locks."""
+        others = {self.owners[p.public_key] for p in peers if p.public_key in self.owners}
+        return sorted(({self.key_source} | others) - {source})
+
+    def split(self, deltas: Mapping[str, Delta]) -> dict[str, dict[str, Delta]]:
+        """The deltas by the source they count for."""
+        found: dict[str, dict[str, Delta]] = defaultdict(dict)
+        for public_key, delta in deltas.items():
+            found[self.of(public_key)][public_key] = delta
+        return found

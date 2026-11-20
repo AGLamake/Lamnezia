@@ -116,8 +116,17 @@ def limit_enable(ctx: OperationContext) -> None:
 
 
 def _move_status(key: AccessKey, current: KeyStatus, new: KeyStatus) -> bool:
-    """Change the status only if nothing else changed it during the operation."""
-    return AccessKey.objects.filter(pk=key.pk, status=current).update(status=new) == 1
+    """Change the status only if nothing else changed it during the operation.
+
+    The key is saved, not updated in bulk: the clone of a split group takes the status from
+    the save signal at once, not at the next sync by the minute."""
+    with transaction.atomic():
+        found = AccessKey.objects.select_for_update().filter(pk=key.pk, status=current).first()
+        if found is None:
+            return False
+        found.status = new
+        found.save(update_fields=["status"])
+    return True
 
 
 @operations.register(actions.REVOKE, _("Revoke a key"))

@@ -201,8 +201,8 @@ group keeps its previous list. The mode the group is in is part of the state the
 The group page shows the routing of a group behind an installed relay and switches it:
 **Switch to split routing** and **Switch to forwarding**. The switch is a background operation:
 
-1. The panel reads the traffic counters of the members, so the traffic of the old path is counted
-   up to the switch.
+1. The panel reads the traffic counters of the members and of the clones on the relay, so the
+   traffic of the old path is counted up to the switch.
 2. For split routing, every member gets a second service peer, "Lamnezia uplink", by the usual
    protocol of changes: the leading server first. If the leading server does not answer, the
    operation fails and nothing changes. A member that does not answer falls behind and gets the
@@ -258,6 +258,33 @@ resolver that does not start or stops is started again after a minute; until the
 where the keys send them. Only the keys' DNS addresses are intercepted: a DNS server set by hand on
 a device is not. The resolver comes with the new relay image: use **Reinstall** on the relay card
 once.
+
+#### Traffic, online status and limits
+
+In split routing the clients of the group are peers of the clone on the relay, so the panel reads
+their traffic and handshakes there: from the relay container, interface `lg<port>`, by the same
+poll as the servers, counted for the keys of the leading server. The members are still read too: a
+client that has not reconnected yet, or the group in its fallback to forwarding, sends its traffic
+there, and a byte takes only one of the two paths, so nothing is counted twice. The uplink peer on
+the members carries all the clients once more; its traffic is counted for a source of its own, the
+exit load of the group (series `uplink:<group>` in the metrics), and not for any key.
+
+On a switch to split routing every live key counts on the clone from zero, and a key issued while
+the group is split counts from its first byte, as on a server. On the switch back the clone is read
+one last time, and its counters are left at zero: a later split counts from zero again. A clone the
+relay creates anew (after a restart of the container) also counts from zero.
+
+The limits act on the clone too:
+
+- **Traffic limit.** A key over the limit is turned off on the servers and leaves the clone within
+  seconds; it comes back when it is turned on again.
+- **Speed limit.** The personal limits of the plans and the total limits of the leading server go
+  onto the clone as the same `tc` rules as on the server. Download is shaped on the clone; upload is
+  shaped on an IFB device if the relay host has the `ifb` module (the panel loads it), otherwise it
+  is policed. The relay agent puts the rules back after every new clone. The agent that applies
+  them comes with the relay update: use **Reinstall** on the relay card once.
+
+In forwarding everything is counted and limited on the servers, as before.
 
 ## Keys of a group behind the relay
 

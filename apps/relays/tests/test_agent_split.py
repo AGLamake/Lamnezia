@@ -285,6 +285,35 @@ def test_new_peers_refresh_the_clone(network: FakeNetwork, folder: Path) -> None
     assert ("forget", PORT) not in calls
 
 
+def test_the_speed_limits_go_on_after_every_clone(network: FakeNetwork, folder: Path) -> None:
+    write_file(folder, f"speed-{PORT}.sh", "#!/bin/sh\n", 1)
+    agent = started(network, folder)
+    write_file(folder, f"peers-{PORT}.conf", "[Peer]\n", 10)
+    mark = len(network.calls)
+
+    agent.tick()
+
+    calls = network.since(mark)
+    assert calls.index(("clone", PORT)) < calls.index(("limit", f"speed-{PORT}.sh"))
+
+
+def test_new_speed_limits_keep_the_clone(network: FakeNetwork, folder: Path) -> None:
+    agent = started(network, folder)
+    write_file(folder, f"speed-{PORT}.sh", "#!/bin/sh\n", 10)
+    mark = len(network.calls)
+
+    agent.tick()
+
+    calls = network.since(mark)
+    assert ("limit", f"speed-{PORT}.sh") in calls and ("clone", PORT) not in calls
+
+
+def test_a_clone_without_speed_limits_runs_no_script(network: FakeNetwork, folder: Path) -> None:
+    started(network, folder)
+
+    assert not any(name == "limit" for name, _ in network.calls)
+
+
 def test_a_group_moved_back_to_forward_drops_its_clone(network: FakeNetwork, folder: Path) -> None:
     agent = started(network, folder)
     write_config(folder, Routing.FORWARD, moment=2)

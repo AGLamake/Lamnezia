@@ -5,7 +5,7 @@ digest of the written file and the published ports tells a sync whether the rela
 as they are now. The file holds resolved addresses, so a member name that moves to another IP
 changes the digest too. A split group also has its clone and uplink there, and the peers of
 its clone (services/clone.py), its network list and its own domains (services/split_lists.py)
-in files of their own.
+in files of their own, and so do the speed limits of its keys on the clone.
 """
 
 import hashlib
@@ -23,7 +23,9 @@ from amnezia_core.relay import (
     RelayGroup,
     Routing,
     SplitRouting,
+    clone_interface,
     clone_peers_file,
+    speed_file,
 )
 from amnezia_core.relay import ServicePeer as CoreServicePeer
 from apps.groups.models import GroupMember, GroupRouting, ServerGroup
@@ -33,6 +35,7 @@ from apps.relays.models import PeerRole, Relay, ServicePeer
 from apps.relays.services.clone import clone_peers
 from apps.relays.services.split_lists import GroupList
 from apps.servers.models import Server
+from apps.traffic.services.speed import SpeedLimiter, clone_speed_script
 
 
 @dataclass(frozen=True)
@@ -94,13 +97,16 @@ class RelayPlan:
 
     def split_files(self, config: RelayConfig) -> dict[str, str]:
         """The files of each split group of `config` by name in the agent folder: the clone
-        peers, the network list and the own domains."""
+        peers, the network list, the own domains and the speed limits on the clone."""
         split = {group.port for group in config.groups if group.split is not None}
+        wanted = SpeedLimiter.wanted_rules() if split else {}
         files = {}
         for group, members in self.groups:
             if group.port in split:
-                files[clone_peers_file(group.port)] = clone_peers(members[0].instance).to_text()
-                files.update(GroupList.of(group).files(group.port))
+                leader, port = members[0].instance, group.port
+                files[clone_peers_file(port)] = clone_peers(leader).to_text()
+                files.update(GroupList.of(group).files(port))
+                files[speed_file(port)] = clone_speed_script(clone_interface(port), leader, wanted)
         return files
 
 

@@ -6,6 +6,9 @@ class RelaysConfig(AppConfig):
 
     def ready(self) -> None:
         from apps.relays import operations, receivers  # noqa: F401, PLC0415  registers operation kinds
-        from apps.relays.services import service_peers  # noqa: F401, PLC0415  registers the probes
+        from apps.relays.services import (  # noqa: F401, PLC0415  register the probes and clones
+            service_peers,
+            traffic,
+        )
 
         receivers.connect()

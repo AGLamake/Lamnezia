@@ -14,12 +14,14 @@ from pathlib import Path
 from django.utils.translation import gettext as _
 
 from amnezia_core.containers import AWG2
-from amnezia_core.relay import clone_peers_file, domains_file, networks_file
+from amnezia_core.relay import clone_peers_file, domains_file, networks_file, speed_file
 from apps.operations.services.context import OperationContext
 from apps.protocols.services.container import ProtocolContainer, Transport, log_arguments
 from apps.relays.errors import RelayError, RelayErrorCode
 from apps.ssh.errors import RemoteFileNotFoundError
 from apps.ssh.services import RemoteHost
+from apps.traffic.services.shaper import LOAD_IFB
+from apps.traffic.services.shaping import tries_ifb
 
 NAME = "lamnezia-relay"
 FOLDER = "/opt/amnezia/relay"
@@ -117,19 +119,25 @@ class RelayContainer:
             self._put_agent()
 
     def write_split_files(self, files: Mapping[str, str], ports: Iterable[int] = ()) -> None:
-        """Write the clone peers, network lists and own domains of the split groups, by file
-        name, and drop the other such files of `ports`: a group that is forwarded again keeps
-        no stale peers, and a group without domains keeps none."""
+        """Write the clone peers, network lists, own domains and speed limits of the split
+        groups, by file name, and drop the other such files of `ports`: a group that is
+        forwarded again keeps no stale peers, and a group without domains keeps none.
+
+        A limit of upload loads the ifb module on the host first, so the agent shapes it."""
         if not self.exists:
             raise RelayError(RelayErrorCode.NOT_INSTALLED, NAME)
         shell = self._docker.shell
         names = (
             name(port)
             for port in sorted(ports)
-            for name in (clone_peers_file, networks_file, domains_file)
+            for name in (clone_peers_file, networks_file, domains_file, speed_file)
         )
         stale = [f"{FOLDER}/{name}" for name in names if name not in files]
         groups = sum(name.startswith("peers-") for name in files)
+        if any(tries_ifb(text) for text in files.values()):
+            with self._ctx.step(_("Load the ifb module on the host")):
+                ifb = self._host.sh(LOAD_IFB).ok
+                self._ctx.log("ifb: loaded" if ifb else "ifb: missing, upload is policed")
         with self._ctx.step(_("Write the peers and lists of the clones")):
             for name, text in sorted(files.items()):
                 shell.write_file_atomic(f"{FOLDER}/{name}", text.encode(), mode=0o600)

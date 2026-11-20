@@ -7,6 +7,7 @@ from apps.traffic.services.shaping import (
     needs_shaping,
     speed_script,
     speed_script_path,
+    tries_ifb,
 )
 
 PHONE = SpeedRule(IPv4Address("10.8.1.2"), 10)
@@ -65,6 +66,31 @@ def test_with_ifb_upload_is_shaped_by_the_same_classes() -> None:
         " match ip src 10.8.1.2/32 flowid 1:1",
     ]
     assert not any("police" in line for line in lines)
+
+
+def test_a_script_for_an_unknown_host_tries_ifb_and_polices_without_it() -> None:
+    script = speed_script("lg51820", [PHONE], ifb=None)
+    lines = script.splitlines()
+
+    start = lines.index('if ip link add "$ifb" type ifb 2>/dev/null; then')
+    shaped, policed = lines[start + 1 : lines.index("else")], lines[lines.index("else") + 1 :]
+    assert shaped[0] == '  ip link set "$ifb" up'
+    assert '  tc qdisc add dev "$ifb" root handle 1: htb' in shaped
+    assert policed[-1] == "fi" and "police rate 10mbit" in policed[-2]
+    assert tries_ifb(script)
+
+
+def test_an_upload_total_without_ifb_is_left_unshaped() -> None:
+    lines = speed_script("lg51820", [], TotalSpeed(upload=20), ifb=None).splitlines()
+
+    assert lines[lines.index("else") + 1 :] == ["  :", "fi"]
+
+
+def test_a_script_without_upload_limits_does_not_try_ifb() -> None:
+    script = speed_script("lg51820", [], TotalSpeed(download=20), ifb=None)
+
+    assert not tries_ifb(script)
+    assert not tries_ifb(speed_script("awg0", [PHONE], ifb=True))
 
 
 def test_total_limit_shares_equally_between_all_peers() -> None:

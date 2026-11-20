@@ -13,8 +13,14 @@ from apps.ssh.errors import ErrorCode, SshConnectionError
 from apps.ssh.services import RemoteHost
 from apps.ssh.tests.fakes import TIMEOUTS, FakeRunner, result
 from apps.traffic.models import TrafficCounter, TrafficHourly, TrafficSource
-from apps.traffic.services.poller import Dump, TrafficPoller, dump_script, split_dumps
-from apps.traffic.services.targets import PollTarget, PollTargets
+from apps.traffic.services.poller import (
+    Channel,
+    Dump,
+    TrafficPoller,
+    dump_script,
+    split_dumps,
+)
+from apps.traffic.services.targets import PeerOwners, PollTarget, PollTargets
 
 DUMP = (Path(__file__).parents[3] / "amnezia_core/tests/fixtures/dump.txt").read_text()
 NOW = datetime(2026, 11, 2, 10, 0, tzinfo=UTC)
@@ -228,3 +234,137 @@ def test_containers_without_awg_are_read_with_wg(tmp_path: Path) -> None:
         "amnezia-wireguard": Dump(0, "wg show all dump"),
         "amnezia-xray": Dump(0, "xray api statsquery --server=127.0.0.1:10085 -pattern user>>>"),
     }
+
+
+ALICE_PEER = "jhkQdvDcgDYudvey3hItwkaQoDy/bLT6QnsyYHwCIlo="
+UPLINK_PEER = "Q2+/5jIlpVjLMKDArTagVYSPsI5fcqPNpSem9NMi50s="
+SERVER_KEY = "u+xLktHw90auwUVtjZEJVpNCbfbFK8GNmGegY/Z0XYs="
+
+
+def relay_dump(rx: int, tx: int) -> str:
+    """The relay container: a probe, the clone of a split group and its uplink."""
+    rows = []
+    for interface, peer in (
+        ("lr51820", "probe"),
+        ("lg51820", ALICE_PEER),
+        ("lu51820", "uplink"),
+    ):
+        rows.append(f"{interface}\tprivate\tpublic\t51820\toff")
+        rows.append(
+            f"{interface}\t{peer}\t(none)\t203.0.113.7:51820\t10.8.1.1/32\t1793541367"
+            f"\t{rx}\t{tx}\toff"
+        )
+    return "\n".join(rows)
+
+
+def clone_target(runner: FakeRunner) -> PollTarget:
+    return replace(
+        target(runner, {"clone:1": "lamnezia-relay"}, name="ru-1 relay"),
+        key_sources={"clone:1": "awg:1"},
+        interfaces={"clone:1": "lg51820"},
+    )
+
+
+def test_dump_script_reads_the_index_of_an_interface() -> None:
+    script = dump_script([Channel("lamnezia-relay", "lg51820")])
+
+    assert "cat /sys/class/net/lg51820/ifindex" in script
+    assert "lamnezia-relay@lg51820" in script
+
+
+@pytest.mark.django_db
+def test_an_interface_source_counts_only_its_own_peers() -> None:
+    for minute, (rx, tx, started) in enumerate(((100, 1000, "t1/7"), (300, 5000, "t1/7"))):
+        output = marker_output(("lamnezia-relay@lg51820", 0, relay_dump(rx, tx)), started=started)
+        runner = FakeRunner({"awg show all dump": result(stdout=output)})
+        at = NOW.replace(minute=minute)
+        TrafficPoller(clock=lambda: at).poll(clone_target(runner))  # noqa: B023
+
+    counter = TrafficCounter.objects.get()
+    assert (counter.source, counter.key_source, counter.public_key) == (
+        "clone:1",
+        "awg:1",
+        ALICE_PEER,
+    )
+    hourly = TrafficHourly.objects.get()
+    assert (hourly.source, hourly.rx_bytes, hourly.tx_bytes) == ("awg:1", 200, 4000)
+
+
+@pytest.mark.django_db
+def test_an_interface_created_again_counts_from_zero() -> None:
+    readings = ((100, 1000, "t1/7"), (5000, 9000, "t1/12"))
+    for minute, (rx, tx, started) in enumerate(readings):
+        output = marker_output(("lamnezia-relay@lg51820", 0, relay_dump(rx, tx)), started=started)
+        runner = FakeRunner({"awg show all dump": result(stdout=output)})
+        at = NOW.replace(minute=minute)
+        TrafficPoller(clock=lambda: at).poll(clone_target(runner))  # noqa: B023
+
+    hourly = TrafficHourly.objects.get()
+    assert (hourly.rx_bytes, hourly.tx_bytes) == (5000, 9000)
+
+
+@pytest.mark.django_db
+def test_a_missing_interface_leaves_its_peers_absent_not_unknown() -> None:
+    output = marker_output(("lamnezia-relay@lg51820", 0, relay_dump(100, 1000)), started="t1/7")
+    runner = FakeRunner({"awg show all dump": result(stdout=output)})
+    TrafficPoller(clock=lambda: NOW).poll(clone_target(runner))
+
+    gone = marker_output(("lamnezia-relay@lg51820", 0, ""), started="t1/")
+    runner = FakeRunner({"awg show all dump": result(stdout=gone)})
+    TrafficPoller(clock=lambda: NOW.replace(minute=5)).poll(clone_target(runner))
+
+    assert TrafficSource.objects.get(source="clone:1").available
+    assert not TrafficCounter.objects.get().present
+
+
+@pytest.mark.django_db
+def test_a_peer_that_is_not_a_key_counts_for_its_owner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    owners = PeerOwners()
+    owners.register(lambda: [(UPLINK_PEER, "uplink:1")])
+    monkeypatch.setattr("apps.traffic.services.poller.peer_owners", owners)
+    for minute, scale in enumerate((1, 3)):
+        dump = DUMP.replace("\t0\t0\t25", f"\t{70 * scale}\t{90 * scale}\t25").replace(
+            "1310720\t16148070", f"{10 * scale}\t{20 * scale}"
+        )
+        runner = FakeRunner(
+            {"awg show all dump": result(stdout=marker_output(("amnezia-awg2", 0, dump)))}
+        )
+        at = NOW.replace(minute=minute)
+        member = replace(target(runner, {"awg:2": "amnezia-awg2"}), key_sources={"awg:2": "awg:1"})
+        TrafficPoller(clock=lambda: at).poll(member)  # noqa: B023
+
+    rows = set(TrafficHourly.objects.values_list("source", "public_key", "rx_bytes", "tx_bytes"))
+    assert rows == {("awg:1", ALICE_PEER, 20, 40), ("uplink:1", UPLINK_PEER, 140, 180)}
+    uplink = TrafficCounter.objects.get(public_key=UPLINK_PEER)
+    assert (uplink.source, uplink.key_source) == ("awg:2", "uplink:1")
+
+
+@pytest.mark.skipif(shutil.which("sh") is None, reason="needs a POSIX shell")
+def test_interface_dump_in_a_real_shell(tmp_path: Path) -> None:
+    (tmp_path / "dump.txt").write_text(relay_dump(1, 2), newline="\n")
+    docker = tmp_path / "docker"
+    docker.write_text(
+        "#!/bin/sh\n"
+        'case "$1" in\n'
+        "  inspect) echo 2026-11-20T10:00:00Z ;;\n"
+        '  exec) if [ "$3" = cat ]; then echo 9; else cat "$DUMP_FILE"; fi ;;\n'
+        "esac\n",
+        newline="\n",
+    )
+    docker.chmod(0o755)
+    env = {**os.environ, "PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}"}
+    env["DUMP_FILE"] = str(tmp_path / "dump.txt")
+
+    completed = subprocess.run(
+        [str(shutil.which("sh")), "-c", dump_script([Channel("lamnezia-relay", "lg51820")])],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    dump = split_dumps(completed.stdout)["lamnezia-relay@lg51820"]
+    assert (dump.code, dump.started) == (0, "2026-11-20T10:00:00Z/9")
+    assert dump.text.splitlines() == relay_dump(1, 2).splitlines()

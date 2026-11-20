@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Traffic and limits of split routing from the clone**: in split routing the panel reads the
+  traffic and online status of the group's clients from the clone on the relay and counts them
+  for the keys of the leading server; the uplink peer on the members counts for the exit load of
+  the group (`uplink:<group>`), not for the keys, so nothing is counted twice. A switch of routing
+  reads the clone too; keys count on the clone from zero, and its counters are left at zero when
+  the group is forwarded again. A key turned off by its traffic limit leaves the clone within
+  seconds, and the speed limits of the leading server's keys go onto the clone as `tc` rules. The
+  relay needs **Reinstall** once for the new agent.
 - **DNS resolver of split routing**: in split routing the relay intercepts the DNS queries of the
   group's clients to the keys' DNS addresses and answers them with its own resolver, which asks
   1.1.1.1 over DNS-over-TLS straight from the relay. The resolver logs no queries or answers and

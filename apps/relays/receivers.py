@@ -7,9 +7,12 @@ relay has, and a source or an own entry of its network list. A transaction queue
 all the relays it named, once it commits, and the sync updates only them. The sync compares
 digests, so a change that is not on a relay costs nothing; the sync by the minute stays for
 what no signal sees, such as DNS.
+
+A new key of a split group also gets its counter on the clone, so it counts from the first byte
+there as on its server.
 """
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from typing import Any
 
 from django.db import transaction
@@ -18,9 +21,10 @@ from django.db.models.signals import post_delete, post_save, pre_save
 
 from apps.groups.models import GroupMember, GroupRouting, ServerGroup
 from apps.keys.models import AccessKey
-from apps.keys.signals import keys_written
+from apps.keys.signals import clients_adding, keys_written
 from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay, ServicePeer, SplitEntry, SplitSource
+from apps.relays.services.traffic import expect_new_keys
 from apps.servers.models import Server
 
 # Fields of a member server and its instance that reach the config of a relay.
@@ -146,6 +150,13 @@ def on_key_saved(
         request_sync(_split_relays(instance.source))
 
 
+def on_clients_adding(
+    sender: object, source: str, public_keys: Sequence[str], **kwargs: Any
+) -> None:
+    """A new key of a split group counts on its clone from the first byte."""
+    expect_new_keys(source, public_keys)
+
+
 def connect() -> None:
     uid = "relays.sync.ServerGroup"
     pre_save.connect(on_group_saving, sender=ServerGroup, dispatch_uid=f"{uid}.saving")
@@ -160,5 +171,6 @@ def connect() -> None:
         on_instance_saved, sender=ProtocolInstance, dispatch_uid="relays.sync.ProtocolInstance"
     )
     keys_written.connect(on_keys_written, dispatch_uid="relays.sync.keys_written")
+    clients_adding.connect(on_clients_adding, dispatch_uid="relays.traffic.clients_adding")
     post_save.connect(on_key_saved, sender=AccessKey, dispatch_uid="relays.sync.AccessKey")
     post_delete.connect(on_key_saved, sender=AccessKey, dispatch_uid="relays.sync.AccessKey.delete")

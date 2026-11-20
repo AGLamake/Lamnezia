@@ -1,5 +1,7 @@
 """The relay container on a fake server: ports are checked before anything is started."""
 
+from ipaddress import IPv4Address
+
 import pytest
 
 from apps.operations.services.context import OperationContext
@@ -8,6 +10,7 @@ from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.relays.errors import RelayError, RelayErrorCode
 from apps.relays.services.container import FOLDER, NAME, RelayContainer, agent_source
 from apps.relays.tests.fake_relay import FakeRelayServer
+from apps.traffic.services.shaping import SpeedRule, TotalSpeed, speed_script
 
 pytestmark = pytest.mark.django_db
 
@@ -144,6 +147,34 @@ def test_writing_only_the_peers_keeps_the_other_files(server: FakeRelayServer) -
 
     assert server.files[f"{FOLDER}/peers-{PORT}.conf"] == b""
     assert server.files[f"{FOLDER}/peers-51820.conf"] == b"kept"
+
+
+def test_an_upload_limit_loads_the_ifb_module_first(server: FakeRelayServer) -> None:
+    container = installed(server, PORT)
+    rule = SpeedRule(IPv4Address("10.8.1.5"), 10)
+
+    container.write_split_files({f"speed-{PORT}.sh": speed_script(f"lg{PORT}", [rule], ifb=None)})
+
+    assert server.ifb_loaded
+    assert f"{FOLDER}/speed-{PORT}.sh" in server.files
+
+
+def test_a_download_limit_needs_no_ifb(server: FakeRelayServer) -> None:
+    container = installed(server, PORT)
+    script = speed_script(f"lg{PORT}", [], TotalSpeed(download=50), ifb=None)
+
+    container.write_split_files({f"speed-{PORT}.sh": script})
+
+    assert not server.ifb_loaded
+
+
+def test_a_forwarded_group_keeps_no_speed_script(server: FakeRelayServer) -> None:
+    container = installed(server, PORT)
+    server.files[f"{FOLDER}/speed-{PORT}.sh"] = b"#!/bin/sh\n"
+
+    container.apply({PORT}, CONFIG, {})
+
+    assert f"{FOLDER}/speed-{PORT}.sh" not in server.files
 
 
 def test_an_update_needs_the_container(server: FakeRelayServer) -> None:
