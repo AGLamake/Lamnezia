@@ -133,6 +133,25 @@ Each release also publishes a ready image `ghcr.io/aglamake/lamnezia:X.Y.Z` (and
 ([ready image](Installation.md#ready-image-instead-of-a-build)), change the version there and run
 `docker compose pull && docker compose up -d --no-build`.
 
+### Checking that a release is genuine
+
+The release workflow signs where the image and the release files come from (a build provenance
+attestation by GitHub), and the image also gets a signed SBOM, the list of its packages. Besides
+`lamnezia-release.txt`, a release carries `lamnezia-X.Y.Z.tar.gz`, the code of the tag. The
+[GitHub CLI](https://cli.github.com/) checks them; a check that passes says the file was built by
+the release workflow of this repository:
+
+```bash
+gh attestation verify oci://ghcr.io/aglamake/lamnezia:X.Y.Z --repo AGLamake/Lamnezia
+gh release download vX.Y.Z --repo AGLamake/Lamnezia
+gh attestation verify lamnezia-X.Y.Z.tar.gz --repo AGLamake/Lamnezia
+gh attestation verify lamnezia-release.txt --repo AGLamake/Lamnezia
+```
+
+The SBOM of the image is checked with
+`--predicate-type https://spdx.dev/Document/v2.3` added to the first command. Releases before
+this one have no attestations.
+
 ## Checks after updating
 
 - `docker compose ps` shows `healthy` for `web`, `worker`, `postgres` and `redis`;

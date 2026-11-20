@@ -71,6 +71,7 @@ curl -fsSL https://raw.githubusercontent.com/AGLamake/Lamnezia/releases/install.
 как `LAMNEZIA_IMAGE=ghcr.io/aglamake/lamnezia:1.2.0`, и дальше запускает контейнеры командами
 `docker compose pull && docker compose up -d --no-build`. Чтобы вернуться к сборке, удалите строку
 `LAMNEZIA_IMAGE` из `.env`. Для версии образа стоит взять тот же тег кода: `LAMNEZIA_REF=v1.2.0`.
+Как проверить подлинность образа — [Обновление](Upgrade.md#проверка-подлинности-релиза).
 
 `--restore ФАЙЛ` ставит панель из [архива панели](Backup.md#из-архива-панели): с её базой,
 секретами и файлами вместо новых.

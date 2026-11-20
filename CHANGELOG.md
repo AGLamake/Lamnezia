@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Signed release provenance**: a release publishes signed build provenance attestations for the
+  image and for its files, and a signed SBOM of the image. A release also carries the code of the
+  tag as `lamnezia-X.Y.Z.tar.gz`. `gh attestation verify` checks a downloaded image or file.
 - **Another server address for a key**: a server takes other IPs or domains, and a background
   check compares the SSH key shown at each with the server's. A key can send its client to a
   checked address: it goes to the `Endpoint` of the config and the `hostName` of `vpn://`, the

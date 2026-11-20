@@ -131,6 +131,23 @@ docker compose up -d --build
 ([готовый образ](Installation.md#готовый-образ-вместо-сборки)), поменяйте в нём версию и выполните
 `docker compose pull && docker compose up -d --no-build`.
 
+### Проверка подлинности релиза
+
+Workflow релиза подписывает происхождение образа и файлов релиза (аттестация сборки от GitHub), а
+для образа ещё и SBOM — список его пакетов. Кроме `lamnezia-release.txt`, в релизе лежит
+`lamnezia-X.Y.Z.tar.gz` — код тега. Проверяет их [GitHub CLI](https://cli.github.com/); успешная
+проверка значит, что файл собран workflow релиза этого репозитория:
+
+```bash
+gh attestation verify oci://ghcr.io/aglamake/lamnezia:X.Y.Z --repo AGLamake/Lamnezia
+gh release download vX.Y.Z --repo AGLamake/Lamnezia
+gh attestation verify lamnezia-X.Y.Z.tar.gz --repo AGLamake/Lamnezia
+gh attestation verify lamnezia-release.txt --repo AGLamake/Lamnezia
+```
+
+SBOM образа проверяется первой командой с добавкой
+`--predicate-type https://spdx.dev/Document/v2.3`. У релизов до этого аттестаций нет.
+
 ## Проверка после обновления
 
 - `docker compose ps` показывает `healthy` у `web`, `worker`, `postgres` и `redis`;

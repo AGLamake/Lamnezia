@@ -72,6 +72,7 @@ The value is a version (`1.2.0`, `1.2`), `latest` or a full image reference. The
 `.env` as `LAMNEZIA_IMAGE=ghcr.io/aglamake/lamnezia:1.2.0` and from then on starts the containers with
 `docker compose pull && docker compose up -d --no-build`. To build again, delete the
 `LAMNEZIA_IMAGE` line from `.env`. Take the same code tag as the image: `LAMNEZIA_REF=v1.2.0`.
+How to check that the image is genuine: [Upgrade](Upgrade.md#checking-that-a-release-is-genuine).
 
 `--restore FILE` installs the panel from a [panel archive](Backup.md#from-a-panel-archive): with its
 database, secrets and files instead of new ones.

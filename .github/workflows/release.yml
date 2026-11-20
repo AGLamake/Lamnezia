@@ -1,6 +1,7 @@
 name: Release
 
 # A tag vX.Y.Z publishes the image (amd64 and arm64) to GHCR and a GitHub release with notes from CHANGELOG.md.
+# The image, its SBOM and the release files get signed attestations: `gh attestation verify` checks them.
 on:
   push:
     tags: ["v*.*.*"]
@@ -8,6 +9,8 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write
+  attestations: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -74,12 +77,46 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # GHCR names are lower case; the attestations name the image by its digest.
+      - name: Image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          output-file: ${{ runner.temp }}/sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - uses: actions/attest-sbom@v2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: ${{ runner.temp }}/sbom.spdx.json
+          push-to-registry: true
+
       # The update from the panel (deploy/update/lamnezia-deploy.sh release) takes only a tag whose
       # commit, and image digest for a ready-image install, match this file of the release.
       - name: Release manifest
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: printf 'commit %s\nimage %s\n' "$GITHUB_SHA" "$DIGEST" > "$RUNNER_TEMP/lamnezia-release.txt"
+
+      - name: Source archive
+        run: git archive --format=tar.gz --prefix="lamnezia-$VERSION/" -o "$RUNNER_TEMP/lamnezia-$VERSION.tar.gz" "$GITHUB_SHA"
+
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            ${{ runner.temp }}/lamnezia-${{ env.VERSION }}.tar.gz
+            ${{ runner.temp }}/lamnezia-release.txt
 
       - name: GitHub release
         env:
@@ -88,4 +125,4 @@ jobs:
           PRERELEASE=""
           case "$VERSION" in *-*) PRERELEASE="--prerelease" ;; esac
           gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" $PRERELEASE \
-            "$RUNNER_TEMP/lamnezia-release.txt"
+            "$RUNNER_TEMP/lamnezia-release.txt" "$RUNNER_TEMP/lamnezia-$VERSION.tar.gz"
