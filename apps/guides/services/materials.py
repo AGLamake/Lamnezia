@@ -1,4 +1,8 @@
-"""Useful materials: the public list grouped by topic and the weekly check that links still open."""
+"""Useful materials: the public list grouped by topic and the weekly check that links still open.
+
+The check goes through `MATERIALS_PROXY` when it is set, so a site blocked where the panel runs
+does not count as broken.
+"""
 
 import urllib.error
 import urllib.request
@@ -9,6 +13,7 @@ from typing import Self
 from django.conf import settings
 from django.utils import timezone
 
+from apps.core.services.outbound import OutboundProxy, url_opener
 from apps.guides.models import MaterialTopic, UsefulMaterial
 
 _USER_AGENT = "Lamnezia"
@@ -76,21 +81,28 @@ class LinkStatus:
 Opener = Callable[[urllib.request.Request, float], object]
 
 
-def _open(request: urllib.request.Request, timeout: float) -> object:
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return response.status
+def status_opener(proxy: OutboundProxy | None) -> Opener:
+    """Opens a request, through the proxy when there is one, and gives the answer status."""
+    open_url = url_opener(proxy)
+
+    def open_status(request: urllib.request.Request, timeout: float) -> object:
+        with open_url(request, timeout=timeout) as response:
+            return response.status
+
+    return open_status
 
 
 class LinkChecker:
     """Opens a link with HEAD and, if the site refuses HEAD, with GET; redirects are followed."""
 
-    def __init__(self, timeout: float = 15, opener: Opener = _open) -> None:
+    def __init__(self, timeout: float = 15, opener: Opener | None = None) -> None:
         self._timeout = timeout
-        self._opener = opener
+        self._opener = opener or status_opener(None)
 
     @classmethod
     def from_settings(cls) -> Self:
-        return cls(timeout=settings.MATERIALS_CHECK_TIMEOUT)
+        proxy = OutboundProxy.parse(settings.MATERIALS_PROXY)
+        return cls(timeout=settings.MATERIALS_CHECK_TIMEOUT, opener=status_opener(proxy))
 
     def check(self, url: str) -> LinkStatus:
         status = self._try(url, "HEAD")

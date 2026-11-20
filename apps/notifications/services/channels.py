@@ -21,7 +21,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 from apps.accounts.services.link_offer import LetterOffer
-from apps.core.services.outbound import TelegramApi
+from apps.core.services.outbound import DiscordApi, MessengerApi, TelegramApi
 from apps.core.services.site_settings import cached_settings
 from apps.notifications.models import Channel, ChannelKind
 from apps.notifications.services.addresses import (
@@ -111,8 +111,8 @@ class HttpClient:
     holds the token.
 
     With a guard, addresses in private networks are refused, the connection goes only to the
-    addresses the guard checked, and redirects are not followed. A request to the Bot API (`api`)
-    goes to the panel's own setting, through its proxy, without the guard.
+    addresses the guard checked, and redirects are not followed. A request to the Bot API or to
+    Discord's hosts with a proxy set (`api`) goes through that proxy, without the guard.
     """
 
     def __init__(self, timeout: float, guard: AddressGuard | None = None) -> None:
@@ -129,7 +129,7 @@ class HttpClient:
         body: bytes,
         headers: dict[str, str] | None = None,
         *,
-        api: TelegramApi | None = None,
+        api: MessengerApi | None = None,
     ) -> bytes:
         """The answer body."""
         _check_scheme(url)
@@ -354,13 +354,16 @@ class TelegramChannel(NotificationChannel):
 
 @register
 class DiscordChannel(NotificationChannel):
-    """A message as an embed through the webhook of a Discord channel."""
+    """A message as an embed through the webhook of a Discord channel; a webhook on discord.com
+    goes through the Discord proxy of the settings (`api`).
+    """
 
     kind = ChannelKind.DISCORD
 
-    def __init__(self, webhook_url: str, http: HttpClient) -> None:
+    def __init__(self, webhook_url: str, http: HttpClient, api: DiscordApi | None = None) -> None:
         self._webhook_url = webhook_url
         self._http = http
+        self._api = api or DiscordApi.from_settings()
 
     @classmethod
     def from_model(cls, channel: Channel, http: HttpClient) -> Self:
@@ -373,7 +376,8 @@ class DiscordChannel(NotificationChannel):
             "timestamp": message.created_at.isoformat(),
             "footer": {"text": message.event},
         }
-        self._http.post(self._webhook_url, _json({"username": "Lamnezia", "embeds": [embed]}))
+        body = _json({"username": "Lamnezia", "embeds": [embed]})
+        self._http.post(self._webhook_url, body, api=self._api.route(self._webhook_url))
 
 
 @register
@@ -381,7 +385,7 @@ class DiscordDmChannel(NotificationChannel):
     """A direct message from the panel bot to a Discord user: the bot opens the DM, then posts.
 
     Discord takes a DM only from a bot that shares a server with the user. With a `menu` label
-    the message has the bot's «Menu» button.
+    the message has the bot's «Menu» button. `api`: the Discord proxy, by default of the settings.
     """
 
     kind = ChannelKind.DISCORD_DM
@@ -389,11 +393,19 @@ class DiscordDmChannel(NotificationChannel):
     # Discord asks bots for this form of User-Agent.
     USER_AGENT = "DiscordBot (https://github.com/AGLamake/Lamnezia, 1)"
 
-    def __init__(self, token: str, user_id: str, http: HttpClient, menu: str = "") -> None:
+    def __init__(
+        self,
+        token: str,
+        user_id: str,
+        http: HttpClient,
+        menu: str = "",
+        api: DiscordApi | None = None,
+    ) -> None:
         self._token = token
         self._user_id = user_id
         self._http = http
         self._menu = menu
+        self._api = api or DiscordApi.from_settings()
 
     @classmethod
     def from_model(cls, channel: Channel, http: HttpClient) -> Self:
@@ -403,10 +415,12 @@ class DiscordDmChannel(NotificationChannel):
         if not self._token:
             raise DeliveryError("no Discord bot token", retryable=False)
         headers = {"Authorization": f"Bot {self._token}", "User-Agent": self.USER_AGENT}
+        api = self._api.route(self.API_URL)
         opened = self._http.post(
             f"{self.API_URL}/users/@me/channels",
             _json({"recipient_id": self._user_id}),
             headers,
+            api=api,
         )
         try:
             channel_id = json.loads(opened)["id"]
@@ -422,7 +436,8 @@ class DiscordDmChannel(NotificationChannel):
                 "custom_id": _DISCORD_MENU_ID,
             }
             body["components"] = [{"type": _DISCORD_ROW, "components": [button]}]
-        self._http.post(f"{self.API_URL}/channels/{channel_id}/messages", _json(body), headers)
+        url = f"{self.API_URL}/channels/{channel_id}/messages"
+        self._http.post(url, _json(body), headers, api=api)
 
 
 @register

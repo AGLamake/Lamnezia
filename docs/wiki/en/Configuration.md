@@ -49,6 +49,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_TRAFFIC_HOURLY_DAYS` | `35` | Days of hourly traffic; older hours are folded into one row per key and day (at least 1). Totals, statistics and limits stay the same. |
 | `LAMNEZIA_GITHUB_TOKEN` | empty | GitHub token without scopes. Raises the API limit for Amnezia release links. |
 | `LAMNEZIA_GITHUB_PROXY` | empty | A proxy for the requests to api.github.com (Amnezia release links, the panel update check), like `LAMNEZIA_TELEGRAM_PROXY`. |
+| `LAMNEZIA_MATERIALS_PROXY` | empty | A proxy for the weekly check of the useful material links, like `LAMNEZIA_TELEGRAM_PROXY`, so a site blocked where the panel runs is not marked broken. |
 | `LAMNEZIA_AMNEZIA_APP_STORE_URL` | Amnezia in App Store | iOS download link in the guides. |
 | `LAMNEZIA_AMNEZIA_GOOGLE_PLAY_URL` | Amnezia in Google Play | Google Play link in the guides. |
 | `LAMNEZIA_REQUIRE_ADMIN_2FA` | `True` | Administrators must sign in with a code from an authenticator app. |
@@ -67,6 +68,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_TELEGRAM_WEBHOOK` | `false` | The Telegram bot takes updates by a webhook at `<LAMNEZIA_SITE_URL>/bots/telegram/` instead of long polling. Needs a public HTTPS domain ([Telegram and Discord accounts](Messengers.md)). |
 | `LAMNEZIA_TELEGRAM_PROXY` | empty | A proxy for the bot and the Telegram notifications where Telegram is blocked: `http://host:port` or `socks5://host:port`, maybe with `user:password@` ([Setting up the bots](Bots.md#telegram-through-a-proxy)). The password is never logged and is hidden on the error page (`LAMNEZIA_DEBUG`). |
 | `LAMNEZIA_TELEGRAM_API_SERVER` | `https://api.telegram.org` | A self-hosted Bot API server for the bot and the Telegram notifications, for example `http://telegram-bot-api:8081`. |
+| `LAMNEZIA_DISCORD_PROXY` | empty | A proxy for the Discord bot, its direct messages and the notification webhooks on discord.com, like `LAMNEZIA_TELEGRAM_PROXY` ([Setting up the bots](Bots.md#discord-through-a-proxy)). |
 | `LAMNEZIA_EMAIL_URL` | `consolemail://` | Mail server for letters (password reset, email confirmation, sign-in links), e.g. `smtp+tls://user:password@smtp.example.com:587`. The default only writes letters to the `web` log. |
 | `LAMNEZIA_DEFAULT_FROM_EMAIL` | `Lamnezia <noreply@localhost>` | Sender of the letters. |
 | `LAMNEZIA_PLUGINS` | empty | Comma-separated Django apps added to the panel, e.g. payment plugins ([Billing plugins](Billing-plugins.md)). |

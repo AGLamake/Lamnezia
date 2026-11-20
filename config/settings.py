@@ -215,6 +215,9 @@ TELEGRAM_WEBHOOK = env.bool("TELEGRAM_WEBHOOK", default=False)
 # where Telegram is blocked. The proxy holds a password: it is never logged.
 TELEGRAM_API_SERVER = env.str("TELEGRAM_API_SERVER", default="")
 TELEGRAM_PROXY = env.str("TELEGRAM_PROXY", default="")
+# A proxy for the Discord bot and the Discord notifications (DMs and channel webhooks on
+# discord.com), like TELEGRAM_PROXY. Webhooks to other sites go directly, with their guard.
+DISCORD_PROXY = env.str("DISCORD_PROXY", default="")
 BOTS_WEBHOOK_PORT = 8081
 # The bots service checks the panel for "turn on/off/restart" and reports the bots' state every
 # BOT_SUPERVISOR_SECONDS; a report older than BOT_SUPERVISOR_STALE means the service does not run.
@@ -403,6 +406,8 @@ GITHUB_PROXY = env.str("GITHUB_PROXY", default="")
 RELEASES_CACHE_TIMEOUT = 6 * 60 * 60
 # Seconds to wait for a useful material link in the weekly check (guides-check-materials).
 MATERIALS_CHECK_TIMEOUT = 15
+# A proxy for that check, like TELEGRAM_PROXY: blocked sites do not count as broken links.
+MATERIALS_PROXY = env.str("MATERIALS_PROXY", default="")
 AMNEZIA_APP_STORE_URL = env.str(
     "AMNEZIA_APP_STORE_URL", default="https://apps.apple.com/app/id1600529900"
 )

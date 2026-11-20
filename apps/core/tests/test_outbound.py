@@ -8,6 +8,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from apps.core.services.outbound import (
     TELEGRAM_API_SERVER,
+    DiscordApi,
     OutboundProxy,
     TelegramApi,
     url_opener,
@@ -113,3 +114,27 @@ def test_a_refused_login_is_a_network_error() -> None:
             url_opener(proxy)("http://api.telegram.test/x", timeout=5)
 
     assert "s3cret" not in str(error.value)
+
+
+def test_discord_goes_through_its_proxy_only_on_its_hosts() -> None:
+    api = DiscordApi(OutboundProxy("socks5://proxy:1080"))
+
+    assert api.route("https://discord.com/api/webhooks/1/x") is api
+    assert api.route("https://canary.discord.com/api/v10/users/@me") is api
+    assert api.route("https://hooks.example.com/discord.com") is None
+    assert api.route("https://discord.com.example.net/x") is None
+
+
+def test_without_a_proxy_discord_is_reached_as_before(settings: Any) -> None:
+    settings.DISCORD_PROXY = ""
+
+    api = DiscordApi.from_settings()
+
+    assert api == DiscordApi(None)
+    assert api.route("https://discord.com/api/v10/users/@me") is None
+
+
+def test_the_discord_proxy_comes_from_the_settings(settings: Any) -> None:
+    settings.DISCORD_PROXY = "http://user:pw@proxy:3128"
+
+    assert DiscordApi.from_settings().proxy == OutboundProxy("http://user:pw@proxy:3128")

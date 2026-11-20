@@ -4,7 +4,8 @@ Users work with it in a direct message: slash commands, buttons and typed text (
 support, with an image attached). On a server only `/menu` and `/link` are offered; the answer
 goes to the user's direct messages and the server gets an ephemeral note about it, or a hint how
 to open direct messages when they are closed. Nothing the bot says is seen by others on the
-server, and plain messages on servers are not read at all.
+server, and plain messages on servers are not read at all. With `DISCORD_PROXY` set the bot
+reaches Discord through that proxy.
 """
 
 import io
@@ -12,6 +13,7 @@ from contextlib import suppress
 from typing import Any, cast
 
 import discord
+from aiohttp_socks import ProxyConnector
 from discord import app_commands
 from django.conf import settings
 from django.utils import translation
@@ -30,6 +32,7 @@ from apps.bots.services.replies import (
     Reply,
 )
 from apps.core.models import SiteSettings
+from apps.core.services.outbound import DiscordApi, OutboundProxy
 from apps.support.services.images import MAX_IMAGE_SIZE
 
 # Discord limits: message text, buttons on one message, button label, custom_id.
@@ -83,7 +86,7 @@ class DiscordAdapter(BotAdapter):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.client = DiscordClient(self)
+        self.client = DiscordClient(self, DiscordApi.from_settings().proxy)
 
     @classmethod
     def token(cls) -> str:
@@ -237,12 +240,20 @@ def _on_server(interaction: discord.Interaction[Any]) -> bool:
 class DiscordClient(discord.Client):
     """The gateway connection with the slash commands of the menu and `/link <code>`."""
 
-    def __init__(self, adapter: DiscordAdapter) -> None:
+    def __init__(self, adapter: DiscordAdapter, proxy: OutboundProxy | None = None) -> None:
         super().__init__(intents=discord.Intents(guilds=True, dm_messages=True))
         self.adapter = adapter
+        self.proxy = proxy
         self.tree = app_commands.CommandTree(self)
         for command in slash_commands(adapter):
             self.tree.add_command(command)
+
+    async def login(self, token: str) -> None:
+        # The connector needs a running event loop. Through it go both the API requests and
+        # the gateway; aiohttp-socks takes http:// and socks5:// proxies alike.
+        if self.proxy is not None:
+            self.http.connector = ProxyConnector.from_url(self.proxy.url)
+        await super().login(token)
 
     async def setup_hook(self) -> None:
         self.add_dynamic_items(ActionButton)

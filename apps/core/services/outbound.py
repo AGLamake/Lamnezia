@@ -1,9 +1,10 @@
-"""Proxies of the panel's own requests to Telegram and GitHub, and the address of the Bot API.
+"""Proxies of the panel's own requests to Telegram, Discord, GitHub and material links.
 
-The panel in a country that blocks api.telegram.org or api.github.com reaches them through a
-proxy or a self-hosted Bot API server set in the environment. Only these requests change: the
-VPN servers (SSH) and webhooks are reached as before, webhooks with their address guard. A proxy
-URL may hold a login and a password: it is shown only as `OutboundProxy.safe`, never logged.
+The panel in a country that blocks api.telegram.org, discord.com or api.github.com reaches them
+through a proxy or a self-hosted Bot API server set in the environment. Only these requests
+change: the VPN servers (SSH) and webhooks to other sites are reached as before, webhooks with
+their address guard. A proxy URL may hold a login and a password: it is shown only as
+`OutboundProxy.safe`, never logged.
 """
 
 import http.client
@@ -22,6 +23,10 @@ from python_socks.sync import Proxy
 
 PROXY_SCHEMES = ("http", "socks5")
 TELEGRAM_API_SERVER = "https://api.telegram.org"
+# Discord's API and channel webhooks live on these hosts.
+DISCORD_HOSTS = frozenset(
+    {"discord.com", "discordapp.com", "canary.discord.com", "ptb.discord.com"}
+)
 
 
 @dataclass(frozen=True)
@@ -79,6 +84,14 @@ def url_opener(proxy: OutboundProxy | None) -> Callable[..., Any]:
     return urllib.request.build_opener(*proxy.handlers()).open
 
 
+def proxied_opener(
+    proxy: OutboundProxy | None, *handlers: urllib.request.BaseHandler
+) -> Callable[..., Any]:
+    """`urlopen` with the extra handlers, through the proxy when there is one."""
+    own = proxy.handlers() if proxy else []
+    return urllib.request.build_opener(*own, *handlers).open
+
+
 @dataclass(frozen=True)
 class TelegramApi:
     """Where the panel calls the Bot API: Telegram's server or a self-hosted one, maybe through
@@ -103,8 +116,36 @@ class TelegramApi:
 
     def opener(self, *handlers: urllib.request.BaseHandler) -> Callable[..., Any]:
         """`urlopen` with the extra handlers, through the proxy when there is one."""
-        own = self.proxy.handlers() if self.proxy else []
-        return urllib.request.build_opener(*own, *handlers).open
+        return proxied_opener(self.proxy, *handlers)
+
+
+@dataclass(frozen=True)
+class DiscordApi:
+    """How the panel reaches Discord's own hosts (the API and channel webhooks): through the
+    proxy of the settings. Without a proxy, or for a webhook on another host, nothing changes.
+    """
+
+    proxy: OutboundProxy | None = None
+
+    @classmethod
+    def from_settings(cls) -> Self:
+        return cls(OutboundProxy.parse(settings.DISCORD_PROXY))
+
+    def route(self, url: str) -> Self | None:
+        """Self for an address on Discord's hosts when there is a proxy; None otherwise: the
+        request goes as before, with the webhook guard.
+        """
+        if self.proxy is None or urlsplit(url).hostname not in DISCORD_HOSTS:
+            return None
+        return self
+
+    def opener(self, *handlers: urllib.request.BaseHandler) -> Callable[..., Any]:
+        """`urlopen` with the extra handlers, through the proxy."""
+        return proxied_opener(self.proxy, *handlers)
+
+
+# A request to a messenger's own service, set in the environment, not to an address from a form.
+MessengerApi = TelegramApi | DiscordApi
 
 
 def _socks_connect(

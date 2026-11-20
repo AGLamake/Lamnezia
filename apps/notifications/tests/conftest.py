@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from django.db import transaction
 
-from apps.core.services.outbound import TelegramApi
+from apps.core.services.outbound import MessengerApi
 from apps.notifications.services.channels import DeliveryError, HttpClient
 
 
@@ -15,7 +15,7 @@ class Post:
     url: str
     body: bytes
     headers: dict[str, str]
-    api: TelegramApi | None = None
+    api: MessengerApi | None = None
 
 
 @dataclass
@@ -33,7 +33,7 @@ class FakeHttp:
         body: bytes,
         headers: dict[str, str] | None = None,
         *,
-        api: TelegramApi | None = None,
+        api: MessengerApi | None = None,
     ) -> bytes:
         if url in self.failing:
             raise self.failing[url]

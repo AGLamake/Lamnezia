@@ -5,6 +5,7 @@ from typing import Any, cast
 
 import discord
 import pytest
+from aiohttp_socks import ProxyConnector
 from discord import app_commands
 from django.utils import translation
 from django.utils.translation import gettext
@@ -468,3 +469,35 @@ async def test_a_new_panel_below_takes_the_buttons_off_the_pressed_one() -> None
 
     assert interaction.edits == [{"view": None}]
     assert interaction.sent[-1]["content"] == "Your key"
+
+
+async def _log_in(client: discord.Client, token: str) -> None:
+    """Stands in for the login request to Discord."""
+
+
+@pytest.mark.asyncio
+async def test_the_bot_reaches_discord_through_the_proxy_of_the_settings(
+    settings: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings.DISCORD_PROXY = "socks5://user:pw@proxy.example:1080"
+    monkeypatch.setattr(discord.Client, "login", _log_in)
+    client = DiscordAdapter(StubCore(Reply("Menu"))).client
+
+    await client.login("token")
+
+    connector = client.http.connector
+    assert isinstance(connector, ProxyConnector)
+    await connector.close()
+
+
+@pytest.mark.asyncio
+async def test_without_a_proxy_the_bot_connects_directly(
+    settings: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    settings.DISCORD_PROXY = ""
+    monkeypatch.setattr(discord.Client, "login", _log_in)
+    client = DiscordAdapter(StubCore(Reply("Menu"))).client
+
+    await client.login("token")
+
+    assert not isinstance(client.http.connector, ProxyConnector)

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Proxy for Discord and for the material link check**: `LAMNEZIA_DISCORD_PROXY` takes the
+  Discord bot (API and gateway), its direct messages and the notification webhooks on discord.com
+  through a proxy, like `LAMNEZIA_TELEGRAM_PROXY`; webhooks to other hosts go directly, with their
+  address check. `LAMNEZIA_MATERIALS_PROXY` does the same for the weekly check of the useful
+  material links. Without the settings nothing changes; the proxy password is never logged.
 - **Installation without a domain**: `install.sh` without `--domain` (or with an empty answer)
   opens the panel by the server's public IPv4 address. The bundled Caddy gets a short-lived
   Let's Encrypt certificate for the IP address and renews it itself (`LAMNEZIA_CADDY_TLS=ip`,

@@ -2,10 +2,12 @@ import datetime
 import urllib.error
 import urllib.request
 from email.message import Message
+from typing import Any
 
 import pytest
 from django.test import Client
 
+from apps.core.tests.proxies import web_server
 from apps.guides.models import MaterialTopic, UsefulMaterial
 from apps.guides.services.materials import LinkChecker, MaterialLinkCheck, sections_by_topic
 
@@ -97,6 +99,28 @@ def test_link_check_marks_broken_and_clears_fixed_links() -> None:
     assert (fixed.is_broken, fixed.check_error) == (False, "")
     assert isinstance(fixed.checked_at, datetime.date)
     assert hidden.checked_at is None
+
+
+def test_the_check_goes_through_the_proxy_of_the_settings(settings: Any) -> None:
+    with web_server() as (port, seen):
+        settings.MATERIALS_PROXY = f"http://user:pw@127.0.0.1:{port}"
+
+        status = LinkChecker.from_settings().check("http://blocked.example/guide")
+
+    # The stand-in answers GET only: the HEAD refused, the check tries GET.
+    assert status.ok
+    assert seen.paths == ["http://blocked.example/guide"]
+    assert seen.auth == ["Basic dXNlcjpwdw=="]
+
+
+def test_without_a_proxy_the_check_goes_directly(settings: Any) -> None:
+    with web_server() as (port, seen):
+        settings.MATERIALS_PROXY = ""
+
+        status = LinkChecker.from_settings().check(f"http://127.0.0.1:{port}/guide")
+
+    assert status.ok
+    assert seen.paths == ["/guide"]
 
 
 def test_page_hides_broken_and_unpublished_materials(client: Client) -> None:

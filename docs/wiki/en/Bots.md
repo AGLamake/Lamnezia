@@ -94,8 +94,20 @@ Telegram login on the sign-in page is opened by the visitor's browser and needs 
 of a proxy, or with it, the panel can call a self-hosted
 [Bot API server](https://github.com/tdlib/telegram-bot-api) placed where Telegram is reachable:
 `LAMNEZIA_TELEGRAM_API_SERVER=http://telegram-bot-api:8081` (without `--local`). The connections to
-the VPN servers and the webhooks never go through these proxies. The proxy password is a secret:
-the panel does not log it, and errors show the proxy without it.
+the VPN servers and the webhooks to other sites never go through these proxies. The proxy password
+is a secret: the panel does not log it, and errors show the proxy without it.
+
+### Discord through a proxy
+
+Where discord.com is blocked, set its proxy the same way:
+
+```sh
+LAMNEZIA_DISCORD_PROXY=socks5://user:password@proxy.example.com:1080
+```
+
+The Discord bot (its API requests and the gateway connection), direct messages from the bot and
+the notification channels whose webhook is on discord.com go through it. A webhook on any other
+host goes directly, with the usual check of its address. Without the setting nothing changes.
 
 ## 5. Discord channel for the administrators' notifications
 

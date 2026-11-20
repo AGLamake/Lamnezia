@@ -49,6 +49,7 @@
 | `LAMNEZIA_TRAFFIC_HOURLY_DAYS` | `35` | Сколько дней трафик хранится по часам; более старые часы сворачиваются в одну запись на ключ и день (не меньше 1). Итоги, статистика и лимиты не меняются. |
 | `LAMNEZIA_GITHUB_TOKEN` | пусто | Токен GitHub без прав. Повышает лимит API для ссылок на релизы Amnezia. |
 | `LAMNEZIA_GITHUB_PROXY` | пусто | Прокси для запросов к api.github.com (ссылки на релизы Amnezia, проверка обновлений панели), как `LAMNEZIA_TELEGRAM_PROXY`. |
+| `LAMNEZIA_MATERIALS_PROXY` | пусто | Прокси для еженедельной проверки ссылок полезных материалов, как `LAMNEZIA_TELEGRAM_PROXY`: сайт, заблокированный там, где стоит панель, не считается битой ссылкой. |
 | `LAMNEZIA_AMNEZIA_APP_STORE_URL` | Amnezia в App Store | Ссылка для iOS в инструкциях. |
 | `LAMNEZIA_AMNEZIA_GOOGLE_PLAY_URL` | Amnezia в Google Play | Ссылка на Google Play в инструкциях. |
 | `LAMNEZIA_REQUIRE_ADMIN_2FA` | `True` | Администраторы входят с кодом из приложения-аутентификатора. |
@@ -67,6 +68,7 @@
 | `LAMNEZIA_TELEGRAM_WEBHOOK` | `false` | Telegram-бот получает обновления через webhook по адресу `<LAMNEZIA_SITE_URL>/bots/telegram/`, а не long polling. Нужен публичный домен с HTTPS ([Аккаунты Telegram и Discord](Messengers.md)). |
 | `LAMNEZIA_TELEGRAM_PROXY` | пусто | Прокси для бота и уведомлений в Telegram, если Telegram заблокирован: `http://host:port` или `socks5://host:port`, можно с `user:password@` ([Настройка ботов](Bots.md#telegram-через-прокси)). Пароль не пишется в логи и скрыт на странице ошибки (`LAMNEZIA_DEBUG`). |
 | `LAMNEZIA_TELEGRAM_API_SERVER` | `https://api.telegram.org` | Свой сервер Bot API для бота и уведомлений в Telegram, например `http://telegram-bot-api:8081`. |
+| `LAMNEZIA_DISCORD_PROXY` | пусто | Прокси для бота Discord, его личных сообщений и вебхуков уведомлений на discord.com, как `LAMNEZIA_TELEGRAM_PROXY` ([Настройка ботов](Bots.md#discord-через-прокси)). |
 | `LAMNEZIA_EMAIL_URL` | `consolemail://` | Почтовый сервер для писем (сброс пароля, подтверждение email, ссылки для входа), например `smtp+tls://user:password@smtp.example.com:587`. По умолчанию письма только пишутся в лог `web`. |
 | `LAMNEZIA_DEFAULT_FROM_EMAIL` | `Lamnezia <noreply@localhost>` | Отправитель писем. |
 | `LAMNEZIA_PLUGINS` | пусто | Django-приложения через запятую, которые добавляются в панель, например плагины оплаты ([Плагины оплаты](Billing-plugins.md)). |

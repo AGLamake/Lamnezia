@@ -11,7 +11,7 @@ from typing import Any
 import pytest
 
 from apps.accounts.tests.registration import configure as configure_site
-from apps.core.services.outbound import OutboundProxy, TelegramApi
+from apps.core.services.outbound import DiscordApi, OutboundProxy, TelegramApi
 from apps.core.tests.proxies import web_server
 from apps.notifications.models import ChannelKind
 from apps.notifications.services.addresses import AddressGuard
@@ -152,6 +152,52 @@ def test_discord_sends_an_embed() -> None:
     assert embed["title"] == "Server Germany is down"
     assert embed["description"] == "No answer."
     assert embed["timestamp"] == "2026-11-03T12:00:00+00:00"
+    assert http.posts[0].api is None
+
+
+DISCORD_PROXY = DiscordApi(OutboundProxy("socks5://proxy:1080"))
+
+
+def test_a_discord_webhook_goes_through_the_discord_proxy() -> None:
+    http = FakeHttp()
+    url = "https://discord.com/api/webhooks/1/x"
+
+    DiscordChannel(url, http, DISCORD_PROXY).send(MESSAGE)  # type: ignore[arg-type]
+
+    assert http.posts[0].api == DISCORD_PROXY
+
+
+def test_a_webhook_on_another_host_keeps_the_guard_without_the_proxy() -> None:
+    http = FakeHttp()
+    url = "https://hooks.example.com/discord"
+
+    DiscordChannel(url, http, DISCORD_PROXY).send(MESSAGE)  # type: ignore[arg-type]
+
+    assert http.posts[0].api is None
+
+
+@pytest.mark.django_db
+def test_discord_channels_take_the_proxy_of_the_settings(settings: Any) -> None:
+    settings.DISCORD_PROXY = "socks5://proxy:1080"
+    configure_site(discord_bot_token="panel-token")
+    http = FakeHttp(answers={DM_OPEN: b'{"id": "77"}'})
+    channel = ChannelFactory.build(kind=ChannelKind.DISCORD_DM, target="501", secret="")
+
+    build_channel(channel, http).send(MESSAGE)  # type: ignore[arg-type]
+
+    assert [post.api for post in http.posts] == [DISCORD_PROXY, DISCORD_PROXY]
+
+
+def test_the_discord_proxy_is_used_without_the_webhook_guard() -> None:
+    with web_server() as (port, seen):
+        api = DiscordApi(OutboundProxy(f"http://user:pw@127.0.0.1:{port}"))
+        client = HttpClient(5, AddressGuard(allow_private=False))
+        url = "http://discord.com/api/webhooks/1/x"
+
+        answer = client.post(url, b"{}", api=api.route(url))
+
+    assert json.loads(answer) == {"ok": True}
+    assert seen.paths == [url]
 
 
 DM_OPEN = "https://discord.com/api/v10/users/@me/channels"
