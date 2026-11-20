@@ -65,7 +65,7 @@
 | `LAMNEZIA_SITE_URL` | `https://<LAMNEZIA_DOMAIN>` | Адрес панели для ссылок, которые присылают боты. |
 | `LAMNEZIA_BOT_RATE_LIMIT` | `20` | Команд в минуту, которые боты принимают от одного аккаунта мессенджера. `0` отключает ограничение. |
 | `LAMNEZIA_TELEGRAM_WEBHOOK` | `false` | Telegram-бот получает обновления через webhook по адресу `<LAMNEZIA_SITE_URL>/bots/telegram/`, а не long polling. Нужен публичный домен с HTTPS ([Аккаунты Telegram и Discord](Messengers.md)). |
-| `LAMNEZIA_TELEGRAM_PROXY` | пусто | Прокси для бота и уведомлений в Telegram, если Telegram заблокирован: `http://host:port` или `socks5://host:port`, можно с `user:password@` ([Настройка ботов](Bots.md#telegram-через-прокси)). Пароль не пишется в логи. |
+| `LAMNEZIA_TELEGRAM_PROXY` | пусто | Прокси для бота и уведомлений в Telegram, если Telegram заблокирован: `http://host:port` или `socks5://host:port`, можно с `user:password@` ([Настройка ботов](Bots.md#telegram-через-прокси)). Пароль не пишется в логи и скрыт на странице ошибки (`LAMNEZIA_DEBUG`). |
 | `LAMNEZIA_TELEGRAM_API_SERVER` | `https://api.telegram.org` | Свой сервер Bot API для бота и уведомлений в Telegram, например `http://telegram-bot-api:8081`. |
 | `LAMNEZIA_EMAIL_URL` | `consolemail://` | Почтовый сервер для писем (сброс пароля, подтверждение email, ссылки для входа), например `smtp+tls://user:password@smtp.example.com:587`. По умолчанию письма только пишутся в лог `web`. |
 | `LAMNEZIA_DEFAULT_FROM_EMAIL` | `Lamnezia <noreply@localhost>` | Отправитель писем. |

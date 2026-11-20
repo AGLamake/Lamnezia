@@ -519,6 +519,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Proxy settings on the error page**: the Django error page (`LAMNEZIA_DEBUG`) and error mails
+  hide `TELEGRAM_PROXY`, `GITHUB_PROXY` and other settings with PROXY in the name, as they may
+  hold a proxy password.
 - **Service secrets on request**: the SOCKS5 password and the `tg://`/`t.me` links of Telegram
   proxies are no longer in the server card page. **Show** asks the panel for them (`no-store`), and
   every look is written to the audit log (*Show service password*, *Show Telegram proxy links*),

@@ -30,6 +30,7 @@ CSRF_COOKIE_HTTPONLY = True
 # No SECURE_SSL_REDIRECT: nginx redirects to HTTPS, and healthchecks come over plain HTTP.
 SECURE_HSTS_SECONDS = env.int("HSTS_SECONDS", default=0 if DEBUG else 365 * 24 * 60 * 60)
 CSRF_FAILURE_VIEW = "apps.core.errors.csrf_failure"
+DEFAULT_EXCEPTION_REPORTER_FILTER = "apps.core.reporting.PanelExceptionReporterFilter"
 # No inline scripts and no eval: Alpine is the CSP build, handlers live in static/js/ui.js.
 # HTMX, Alpine x-show and the Django admin set inline styles.
 CONTENT_SECURITY_POLICY = (

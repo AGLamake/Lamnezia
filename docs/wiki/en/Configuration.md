@@ -65,7 +65,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_SITE_URL` | `https://<LAMNEZIA_DOMAIN>` | Panel address for links the bots send. |
 | `LAMNEZIA_BOT_RATE_LIMIT` | `20` | Commands a minute the bots take from one messenger account. `0` turns the limit off. |
 | `LAMNEZIA_TELEGRAM_WEBHOOK` | `false` | The Telegram bot takes updates by a webhook at `<LAMNEZIA_SITE_URL>/bots/telegram/` instead of long polling. Needs a public HTTPS domain ([Telegram and Discord accounts](Messengers.md)). |
-| `LAMNEZIA_TELEGRAM_PROXY` | empty | A proxy for the bot and the Telegram notifications where Telegram is blocked: `http://host:port` or `socks5://host:port`, maybe with `user:password@` ([Setting up the bots](Bots.md#telegram-through-a-proxy)). The password is never logged. |
+| `LAMNEZIA_TELEGRAM_PROXY` | empty | A proxy for the bot and the Telegram notifications where Telegram is blocked: `http://host:port` or `socks5://host:port`, maybe with `user:password@` ([Setting up the bots](Bots.md#telegram-through-a-proxy)). The password is never logged and is hidden on the error page (`LAMNEZIA_DEBUG`). |
 | `LAMNEZIA_TELEGRAM_API_SERVER` | `https://api.telegram.org` | A self-hosted Bot API server for the bot and the Telegram notifications, for example `http://telegram-bot-api:8081`. |
 | `LAMNEZIA_EMAIL_URL` | `consolemail://` | Mail server for letters (password reset, email confirmation, sign-in links), e.g. `smtp+tls://user:password@smtp.example.com:587`. The default only writes letters to the `web` log. |
 | `LAMNEZIA_DEFAULT_FROM_EMAIL` | `Lamnezia <noreply@localhost>` | Sender of the letters. |
