@@ -63,6 +63,8 @@
 | `relay_up` | Панель снова читает состояние ретранслятора после сбоя (`relay_down`). Один раз за сбой, даже если `relay_down` не получил ни один канал. | `relay`, `host`, `last_seen` — время последнего чтения до сбоя или пустая строка |
 | `member_caught_up` | Отстававший участник (`member_lagging`) снова получил файлы группы. Один раз за отставание, даже если `member_lagging` не получил ни один канал. | `group`, `server`, `since` — с какого момента отставал |
 | `split_list_stale` | Источник списка сетей группы в раздельном режиме не дал список, который панель принимает: не скачался, не разобрался или в нём меньше половины прежних сетей. Ретранслятор работает с прежним списком. Раз в сутки, пока источник не обновляется. | `group`, `source` — хост адреса источника, `days` — дней с последнего удачного списка, `error` |
+| `split_emergency` | Агент ретранслятора сам перевёл группу из раздельного режима на проброс: канал не работает ни через одного участника, а участник отвечает на обычную проверку. | `group`, `relay`, `server` — участник, на который идёт проброс, или `null` |
+| `split_restored` | Канал снова работает, и агент вернул группу в раздельный режим. | `group`, `relay` |
 | `staff_report` | Отчёт по расписанию (**Настройки → Отчёт персоналу**) или **Прислать сейчас**. Вся панель. | `period` — `daily` или `weekly`, `since` — начало периода (местное `YYYY-MM-DD HH:MM`), `servers_down`, `relays_down`, `groups_down` — имена, `traffic` — байты, `top_keys` — до пяти `[имя ключа, байты]`, `access_ending` — `"user YYYY-MM-DD"`, `failed_operations`, `backups_oldest` и `archive_at` — местное время или `null`, если копии нет, `applications`, `new_requests`, `url` — главная панели |
 | `test` | **Отправить тест** на странице канала. | `channel` — название канала |
 
@@ -148,6 +150,10 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/member_caught_up"}}}},
     {"if": {"properties": {"event": {"const": "split_list_stale"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/split_list_stale"}}}},
+    {"if": {"properties": {"event": {"const": "split_emergency"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/split_emergency"}}}},
+    {"if": {"properties": {"event": {"const": "split_restored"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/split_restored"}}}},
     {"if": {"properties": {"event": {"const": "staff_report"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/staff_report"}}}},
     {"if": {"properties": {"event": {"const": "test"}}},
@@ -370,6 +376,16 @@
       "type": "object",
       "required": ["group", "source", "days", "error"],
       "properties": {"group": {"type": "string"}, "source": {"type": "string"}, "days": {"type": "integer", "minimum": 1}, "error": {"type": "string"}}
+    },
+    "split_emergency": {
+      "type": "object",
+      "required": ["group", "relay", "server"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}, "server": {"type": ["string", "null"]}}
+    },
+    "split_restored": {
+      "type": "object",
+      "required": ["group", "relay"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}}
     },
     "staff_report": {
       "type": "object",

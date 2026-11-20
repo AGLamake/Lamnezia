@@ -3,7 +3,9 @@
 The agent names members by address; the monitor matches them to group members, so the panel
 keeps member ids and names. Comparing a reading with the previous one gives the events of
 docs/FALLBACK.md section 7: a switch, a member the relay cannot reach, a group with none left,
-and the pairs of the last two: the member and the group reachable again.
+and the pairs of the last two: the member and the group reachable again. A split group also
+keeps its mode, uplink and network count (docs/SPLIT.md 4.6), and the agent moving it to the
+emergency forward and back is a change too.
 
 A member the relay cannot reach opens an outage that goes on from reading to reading. It ends
 only after the member has failed no probe seen for `STEADY_SECONDS`: a member that answers one
@@ -12,9 +14,18 @@ probe in a few would otherwise be told down and up again every few minutes.
 
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field, replace
+from datetime import datetime
 from typing import Any
 
-from amnezia_core.relay import DEFAULT_FAILURES, Backend, BackendState, GroupState, RelayState
+from amnezia_core.relay import (
+    DEFAULT_FAILURES,
+    Backend,
+    BackendState,
+    GroupState,
+    RelayState,
+    Routing,
+    UplinkState,
+)
 
 # How long a member that was down must answer every probe seen before its outage is over.
 STEADY_SECONDS = 5 * 60
@@ -45,11 +56,35 @@ class Outage:
 
 
 @dataclass(frozen=True)
+class Uplink:
+    """The uplink of a split group: the member it points to (None when it points nowhere or to
+    an address no member has now) and whether its last check passed."""
+
+    member: Member | None
+    alive: bool
+
+    @classmethod
+    def of(cls, state: UplinkState, members: Mapping[Backend, Member]) -> "Uplink":
+        endpoint = state.endpoint
+        return cls(members.get(endpoint) if endpoint else None, state.alive)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"member": vars(self.member) if self.member else None, "alive": self.alive}
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "Uplink":
+        member = data.get("member")
+        return cls(Member(**member) if member else None, bool(data["alive"]))
+
+
+@dataclass(frozen=True)
 class GroupHealth:
     """One group: its active member, when it last switched, who answers and who does not.
 
     `unanswered`: the active member answers the relay but none of the clients.
     `outages`: the members lost and not steady again yet (see the module docstring).
+    `routing` is what the panel asks, `mode` what the agent does; `mode_changed_at` is when it
+    last changed the mode, `networks` the size of the list it applies (split groups only).
     """
 
     port: int
@@ -61,6 +96,11 @@ class GroupHealth:
     bytes_to_clients: int
     unanswered: bool = False
     outages: tuple[Outage, ...] = ()
+    routing: Routing = Routing.FORWARD
+    mode: Routing = Routing.FORWARD
+    mode_changed_at: int | None = None
+    uplink: Uplink | None = None
+    networks: int = 0
 
     @classmethod
     def of(
@@ -83,18 +123,32 @@ class GroupHealth:
         return cls(
             port=state.port,
             active=members.get(state.active) if state.active else None,
-            switched_at=int(state.switched_at.timestamp()) if state.switched_at else None,
+            switched_at=_seconds(state.switched_at),
             alive=tuple(alive),
             down=tuple(down),
             bytes_from_clients=state.bytes_from_clients,
             bytes_to_clients=state.bytes_to_clients,
             unanswered=state.unanswered,
             outages=_outages(down, others, failed, before, now),
+            routing=state.routing,
+            mode=state.mode,
+            mode_changed_at=_seconds(state.mode_changed_at),
+            uplink=Uplink.of(state.uplink, members) if state.uplink else None,
+            networks=state.networks,
         )
 
     @property
     def all_down(self) -> bool:
         return bool(self.down) and not self.alive
+
+    @property
+    def split(self) -> bool:
+        return self.routing is Routing.SPLIT
+
+    @property
+    def emergency(self) -> bool:
+        """A split group the agent forwards because its uplink fails and a member answers."""
+        return self.split and self.mode is Routing.FORWARD
 
     def lost(self) -> set[int]:
         """Ids of the members with an outage going on."""
@@ -119,12 +173,18 @@ class GroupHealth:
             "bytes_to_clients": self.bytes_to_clients,
             "unanswered": self.unanswered,
             "outages": [outage.to_dict() for outage in self.outages],
+            "routing": str(self.routing),
+            "mode": str(self.mode),
+            "mode_changed_at": self.mode_changed_at,
+            "uplink": self.uplink.to_dict() if self.uplink else None,
+            "networks": self.networks,
         }
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any], updated_at: int) -> "GroupHealth":
-        """A reading stored before outages were kept has one for each member down then."""
-        active = data.get("active")
+        """A reading stored before outages were kept has one for each member down then; one
+        stored before split routing is a forwarded group."""
+        active, uplink = data.get("active"), data.get("uplink")
         down = tuple(Member(**item) for item in data.get("down", ()))
         if "outages" in data:
             outages = tuple(Outage.from_dict(item) for item in data["outages"])
@@ -140,6 +200,11 @@ class GroupHealth:
             bytes_to_clients=int(data.get("bytes_to_clients", 0)),
             unanswered=bool(data.get("unanswered", False)),
             outages=outages,
+            routing=Routing(data.get("routing", Routing.FORWARD)),
+            mode=Routing(data.get("mode", Routing.FORWARD)),
+            mode_changed_at=data.get("mode_changed_at"),
+            uplink=Uplink.from_dict(uplink) if uplink else None,
+            networks=int(data.get("networks", 0)),
         )
 
 
@@ -179,7 +244,18 @@ class GroupUp:
     port: int
 
 
-type Change = Switched | MemberDown | AllDown | MemberUp | GroupUp
+@dataclass(frozen=True)
+class ModeChanged:
+    """The agent moved a split group to the emergency forward (`emergency`) or back to split
+    routing; `active` is the member it forwards to, `at` when it changed the mode."""
+
+    port: int
+    emergency: bool
+    active: Member | None
+    at: int
+
+
+type Change = Switched | MemberDown | AllDown | MemberUp | GroupUp | ModeChanged
 
 
 @dataclass(frozen=True)
@@ -230,6 +306,8 @@ class RelayHealth:
         The first active member after an installation is no switch. A member is told down when
         its outage opens and up when it ends while the member is still in the group; a group
         comes up only after it was down in `previous`. So each up follows the down told before.
+        A mode change is told only for a group split in both readings: the panel moving a group
+        between forward and split routing is no change of the agent.
         """
         for port, group in self.groups.items():
             before = previous.groups.get(port) if previous else None
@@ -252,6 +330,9 @@ class RelayHealth:
                     yield MemberUp(port, member)
             if before is not None and before.all_down and group.alive:
                 yield GroupUp(port)
+            if before is not None and before.split and group.split and before.mode != group.mode:
+                at = group.mode_changed_at or self.updated_at
+                yield ModeChanged(port, group.emergency, group.active, at)
 
     def rates(self, previous: "RelayHealth | None") -> tuple[float, float] | None:
         """Bytes per second from and to the clients since `previous`; None when unknown.
@@ -269,6 +350,10 @@ class RelayHealth:
     def _bytes(self) -> tuple[int, int]:
         groups = self.groups.values()
         return sum(g.bytes_from_clients for g in groups), sum(g.bytes_to_clients for g in groups)
+
+
+def _seconds(moment: datetime | None) -> int | None:
+    return int(moment.timestamp()) if moment else None
 
 
 def _outages(

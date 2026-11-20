@@ -103,6 +103,11 @@ class Relay(models.Model):
     def group_health(self, port: int) -> GroupHealth | None:
         return next((group for group in self.groups_health if group.port == port), None)
 
+    @property
+    def splits(self) -> bool:
+        """A group of the last reading is in split routing: the relay works for it."""
+        return any(group.split for group in self.groups_health)
+
 
 class PeerRole(models.TextChoices):
     """What a service peer of a group is for; neither is ever given to a user."""

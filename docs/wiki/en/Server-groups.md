@@ -187,7 +187,8 @@ that, the panel no longer updates the relay by itself and only shows the warning
 
 ### Split routing
 
-The relay agent can also run a group in **split** routing instead of forwarding its port. The relay
+Split routing lets Russian sites see the relay's Russian address while other sites see the address
+abroad, with no settings on the devices and no new keys. The relay agent can also run a group in **split** routing instead of forwarding its port. The relay
 then answers the clients itself with a copy of the group's interface (same key and parameters, the
 group's port), sends traffic to the networks of the group's list and to private networks straight
 out of the relay, and sends everything else to the active member over an AmneziaWG uplink with the
@@ -285,6 +286,64 @@ The limits act on the clone too:
   them comes with the relay update: use **Reinstall** on the relay card once.
 
 In forwarding everything is counted and limited on the servers, as before.
+
+#### What the panel shows
+
+- **Group page.** Under the routing switch the group shows the mode the agent keeps it in:
+  *split routing*, or *emergency forwarding* while the uplink fails, with the moment it changed,
+  the member the uplink leads to (the active exit) and whether the uplink works. The network list
+  tells how many networks the relay applies and when a list was last taken.
+- **Relay card.** Next to the channel load the card shows the CPU load of the relay server, from
+  the server monitoring. Each split group shows its mode, exit and uplink state as on the group
+  page.
+- **Notifications.** *Emergency forwarding* (`split_emergency`) comes when the agent moves a split
+  group to forwarding by itself, and *Split routing again* (`split_restored`) when it moves it
+  back. *Network list not updated* (`split_list_stale`) comes once a day while a source of the
+  list fails. Moving a group between the routings from the group page is not told.
+
+#### Server requirements
+
+Split routing decrypts the traffic abroad on the relay and encrypts it again for the uplink, so the
+relay rests on its processor. On one vCPU without AVX2 it carried about 40 Mbit/s abroad at 100 %
+CPU; forwarding carried as much at 10–25 %. Watch the CPU load on the relay card.
+
+Relay (in Russia):
+
+| | Minimum | Good |
+|---|---|---|
+| Processor | 2 dedicated vCPU (not burst or shared) | 4 dedicated vCPU |
+| CPU generation | with AVX2: AMD EPYC (Zen 2+), Ryzen, Xeon Scalable, Core i7/i9 | EPYC Zen 3/4, Ryzen 7000/9000 |
+| Traffic abroad (estimate) | ~100 Mbit/s | 250–400 Mbit/s |
+| Memory | 2 GB | 4 GB |
+| Disk | 15 GB SSD/NVMe | 20–30 GB NVMe |
+| Port | 1 Gbit/s | 1 Gbit/s, no hard shaping |
+| Monthly traffic | at least twice the users' traffic (traffic abroad crosses the port twice) | unlimited |
+| Virtualization | KVM (`tun`, kernel modules, nftables, Docker) | KVM or a dedicated server |
+| OS | Debian 12 / Ubuntu 22.04+, kernel 5.10 or newer | Debian 12/13 |
+| Address | static IPv4 of a Russian data center | the same |
+
+Before paying, better on an hourly plan, check that an AmneziaWG handshake with the group's
+parameters to every member holds for more than ten minutes and carries traffic, that mobile
+operators reach the relay over UDP, and that the provider does not limit outgoing UDP.
+
+Exit (a member of the group): one vCPU with AVX2 and 1 GB of memory are enough, since the member
+decrypts a single stream from the relay. What matters more is the path from the relay: the
+handshake with the group's parameters must get through from the relay and hold, every 10 ms of
+round trip to the exit is added to every site abroad, and the address should not be in ranges that
+services block. Keep two or three exits at different hosting providers for the fallback.
+
+#### Limitations
+
+- Only the blacklist mode: the networks of the list go straight out, everything else abroad. A
+  whitelist (only the list abroad) is not there yet.
+- IPv4 only, and only AmneziaWG 3.1 groups.
+- Routing is chosen for the whole group, not per user or key.
+- One exit is active at a time; there is no balancing between members.
+- The relay remains a single point of failure, now also for the processor.
+- Lists are not exact: a Russian network may serve a foreign service and the other way round. Own
+  entries correct that.
+- The relay sees the destination addresses of the users while a connection lasts (conntrack); it
+  writes nothing to disk and gives the panel nothing of it.
 
 ## Keys of a group behind the relay
 

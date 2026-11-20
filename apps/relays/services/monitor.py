@@ -7,7 +7,8 @@ member left; a member is told once per outage, which ends only when it answers s
 once per outage, as a server that is down. Members that lag behind their group too long are
 reported too. Each of these but a switch has a pair told once when it is over; an outage and
 a lag are remembered apart from notifications (notifications/services/trouble.py), so the pair
-comes even when nobody hears of the trouble itself.
+comes even when nobody hears of the trouble itself. The agent moving a split group to the
+emergency forward and back is told as it happens (docs/SPLIT.md 4.3).
 Every reading with a known load is kept for the load chart (services/load.py).
 A reading is also compared with the groups the panel wrote (services/mismatch.py): a new
 mismatch drops the synced digest, so the next sync writes the relay again.
@@ -43,6 +44,7 @@ from apps.relays.services.health import (
     Member,
     MemberDown,
     MemberUp,
+    ModeChanged,
     RelayHealth,
     Switched,
 )
@@ -213,6 +215,18 @@ def _notify(change: Change, group: ServerGroup, relay: Relay, at: int) -> None:
                 Event.GROUP_REACHABLE,
                 {"group": group.name, "relay": relay_name},
                 key=f"group_reachable:{group.pk}:{at}",
+            )
+        case ModeChanged(emergency=True, active=active, at=changed_at):
+            emit(
+                Event.SPLIT_EMERGENCY,
+                {"group": group.name, "relay": relay_name, "server": active and active.name},
+                key=f"split_emergency:{group.pk}:{changed_at}",
+            )
+        case ModeChanged(at=changed_at):
+            emit(
+                Event.SPLIT_RESTORED,
+                {"group": group.name, "relay": relay_name},
+                key=f"split_restored:{group.pk}:{changed_at}",
             )
 
 

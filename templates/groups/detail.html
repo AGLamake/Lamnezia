@@ -126,7 +126,7 @@
   {% endif %}
   {% if relay.installed_at %}
   <div id="routing" class="flex flex-wrap items-center gap-2">
-    <p class="help-text">{% blocktranslate with routing=group.get_routing_display %}Routing: {{ routing }}.{% endblocktranslate %} {% if group.routing == "split" %}{% translate "The relay ends the tunnels of the clients on a clone of the leading server and sends their traffic to the active member through the uplink." %}{% else %}{% translate "The relay forwards the UDP port of the group to the active member as it is." %}{% endif %}</p>
+    <p class="help-text">{% blocktranslate with routing=group.get_routing_display %}Routing: {{ routing }}.{% endblocktranslate %} {% if group.routing == "split" %}{% translate "The relay ends the tunnels of the clients on a clone of the leading server and sends their traffic to the active member through the uplink." %}{% else %}{% translate "The relay forwards the UDP port of the group to the active member as it is." %}{% endif %}{% if group.routing == "split" and health.split %} {% include "relays/_mode.html" %}{% endif %}</p>
     <form method="post" action="{% url 'groups:routing' group.pk %}" data-confirm="{% translate "The panel first reads the traffic counters of the members, then moves the tunnels of the clients. Every client of the group makes one new handshake. Continue?" %}">
       {% csrf_token %}
       {% if group.routing == "split" %}

@@ -695,6 +695,10 @@ msgstr "По ключам"
 msgid "CPU"
 msgstr "Процессор"
 
+#, python-format
+msgid "CPU load: %(cpu)s%%."
+msgstr "Нагрузка CPU: %(cpu)s%%."
+
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -1867,6 +1871,10 @@ msgstr "Привязанные аккаунты"
 msgid "Linked."
 msgstr "Привязано."
 
+#, python-format
+msgid "Lists last taken %(when)s."
+msgstr "Списки последний раз получены %(when)s."
+
 msgid "Load"
 msgstr "Нагрузка"
 
@@ -1886,6 +1894,9 @@ msgstr "Нагрузка канала по часам за последние с
 #
 msgid "Load of the channel by six hours for the last week"
 msgstr "Нагрузка канала по шесть часов за последнюю неделю"
+
+msgid "Load the ifb module on the host"
+msgstr "Загрузить модуль ifb на хосте"
 
 msgid "Load to the clients by hour for the last day"
 msgstr "Нагрузка к клиентам по часам за последние сутки"
@@ -2158,6 +2169,9 @@ msgstr "Ключей пока нет."
 
 msgid "No keys."
 msgstr "Ключей нет."
+
+msgid "No list taken yet."
+msgstr "Ни один список ещё не получен."
 
 msgid "No list: the relay sends everything abroad through the uplink."
 msgstr "Списка нет: ретранслятор отправляет всё за рубеж через канал."
@@ -3221,6 +3235,9 @@ msgstr "Замер скорости по портам"
 msgid "Split groups: %(count)d."
 msgstr "Групп с раздельной маршрутизацией: %(count)d."
 
+msgid "Split routing encrypts the traffic abroad once more on the relay, so it rests on the processor."
+msgstr "В раздельном режиме ретранслятор ещё раз шифрует зарубежный трафик, поэтому упирается в процессор."
+
 msgid "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced. Users who had keys on it get keys of the group."
 msgstr "Отдельные серверы AmneziaWG 3.1 на порту группы. Вступающий сервер получает файлы группы: его ключ, настройки и клиенты заменяются. Пользователи, у которых были ключи на нём, получают ключи группы."
 
@@ -3870,6 +3887,13 @@ msgstr "Контейнер протокола удалён с сервера."
 msgid "The relay already sends the clients to this server."
 msgstr "Ретранслятор уже отправляет клиентов на этот сервер."
 
+#, python-format
+msgid "The relay applies %(networks)s network."
+msgid_plural "The relay applies %(networks)s networks."
+msgstr[0] "Ретранслятор применяет %(networks)s сеть."
+msgstr[1] "Ретранслятор применяет %(networks)s сети."
+msgstr[2] "Ретранслятор применяет %(networks)s сетей."
+
 msgid "The relay cannot reach the server: the clients stay where they are."
 msgstr "Ретранслятор не достучался до сервера: клиенты остаются там, где были."
 
@@ -3902,6 +3926,9 @@ msgstr "Ретранслятор пробрасывает UDP-порт груп�
 
 msgid "The relay forwards to an IPv4 address: check the DNS name of the server."
 msgstr "Ретранслятор пересылает на IPv4-адрес: проверьте DNS-имя сервера."
+
+msgid "The relay has not told how many networks it applies yet."
+msgstr "Ретранслятор ещё не сообщил, сколько сетей применяет."
 
 msgid "The relay on the new machine does not run with its ports after the install."
 msgstr "После установки ретранслятор на новой машине не работает со своими портами."
@@ -4125,6 +4152,9 @@ msgstr "Обновление запущено."
 
 msgid "The update was interrupted."
 msgstr "Обновление прервано."
+
+msgid "The uplink abroad does not work, so the relay forwards the clients to the active member as in forwarding mode. It goes back to split routing by itself."
+msgstr "Канал за границу не работает, поэтому ретранслятор пробрасывает клиентов на активного участника, как в режиме проброса. В раздельный режим он вернётся сам."
 
 msgid "The user has no subscription link yet."
 msgstr "У пользователя пока нет ссылки-подписки."
@@ -4810,11 +4840,18 @@ msgstr "скачивание %(mbit)s Мбит/с"
 msgid "due today"
 msgstr "сегодня"
 
+msgid "emergency forwarding"
+msgstr "аварийный проброс"
+
 msgid "enabled"
 msgstr "включён"
 
 msgid "error"
 msgstr "ошибка"
+
+#, python-format
+msgid "exit %(server)s"
+msgstr "выход %(server)s"
 
 msgid "expired"
 msgstr "истёк"
@@ -5048,6 +5085,9 @@ msgstr "без срока"
 
 msgid "no end date"
 msgstr "без срока"
+
+msgid "no exit"
+msgstr "нет выхода"
 
 msgid "no limit"
 msgstr "без ограничения"
@@ -5358,6 +5398,10 @@ msgstr "время входа"
 msgid "since %(date)s"
 msgstr "с %(date)s"
 
+#, python-format
+msgid "since %(when)s"
+msgstr "с %(when)s"
+
 msgid "site list of the Amnezia application (JSON)"
 msgstr "список сайтов приложения Amnezia (JSON)"
 
@@ -5366,6 +5410,9 @@ msgstr "источник"
 
 msgid "split"
 msgstr "раздельная"
+
+msgid "split routing"
+msgstr "раздельный режим"
 
 msgid "started at"
 msgstr "начат"
@@ -5489,6 +5536,12 @@ msgstr "обновлена"
 
 msgid "uplink"
 msgstr "канал"
+
+msgid "uplink down"
+msgstr "канал не работает"
+
+msgid "uplink works"
+msgstr "канал работает"
 
 #, python-format
 msgid "upload %(mbit)s Mbit/s"

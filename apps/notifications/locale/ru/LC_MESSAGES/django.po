@@ -84,6 +84,9 @@ msgstr "ID пользователя Discord"
 msgid "Email"
 msgstr "Email"
 
+msgid "Emergency forwarding"
+msgstr "Аварийный проброс"
+
 msgid "Empty: the bot from the panel settings. The bot must be in the chat."
 msgstr "Пусто — бот из настроек панели. Бот должен состоять в чате."
 
@@ -352,6 +355,9 @@ msgstr "Вход заблокирован: {user}"
 msgid "Signing secret"
 msgstr "Секрет подписи"
 
+msgid "Split routing again"
+msgstr "Снова раздельный режим"
+
 msgid "Status"
 msgstr "Статус"
 
@@ -432,6 +438,10 @@ msgid "The relay {relay} cannot reach the server {server} of the group {group}. 
 msgstr "Ретранслятор {relay} не достучался до сервера {server} группы {group}. Ретранслятор не отправляет на него клиентов, пока он снова не ответит."
 
 #, python-brace-format
+msgid "The relay {relay} cannot send the traffic of the split group {group} abroad through the uplink, so it forwards the clients to {server} as in forwarding mode. All sites see the address abroad until the uplink works again; the clients make one new handshake."
+msgstr "Ретранслятор {relay} не может отправить трафик группы {group} за границу через канал, поэтому пробрасывает клиентов на {server}, как в режиме проброса. Пока канал не заработает, все сайты видят зарубежный адрес; клиенты один раз заново выполняют рукопожатие."
+
+#, python-brace-format
 msgid "The relay {relay} reaches a server of the group {group} again. The clients of the group have a connection."
 msgstr "Ретранслятор {relay} снова получает ответ от сервера группы {group}. У клиентов группы есть связь."
 
@@ -474,6 +484,10 @@ msgid ""
 msgstr ""
 "Персонал отклонил ваше предложение: {title}\n"
 "Причина: {reason}"
+
+#, python-brace-format
+msgid "The uplink of the relay {relay} works again, so the group {group} is back in split routing: Russian sites see the address of the relay again. The clients make one new handshake."
+msgstr "Канал ретранслятора {relay} снова работает, и группа {group} вернулась в раздельный режим: российские сайты снова видят адрес ретранслятора. Клиенты один раз заново выполняют рукопожатие."
 
 #, python-brace-format
 msgid "There is a new answer to your request: {topic}."
@@ -627,12 +641,20 @@ msgid "{group}: a server is reachable again"
 msgstr "{group}: сервер снова доступен"
 
 #, python-brace-format
+msgid "{group}: emergency forwarding"
+msgstr "{group}: аварийный проброс"
+
+#, python-brace-format
 msgid "{group}: network list not updated for {days} days"
 msgstr "{group}: список сетей не обновлён {days} дн."
 
 #, python-brace-format
 msgid "{group}: no server is reachable"
 msgstr "{group}: ни один сервер не доступен"
+
+#, python-brace-format
+msgid "{group}: split routing again"
+msgstr "{group}: снова раздельный режим"
 
 #, python-brace-format
 msgid "{group}: traffic moved to {to}"

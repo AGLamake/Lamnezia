@@ -66,6 +66,8 @@ class Event(StrEnum):
     RELAY_UP = "relay_up"
     MEMBER_CAUGHT_UP = "member_caught_up"
     SPLIT_LIST_STALE = "split_list_stale"
+    SPLIT_EMERGENCY = "split_emergency"
+    SPLIT_RESTORED = "split_restored"
     STAFF_REPORT = "staff_report"
     ZONE_REPORT = "zone_report"
     TEST = "test"
@@ -479,6 +481,27 @@ EVENTS: dict[Event, EventType] = {
         _(
             "The list from {source} for the split group {group} was not taken: {error}. "
             "The relay keeps the list it has."
+        ),
+    ),
+    # The relay agent moves a split group to the emergency forward and back by itself
+    # (docs/SPLIT.md 4.3); `server` is the member it forwards to.
+    Event.SPLIT_EMERGENCY: EventType(
+        _("Emergency forwarding"),
+        _("{group}: emergency forwarding"),
+        _(
+            "The relay {relay} cannot send the traffic of the split group {group} abroad through "
+            "the uplink, so it forwards the clients to {server} as in forwarding mode. All sites "
+            "see the address abroad until the uplink works again; the clients make one new "
+            "handshake."
+        ),
+    ),
+    Event.SPLIT_RESTORED: EventType(
+        _("Split routing again"),
+        _("{group}: split routing again"),
+        _(
+            "The uplink of the relay {relay} works again, so the group {group} is back in split "
+            "routing: Russian sites see the address of the relay again. The clients make one new "
+            "handshake."
         ),
     ),
     # The summary of `SiteSettings.report_frequency` for the channels: the whole panel since

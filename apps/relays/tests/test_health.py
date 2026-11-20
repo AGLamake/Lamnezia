@@ -4,7 +4,7 @@ import json
 from ipaddress import IPv4Address
 from typing import Any
 
-from amnezia_core.relay import Backend, RelayState
+from amnezia_core.relay import Backend, RelayState, Routing
 from apps.relays.services.health import (
     STEADY_SECONDS,
     AllDown,
@@ -13,9 +13,11 @@ from apps.relays.services.health import (
     Member,
     MemberDown,
     MemberUp,
+    ModeChanged,
     Outage,
     RelayHealth,
     Switched,
+    Uplink,
 )
 
 PORT = 55424
@@ -46,6 +48,7 @@ def reading(  # noqa: PLR0913 - one argument per field of the state file
     received: int = 0,
     unanswered: bool | None = None,
     previous: RelayHealth | None = None,
+    split: dict[str, Any] | None = None,
 ) -> RelayHealth:
     group = {
         "port": PORT,
@@ -57,6 +60,7 @@ def reading(  # noqa: PLR0913 - one argument per field of the state file
     }
     if unanswered is not None:
         group["unanswered"] = unanswered
+    group.update(split or {})
     text = json.dumps({"version": 1, "updated_at": at, "groups": [group]})
     return RelayHealth.of(RelayState.parse(text), MEMBERS, previous)
 
@@ -109,6 +113,77 @@ def test_an_older_agent_says_nothing_about_the_clients() -> None:
 def test_stored_health_of_an_unknown_form_is_none() -> None:
     assert RelayHealth.load({}) is None
     assert RelayHealth.load({"updated_at": AT, "groups": [{"active": None}]}) is None
+
+
+def split(mode: str = "split", *, alive: bool = True, changed: int = AT - 600) -> dict[str, Any]:
+    """The split fields of a group state: the agent keeps it in `mode`, the uplink to FIRST."""
+    return {
+        "routing": "split",
+        "mode": mode,
+        "mode_changed_at": changed,
+        "uplink": {"endpoint": FIRST.to_dict(), "alive": alive, "checked_at": AT},
+        "networks": 8123,
+    }
+
+
+def test_a_split_group_keeps_its_mode_uplink_and_networks() -> None:
+    group = reading(split=split()).groups[PORT]
+
+    assert group.split and not group.emergency
+    assert group.uplink == Uplink(LEADER, alive=True)
+    assert group.networks == 8123
+    assert group.mode_changed_at == AT - 600
+
+
+def test_a_split_group_forwarded_by_the_agent_is_in_emergency() -> None:
+    group = reading(split=split("forward", alive=False)).groups[PORT]
+
+    assert group.emergency
+    assert group.uplink == Uplink(LEADER, alive=False)
+
+
+def test_an_uplink_to_an_address_of_no_member_has_no_member() -> None:
+    fields = split() | {"uplink": {"endpoint": None, "alive": False, "checked_at": None}}
+
+    assert reading(split=fields).groups[PORT].uplink == Uplink(None, alive=False)
+
+
+def test_the_split_health_survives_storing() -> None:
+    health = reading(split=split("forward", alive=False))
+
+    assert RelayHealth.load(json.loads(json.dumps(health.to_dict()))) == health
+
+
+def test_health_stored_before_split_routing_is_a_forwarded_group() -> None:
+    stored = reading().to_dict()
+    for group in stored["groups"]:
+        for key in ("routing", "mode", "mode_changed_at", "uplink", "networks"):
+            del group[key]
+
+    group = RelayHealth.load(stored).groups[PORT]  # type: ignore[union-attr]
+
+    assert group.routing is Routing.FORWARD and not group.split and group.uplink is None
+
+
+def test_the_agent_moving_a_split_group_to_forward_is_an_emergency() -> None:
+    before = reading(split=split())
+    after = reading(at=AT + 60, split=split("forward", alive=False, changed=AT + 30))
+
+    assert list(after.changes(before)) == [ModeChanged(PORT, True, LEADER, AT + 30)]
+
+
+def test_the_agent_moving_a_group_back_to_split_is_told() -> None:
+    before = reading(split=split("forward", alive=False))
+    after = reading(at=AT + 60, split=split(changed=AT + 50))
+
+    assert list(after.changes(before)) == [ModeChanged(PORT, False, LEADER, AT + 50)]
+
+
+def test_the_panel_moving_a_group_between_routings_is_no_mode_change() -> None:
+    forwarded, split_now = reading(), reading(at=AT + 60, split=split())
+
+    assert list(split_now.changes(forwarded)) == []
+    assert list(reading(at=AT + 120).changes(split_now)) == []
 
 
 def test_a_new_active_member_is_a_switch() -> None:

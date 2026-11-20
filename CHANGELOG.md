@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Screens and notifications of split routing**: the group page and the relay card show the mode
+  the agent keeps a split group in (split routing or emergency forwarding, and since when), the
+  active exit and whether the uplink works; the relay card also shows the CPU load of the relay
+  server, and the network list tells how many networks the relay applies and when a list was last
+  taken. New notifications `split_emergency` and `split_restored` come when the agent moves a
+  split group to forwarding and back by itself. The wiki describes split routing, the server
+  requirements and its limitations.
 - **Traffic and limits of split routing from the clone**: in split routing the panel reads the
   traffic and online status of the group's clients from the clone on the relay and counts them
   for the keys of the leading server; the uplink peer on the members counts for the exit load of

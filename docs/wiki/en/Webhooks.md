@@ -63,6 +63,8 @@ zone), `data` depends on the event.
 | `relay_up` | The panel reads the state of a relay again after an outage (`relay_down`). Once per outage, even when no channel heard of `relay_down`. | `relay`, `host`, `last_seen` — time of the last reading before the outage or an empty string |
 | `member_caught_up` | A lagging member (`member_lagging`) has the files of its group again. Once per lag, even when no channel heard of `member_lagging`. | `group`, `server`, `since` — when it started to lag |
 | `split_list_stale` | A network list source of a split group did not give a list the panel takes: it did not download, did not read or has less than half of the networks before. The relay keeps the list it has. Once a day while the source fails. | `group`, `source` — host of the source address, `days` — days since the last good list, `error` |
+| `split_emergency` | The relay agent moved a split group to forwarding by itself: the uplink fails on every member while a member answers the usual probe. | `group`, `relay`, `server` — the member it forwards to, or `null` |
+| `split_restored` | The uplink works again and the agent moved the group back to split routing. | `group`, `relay` |
 | `staff_report` | The scheduled report (**Settings → Report to the staff**), or **Send now**. The whole panel. | `period` — `daily` or `weekly`, `since` — start of the period (local `YYYY-MM-DD HH:MM`), `servers_down`, `relays_down`, `groups_down` — names, `traffic` — bytes, `top_keys` — up to five `[key name, bytes]`, `access_ending` — `"user YYYY-MM-DD"`, `failed_operations`, `backups_oldest` and `archive_at` — local time or `null` without a copy, `applications`, `new_requests`, `url` — the dashboard |
 | `test` | **Send test** on the channel page. | `channel` — channel name |
 
@@ -148,6 +150,10 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/member_caught_up"}}}},
     {"if": {"properties": {"event": {"const": "split_list_stale"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/split_list_stale"}}}},
+    {"if": {"properties": {"event": {"const": "split_emergency"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/split_emergency"}}}},
+    {"if": {"properties": {"event": {"const": "split_restored"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/split_restored"}}}},
     {"if": {"properties": {"event": {"const": "staff_report"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/staff_report"}}}},
     {"if": {"properties": {"event": {"const": "test"}}},
@@ -370,6 +376,16 @@ may be added: ignore what you do not know.
       "type": "object",
       "required": ["group", "source", "days", "error"],
       "properties": {"group": {"type": "string"}, "source": {"type": "string"}, "days": {"type": "integer", "minimum": 1}, "error": {"type": "string"}}
+    },
+    "split_emergency": {
+      "type": "object",
+      "required": ["group", "relay", "server"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}, "server": {"type": ["string", "null"]}}
+    },
+    "split_restored": {
+      "type": "object",
+      "required": ["group", "relay"],
+      "properties": {"group": {"type": "string"}, "relay": {"type": "string"}}
     },
     "staff_report": {
       "type": "object",

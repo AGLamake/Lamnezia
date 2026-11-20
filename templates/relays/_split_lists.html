@@ -2,6 +2,7 @@
 <section id="split-lists" class="card space-y-3 scroll-mt-24">
   <h2 class="card-title">{% translate "Network list" %}</h2>
   <p class="help-text">{% translate "The relay sends the networks of these lists straight out and everything else abroad through the uplink. The panel downloads every list once a day and gives the relay the merged list; a list that did not download, did not read or shrank to less than half is not taken, and the relay keeps the one it has." %}</p>
+  <p id="split-summary">{% if health.split %}{% blocktranslate count networks=health.networks %}The relay applies {{ networks }} network.{% plural %}The relay applies {{ networks }} networks.{% endblocktranslate %}{% else %}{% translate "The relay has not told how many networks it applies yet." %}{% endif %} {% if lists_taken %}{% blocktranslate with when=lists_taken|date:"SHORT_DATETIME_FORMAT" %}Lists last taken {{ when }}.{% endblocktranslate %}{% else %}{% translate "No list taken yet." %}{% endif %}</p>
   <div class="table-wrap">
     <table class="table table-cards">
       <thead>

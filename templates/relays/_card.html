@@ -36,10 +36,13 @@
       {% endif %}{% endwith %}
       {% if relay.read_at %}
         <p>{% blocktranslate with incoming=relay.rate_from_clients|per_second outgoing=relay.rate_to_clients|per_second %}Channel load: {{ incoming }} from the clients, {{ outgoing }} to them.{% endblocktranslate %}</p>
+        {% with sample=server.latest_sample %}{% if sample.cpu_percent is not None %}
+          <p id="relay-cpu">{% blocktranslate with cpu=sample.cpu_percent|floatformat:0 %}CPU load: {{ cpu }}%.{% endblocktranslate %}{% if relay.splits %} <span class="help-text">{% translate "Split routing encrypts the traffic abroad once more on the relay, so it rests on the processor." %}</span>{% endif %}</p>
+        {% endif %}{% endwith %}
         {% relay_load relay %}
         <ul class="space-y-1">
           {% for health in relay.groups_health %}
-            <li>UDP {{ health.port }}: {% if health.active %}{% blocktranslate with server=health.active.name %}traffic goes to {{ server }}{% endblocktranslate %}{% else %}{% translate "no server reachable" %}{% endif %}{% if health.down %} · {% translate "unreachable:" %} {% for member in health.down %}{{ member.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% if health.unanswered %} · <span class="text-danger">{% translate "the clients get no answer from it" %}</span>{% endif %}</li>
+            <li>UDP {{ health.port }}: {% if health.active %}{% blocktranslate with server=health.active.name %}traffic goes to {{ server }}{% endblocktranslate %}{% else %}{% translate "no server reachable" %}{% endif %}{% if health.down %} · {% translate "unreachable:" %} {% for member in health.down %}{{ member.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% if health.unanswered %} · <span class="text-danger">{% translate "the clients get no answer from it" %}</span>{% endif %}{% if health.split %} · {% include "relays/_mode.html" %}{% endif %}</li>
           {% endfor %}
         </ul>
       {% endif %}

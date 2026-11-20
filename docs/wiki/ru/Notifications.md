@@ -69,6 +69,8 @@
 | Ретранслятор снова отвечает | `relay_up` | `relay`, `host`, `last_seen` |
 | Сервер группы догнал группу | `member_caught_up` | `group`, `server`, `since` |
 | Список сетей не обновлён | `split_list_stale` | `group`, `source`, `days`, `error` |
+| Аварийный проброс | `split_emergency` | `group`, `relay`, `server` |
+| Снова раздельный режим | `split_restored` | `group`, `relay` |
 | Отчёт персоналу | `staff_report` | `period`, `since`, `servers_down`, `relays_down`, `groups_down`, `traffic`, `top_keys`, `access_ending`, `failed_operations`, `backups_oldest`, `archive_at`, `applications`, `new_requests`, `url` |
 
 `server_up` и последние четыре приходят один раз, когда закончился соответствующий сбой

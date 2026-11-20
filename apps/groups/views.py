@@ -5,7 +5,7 @@ from typing import Any
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import Max, QuerySet
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -113,8 +113,8 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
     The operations under way that a change of the group waits for are listed with links: joins
     and installs, the catch-ups of lagging members, and the key operations that hold the lead;
     the last planned switch of the relay is shown with its result, and a split group shows its
-    network list. `?leader_leaves=1` (after a leading server was asked to leave) offers to hand
-    the lead to another member first.
+    network list with the moment a list was last taken. `?leader_leaves=1` (after a leading
+    server was asked to leave) offers to hand the lead to another member first.
     """
 
     model = ServerGroup
@@ -159,6 +159,9 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
             candidates=candidates,
             bare_servers=[
                 (server, port_taken(server, group.port)) for server in servers_without_awg()
+            ],
+            lists_taken=group.split_sources.filter(enabled=True).aggregate(taken=Max("updated_at"))[
+                "taken"
             ],
             source_form=SplitSourceForm(group=group),
             entry_form=SplitEntryForm(group=group),

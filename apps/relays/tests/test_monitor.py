@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
+from django.utils import translation
 
 from apps.groups.models import GroupMember, LagReason, ServerGroup
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT
@@ -44,6 +45,8 @@ EVENTS = [
     Event.GROUP_REACHABLE,
     Event.RELAY_UP,
     Event.MEMBER_CAUGHT_UP,
+    Event.SPLIT_EMERGENCY,
+    Event.SPLIT_RESTORED,
 ]
 
 
@@ -98,6 +101,7 @@ def write_state(  # noqa: PLR0913 - one argument per field of the state file
     switched_at: int | None = None,
     backends: list[dict[str, Any]] | None = None,
     sent: int = 0,
+    split: dict[str, Any] | None = None,
 ) -> None:
     group = {
         "port": PORT,
@@ -106,6 +110,7 @@ def write_state(  # noqa: PLR0913 - one argument per field of the state file
         "backends": backends or [backend(LEADER_HOST), backend(JOINER_HOST)],
         "bytes_from_clients": sent,
         "bytes_to_clients": sent * 2,
+        **(split or {}),
     }
     state = {"version": 1, "updated_at": at, "groups": [group]}
     fake.files[STATE_PATH] = json.dumps(state).encode()
@@ -134,6 +139,65 @@ def test_a_reading_is_kept_with_the_relay(
     assert relay.read_at == NOW
     assert relay.read_error == ""
     assert not Notification.objects.exists()
+
+
+def split(mode: str, changed: int) -> dict[str, Any]:
+    return {
+        "routing": "split",
+        "mode": mode,
+        "mode_changed_at": changed,
+        "uplink": {"endpoint": None, "alive": mode == "split", "checked_at": AT},
+    }
+
+
+def test_the_agent_moving_a_split_group_to_forward_is_told_once(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    watch = monitor(relay_fake, clock)
+    write_state(relay_fake, split=split("split", AT - 600))
+    watch.poll(relay)
+
+    write_state(relay_fake, at=AT + 60, split=split("forward", AT + 30))
+    clock.now = NOW + timedelta(seconds=60)
+    watch.poll(relay)
+    watch.poll(relay)
+
+    leader = GroupMember.objects.get(leading=True).instance.server.name
+    group = relay.server.relayed_groups.get()
+    assert told(Event.SPLIT_EMERGENCY) == [
+        {"group": group.name, "relay": relay.server.name, "server": leader}
+    ]
+    relay.refresh_from_db()
+    health = relay.group_health(PORT)
+    assert health is not None and health.emergency
+
+
+def test_the_agent_moving_a_group_back_to_split_is_told(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    watch = monitor(relay_fake, clock)
+    write_state(relay_fake, split=split("forward", AT - 600))
+    watch.poll(relay)
+
+    write_state(relay_fake, at=AT + 60, split=split("split", AT + 50))
+    clock.now = NOW + timedelta(seconds=60)
+    watch.poll(relay)
+
+    group = relay.server.relayed_groups.get()
+    assert told(Event.SPLIT_RESTORED) == [{"group": group.name, "relay": relay.server.name}]
+    assert not told(Event.SPLIT_EMERGENCY)
+
+
+def test_the_mode_notifications_read_in_both_languages() -> None:
+    data = {"group": "Europe", "relay": "Moscow", "server": "Helsinki"}
+
+    title, text = EVENT_TYPES[Event.SPLIT_EMERGENCY].render(data)
+
+    assert title == "Europe: emergency forwarding"
+    assert "Helsinki" in text
+    with translation.override("ru"):
+        title, _text = EVENT_TYPES[Event.SPLIT_RESTORED].render(data)
+    assert title == "Europe: снова раздельный режим"
 
 
 def test_a_switch_is_kept_and_told_once(
