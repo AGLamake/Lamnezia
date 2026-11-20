@@ -40,11 +40,11 @@ def remove_relay(ctx: OperationContext) -> None:
         deployment.remove()
 
 
-@operations.register(PEERS_KIND, gettext_lazy("Write the peers of the clones to the relay"))
-def write_clone_peers(ctx: OperationContext) -> None:
+@operations.register(PEERS_KIND, gettext_lazy("Write the peers and lists of the clones"))
+def write_split_files(ctx: OperationContext) -> None:
     deployment = _deployment(ctx)
     if deployment is not None:
-        deployment.write_peers()
+        deployment.write_split_files()
 
 
 @operations.register(ROUTING_KIND, gettext_lazy("Change the routing of a group"))

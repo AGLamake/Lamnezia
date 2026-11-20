@@ -140,7 +140,7 @@ def test_writing_only_the_peers_keeps_the_other_files(server: FakeRelayServer) -
     container = installed(server, PORT, 51820)
     server.files[f"{FOLDER}/peers-51820.conf"] = b"kept"
 
-    container.write_peers({f"peers-{PORT}.conf": ""})
+    container.write_split_files({f"peers-{PORT}.conf": ""})
 
     assert server.files[f"{FOLDER}/peers-{PORT}.conf"] == b""
     assert server.files[f"{FOLDER}/peers-51820.conf"] == b"kept"

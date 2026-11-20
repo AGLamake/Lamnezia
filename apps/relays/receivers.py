@@ -3,9 +3,10 @@
 The members of a group, the group port, relay or routing, the service peers, the address of a
 member server, or the port, keys and parameters of a member: a change of any of them names the
 relays of the groups it touches. So does a key of a split group, whose peer the clone on the
-relay has. A transaction queues one sync for all the relays it named, once it commits, and the
-sync updates only them. The sync compares digests, so a change that is not on a relay costs
-nothing; the sync by the minute stays for what no signal sees, such as DNS.
+relay has, and a source or an own entry of its network list. A transaction queues one sync for
+all the relays it named, once it commits, and the sync updates only them. The sync compares
+digests, so a change that is not on a relay costs nothing; the sync by the minute stays for
+what no signal sees, such as DNS.
 """
 
 from collections.abc import Iterable
@@ -19,7 +20,7 @@ from apps.groups.models import GroupMember, GroupRouting, ServerGroup
 from apps.keys.models import AccessKey
 from apps.keys.signals import keys_written
 from apps.protocols.models import ProtocolInstance
-from apps.relays.models import Relay, ServicePeer
+from apps.relays.models import Relay, ServicePeer, SplitEntry, SplitSource
 from apps.servers.models import Server
 
 # Fields of a member server and its instance that reach the config of a relay.
@@ -95,7 +96,9 @@ def on_group_changed(sender: type[ServerGroup], instance: ServerGroup, **kwargs:
 
 
 def on_group_part_changed(
-    sender: type[Model], instance: GroupMember | ServicePeer, **kwargs: Any
+    sender: type[Model],
+    instance: GroupMember | ServicePeer | SplitSource | SplitEntry,
+    **kwargs: Any,
 ) -> None:
     request_sync(_relays_of(ServerGroup.objects.filter(pk=instance.group_id)))
 
@@ -148,7 +151,7 @@ def connect() -> None:
     pre_save.connect(on_group_saving, sender=ServerGroup, dispatch_uid=f"{uid}.saving")
     post_save.connect(on_group_changed, sender=ServerGroup, dispatch_uid=f"{uid}.save")
     post_delete.connect(on_group_changed, sender=ServerGroup, dispatch_uid=f"{uid}.delete")
-    for model in (GroupMember, ServicePeer):
+    for model in (GroupMember, ServicePeer, SplitSource, SplitEntry):
         uid = f"relays.sync.{model.__name__}"
         post_save.connect(on_group_part_changed, sender=model, dispatch_uid=f"{uid}.save")
         post_delete.connect(on_group_part_changed, sender=model, dispatch_uid=f"{uid}.delete")

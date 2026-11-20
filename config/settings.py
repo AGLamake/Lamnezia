@@ -352,6 +352,9 @@ CELERY_BEAT_SCHEDULE = {
     "notifications-recover-stuck": {"task": "notifications.recover_stuck", "schedule": 10 * 60},
     "servers-thin-history": {"task": "servers.thin_history", "schedule": 60 * 60},
     "relays-thin-history": {"task": "relays.thin_history", "schedule": 60 * 60},
+    # Hourly, so a restart of beat does not put the daily update off; each source is due once a
+    # day, a failed one at the next run.
+    "relays-update-split-lists": {"task": "relays.update_split_lists", "schedule": 60 * 60},
     "operations-prune": {"task": "operations.prune", "schedule": 24 * 60 * 60},
     "notifications-prune": {"task": "notifications.prune", "schedule": 24 * 60 * 60},
     "traffic-roll-up": {"task": "traffic.roll_up", "schedule": 24 * 60 * 60},

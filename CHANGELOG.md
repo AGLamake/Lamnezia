@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Network list of split routing**: the group page of a split group shows its network list. A
+  group gets the RIPE NCC delegations to Russia as its first source; more sources are added by
+  address in one of three formats (networks one per line, the site list of the Amnezia
+  application, RIPE NCC delegations), and turned off or deleted. The panel downloads every source
+  once a day and gives the relay the merged list; the relay never downloads lists. A list that did
+  not download, did not read or has less than half of the networks before is not taken, and the
+  administrators get `split_list_stale` once a day. Own entries — IPv4 networks or domains, sent
+  straight from the relay or abroad through the uplink — win over the lists; the relay agent looks
+  up the domains every 10 minutes and logs no names. A missing list file on the relay now means
+  an empty list.
 - **Signed release provenance**: a release publishes signed build provenance attestations for the
   image and for its files, and a signed SBOM of the image. A release also carries the code of the
   tag as `lamnezia-X.Y.Z.tar.gz`. `gh attestation verify` checks a downloaded image or file.

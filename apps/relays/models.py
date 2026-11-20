@@ -2,7 +2,7 @@
 
 A relay forwards the UDP port of every group that names its server to the live member of the
 group; its agent probes the members with the probe peer of the group. A split group also has
-an uplink peer (docs/SPLIT.md).
+an uplink peer and its network list: sources and own entries (docs/SPLIT.md).
 """
 
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -157,3 +157,86 @@ class RelaySample(models.Model):
 
     def __str__(self) -> str:
         return f"{self.relay_id} @ {self.at:%Y-%m-%d %H:%M}"
+
+
+# Delegations of the RIPE NCC region by country, updated daily: the default source of the list.
+RIPE_DELEGATIONS_URL = "https://ftp.ripe.net/pub/stats/ripencc/delegated-ripencc-latest"
+SOURCE_ERROR_LENGTH = 255
+
+
+class SourceKind(models.TextChoices):
+    """The format of a source list (`amnezia_core.split_lists.SourceFormat`)."""
+
+    CIDR = "cidr", _("networks, one per line")
+    LIB4U = "lib4u", _("site list of the Amnezia application (JSON)")
+    RIPE = "ripe", _("delegations of the RIPE NCC to Russia")
+
+
+class SplitSource(models.Model):
+    """A list of networks a split group sends straight out of the relay (docs/SPLIT.md 4.5).
+
+    The panel downloads it daily and keeps the last good list: one that did not download, did
+    not read or has less than half of the networks before is not taken.
+    """
+
+    group = models.ForeignKey(
+        "groups.ServerGroup",
+        verbose_name=_("group"),
+        on_delete=models.CASCADE,
+        related_name="split_sources",
+    )
+    url = models.URLField(_("address"), max_length=500)
+    kind = models.CharField(_("format"), max_length=16, choices=SourceKind)
+    enabled = models.BooleanField(_("enabled"), default=True)
+    networks = models.TextField(_("networks"), blank=True, help_text=_("One network per line."))
+    size = models.PositiveIntegerField(_("networks in the list"), default=0)
+    updated_at = models.DateTimeField(_("list taken at"), null=True, blank=True)
+    checked_at = models.DateTimeField(_("checked at"), null=True, blank=True)
+    error = models.CharField(_("error"), max_length=SOURCE_ERROR_LENGTH, blank=True)
+    created_at = models.DateTimeField(_("created"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("network list source")
+        verbose_name_plural = _("network list sources")
+        ordering = ("pk",)
+        constraints = (
+            models.UniqueConstraint(fields=("group", "url"), name="split_source_unique"),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.group} · {self.url}"
+
+
+class SplitDirection(models.TextChoices):
+    """`amnezia_core.split_lists.Direction`."""
+
+    LOCAL = "local", _("straight from the relay")
+    ABROAD = "abroad", _("abroad through the uplink")
+
+
+class SplitEntry(models.Model):
+    """An own entry of a split group: a network or a domain that always goes one way.
+
+    The relay agent resolves a domain itself every few minutes; the panel resolves none.
+    """
+
+    group = models.ForeignKey(
+        "groups.ServerGroup",
+        verbose_name=_("group"),
+        on_delete=models.CASCADE,
+        related_name="split_entries",
+    )
+    value = models.CharField(_("network or domain"), max_length=253)
+    direction = models.CharField(_("direction"), max_length=16, choices=SplitDirection)
+    created_at = models.DateTimeField(_("created"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("own entry")
+        verbose_name_plural = _("own entries")
+        ordering = ("direction", "value")
+        constraints = (
+            models.UniqueConstraint(fields=("group", "value"), name="split_entry_unique"),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.group} · {self.direction} · {self.value}"

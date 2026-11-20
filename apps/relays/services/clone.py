@@ -27,7 +27,8 @@ def clone_peers(leader: ProtocolInstance) -> ClonePeers:
 
 
 def peers_digest(files: Mapping[str, str]) -> str:
-    """The digest of the peers files of a relay, by file name; it changes with any key peer."""
+    """The digest of the files of the split groups of a relay, by file name: it changes with any
+    key peer, network or own domain."""
     return hashlib.sha256(json.dumps(sorted(files.items())).encode()).hexdigest()
 
 

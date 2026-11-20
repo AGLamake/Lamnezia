@@ -1,0 +1,68 @@
+{% load i18n %}
+<section id="split-lists" class="card space-y-3 scroll-mt-24">
+  <h2 class="card-title">{% translate "Network list" %}</h2>
+  <p class="help-text">{% translate "The relay sends the networks of these lists straight out and everything else abroad through the uplink. The panel downloads every list once a day and gives the relay the merged list; a list that did not download, did not read or shrank to less than half is not taken, and the relay keeps the one it has." %}</p>
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr><th>{% translate "Source" %}</th><th>{% translate "Networks" %}</th><th>{% translate "Taken" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th></tr>
+      </thead>
+      <tbody>
+        {% for source in group.split_sources.all %}
+          <tr>
+            <td><span class="font-medium break-all">{{ source.url }}</span> <span class="help-text block">{{ source.get_kind_display }}</span>{% if not source.enabled %} <span class="badge badge-muted">{% translate "off" %}</span>{% endif %}{% if source.error %}<span class="help-text block text-danger">{{ source.error }}</span>{% endif %}</td>
+            <td data-label="{% translate 'Networks' %}">{{ source.size }}</td>
+            <td data-label="{% translate 'Taken' %}">{% if source.updated_at %}{{ source.updated_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-muted">{% translate "not yet" %}</span>{% endif %}</td>
+            <td><div class="flex flex-wrap gap-2">
+              <form method="post" action="{% url 'relays:source_toggle' source.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% if source.enabled %}{% translate "Turn off" %}{% else %}{% translate "Turn on" %}{% endif %}</button>
+              </form>
+              <form method="post" action="{% url 'relays:source_delete' source.pk %}" data-confirm="{% translate "The relay stops sending the networks of this list straight out. Continue?" %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">{% translate "Delete" %}</button>
+              </form>
+            </div></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="help-text">{% translate "No list: the relay sends everything abroad through the uplink." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <form method="post" action="{% url 'relays:source_add' group.pk %}" class="space-y-2">
+    {% csrf_token %}
+    <div class="grid gap-3 sm:grid-cols-2">
+      {{ source_form.url.as_field_group }}
+      {{ source_form.kind.as_field_group }}
+    </div>
+    <button type="submit" class="btn btn-secondary">{% translate "Add the list" %}</button>
+  </form>
+
+  <h3 class="font-medium">{% translate "Own entries" %}</h3>
+  <p class="help-text">{% translate "Networks and domains that always go one way, over the lists. The relay looks up the domains itself every ten minutes; a site behind a CDN may share addresses with other sites." %}</p>
+  {% with entries=group.split_entries.all %}
+  {% if entries %}
+  <ul class="space-y-1">
+    {% for entry in entries %}
+      <li class="flex flex-wrap items-center gap-2">
+        <span class="font-medium break-all">{{ entry.value }}</span>
+        <span class="badge {% if entry.direction == "abroad" %}badge-info{% else %}badge-muted{% endif %}">{{ entry.get_direction_display }}</span>
+        <form method="post" action="{% url 'relays:entry_delete' entry.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary">{% translate "Delete" %}</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% endwith %}
+  <form method="post" action="{% url 'relays:entry_add' group.pk %}" class="space-y-2">
+    {% csrf_token %}
+    <div class="grid gap-3 sm:grid-cols-2">
+      {{ entry_form.value.as_field_group }}
+      {{ entry_form.direction.as_field_group }}
+    </div>
+    <button type="submit" class="btn btn-secondary">{% translate "Add the entry" %}</button>
+  </form>
+</section>

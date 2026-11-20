@@ -67,6 +67,7 @@ channels hear each event.
 | Group server reachable again | `group_reachable` | `group`, `relay` |
 | Relay answers again | `relay_up` | `relay`, `host`, `last_seen` |
 | Group server caught up | `member_caught_up` | `group`, `server`, `since` |
+| Network list not updated | `split_list_stale` | `group`, `source`, `days`, `error` |
 | Report to the staff | `staff_report` | `period`, `since`, `servers_down`, `relays_down`, `groups_down`, `traffic`, `top_keys`, `access_ending`, `failed_operations`, `backups_oldest`, `archive_at`, `applications`, `new_requests`, `url` |
 
 `server_up` and the last four come once when the matching trouble is over (`server_down`,

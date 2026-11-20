@@ -144,6 +144,8 @@
   {% endif %}
 </section>
 
+{% if group.routing == "split" %}{% include "relays/_split_lists.html" %}{% endif %}
+
 <section class="card space-y-3">
   <h2 class="card-title">{% translate "Add a server" %}</h2>
   <p class="help-text">{% translate "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced. Users who had keys on it get keys of the group." %}</p>

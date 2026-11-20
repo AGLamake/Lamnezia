@@ -380,11 +380,17 @@ msgstr "Добавить и проверить"
 msgid "Add one and choose the events it should get."
 msgstr "Добавьте канал и выберите, о каких событиях он будет сообщать."
 
+msgid "Add the entry"
+msgstr "Добавить запись"
+
 msgid "Add the key to the app"
 msgstr "Добавьте ключ в приложение"
 
 msgid "Add the link to v2rayN, v2RayTun, Hiddify, Streisand or another XRay client as a subscription. The client fetches your active XRay keys by it and updates them itself: a re-issued key or a changed server reaches it without a new link. The Amnezia app does not read subscription links: add keys to it one by one."
 msgstr "Добавьте ссылку в v2rayN, v2RayTun, Hiddify, Streisand или другой клиент XRay как подписку. Клиент забирает по ней ваши действующие ключи XRay и обновляет их сам: перевыпущенный ключ или изменённый сервер приходят без новой ссылки. Приложение Amnezia ссылки-подписки не читает: в него ключи добавляются по одному."
+
+msgid "Add the list"
+msgstr "Добавить список"
 
 msgid "Add the machine as a server first: the move uses its SSH access. It must run Debian or Ubuntu and have no panel yet."
 msgstr "Сначала добавьте машину как сервер: перенос использует её SSH-доступ. На ней должен быть Debian или Ubuntu и ещё не должно быть панели."
@@ -1191,6 +1197,9 @@ msgstr "Английский"
 
 msgid "Enter a name."
 msgstr "Введите название."
+
+msgid "Enter an IPv4 network or a domain name."
+msgstr "Введите сеть IPv4 или доменное имя."
 
 msgid "Enter the code that the app shows."
 msgstr "Введите код, который показывает приложение."
@@ -2030,6 +2039,15 @@ msgstr "Имя в мессенджере"
 msgid "Needs attention"
 msgstr "Требует внимания"
 
+msgid "Network list"
+msgstr "Список сетей"
+
+msgid "Networks"
+msgstr "Сети"
+
+msgid "Networks and domains that always go one way, over the lists. The relay looks up the domains itself every ten minutes; a site behind a CDN may share addresses with other sites."
+msgstr "Сети и домены, которые всегда идут одним путём, поверх списков. Домены ретранслятор резолвит сам раз в десять минут; у сайта за CDN адреса могут совпадать с другими сайтами."
+
 msgid "New archive"
 msgstr "Новый архив"
 
@@ -2140,6 +2158,9 @@ msgstr "Ключей пока нет."
 
 msgid "No keys."
 msgstr "Ключей нет."
+
+msgid "No list: the relay sends everything abroad through the uplink."
+msgstr "Списка нет: ретранслятор отправляет всё за рубеж через канал."
 
 msgid "No materials yet."
 msgstr "Материалов пока нет."
@@ -2322,11 +2343,17 @@ msgstr "Один зашифрованный файл с базой данных,
 msgid "One link for v2rayN, v2RayTun, Hiddify and other XRay clients: they update your XRay keys themselves."
 msgstr "Одна ссылка для v2rayN, v2RayTun, Hiddify и других клиентов XRay: они сами обновляют ваши ключи XRay."
 
+msgid "One network per line."
+msgstr "По одной сети в строке."
+
 msgid "Online now"
 msgstr "Сейчас онлайн"
 
 msgid "Only AmneziaWG 3.1 servers can be in a group."
 msgstr "В группе могут быть только серверы AmneziaWG 3.1."
+
+msgid "Only IPv4 networks are routed."
+msgstr "Маршрутизируются только сети IPv4."
 
 msgid "Only a joined server that has every key change of the group can lead it."
 msgstr "Ведущим может стать только вступивший сервер, у которого есть все изменения ключей группы."
@@ -2441,6 +2468,9 @@ msgstr "Итог"
 
 msgid "Overview"
 msgstr "Обзор"
+
+msgid "Own entries"
+msgstr "Свои записи"
 
 msgid "Owner"
 msgstr "Владелец"
@@ -3175,6 +3205,9 @@ msgstr "Что-то не работает? Загляните в <a href=\"%(faq
 msgid "Something went wrong"
 msgstr "Что-то пошло не так"
 
+msgid "Source"
+msgstr "Источник"
+
 msgid "Speed"
 msgstr "Скорость"
 
@@ -3299,6 +3332,9 @@ msgstr "Убрать вступающий сервер из группы"
 #
 msgid "Take out of the group"
 msgstr "Убрать из группы"
+
+msgid "Taken"
+msgstr "Получен"
 
 #, python-format
 msgid "Taken: %(ports)s."
@@ -3494,6 +3530,12 @@ msgstr "Файлы панели дошли до новой машины повр
 msgid "The form is out of date"
 msgstr "Форма устарела"
 
+msgid "The group already has this entry."
+msgstr "У группы уже есть эта запись."
+
+msgid "The group already has this list."
+msgstr "У группы уже есть этот список."
+
 msgid "The group already has this routing."
 msgstr "У группы уже такая маршрутизация."
 
@@ -3631,6 +3673,9 @@ msgstr "Ссылка неверна или страницу удалили."
 
 msgid "The link works once and not for long."
 msgstr "Ссылка работает один раз и недолго."
+
+msgid "The list is downloaded by HTTP or HTTPS."
+msgstr "Список скачивается по HTTP или HTTPS."
 
 msgid "The log of the step shows the reason. Fix it and start the move again."
 msgstr "Причина — в журнале шага. Устраните её и начните перенос снова."
@@ -3882,9 +3927,15 @@ msgstr "Сейчас ретранслятор отправляет клиент�
 msgid "The relay sends the clients of the group to this server, if it reaches it. Every client of the group loses its connection for about 20 seconds. Continue?"
 msgstr "Ретранслятор отправит клиентов группы на этот сервер, если достучится до него. Все клиенты группы потеряют соединение примерно на 20 секунд. Продолжить?"
 
+msgid "The relay sends the networks of these lists straight out and everything else abroad through the uplink. The panel downloads every list once a day and gives the relay the merged list; a list that did not download, did not read or shrank to less than half is not taken, and the relay keeps the one it has."
+msgstr "Сети из этих списков ретранслятор отправляет напрямую, всё остальное — за рубеж через канал. Панель скачивает каждый список раз в сутки и отдаёт ретранслятору объединённый список; список, который не скачался, не разобрался или уменьшился больше чем вдвое, не принимается, и ретранслятор остаётся с прежним."
+
 #
 msgid "The relay skips the server until the panel copies the group files onto it."
 msgstr "Ретранслятор пропускает сервер, пока панель не скопирует на него файлы группы."
+
+msgid "The relay stops sending the networks of this list straight out. Continue?"
+msgstr "Ретранслятор перестанет отправлять сети этого списка напрямую. Продолжить?"
 
 msgid "The relay takes clients of the groups that name this server and forwards them to a live member. Its agent probes the members and switches by itself, even when the panel is down."
 msgstr "Ретранслятор принимает клиентов групп, назначивших этот сервер, и пересылает их живому участнику. Его агент сам проверяет участников и переключается, даже когда панель недоступна."
@@ -4533,11 +4584,8 @@ msgstr "Записать файлы группы"
 msgid "Write the files of the snapshot"
 msgstr "Записать файлы снимка"
 
-msgid "Write the peers of the clones"
-msgstr "Записать пиры клонов"
-
-msgid "Write the peers of the clones to the relay"
-msgstr "Запись пиров клонов на ретранслятор"
+msgid "Write the peers and lists of the clones"
+msgstr "Запись пиров и списков клонов"
 
 msgid "Write the relay configuration"
 msgstr "Записать настройки ретранслятора"
@@ -4626,6 +4674,9 @@ msgstr "участник группы работает на сервере ре�
 msgid "a useful material"
 msgstr "полезный материал"
 
+msgid "abroad through the uplink"
+msgstr "за рубеж через канал"
+
 msgid "account id"
 msgstr "ID аккаунта"
 
@@ -4694,6 +4745,9 @@ msgstr "интервал проверки, секунды"
 msgid "checked %(when)s ago"
 msgstr "проверено %(when)s назад"
 
+msgid "checked at"
+msgstr "проверен"
+
 msgid "clients get no answer"
 msgstr "клиенты без ответа"
 
@@ -4710,11 +4764,17 @@ msgstr "подтверждение начато"
 msgid "container removed"
 msgstr "контейнер удалён"
 
+msgid "created"
+msgstr "создан"
+
 msgid "created at"
 msgstr "создан"
 
 msgid "created by"
 msgstr "создал"
+
+msgid "delegations of the RIPE NCC to Russia"
+msgstr "делегирования RIPE NCC по России"
 
 msgid "deleted"
 msgstr "удалён"
@@ -4727,6 +4787,9 @@ msgstr "описание (русский)"
 
 msgid "device"
 msgstr "устройство"
+
+msgid "direction"
+msgstr "направление"
 
 msgid "disabled"
 msgstr "отключён"
@@ -4747,6 +4810,12 @@ msgstr "скачивание %(mbit)s Мбит/с"
 msgid "due today"
 msgstr "сегодня"
 
+msgid "enabled"
+msgstr "включён"
+
+msgid "error"
+msgstr "ошибка"
+
 msgid "expired"
 msgstr "истёк"
 
@@ -4764,6 +4833,9 @@ msgstr "неудач до переключения"
 
 msgid "fetched at"
 msgstr "получено"
+
+msgid "format"
+msgstr "формат"
 
 msgid "forward"
 msgstr "проброс"
@@ -4899,6 +4971,9 @@ msgstr "привязанные аккаунты"
 msgid "linked at"
 msgstr "привязан"
 
+msgid "list taken at"
+msgstr "список получен"
+
 msgid "maintenance"
 msgstr "обслуживание"
 
@@ -4928,6 +5003,24 @@ msgstr "имя в мессенджере"
 
 msgid "name me as the author"
 msgstr "указать меня автором"
+
+msgid "network list source"
+msgstr "источник списка сетей"
+
+msgid "network list sources"
+msgstr "источники списка сетей"
+
+msgid "network or domain"
+msgstr "сеть или домен"
+
+msgid "networks"
+msgstr "сети"
+
+msgid "networks in the list"
+msgstr "сетей в списке"
+
+msgid "networks, one per line"
+msgstr "сети, по одной в строке"
 
 msgid "new"
 msgstr "новый"
@@ -5055,6 +5148,12 @@ msgid_plural "overdue by %(days)s days"
 msgstr[0] "просрочено на %(days)s день"
 msgstr[1] "просрочено на %(days)s дня"
 msgstr[2] "просрочено на %(days)s дней"
+
+msgid "own entries"
+msgstr "свои записи"
+
+msgid "own entry"
+msgstr "своя запись"
 
 msgid "owner blocked"
 msgstr "владелец заблокирован"
@@ -5259,6 +5358,9 @@ msgstr "время входа"
 msgid "since %(date)s"
 msgstr "с %(date)s"
 
+msgid "site list of the Amnezia application (JSON)"
+msgstr "список сайтов приложения Amnezia (JSON)"
+
 msgid "source"
 msgstr "источник"
 
@@ -5291,6 +5393,9 @@ msgstr "остановка запрошена"
 
 msgid "stop the old copy automatically"
 msgstr "останавливать старую копию автоматически"
+
+msgid "straight from the relay"
+msgstr "напрямую с ретранслятора"
 
 msgid "suggested by"
 msgstr "предложил"

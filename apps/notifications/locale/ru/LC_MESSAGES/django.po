@@ -165,6 +165,9 @@ msgstr "Меню"
 msgid "Message from {user}, chat #{number}"
 msgstr "Сообщение от {user}, чат №{number}"
 
+msgid "Network list not updated"
+msgstr "Список сетей не обновлён"
+
 #, python-brace-format
 msgid "New VPN keys on {server}"
 msgstr "Новые ключи VPN на {server}"
@@ -405,6 +408,10 @@ msgid "The keys of {user} are turned off: {reason}."
 msgstr "Ключи пользователя {user} отключены: {reason}."
 
 #, python-brace-format
+msgid "The list from {source} for the split group {group} was not taken: {error}. The relay keeps the list it has."
+msgstr "Список с {source} для группы {group} с раздельной маршрутизацией не принят: {error}. Ретранслятор работает с прежним списком."
+
+#, python-brace-format
 msgid "The panel cannot read the state of the relay {relay} ({host}). Last reading: {last_seen}. The relay may still forward the clients on its own."
 msgstr "Панель не может прочитать состояние ретранслятора {relay} ({host}). Последнее чтение: {last_seen}. Сам ретранслятор при этом может продолжать пересылать клиентов."
 
@@ -618,6 +625,10 @@ msgstr "пользователь"
 #, python-brace-format
 msgid "{group}: a server is reachable again"
 msgstr "{group}: сервер снова доступен"
+
+#, python-brace-format
+msgid "{group}: network list not updated for {days} days"
+msgstr "{group}: список сетей не обновлён {days} дн."
 
 #, python-brace-format
 msgid "{group}: no server is reachable"

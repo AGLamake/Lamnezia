@@ -65,6 +65,7 @@ class Event(StrEnum):
     GROUP_REACHABLE = "group_reachable"
     RELAY_UP = "relay_up"
     MEMBER_CAUGHT_UP = "member_caught_up"
+    SPLIT_LIST_STALE = "split_list_stale"
     STAFF_REPORT = "staff_report"
     ZONE_REPORT = "zone_report"
     TEST = "test"
@@ -467,6 +468,17 @@ EVENTS: dict[Event, EventType] = {
         _(
             "The server {server} has the files of the group {group} again after lagging behind "
             "since {since}. The relay sends clients to it again."
+        ),
+    ),
+    # Once a day while a source of a split group's network list fails (docs/SPLIT.md 4.5): the
+    # group keeps its list. `source` is the host of the address, `days` count from the last
+    # good list.
+    Event.SPLIT_LIST_STALE: EventType(
+        _("Network list not updated"),
+        _("{group}: network list not updated for {days} days"),
+        _(
+            "The list from {source} for the split group {group} was not taken: {error}. "
+            "The relay keeps the list it has."
         ),
     ),
     # The summary of `SiteSettings.report_frequency` for the channels: the whole panel since

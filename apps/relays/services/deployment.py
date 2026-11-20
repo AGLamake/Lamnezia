@@ -3,7 +3,7 @@
 An update gives every group of the relay its service peers on the members first, then writes
 the clone peers of the split groups and the members in order to the agent, and only then takes
 the uplink peer off the groups that are forwarded again; a removal takes the peers off. A key
-change of a split group needs only its clone peers: a lighter operation writes just them. The
+or list change of a split group needs only its files: a lighter operation writes just them. The
 relay server is locked only for its own container: a member on the same server takes the same
 lock for its peers.
 """
@@ -60,7 +60,7 @@ class RelayDeployment:
             self._place_service_peers()
             plan = RelayPlan.of(self._relay.server)
             config = self._config(plan)
-            peers = plan.clone_peers(config)
+            peers = plan.split_files(config)
             with self._lock(host):
                 setup.prepare()
                 container = RelayContainer(host, self._ctx)
@@ -81,7 +81,7 @@ class RelayDeployment:
             plan = RelayPlan.of(self._relay.server)
             _refuse(plan, self._relay.server)
             config = self._config(plan)
-            peers = plan.clone_peers(config)
+            peers = plan.split_files(config)
             with self._lock(host):
                 container = RelayContainer(host, self._ctx)
                 with self._ctx.step(_("Check the ports of the groups")):
@@ -90,19 +90,20 @@ class RelayDeployment:
         self._synced(plan, config, peers)
         self._withdraw_uplinks(plan)
 
-    def write_peers(self) -> None:
-        """Write the clone peers of the split groups after a key change; nothing else changes.
+    def write_split_files(self) -> None:
+        """Write the clone peers and lists of the split groups after a key or list change;
+        nothing else changes.
 
-        Peers files of groups the panel forwards now stay: the agent may split them still,
-        and only an update that also writes its config takes them away.
+        Files of groups the panel forwards now stay: the agent may split them still, and only
+        an update that also writes its config takes them away.
         """
         plan = RelayPlan.of(self._relay.server)
         config = self._config(plan)
-        peers = plan.clone_peers(config)
+        peers = plan.split_files(config)
         with ExitStack() as stack:
             host = self._connect(stack)
             with self._lock(host):
-                RelayContainer(host, self._ctx).write_peers(peers)
+                RelayContainer(host, self._ctx).write_split_files(peers)
         self._relay.peers_synced = peers_digest(peers)
         self._relay.save(update_fields=["peers_synced"])
 
@@ -254,7 +255,7 @@ def _sync(relay: Relay) -> None:
     _skip(relay, SyncSkip.NONE, "")
     if plan.digest(config) != relay.synced:
         kind = UPDATE_KIND
-    elif peers_digest(plan.clone_peers(config)) != relay.peers_synced:
+    elif peers_digest(plan.split_files(config)) != relay.peers_synced:
         kind = PEERS_KIND
     else:
         return

@@ -47,6 +47,7 @@ from apps.groups.tasks import check_group_domain
 from apps.keys.services.counts import InstanceKeyCount
 from apps.protocols.models import ProtocolInstance
 from apps.relays.errors import RelayError
+from apps.relays.forms import SplitEntryForm, SplitSourceForm
 from apps.relays.models import Relay
 from apps.relays.services.health import GroupHealth
 from apps.relays.services.routing import start_routing
@@ -111,9 +112,9 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
 
     The operations under way that a change of the group waits for are listed with links: joins
     and installs, the catch-ups of lagging members, and the key operations that hold the lead;
-    the last planned switch of the relay
-    is shown with its result. `?leader_leaves=1` (after a leading
-    server was asked to leave) offers to hand the lead to another member first.
+    the last planned switch of the relay is shown with its result, and a split group shows its
+    network list. `?leader_leaves=1` (after a leading server was asked to leave) offers to hand
+    the lead to another member first.
     """
 
     model = ServerGroup
@@ -159,6 +160,8 @@ class GroupDetailView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg]
             bare_servers=[
                 (server, port_taken(server, group.port)) for server in servers_without_awg()
             ],
+            source_form=SplitSourceForm(group=group),
+            entry_form=SplitEntryForm(group=group),
             **kwargs,
         )
 

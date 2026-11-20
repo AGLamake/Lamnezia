@@ -14,7 +14,7 @@ from pathlib import Path
 from django.utils.translation import gettext as _
 
 from amnezia_core.containers import AWG2
-from amnezia_core.relay import clone_peers_file
+from amnezia_core.relay import clone_peers_file, domains_file, networks_file
 from apps.operations.services.context import OperationContext
 from apps.protocols.services.container import ProtocolContainer, Transport, log_arguments
 from apps.relays.errors import RelayError, RelayErrorCode
@@ -95,18 +95,20 @@ class RelayContainer:
         with self._ctx.step(_("Start the relay container")):
             self._start(ports)
 
-    def apply(self, ports: set[int], config: bytes, peers: Mapping[str, str]) -> None:
-        """Publish exactly `ports`, then give the agent the clone peers, its config and its code.
+    def apply(self, ports: set[int], config: bytes, files: Mapping[str, str]) -> None:
+        """Publish exactly `ports`, then give the agent the files of the split groups, its
+        config and its code.
 
         The ports are checked before the container is started again with the new set. The
-        peers go first: a group that becomes split finds its clients on the clone at once.
+        clone peers and lists go first: a group that becomes split finds its clients on the
+        clone at once.
         """
         if not self.exists:
             raise RelayError(RelayErrorCode.NOT_INSTALLED, NAME)
         if self.published_ports() != ports:
             with self._ctx.step(_("Publish the ports of the groups")):
                 self._start(ports)
-        self.write_peers(peers, ports)
+        self.write_split_files(files, ports)
         with self._ctx.step(_("Write the relay configuration")):
             shell = self._docker.shell
             shell.write_file_atomic(f"{FOLDER}/config.json", config, mode=0o600)
@@ -114,20 +116,26 @@ class RelayContainer:
         with self._ctx.step(_("Update the relay agent")):
             self._put_agent()
 
-    def write_peers(self, peers: Mapping[str, str], ports: Iterable[int] = ()) -> None:
-        """Write the clone peers of the split groups, by file name, and drop those of the
-        other groups of `ports`: a group that is forwarded again keeps no stale peers."""
+    def write_split_files(self, files: Mapping[str, str], ports: Iterable[int] = ()) -> None:
+        """Write the clone peers, network lists and own domains of the split groups, by file
+        name, and drop the other such files of `ports`: a group that is forwarded again keeps
+        no stale peers, and a group without domains keeps none."""
         if not self.exists:
             raise RelayError(RelayErrorCode.NOT_INSTALLED, NAME)
         shell = self._docker.shell
-        names = (clone_peers_file(port) for port in sorted(ports))
-        stale = [f"{FOLDER}/{name}" for name in names if name not in peers]
-        with self._ctx.step(_("Write the peers of the clones")):
-            for name, text in sorted(peers.items()):
+        names = (
+            name(port)
+            for port in sorted(ports)
+            for name in (clone_peers_file, networks_file, domains_file)
+        )
+        stale = [f"{FOLDER}/{name}" for name in names if name not in files]
+        groups = sum(name.startswith("peers-") for name in files)
+        with self._ctx.step(_("Write the peers and lists of the clones")):
+            for name, text in sorted(files.items()):
                 shell.write_file_atomic(f"{FOLDER}/{name}", text.encode(), mode=0o600)
             if stale:
                 shell.run(shlex.join(["rm", "-f", "--", *stale]))
-            self._ctx.log(_("Split groups: %(count)d.") % {"count": len(peers)})
+            self._ctx.log(_("Split groups: %(count)d.") % {"count": groups})
 
     def remove(self) -> None:
         """Drop the container, its image and the volume with the agent and its state."""

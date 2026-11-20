@@ -23,17 +23,21 @@ listens on its port, packets to the networks of its list and to private networks
 relay directly, the rest gets a firewall mark and goes over the uplink `lu<port>`, a client of
 the group on the active member. A new active member only changes the uplink's endpoint, so the
 clients' sessions stay. When the uplink fails on every live member, the group falls back to
-forwarding (`Lane`).
+forwarding (`Lane`). The own domains of a split group are resolved here, in the background every
+few minutes (`Domains`): their addresses go straight out or always over the uplink. The names
+and addresses are not logged.
 """
 
 import functools
 import ipaddress
 import json
 import os
+import socket
 import subprocess
 import sys
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
@@ -65,6 +69,13 @@ LOCAL_NETWORKS = (
     "0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8",
     "169.254.0.0/16", "172.16.0.0/12", "192.168.0.0/16", "224.0.0.0/3",
 )  # fmt: skip
+
+# Seconds between lookups of the own domains of split groups, and lookups at a time.
+RESOLVE_INTERVAL = 600
+RESOLVE_WORKERS = 8
+# Directions of an own domain (`amnezia_core.split_lists.Direction`).
+LOCAL = "local"
+ABROAD = "abroad"
 
 # Answers to a switch request of the panel (`amnezia_core.relay.SwitchOutcome`).
 SWITCHED = "switched"
@@ -388,11 +399,14 @@ class Lane:
 
 @dataclass(frozen=True)
 class SplitRoute:
-    """The nftables part of a split group: its clone's subnet and the networks sent directly."""
+    """The nftables part of a split group: its clone's subnet, the networks sent directly and the
+    addresses of its own domains, sent directly (`local`) or always over the uplink (`abroad`)."""
 
     port: int
     subnet: str
     networks: tuple[str, ...] = ()
+    local: tuple[str, ...] = ()
+    abroad: tuple[str, ...] = ()
 
 
 def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] = ()) -> str:
@@ -402,7 +416,8 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
     Declaring and deleting the table first replaces it atomically, with no moment without rules,
     and a new network list with it. Masquerade keeps the relay in the path: without it the
     member answers the client directly. A packet from a split group's clone to an address out of
-    its list and the private networks gets the group's mark, which routes it into the uplink.
+    its list, its local domains and the private networks gets the group's mark, which routes it
+    into the uplink; so does one to an address of its abroad domains, even one in the list.
     """
     ports = sorted({*routes, *(split.port for split in splits)})
     counters = [
@@ -428,9 +443,13 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
     for split in sorted(splits, key=lambda item: item.port):
         port, clone, uplink = split.port, f"lg{split.port}", f"lu{split.port}"
         sets += _set(f"ru_{port}", split.networks)
+        sets += _set(f"dl_{port}", split.local)
+        sets += _set(f"da_{port}", split.abroad)
+        mark = f"meta mark set {MARK_BASE + port}"
+        marks.append(f'\t\tiifname "{clone}" ip daddr != @local ip daddr @da_{port} {mark}')
         marks.append(
             f'\t\tiifname "{clone}" ip daddr != @local ip daddr != @ru_{port} '
-            f"meta mark set {MARK_BASE + port}"
+            f"ip daddr != @dl_{port} {mark}"
         )
         masquerade.append(f'\t\tip saddr {split.subnet} oifname != "{clone}" masquerade')
         count.append(f'\t\tiifname "{clone}" counter name "from_clients_{port}"')
@@ -545,12 +564,113 @@ def _sum(left: tuple[int, int], right: tuple[int, int]) -> tuple[int, int]:
     return left[0] + right[0], left[1] + right[1]
 
 
+def parse_domains(text: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """The local and the abroad domains of a split group; ValueError if a line is bad.
+
+    One domain per line after its direction (`amnezia_core.relay.DomainList`).
+    """
+    found: dict[str, set[str]] = {LOCAL: set(), ABROAD: set()}
+    for number, line in enumerate(text.splitlines(), start=1):
+        entry = line.split("#", 1)[0].split()
+        if not entry:
+            continue
+        if len(entry) != 2 or entry[0] not in found:  # noqa: PLR2004 - direction and name
+            raise ValueError(f"line {number} is not a direction and a domain")
+        found[entry[0]].add(entry[1])
+    return tuple(sorted(found[LOCAL])), tuple(sorted(found[ABROAD]))
+
+
+def resolve(name: str) -> tuple[str, ...]:
+    """The IPv4 addresses of a name, by the resolver of the relay."""
+    found = socket.getaddrinfo(name, None, socket.AF_INET, socket.SOCK_STREAM)
+    return tuple(sorted({str(item[4][0]) for item in found}))
+
+
+class Pool(Protocol):
+    def submit(self, fn: Callable[[str], tuple[str, ...]], name: str, /) -> Future[Any]: ...
+
+
+class Domains:
+    """The own domains of the split groups and their addresses.
+
+    The names are looked up in the background, all at once every `interval` seconds and right
+    after a group gets a new list, so a slow resolver never holds up the probes. A name that
+    does not resolve keeps the addresses it had. Nothing about the names is logged: they are
+    resources the users visit.
+    """
+
+    def __init__(
+        self,
+        clock: Callable[[], float],
+        lookup: Callable[[str], tuple[str, ...]] = resolve,
+        pool: Pool | None = None,
+        interval: float = RESOLVE_INTERVAL,
+    ) -> None:
+        self._clock = clock
+        self._lookup = lookup
+        self._pool = pool if pool is not None else ThreadPoolExecutor(RESOLVE_WORKERS)
+        self._interval = interval
+        self._lists: dict[int, tuple[tuple[str, ...], tuple[str, ...]]] = {}
+        self._addresses: dict[str, tuple[str, ...]] = {}
+        self._round: dict[str, Future[Any]] = {}
+        self._due = 0.0
+
+    def set(self, port: int, local: tuple[str, ...], abroad: tuple[str, ...]) -> bool:
+        """Give the group its domains; True when its addresses change."""
+        before = self.addresses(port)
+        self._lists[port] = (local, abroad)
+        if not set(local + abroad) <= self._addresses.keys():
+            self._due = 0.0
+        return self.addresses(port) != before
+
+    def drop(self, port: int) -> None:
+        self._lists.pop(port, None)
+
+    def poll(self) -> bool:
+        """Take a finished round and start one that is due; True when addresses changed."""
+        changed = False
+        if self._round and all(future.done() for future in self._round.values()):
+            changed = self._take()
+        if not self._round and self._lists and self._clock() >= self._due:
+            names = sorted(
+                {name for pair in self._lists.values() for part in pair for name in part}
+            )
+            self._round = {name: self._pool.submit(self._lookup, name) for name in names}
+            self._due = self._clock() + self._interval
+            if all(future.done() for future in self._round.values()):
+                changed = self._take() or changed
+        return changed
+
+    def addresses(self, port: int) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        """The addresses of the group's local and abroad domains."""
+        local, abroad = self._lists.get(port, ((), ()))
+        return self._of(local), self._of(abroad)
+
+    def _of(self, names: Iterable[str]) -> tuple[str, ...]:
+        return tuple(
+            sorted({address for name in names for address in self._addresses.get(name, ())})
+        )
+
+    def _take(self) -> bool:
+        before = {port: self.addresses(port) for port in self._lists}
+        for name, future in self._round.items():
+            found = None if future.exception() is not None else future.result()
+            if found:
+                self._addresses[name] = found
+        self._round = {}
+        wanted = {name for pair in self._lists.values() for part in pair for name in part}
+        for name in set(self._addresses) - wanted:
+            del self._addresses[name]
+        return any(self.addresses(port) != addresses for port, addresses in before.items())
+
+
 class Agent:
     """One pass of `tick` reads a changed config, probes every group and writes the state.
 
     A config the agent cannot read keeps the previous one: the relay goes on forwarding. The
-    peers and the network list of a split group are files of their own, taken when they change;
-    an empty or broken list keeps the one the group has.
+    peers, the network list and the own domains of a split group are files of their own, taken
+    when they change; an empty or broken list keeps the one the group has, a missing one is
+    empty: the panel removed it.
     """
 
     def __init__(
@@ -559,6 +679,7 @@ class Agent:
         folder: Path = FOLDER,
         clock: Callable[[], float] = time.time,
         log: Callable[[str], None] = print,
+        domains: Domains | None = None,
     ) -> None:
         self._network = network
         self._folder = folder
@@ -572,6 +693,7 @@ class Agent:
         self._watches: dict[int, Watch] = {}
         self._lanes: dict[int, Lane] = {}
         self._networks: dict[int, tuple[str, ...]] = {}
+        self._domains = domains if domains is not None else Domains(clock)
         # Modification times of the split groups' files as last taken.
         self._seen: dict[str, float | None] = {}
         # Ports whose routing changed: their clients' conntrack entries go with the new rules.
@@ -584,6 +706,8 @@ class Agent:
     def tick(self) -> None:
         self._reload()
         self._take_split_files()
+        if self._domains.poll():
+            self._dirty = True
         now = int(self._clock())
         moved = set(self._rerouted)
         requested = self._take_request()
@@ -642,6 +766,7 @@ class Agent:
             del self._watches[port]
             self._lanes.pop(port, None)
             self._networks.pop(port, None)
+            self._domains.drop(port)
         for group in settings.groups:
             self._network.prepare(group)
             watch = self._watches.get(group.port)
@@ -662,6 +787,7 @@ class Agent:
                 self._network.unclone(port)
                 del self._lanes[port]
                 self._networks.pop(port, None)
+                self._domains.drop(port)
                 self._rerouted.add(port)
             return
         if lane is None:
@@ -669,12 +795,13 @@ class Agent:
             self._lanes[port] = Lane(settings.failures, settings.recovery, mode)
             self._rerouted.add(port)
             self._seen.pop(_networks_file(port), None)
+            self._seen.pop(_domains_file(port), None)
         else:
             lane.update(settings.failures, settings.recovery)
         self._seen.pop(_peers_file(port), None)
 
     def _take_split_files(self) -> None:
-        """Apply a changed peers file or network list of each split group."""
+        """Apply a changed peers file, network list or domain list of each split group."""
         for port, lane in self._lanes.items():
             group = self._watches[port].group
             if self._changed(_peers_file(port)):
@@ -686,6 +813,8 @@ class Agent:
                     self._log(f"group {port}: clone not applied: {error}")
             if self._changed(_networks_file(port)):
                 self._take_networks(port)
+            if self._changed(_domains_file(port)):
+                self._take_domains(port)
 
     def _changed(self, name: str) -> bool:
         try:
@@ -702,12 +831,24 @@ class Agent:
             text = (self._folder / _networks_file(port)).read_text(encoding="utf-8")
             networks = parse_networks(text)
         except FileNotFoundError:
-            return
+            networks = ()
         except ValueError as error:
             self._log(f"group {port}: network list ignored: {error}")
             return
         if networks != self._networks.get(port):
             self._networks[port] = networks
+            self._dirty = True
+
+    def _take_domains(self, port: int) -> None:
+        try:
+            text = (self._folder / _domains_file(port)).read_text(encoding="utf-8")
+            local, abroad = parse_domains(text)
+        except FileNotFoundError:
+            local, abroad = (), ()
+        except ValueError as error:
+            self._log(f"group {port}: domain list ignored: {error}")
+            return
+        if self._domains.set(port, local, abroad):
             self._dirty = True
 
     def _steer(self, watch: Watch, lane: Lane, switched: bool, now: int) -> bool:
@@ -742,7 +883,9 @@ class Agent:
         for port, watch in self._watches.items():
             lane, split = self._lanes.get(port), watch.group.split
             if lane is not None and lane.split and split is not None:
-                splits.append(SplitRoute(port, split.subnet, self._networks.get(port, ())))
+                networks = self._networks.get(port, ())
+                local, abroad = self._domains.addresses(port)
+                splits.append(SplitRoute(port, split.subnet, networks, local, abroad))
             else:
                 routes[port] = watch.active
         return ruleset(routes, splits)
@@ -831,6 +974,10 @@ def _peers_file(port: int) -> str:
 
 def _networks_file(port: int) -> str:
     return f"networks-{port}.txt"
+
+
+def _domains_file(port: int) -> str:
+    return f"domains-{port}.txt"
 
 
 class AwgUplink:

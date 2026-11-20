@@ -9,8 +9,9 @@ also write a switch request; the agent answers it in the state file. The files a
 
 A group in split routing (docs/SPLIT.md) ends the tunnel on the relay: a clone of the group
 answers its clients, Russian networks go straight out and the rest goes over the uplink, a
-client of the group on the active member. Its peers and its list of networks come in files of
-their own, so issuing a key or a new list does not rewrite the config.
+client of the group on the active member. Its peers, its list of networks and its own domains,
+which the agent resolves, come in files of their own, so issuing a key or a new list does not
+rewrite the config.
 """
 
 import json
@@ -278,6 +279,11 @@ def networks_file(port: int) -> str:
     return f"networks-{port}.txt"
 
 
+def domains_file(port: int) -> str:
+    """Name of the file with the own domains of a split group in the agent folder."""
+    return f"domains-{port}.txt"
+
+
 def clone_peers_file(port: int) -> str:
     """Name of the file with the `[Peer]` sections of a split group's clone in the agent folder."""
     return f"peers-{port}.conf"
@@ -299,6 +305,27 @@ class ClonePeers:
 
     def to_text(self) -> str:
         return "".join("\n".join(peer.to_section().lines) + "\n" for peer in self.peers)
+
+
+@dataclass(frozen=True)
+class DomainList:
+    """Own domains of a split group: the agent resolves them and routes their addresses.
+
+    One domain per line after its direction, `local` (straight out of the relay) or `abroad`
+    (over the uplink, even when the address is in the network list). The panel writes no file
+    for a group without domains; the agent then routes none.
+    """
+
+    local: tuple[str, ...] = ()
+    abroad: tuple[str, ...] = ()
+
+    def __bool__(self) -> bool:
+        return bool(self.local or self.abroad)
+
+    def to_text(self) -> str:
+        lines = [f"local {name}" for name in self.local]
+        lines += [f"abroad {name}" for name in self.abroad]
+        return "".join(f"{line}\n" for line in lines)
 
 
 @dataclass(frozen=True)

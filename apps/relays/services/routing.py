@@ -21,6 +21,7 @@ from apps.relays.errors import RelayError, RelayErrorCode
 from apps.relays.models import PeerRole, Relay
 from apps.relays.services.deployment import KINDS, ROUTING_KIND, RelayDeployment
 from apps.relays.services.service_peers import ServicePeerPlacement
+from apps.relays.services.split_lists import add_default_source, update_soon
 from apps.ssh.errors import SshError
 from apps.traffic.services.poller import TrafficPoller
 from apps.traffic.services.targets import poll_targets
@@ -29,7 +30,10 @@ from apps.traffic.services.targets import poll_targets
 def start_routing(
     group: ServerGroup, routing: GroupRouting, *, user: User, ip: str | None = None
 ) -> Operation:
-    """Start moving the group to `routing`; refused while another relay operation runs."""
+    """Start moving the group to `routing`; refused while another relay operation runs.
+
+    A group split for the first time gets the default source of its network list.
+    """
     with transaction.atomic():
         group = ServerGroup.objects.select_for_update().get(pk=group.pk)
         installed = Relay.objects.select_for_update().filter(installed_at__isnull=False)
@@ -45,6 +49,8 @@ def start_routing(
         )
         if running.exists():
             raise RelayError(RelayErrorCode.RELAY_BUSY, str(relay.server))
+        if routing == GroupRouting.SPLIT and add_default_source(group) is not None:
+            update_soon()
         params = {"server_id": relay.server_id, "group_id": group.pk, "routing": str(routing)}
         operation = launch(ROUTING_KIND, params, user=user, subject=str(group))
         data = {"operation": operation.pk, "routing": str(routing)}

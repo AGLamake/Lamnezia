@@ -62,6 +62,7 @@
 | `group_reachable` | У группы, где ни один участник не отвечал (`group_unreachable`), снова есть доступный участник: у её клиентов есть связь. Один раз за сбой. | `group`, `relay` |
 | `relay_up` | Панель снова читает состояние ретранслятора после сбоя (`relay_down`). Один раз за сбой, даже если `relay_down` не получил ни один канал. | `relay`, `host`, `last_seen` — время последнего чтения до сбоя или пустая строка |
 | `member_caught_up` | Отстававший участник (`member_lagging`) снова получил файлы группы. Один раз за отставание, даже если `member_lagging` не получил ни один канал. | `group`, `server`, `since` — с какого момента отставал |
+| `split_list_stale` | Источник списка сетей группы в раздельном режиме не дал список, который панель принимает: не скачался, не разобрался или в нём меньше половины прежних сетей. Ретранслятор работает с прежним списком. Раз в сутки, пока источник не обновляется. | `group`, `source` — хост адреса источника, `days` — дней с последнего удачного списка, `error` |
 | `staff_report` | Отчёт по расписанию (**Настройки → Отчёт персоналу**) или **Прислать сейчас**. Вся панель. | `period` — `daily` или `weekly`, `since` — начало периода (местное `YYYY-MM-DD HH:MM`), `servers_down`, `relays_down`, `groups_down` — имена, `traffic` — байты, `top_keys` — до пяти `[имя ключа, байты]`, `access_ending` — `"user YYYY-MM-DD"`, `failed_operations`, `backups_oldest` и `archive_at` — местное время или `null`, если копии нет, `applications`, `new_requests`, `url` — главная панели |
 | `test` | **Отправить тест** на странице канала. | `channel` — название канала |
 
@@ -145,6 +146,8 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/relay_up"}}}},
     {"if": {"properties": {"event": {"const": "member_caught_up"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/member_caught_up"}}}},
+    {"if": {"properties": {"event": {"const": "split_list_stale"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/split_list_stale"}}}},
     {"if": {"properties": {"event": {"const": "staff_report"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/staff_report"}}}},
     {"if": {"properties": {"event": {"const": "test"}}},
@@ -362,6 +365,11 @@
       "type": "object",
       "required": ["group", "server", "since"],
       "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
+    },
+    "split_list_stale": {
+      "type": "object",
+      "required": ["group", "source", "days", "error"],
+      "properties": {"group": {"type": "string"}, "source": {"type": "string"}, "days": {"type": "integer", "minimum": 1}, "error": {"type": "string"}}
     },
     "staff_report": {
       "type": "object",

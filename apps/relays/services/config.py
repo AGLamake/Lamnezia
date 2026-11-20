@@ -4,7 +4,8 @@ The panel writes the result to the relay as config.json (docs/FALLBACK.md sectio
 digest of the written file and the published ports tells a sync whether the relay got the groups
 as they are now. The file holds resolved addresses, so a member name that moves to another IP
 changes the digest too. A split group also has its clone and uplink there, and the peers of
-its clone in a file of their own (services/clone.py).
+its clone (services/clone.py), its network list and its own domains (services/split_lists.py)
+in files of their own.
 """
 
 import hashlib
@@ -30,6 +31,7 @@ from apps.groups.services.replication import backends
 from apps.protocols.services.installer import ipv4_addresses
 from apps.relays.models import PeerRole, Relay, ServicePeer
 from apps.relays.services.clone import clone_peers
+from apps.relays.services.split_lists import GroupList
 from apps.servers.models import Server
 
 
@@ -89,14 +91,16 @@ class RelayPlan:
             )
         return RelayConfig(tuple(groups), self.check_interval, self.failures)
 
-    def clone_peers(self, config: RelayConfig) -> dict[str, str]:
-        """The peers file of each split group of `config`, by its name in the agent folder."""
+    def split_files(self, config: RelayConfig) -> dict[str, str]:
+        """The files of each split group of `config` by name in the agent folder: the clone
+        peers, the network list and the own domains."""
         split = {group.port for group in config.groups if group.split is not None}
-        return {
-            clone_peers_file(group.port): clone_peers(members[0].instance).to_text()
-            for group, members in self.groups
-            if group.port in split
-        }
+        files = {}
+        for group, members in self.groups:
+            if group.port in split:
+                files[clone_peers_file(group.port)] = clone_peers(members[0].instance).to_text()
+                files.update(GroupList.of(group).files(group.port))
+        return files
 
 
 def members_on_relay(server: Server) -> list[GroupMember]:

@@ -323,7 +323,8 @@ NFT_KEYWORDS = frozenset(
 
 
 def mixed_ruleset() -> str:
-    return ruleset({PORT: A, 51820: None}, [SplitRoute(9733, SUBNET, ("5.8.0.0/15",))])
+    split = SplitRoute(9733, SUBNET, ("5.8.0.0/15",), ("93.184.215.14",), ("5.8.1.1", "5.8.1.2"))
+    return ruleset({PORT: A, 51820: None}, [split])
 
 
 def test_chain_and_set_names_are_not_nft_keywords() -> None:

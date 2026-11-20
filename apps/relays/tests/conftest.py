@@ -1,6 +1,7 @@
 """Fixtures of the relay tests: the group fixtures plus a fake relay server.
 
 `servers` of the groups connects the members; `relay_server` also connects the deployment.
+`lists` answers the downloads of the network list sources: no test goes to the network.
 """
 
 from collections.abc import Iterator
@@ -11,6 +12,7 @@ import pytest
 from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.tests import conftest as groups
 from apps.groups.tests.conftest import Fakes, Run, succeeded
+from apps.notifications.services.channels import DeliveryError, HttpClient
 from apps.relays.tests.fake_relay import FakeRelayServer
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
@@ -28,6 +30,27 @@ admin, down, group, join, joiner = (
 )
 leader, leader_awg, joiner_awg = groups.leader, groups.leader_awg, groups.joiner_awg
 servers, start = groups.servers, groups.start
+
+
+class FakeLists:
+    """Bodies of the list sources by address; another address does not answer."""
+
+    def __init__(self) -> None:
+        self.bodies: dict[str, bytes] = {}
+        self.asked: list[str] = []
+
+    def get(self, url: str, *, limit: int) -> bytes:
+        self.asked.append(url)
+        if url not in self.bodies:
+            raise DeliveryError("connection failed: offline", retryable=True)
+        return self.bodies[url]
+
+
+@pytest.fixture(autouse=True)
+def lists(monkeypatch: pytest.MonkeyPatch) -> FakeLists:
+    fake = FakeLists()
+    monkeypatch.setattr(HttpClient, "get", lambda self, url, *, limit: fake.get(url, limit=limit))
+    return fake
 
 
 @pytest.fixture

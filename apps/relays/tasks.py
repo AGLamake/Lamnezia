@@ -9,6 +9,7 @@ from apps.relays.models import Relay
 from apps.relays.services.deployment import sync_relays
 from apps.relays.services.load import prune_load
 from apps.relays.services.monitor import RelayMonitor, report_caught_up, report_lagging
+from apps.relays.services.split_lists import SourceUpdate
 from apps.servers.services.thinning import HistoryThinner
 
 
@@ -42,3 +43,10 @@ def thin_history() -> int:
     thinner = HistoryThinner(timedelta(days=settings.MONITOR_DETAIL_DAYS), timezone.now())
     removed = sum(thinner.thin_series(relay.samples.all()) for relay in Relay.objects.all())
     return Cleanup.record("relays.thin_history", removed)
+
+
+@shared_task(name="relays.update_split_lists")
+def update_split_lists() -> None:
+    """Hourly: the network list sources due for their daily update, and those that failed."""
+    update = SourceUpdate.from_settings(timezone.now())
+    update.run(update.due())

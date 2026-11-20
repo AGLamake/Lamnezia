@@ -15,6 +15,12 @@ msgstr "Вызов API отключённым токеном"
 msgid "Action"
 msgstr "Действие"
 
+msgid "Add network list source"
+msgstr "Добавление источника списка сетей"
+
+msgid "Add own entry of split routing"
+msgstr "Добавление своей записи раздельной маршрутизации"
+
 msgid "Add server address"
 msgstr "Добавление адреса сервера"
 
@@ -84,8 +90,14 @@ msgstr "Отказ в предложенной статье"
 msgid "Delete invitation"
 msgstr "Удаление приглашения"
 
+msgid "Delete network list source"
+msgstr "Удаление источника списка сетей"
+
 msgid "Delete notification channel"
 msgstr "Удаление канала уведомлений"
+
+msgid "Delete own entry of split routing"
+msgstr "Удаление своей записи раздельной маршрутизации"
 
 msgid "Delete panel archive"
 msgstr "Удаление архива панели"
@@ -206,6 +218,9 @@ msgstr "Выключение бота"
 
 msgid "Turn bot on"
 msgstr "Включение бота"
+
+msgid "Turn network list source on or off"
+msgstr "Включение или выключение источника списка сетей"
 
 msgid "Unlink messenger"
 msgstr "Отвязка мессенджера"

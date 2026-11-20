@@ -216,8 +216,32 @@ uplink peer is taken off the members. While a group is split, issuing, revoking 
 keys reaches the clone too: the relay gets the new peers within seconds, and the sync by the minute
 catches what was missed. The clone has the keys the panel knows; peers added on the server by hand
 are not copied. The switch is refused while another operation on the relay runs. The agent needs
-the new relay image: use **Reinstall** on the relay card once. The network list of a split group is
-set in a later version.
+the new relay image: use **Reinstall** on the relay card once.
+
+#### Network list
+
+A split group shows its **Network list** on the group page. The relay sends the networks of the
+list straight out and everything else abroad over the uplink (a "black list" of what stays at home).
+
+- **Sources.** On the first switch to split routing the group gets one source: the RIPE NCC
+  delegations to Russia. Add more by address and format: networks one per line (`#` starts a
+  comment), the site list of the Amnezia application (JSON), or the RIPE NCC delegations. A source
+  can be turned off or deleted. The panel downloads every enabled source once a day (each address
+  once for all groups), merges the networks of all sources and gives the relay the result as a
+  file. The relay itself never downloads lists.
+- **Protection.** A list that did not download, did not read or has less than half of the networks
+  it had before is not taken: the group keeps its list, the source shows the error, and the panel
+  tries again every hour. While a source fails, the administrators get the notification
+  **Network list not updated** once a day, with the number of days since the last good list.
+- **Own entries.** An IPv4 network, an address or a domain that always goes one way:
+  **straight from the relay** or **abroad through the uplink**. An entry abroad wins over the lists.
+  Domains are looked up by the relay itself, every 10 minutes and right after a change; a name that
+  does not resolve keeps its last addresses. The panel resolves no domains, and the relay logs
+  neither the names nor their addresses. A site behind a CDN may share addresses with other sites:
+  they then go the same way.
+
+A list or entry change reaches the relay within seconds; the relay applies the networks and
+addresses in one nftables transaction.
 
 ## Keys of a group behind the relay
 

@@ -107,7 +107,8 @@ class _RefuseRedirects(urllib.request.HTTPRedirectHandler):
 
 
 class HttpClient:
-    """POSTs JSON. Errors never carry the URL: for Telegram and Discord it holds the token.
+    """POSTs JSON and downloads files. Errors never carry the URL: for Telegram and Discord it
+    holds the token.
 
     With a guard, addresses in private networks are refused, the connection goes only to the
     addresses the guard checked, and redirects are not followed. A request to the Bot API (`api`)
@@ -131,8 +132,7 @@ class HttpClient:
         api: TelegramApi | None = None,
     ) -> bytes:
         """The answer body."""
-        if urlsplit(url).scheme not in ("http", "https"):
-            raise DeliveryError("only http and https addresses are allowed", retryable=False)
+        _check_scheme(url)
         open_url = self._opener(url) if api is None else api.opener(_RefuseRedirects())
         request = urllib.request.Request(
             url,
@@ -144,9 +144,20 @@ class HttpClient:
                 **(headers or {}),
             },
         )
+        return self._send(open_url, request)
+
+    def get(self, url: str, *, limit: int) -> bytes:
+        """The body at the URL; an answer longer than `limit` bytes is refused."""
+        _check_scheme(url)
+        request = urllib.request.Request(url, headers={"User-Agent": "Lamnezia"})
+        return self._send(self._opener(url), request, limit)
+
+    def _send(
+        self, open_url: Callable[..., Any], request: urllib.request.Request, limit: int = -1
+    ) -> bytes:
         try:
             with open_url(request, timeout=self._timeout) as response:
-                answer: bytes = response.read()
+                answer: bytes = response.read() if limit < 0 else response.read(limit + 1)
         except urllib.error.HTTPError as error:
             detail = error.read(_ERROR_DETAIL_LIMIT).decode(errors="replace")
             retryable = error.code >= _SERVER_ERROR or error.code in _RETRYABLE_STATUS
@@ -156,6 +167,8 @@ class HttpClient:
         except (urllib.error.URLError, OSError) as error:
             reason = getattr(error, "reason", error)
             raise DeliveryError(f"connection failed: {reason}", retryable=True) from None
+        if 0 <= limit < len(answer):
+            raise DeliveryError(f"the answer is longer than {limit} bytes", retryable=False)
         return answer
 
     def _opener(self, url: str) -> Callable[..., Any]:
@@ -177,6 +190,11 @@ class HttpClient:
         if pinned is None:
             return urllib.request.build_opener(_RefuseRedirects).open
         return pinned.opener(_RefuseRedirects()).open
+
+
+def _check_scheme(url: str) -> None:
+    if urlsplit(url).scheme not in ("http", "https"):
+        raise DeliveryError("only http and https addresses are allowed", retryable=False)
 
 
 def _json(data: dict[str, Any]) -> bytes:

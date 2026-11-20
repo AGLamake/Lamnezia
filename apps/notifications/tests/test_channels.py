@@ -256,6 +256,29 @@ def test_http_client_posts_json(monkeypatch: pytest.MonkeyPatch) -> None:
     assert request.get_header("X-test") == "1"
 
 
+def test_http_client_downloads_a_file_within_the_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    sent: list[urllib.request.Request] = []
+
+    def answer(request: urllib.request.Request, timeout: float) -> Response:
+        sent.append(request)
+        return Response(b"5.8.0.0/16\n")
+
+    monkeypatch.setattr(urllib.request, "urlopen", answer)
+
+    assert HttpClient(1).get("https://lists.example.com/ru.txt", limit=11) == b"5.8.0.0/16\n"
+    assert sent[0].get_method() == "GET"
+
+
+def test_http_client_refuses_a_file_over_the_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(urllib.request, "urlopen", lambda request, timeout: Response(b"x" * 11))
+
+    with pytest.raises(DeliveryError) as error:
+        HttpClient(1).get("https://lists.example.com/ru.txt", limit=10)
+
+    assert not error.value.retryable
+    assert "lists.example.com" not in str(error.value)
+
+
 def test_a_guarded_client_refuses_a_private_address_for_good(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
