@@ -2115,6 +2115,9 @@ msgstr "Новые пользователи, ждущие подтвержден
 msgid "Next page"
 msgstr "Следующая страница"
 
+msgid "No VPN interface, clients have no connection:"
+msgstr "Нет VPN-интерфейса, у клиентов нет связи:"
+
 msgid "No account of the panel is linked to this one. Sign in with a password."
 msgstr "К этому аккаунту не привязан ни один пользователь панели. Войдите по паролю."
 
@@ -2870,6 +2873,10 @@ msgstr "Перезапустить"
 
 msgid "Restart the container? Clients reconnect in a few seconds."
 msgstr "Перезапустить контейнер? Клиенты переподключатся через несколько секунд."
+
+#, python-format
+msgid "Restarts of %(container)s did not bring its interface back (%(attempts)s): check the container log and the free memory of the server."
+msgstr "Перезапуски %(container)s не вернули интерфейс (%(attempts)s): проверьте журнал контейнера и свободную память сервера."
 
 msgid "Restore"
 msgstr "Восстановить"
@@ -3852,6 +3859,10 @@ msgstr "Эти порты нужны веб-серверу панели. Осв�
 
 msgid "The panel prepares the server and installs the container the same way the Amnezia app does, so the app keeps working with it."
 msgstr "Панель готовит сервер и устанавливает контейнер так же, как приложение Amnezia, поэтому приложение продолжает с ним работать."
+
+#, python-format
+msgid "The panel restarts %(container)s to bring its interface back; restarts so far: %(attempts)s."
+msgstr "Панель перезапускает %(container)s, чтобы вернуть интерфейс; перезапусков: %(attempts)s."
 
 msgid "The panel writes its settings to the relay at the next sync. If this warning stays, press Update or Reinstall."
 msgstr "Панель запишет свои настройки на ретранслятор при ближайшей синхронизации. Если предупреждение не уходит, нажмите «Обновить» или «Переустановить»."

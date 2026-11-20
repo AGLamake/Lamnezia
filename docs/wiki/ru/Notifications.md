@@ -43,6 +43,9 @@
 | AmneziaWG снова работает с настройками 3.1 | `awg3_restored` | `server`, `host`, `since` |
 | Высокая нагрузка на сервер | `server_load_high` | `server`, `host`, `resource` (`cpu`, `memory`, `disk`), `percent`, `threshold`, `since` |
 | Нагрузка на сервер в норме | `server_load_normal` | `server`, `host`, `resource`, `percent`, `threshold`, `since` |
+| Пропал VPN-интерфейс | `interface_lost` | `server`, `host`, `container`, `since`, `attempts` |
+| VPN-интерфейс восстановлен | `interface_restored` | `server`, `host`, `container`, `since`, `attempts` |
+| VPN-интерфейс не восстановлен | `interface_repair_failed` | `server`, `host`, `container`, `since`, `attempts` |
 | Достигнут лимит | `limit_reached` | `user`, `reason` (`traffic`, `total_traffic`, `expired`) |
 | Доступ скоро закончится | `access_expiring` | `user`, `until` (дата) |
 | Трафик скоро закончится | `traffic_low` | `user`, `percent`, `used`, `limit_bytes`, `limit`, `incomplete`, `note`, `url` |
@@ -174,6 +177,14 @@ amnezia-awg2. Когда настройки вернулись, один раз 
 о ней не сообщается повторно. `server_load_normal` приходит один раз и только если о начале
 сообщили. Каждый ресурс отслеживается отдельно. Ретрансляторы не отслеживаются: у них панель
 читает только трафик.
+
+Когда контейнер WireGuard-семейства работает, а его интерфейса нет 3 замера подряд (например,
+ядро завершило amneziawg-go при нехватке памяти), один раз приходит `interface_lost`, и панель
+перезапускает контейнер — не больше 3 раз, с растущей паузой. `interface_restored` приходит один
+раз, когда замер снова находит интерфейс; `interface_repair_failed` — один раз, когда
+перезапуски не помогли, и панель больше не перезапускает контейнер. `since` — первый замер без
+интерфейса, `attempts` — сделанные перезапуски. Остановленный администратором контейнер
+завершает наблюдение без уведомления ([Серверы и импорт](Servers-and-import.md#мониторинг)).
 
 ## В браузере
 

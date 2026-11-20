@@ -263,6 +263,11 @@ class ServerSample(models.Model):
         return any(c.get("awg3_dropped") for c in self.containers)
 
     @property
+    def missing_interfaces(self) -> list[str]:
+        """Running WireGuard-family containers whose interface is gone, e.g. killed for memory."""
+        return [c["name"] for c in self.containers if c.get("interface_missing")]
+
+    @property
     def probe_running(self) -> bool:
         return any(
             c["name"] == PROBE_CONTAINER and c["state"] == "running" for c in self.containers
@@ -307,6 +312,33 @@ class LoadAlert(models.Model):
 
     def __str__(self) -> str:
         return f"{self.server_id} {self.resource}"
+
+
+class InterfaceRepair(models.Model):
+    """A running WireGuard-family container that lost its interface and its restarts so far.
+
+    The row lives from the run of readings that found the interface gone until a reading finds it
+    back or the container stopped (apps/servers/services/interface_watch.py).
+    """
+
+    server = models.ForeignKey(Server, on_delete=models.CASCADE, related_name="interface_repairs")
+    container = models.CharField(_("container"), max_length=64)
+    missing_since = models.DateTimeField(_("missing since"))
+    attempts = models.PositiveSmallIntegerField(_("restarts"), default=0)
+    next_attempt_at = models.DateTimeField(_("next restart at"), null=True, blank=True)
+    gave_up = models.BooleanField(_("gave up"), default=False)
+
+    class Meta:
+        verbose_name = _("interface repair")
+        verbose_name_plural = _("interface repairs")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["server", "container"], name="servers_interfacerepair_unique_container"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.server_id} {self.container}"
 
 
 class ServerAddress(models.Model):

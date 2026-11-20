@@ -37,6 +37,9 @@
 | `awg3_restored` | amnezia-awg2 снова принимает параметры 3.1 после `awg3_dropped`. Один раз, даже если `awg3_dropped` не получил ни один канал. | `server` — имя, `host`, `since` — с какого замера параметры были отброшены |
 | `server_load_high` | Процессор, память или диск сервера несколько замеров подряд не ниже порога из **Настроек**. Повторяется, пока нагрузка держится, не чаще заданного. | `server` — имя, `host`, `resource` (`cpu`, `memory`, `disk`), `percent` — последний замер, `threshold` — порог в процентах, `since` — первый замер выше порога |
 | `server_load_normal` | Нагрузка из `server_load_high` столько же замеров ниже порога. Один раз и только если о начале сообщили. | как у `server_load_high` |
+| `interface_lost` | Контейнер WireGuard-семейства на сервере работает, а его VPN-интерфейса нет несколько замеров подряд; панель перезапускает контейнер. Один раз, пока интерфейс не вернётся. | `server` — имя, `host`, `container`, `since` — первый замер без интерфейса, `attempts` — сделанные перезапуски |
+| `interface_restored` | Интерфейс из `interface_lost` вернулся. Один раз. | как у `interface_lost` |
+| `interface_repair_failed` | Перезапуски после `interface_lost` не вернули интерфейс; панель больше не перезапускает. Один раз. | как у `interface_lost` |
 | `limit_reached` | Ключи пользователя отключены по лимиту. | `user`, `reason`: `traffic`, `total_traffic` или `expired` |
 | `access_expiring` | Срок доступа пользователя кончается в ближайшие три дня. Один раз на срок. | `user`, `until` — дата `YYYY-MM-DD` |
 | `traffic_low` | Пользователь израсходовал долю лимита трафика, заданную в **Настройках** (по умолчанию 80%). Один раз за период этого лимита; после достижения лимита не приходит. Приходит и самому пользователю. | `user`, `percent` — израсходованная доля, `used`, `limit_bytes` — байты, `limit` (`of the period`, `of the plan`), `incomplete` — трафик части ключей сейчас не считается, `note`, `url` — страница расхода в портале |
@@ -98,6 +101,12 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/server_load_high"}}}},
     {"if": {"properties": {"event": {"const": "server_load_normal"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/server_load_normal"}}}},
+    {"if": {"properties": {"event": {"const": "interface_lost"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/interface_lost"}}}},
+    {"if": {"properties": {"event": {"const": "interface_restored"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/interface_restored"}}}},
+    {"if": {"properties": {"event": {"const": "interface_repair_failed"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/interface_repair_failed"}}}},
     {"if": {"properties": {"event": {"const": "limit_reached"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
@@ -214,6 +223,36 @@
         "resource": {"enum": ["cpu", "memory", "disk"]},
         "percent": {"type": "integer"}, "threshold": {"type": "integer"},
         "since": {"type": "string", "format": "date-time"}
+      }
+    },
+    "interface_lost": {
+      "type": "object",
+      "required": ["server", "host", "container", "since", "attempts"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "container": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"},
+        "attempts": {"type": "integer"}
+      }
+    },
+    "interface_restored": {
+      "type": "object",
+      "required": ["server", "host", "container", "since", "attempts"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "container": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"},
+        "attempts": {"type": "integer"}
+      }
+    },
+    "interface_repair_failed": {
+      "type": "object",
+      "required": ["server", "host", "container", "since", "attempts"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "container": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"},
+        "attempts": {"type": "integer"}
       }
     },
     "limit_reached": {

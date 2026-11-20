@@ -85,6 +85,19 @@ def test_awg3_settings_dropped_by_the_kernel_module_show_on_the_server_card(
     assert "AmneziaWG runs without the 3.1 settings" in html
 
 
+def test_a_running_container_without_its_interface_is_marked() -> None:
+    output = OUTPUT + "@@lamnezia-interfaces\namnezia-awg2 down\n"
+
+    sample = monitor(FakeServers(output)).poll(ServerFactory())
+
+    assert sample.missing_interfaces == ["amnezia-awg2"]
+    assert sample.containers[0] == {
+        "name": "amnezia-awg2",
+        "state": "running",
+        "interface_missing": True,
+    }
+
+
 def test_a_server_without_dropped_settings_shows_nothing() -> None:
     sample = monitor(FakeServers()).poll(ServerFactory())
 

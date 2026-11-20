@@ -153,6 +153,15 @@ background job of its own, so a server that does not answer does not delay the o
 - **High load: CPU above the threshold since …** — a resource has stayed above its threshold in
   **Settings → Server load** for several readings in a row; the server is also in **Needs
   attention** until the load is back to normal ([Notifications](Notifications.md)).
+- **No VPN interface, clients have no connection: amnezia-awg2** — the container runs, but its
+  interface is gone, e.g. the kernel killed amneziawg-go when memory ran out. The reading checks
+  `awg show` / `wg show` inside every running WireGuard-family container (AmneziaWG, legacy
+  AmneziaWG, WireGuard). After 3 readings in a row without the interface the panel restarts the
+  container with a background operation under the server lock, at most 3 times with a pause of
+  5, 10 and 20 minutes; the card shows how many restarts it took. If the interface is still not
+  back, the panel stops and says so on the card. Nothing is restarted while an operation on the
+  server, its protocols or services is running, and a container stopped by the administrator is
+  not touched ([Notifications](Notifications.md)).
 
 The servers are shown as cards on the **Overview** (moderators see the servers of their zone, without links to the
 server pages), the status is also in the server list. Above the cards the overview shows the key

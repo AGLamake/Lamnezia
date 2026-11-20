@@ -42,6 +42,9 @@ channels hear each event.
 | AmneziaWG runs with the 3.1 settings again | `awg3_restored` | `server`, `host`, `since` |
 | Server load is high | `server_load_high` | `server`, `host`, `resource` (`cpu`, `memory`, `disk`), `percent`, `threshold`, `since` |
 | Server load is back to normal | `server_load_normal` | `server`, `host`, `resource`, `percent`, `threshold`, `since` |
+| VPN interface lost | `interface_lost` | `server`, `host`, `container`, `since`, `attempts` |
+| VPN interface restored | `interface_restored` | `server`, `host`, `container`, `since`, `attempts` |
+| VPN interface not restored | `interface_repair_failed` | `server`, `host`, `container`, `since`, `attempts` |
 | Limit reached | `limit_reached` | `user`, `reason` (`traffic`, `total_traffic`, `expired`) |
 | Access ends soon | `access_expiring` | `user`, `until` (date) |
 | Traffic runs out soon | `traffic_low` | `user`, `percent`, `used`, `limit_bytes`, `limit`, `incomplete`, `note`, `url` |
@@ -171,6 +174,14 @@ around the threshold changes nothing. While the load stays high, `server_load_hi
 no more often than set (every 6 hours by default); a load that goes back above the threshold
 sooner is not told again. `server_load_normal` comes once per run, only when its start was told.
 Each resource is watched apart. Relays are not watched: the panel reads only their traffic.
+
+When a WireGuard-family container runs but its interface is gone for 3 readings in a row (e.g.
+the kernel killed amneziawg-go when memory ran out), `interface_lost` comes once and the panel
+restarts the container, at most 3 times with a growing pause. `interface_restored` comes once
+when a reading finds the interface back; `interface_repair_failed` comes once when the restarts
+did not help, and the panel stops restarting. `since` is the first reading without the
+interface, `attempts` the restarts made. A container stopped by the administrator ends the watch
+without a notification ([Servers and import](Servers-and-import.md#monitoring)).
 
 ## In the browser
 

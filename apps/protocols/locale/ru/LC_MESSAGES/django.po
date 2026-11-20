@@ -191,6 +191,9 @@ msgstr "Проверка systemd"
 msgid "Check the DNS record of the server, or give the server by its IP address."
 msgstr "Проверьте DNS-запись сервера или укажите сервер по IP-адресу."
 
+msgid "Check the VPN interface"
+msgstr "Проверка VPN-интерфейса"
+
 msgid "Check the cloud metadata block"
 msgstr "Проверить закрытие метаданных облака"
 
@@ -1025,6 +1028,9 @@ msgstr "В контейнере уже есть server.json, который па
 
 msgid "The container already has an ikev2.conf the panel cannot read."
 msgstr "В контейнере уже есть ikev2.conf, который панель не может прочитать."
+
+msgid "The container is not running or has its interface again."
+msgstr "Контейнер не запущен или его интерфейс уже на месте."
 
 msgid "The container is removed, but its data volume is still on the server."
 msgstr "Контейнер удалён, но его том с данными остался на сервере."

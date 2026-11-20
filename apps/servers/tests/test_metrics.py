@@ -69,3 +69,16 @@ def test_cpu_load_is_unknown_after_a_reboot() -> None:
     earlier = CpuTimes(total=1000, idle=850)
 
     assert CpuTimes(total=200, idle=150).busy_percent_since(earlier) is None
+
+
+def test_running_containers_without_their_interface_are_reported() -> None:
+    output = OUTPUT + "@@lamnezia-interfaces\namnezia-awg2 down\namnezia-wireguard up\nfoo down\n"
+
+    assert parse_metrics(output).missing_interfaces == {"amnezia-awg2"}
+    assert parse_metrics(OUTPUT).missing_interfaces == frozenset()
+
+
+def test_the_script_checks_the_interface_of_every_wireguard_container() -> None:
+    assert 'docker exec amnezia-awg2 sh -c "awg show awg0' in METRICS_SCRIPT
+    assert 'docker exec amnezia-awg sh -c "wg show wg0' in METRICS_SCRIPT
+    assert 'docker exec amnezia-wireguard sh -c "wg show wg0' in METRICS_SCRIPT

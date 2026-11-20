@@ -11,8 +11,9 @@ from django.utils.translation import gettext_lazy
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
 from apps.operations.services.subjects import subjects
+from apps.protocols.services.lifecycle import LostInterfaceRestart
 from apps.servers.models import Server, ServerAddress
-from apps.servers.services import probe
+from apps.servers.services import interface_watch, probe
 from apps.servers.services.addresses import CHECK_ADDRESS_KIND, AddressCheck
 from apps.servers.services.check import CHECK_KIND, ServerCheck
 from apps.servers.services.connection import connect
@@ -55,6 +56,17 @@ def install_probe(ctx: OperationContext) -> None:
 def remove_probe(ctx: OperationContext) -> None:
     with _probe_setup(ctx) as setup:
         setup.remove()
+
+
+@operations.register(
+    interface_watch.RESTART_KIND, gettext_lazy("Restart a container that lost its VPN interface")
+)
+def restart_lost_interface(ctx: OperationContext) -> None:
+    server = Server.objects.get(pk=ctx.params["server_id"])
+    with ExitStack() as stack:
+        with ctx.step(_("Connect to the server")):
+            host = stack.enter_context(connect(server))
+        LostInterfaceRestart(host, ctx.params["container"], ctx).restart()
 
 
 @contextmanager

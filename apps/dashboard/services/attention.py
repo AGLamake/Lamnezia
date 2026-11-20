@@ -61,7 +61,7 @@ class Attention:
     def servers(self) -> list[Server]:
         servers: QuerySet[Server] = (
             Server.objects.select_related("latest_sample")
-            .prefetch_related("load_alerts")
+            .prefetch_related("load_alerts", "interface_repairs")
             .order_by("name")
         )
         return list(Zone(self._member).narrow(servers, server="pk"))

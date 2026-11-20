@@ -93,10 +93,15 @@ class AwgContainer(ProtocolContainer):
         self.wait_for_awg()
 
     def wait_for_awg(self) -> None:
-        """Wait until start.sh, run in the background, brings the interface up with its settings.
+        """Wait until start.sh, run in the background, brings the interface up with its settings."""
+        self.wait_for_interface()
+        self.check_header_protection()
 
-        The background run prints nowhere: if the interface does not come up, `<tool>-quick up`
-        runs once more to tell why.
+    def wait_for_interface(self) -> None:
+        """Wait until the interface is up; SetupError if it does not come up.
+
+        The background run of start.sh prints nowhere: if the interface does not come up,
+        `<tool>-quick up` runs once more to tell why.
         """
         wait = (
             f"i=0; until {self._show} >/dev/null 2>&1; do "
@@ -104,7 +109,6 @@ class AwgContainer(ProtocolContainer):
         )
         if not self.shell.sh(wait, timeout=_START_WAIT * 2).ok:
             self._up()
-        self.check_header_protection()
 
     def awg_is_up(self) -> bool:
         return self.shell.sh(f"{self._show} >/dev/null 2>&1").ok

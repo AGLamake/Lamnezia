@@ -388,6 +388,10 @@ msgid "The VPN access of {user} ends on {until}."
 msgstr "Доступ к VPN пользователя {user} заканчивается {until}."
 
 #, python-brace-format
+msgid "The VPN interface of {container} on the server {server} ({host}) is back. Missing since {since}, restarts: {attempts}."
+msgstr "VPN-интерфейс {container} на сервере {server} ({host}) снова на месте. Пропадал с {since}, перезапусков: {attempts}."
+
+#, python-brace-format
 msgid "The VPN protocol is removed from {server}, and your keys on it no longer connect. Open the personal account to see the keys you have."
 msgstr "VPN-протокол удалён с сервера {server}, и ваши ключи на нём больше не подключаются. Откройте личный кабинет, чтобы увидеть свои ключи."
 
@@ -508,6 +512,15 @@ msgstr "URL"
 #, python-brace-format
 msgid "Users report that {server} does not work: {reports} so far."
 msgstr "Пользователи сообщают, что {server} не работает: пока сообщений — {reports}."
+
+msgid "VPN interface lost"
+msgstr "Пропал VPN-интерфейс"
+
+msgid "VPN interface not restored"
+msgstr "VPN-интерфейс не восстановлен"
+
+msgid "VPN interface restored"
+msgstr "VPN-интерфейс восстановлен"
 
 #, python-brace-format
 msgid "VPN keys on {server} are revoked"
@@ -635,6 +648,26 @@ msgstr "в браузеры пользователя"
 
 msgid "user"
 msgstr "пользователь"
+
+#, python-brace-format
+msgid "{attempts} restarts of {container} on the server {server} ({host}) did not bring its VPN interface back; missing since {since}. The panel stops restarting it: check the container log and the free memory of the server."
+msgstr "{attempts} перезапуска {container} на сервере {server} ({host}) не вернули VPN-интерфейс; его нет с {since}. Панель больше не перезапускает контейнер: проверьте его журнал и свободную память сервера."
+
+#, python-brace-format
+msgid "{container} on the server {server} ({host}) runs, but its VPN interface is gone since {since}: clients have no connection. The panel restarts the container."
+msgstr "{container} на сервере {server} ({host}) работает, но его VPN-интерфейса нет с {since}: у клиентов нет связи. Панель перезапускает контейнер."
+
+#, python-brace-format
+msgid "{container} on {server} has its interface again"
+msgstr "У {container} на {server} снова есть интерфейс"
+
+#, python-brace-format
+msgid "{container} on {server} is still without its interface"
+msgstr "{container} на {server} по-прежнему без интерфейса"
+
+#, python-brace-format
+msgid "{container} on {server} lost its interface"
+msgstr "{container} на {server} потерял интерфейс"
 
 #, python-brace-format
 msgid "{group}: a server is reachable again"

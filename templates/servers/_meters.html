@@ -13,6 +13,8 @@
     </div>
     {% if sample.stopped_containers %}<p class="error-text">{% translate "not running:" %} {{ sample.stopped_containers|join:", " }}</p>{% endif %}
     {% for alert in server.overloads %}<p class="error-text">{% blocktranslate with resource=alert.get_resource_display since=alert.high_since|date:"SHORT_DATETIME_FORMAT" %}High load: {{ resource }} above the threshold since {{ since }}.{% endblocktranslate %}</p>{% endfor %}
+    {% if sample.missing_interfaces %}<p class="error-text">{% translate "No VPN interface, clients have no connection:" %} {{ sample.missing_interfaces|join:", " }}</p>{% endif %}
+    {% for repair in server.interface_repairs.all %}<p class="{% if repair.gave_up %}error-text{% else %}help-text{% endif %}">{% if repair.gave_up %}{% blocktranslate with container=repair.container attempts=repair.attempts %}Restarts of {{ container }} did not bring its interface back ({{ attempts }}): check the container log and the free memory of the server.{% endblocktranslate %}{% else %}{% blocktranslate with container=repair.container attempts=repair.attempts %}The panel restarts {{ container }} to bring its interface back; restarts so far: {{ attempts }}.{% endblocktranslate %}{% endif %}</p>{% endfor %}
     {% if sample.awg3_dropped %}<p class="error-text">{% translate "AmneziaWG runs without the 3.1 settings: the kernel module of the server is older and dropped them." %}</p>{% endif %}
   {% endif %}
 {% endwith %}

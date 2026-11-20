@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Restart of a WireGuard-family container that lost its interface**: the monitor reading now
+  checks the VPN interface inside running AmneziaWG, legacy AmneziaWG and WireGuard containers.
+  After 3 readings in a row without it, the panel restarts the container with a background
+  operation under the server lock, at most 3 times with a pause of 5, 10 and 20 minutes, and then
+  only notifies. New notification events `interface_lost`, `interface_restored` and
+  `interface_repair_failed`; the server card shows the missing interface and the restarts. Nothing
+  is restarted while an operation on the server runs, and a container stopped by the
+  administrator is left alone. **Upgrade**: a migration.
 - **VPN clients cannot reach the cloud metadata service**: a rule in the `DOCKER-USER` chain of the
   server drops traffic from the Docker bridges of the Amnezia containers to `169.254.0.0/16`, where
   clouds serve the server's data and the tokens of its service account; the host itself still

@@ -31,6 +31,9 @@ class Event(StrEnum):
     AWG3_RESTORED = "awg3_restored"
     SERVER_LOAD_HIGH = "server_load_high"
     SERVER_LOAD_NORMAL = "server_load_normal"
+    INTERFACE_LOST = "interface_lost"
+    INTERFACE_RESTORED = "interface_restored"
+    INTERFACE_REPAIR_FAILED = "interface_repair_failed"
     LIMIT_REACHED = "limit_reached"
     ACCESS_EXPIRING = "access_expiring"
     TRAFFIC_LOW = "traffic_low"
@@ -191,6 +194,33 @@ EVENTS: dict[Event, EventType] = {
             "of {threshold}%. High since {since}."
         ),
         coded={"resource": LoadResource},
+    ),
+    # `container` runs, but its interface is gone; `since` is the first reading without it and
+    # `attempts` the restarts the panel made.
+    Event.INTERFACE_LOST: EventType(
+        _("VPN interface lost"),
+        _("{container} on {server} lost its interface"),
+        _(
+            "{container} on the server {server} ({host}) runs, but its VPN interface is gone "
+            "since {since}: clients have no connection. The panel restarts the container."
+        ),
+    ),
+    Event.INTERFACE_RESTORED: EventType(
+        _("VPN interface restored"),
+        _("{container} on {server} has its interface again"),
+        _(
+            "The VPN interface of {container} on the server {server} ({host}) is back. "
+            "Missing since {since}, restarts: {attempts}."
+        ),
+    ),
+    Event.INTERFACE_REPAIR_FAILED: EventType(
+        _("VPN interface not restored"),
+        _("{container} on {server} is still without its interface"),
+        _(
+            "{attempts} restarts of {container} on the server {server} ({host}) did not bring "
+            "its VPN interface back; missing since {since}. The panel stops restarting it: check "
+            "the container log and the free memory of the server."
+        ),
     ),
     Event.LIMIT_REACHED: EventType(
         _("Limit reached"),

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from amnezia_core.containers import AWG2
+from amnezia_core.containers import AWG2, WG_CONTAINERS, WgContainer
 from apps.servers.models import PROBE_CONTAINER
 
 _MARKER = "@@lamnezia-"
@@ -19,6 +19,16 @@ _AWG3_DROPPED = (
     " && echo dropped"
 )
 
+
+def _interface_check(container: WgContainer) -> str:
+    """`<name> up` or `<name> down` for a running container; nothing when it is not running."""
+    show = f"{container.tool} show {container.interface} >/dev/null 2>&1"
+    return (
+        f'docker exec {container.name} sh -c "{show} && echo up || echo down" 2>/dev/null'
+        f" | sed 's/^/{container.name} /'\n"
+    )
+
+
 # One SSH command per reading. CPU load comes from the difference between two readings, so the
 # script does not sleep to measure it. Docker may be missing: then the container list is empty.
 METRICS_SCRIPT = (
@@ -28,7 +38,9 @@ METRICS_SCRIPT = (
     f"echo {_MARKER}disk; df -Pk / | awk 'NR == 2 {{print $2, $4}}'\n"
     f"echo {_MARKER}containers; docker ps -a --format '{{{{.Names}}}} {{{{.State}}}}' 2>/dev/null\n"
     f'echo {_MARKER}awg3; docker exec {AWG2.name} sh -c "{_AWG3_DROPPED}" 2>/dev/null\n'
-    "true\n"
+    f"echo {_MARKER}interfaces\n"
+    + "".join(_interface_check(container) for container in WG_CONTAINERS.values())
+    + "true\n"
 )
 
 
@@ -71,6 +83,8 @@ class HostMetrics:
     containers: tuple[ContainerState, ...] = ()
     # amnezia-awg2 runs without the AmneziaWG 3.1 settings of its config
     awg3_dropped: bool = False
+    # running WireGuard-family containers whose interface is gone
+    missing_interfaces: frozenset[str] = frozenset()
 
 
 def parse_metrics(output: str) -> HostMetrics:
@@ -86,6 +100,7 @@ def parse_metrics(output: str) -> HostMetrics:
         uptime=_parse_uptime(sections.get("uptime", "")),
         containers=_parse_containers(sections.get("containers", "")),
         awg3_dropped=sections.get("awg3", "").strip() == "dropped",
+        missing_interfaces=_parse_interfaces(sections.get("interfaces", "")),
     )
 
 
@@ -135,6 +150,16 @@ def _parse_containers(text: str) -> tuple[ContainerState, ...]:
         if (name.startswith(_CONTAINER_PREFIX) or name == PROBE_CONTAINER) and state:
             containers.append(ContainerState(name, state))
     return tuple(containers)
+
+
+def _parse_interfaces(text: str) -> frozenset[str]:
+    """Names reported `down`; a container that is not running reports nothing."""
+    missing = set()
+    for line in text.splitlines():
+        name, _, state = line.strip().partition(" ")
+        if state == "down" and name in WG_CONTAINERS:
+            missing.add(name)
+    return frozenset(missing)
 
 
 def _numbers(text: str, count: int) -> list[int] | None:

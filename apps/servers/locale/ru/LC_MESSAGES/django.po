@@ -130,6 +130,9 @@ msgstr "Удалить контейнер проверки"
 msgid "Remove the reachability probe"
 msgstr "Удаление проверки доступности"
 
+msgid "Restart a container that lost its VPN interface"
+msgstr "Перезапуск контейнера без VPN-интерфейса"
+
 msgid "SSH key"
 msgstr "SSH-ключ"
 
@@ -215,6 +218,9 @@ msgstr "проверка не прошла"
 msgid "checked at"
 msgstr "проверен"
 
+msgid "container"
+msgstr "контейнер"
+
 msgid "containers"
 msgstr "контейнеры"
 
@@ -230,6 +236,9 @@ msgstr "свободно на диске"
 msgid "free memory"
 msgstr "свободная память"
 
+msgid "gave up"
+msgstr "попытки исчерпаны"
+
 msgid "high since"
 msgstr "высокая с"
 
@@ -238,6 +247,12 @@ msgstr "хост"
 
 msgid "hosting or payment page"
 msgstr "страница хостера или оплаты"
+
+msgid "interface repair"
+msgstr "восстановление интерфейса"
+
+msgid "interface repairs"
+msgstr "восстановления интерфейсов"
 
 msgid "key passphrase"
 msgstr "пароль ключа"
@@ -260,8 +275,14 @@ msgstr "вход"
 msgid "memory"
 msgstr "память"
 
+msgid "missing since"
+msgstr "нет с"
+
 msgid "name"
 msgstr "название"
+
+msgid "next restart at"
+msgstr "следующий перезапуск"
 
 msgid "not checked"
 msgstr "не проверен"
@@ -286,6 +307,9 @@ msgstr "готов"
 
 msgid "resource"
 msgstr "ресурс"
+
+msgid "restarts"
+msgstr "перезапуски"
 
 msgid "server"
 msgstr "сервер"

@@ -37,6 +37,9 @@ zone), `data` depends on the event.
 | `awg3_restored` | amnezia-awg2 takes the 3.1 settings again after `awg3_dropped`. Once, even when no channel heard of `awg3_dropped`. | `server` name, `host`, `since` — the reading the settings were dropped since |
 | `server_load_high` | CPU, memory or disk of a server stayed at or above the threshold in **Settings** for several readings in a row. Repeated while the load lasts, no more often than set. | `server` name, `host`, `resource` (`cpu`, `memory`, `disk`), `percent` — the latest reading, `threshold` — percent, `since` — the first reading above the threshold |
 | `server_load_normal` | The load of `server_load_high` stayed below the threshold for as many readings. Once, only when the start was told. | the same as `server_load_high` |
+| `interface_lost` | A WireGuard-family container of a server runs, but its VPN interface is gone for several readings in a row; the panel restarts the container. Once, until the interface is back. | `server` name, `host`, `container`, `since` — the first reading without the interface, `attempts` — restarts made |
+| `interface_restored` | The interface of `interface_lost` is back. Once. | the same as `interface_lost` |
+| `interface_repair_failed` | The restarts after `interface_lost` did not bring the interface back; the panel stops restarting. Once. | the same as `interface_lost` |
 | `limit_reached` | A user's keys are turned off by a limit. | `user`, `reason`: `traffic`, `total_traffic` or `expired` |
 | `access_expiring` | The access term of a user ends within three days. Once per term. | `user`, `until` — date `YYYY-MM-DD` |
 | `traffic_low` | A user has used the share of a traffic limit set in **Settings** (80% by default). Once per period of that limit; not sent once the limit is reached. Also sent to the user. | `user`, `percent` — share used, `used`, `limit_bytes` — bytes, `limit` (`of the period`, `of the plan`), `incomplete` — traffic of some keys is not counted now, `note`, `url` — usage page of the portal |
@@ -98,6 +101,12 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/server_load_high"}}}},
     {"if": {"properties": {"event": {"const": "server_load_normal"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/server_load_normal"}}}},
+    {"if": {"properties": {"event": {"const": "interface_lost"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/interface_lost"}}}},
+    {"if": {"properties": {"event": {"const": "interface_restored"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/interface_restored"}}}},
+    {"if": {"properties": {"event": {"const": "interface_repair_failed"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/interface_repair_failed"}}}},
     {"if": {"properties": {"event": {"const": "limit_reached"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/limit_reached"}}}},
     {"if": {"properties": {"event": {"const": "access_expiring"}}},
@@ -214,6 +223,36 @@ may be added: ignore what you do not know.
         "resource": {"enum": ["cpu", "memory", "disk"]},
         "percent": {"type": "integer"}, "threshold": {"type": "integer"},
         "since": {"type": "string", "format": "date-time"}
+      }
+    },
+    "interface_lost": {
+      "type": "object",
+      "required": ["server", "host", "container", "since", "attempts"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "container": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"},
+        "attempts": {"type": "integer"}
+      }
+    },
+    "interface_restored": {
+      "type": "object",
+      "required": ["server", "host", "container", "since", "attempts"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "container": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"},
+        "attempts": {"type": "integer"}
+      }
+    },
+    "interface_repair_failed": {
+      "type": "object",
+      "required": ["server", "host", "container", "since", "attempts"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "container": {"type": "string"},
+        "since": {"type": "string", "format": "date-time"},
+        "attempts": {"type": "integer"}
       }
     },
     "limit_reached": {

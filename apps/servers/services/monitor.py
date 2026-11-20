@@ -21,6 +21,7 @@ from apps.notifications.services.trouble import (
 )
 from apps.servers.models import Server, ServerSample
 from apps.servers.services.connection import connect
+from apps.servers.services.interface_watch import INTERFACE_RULES, InterfaceWatch
 from apps.servers.services.load import LoadRules, LoadWatch
 from apps.servers.services.metrics import (
     METRICS_SCRIPT,
@@ -70,6 +71,7 @@ class ServerMonitor:
         server.record_sample(sample)
         if sample.answered:
             LoadWatch(LoadRules.from_site()).check(server, sample.at)
+            InterfaceWatch(INTERFACE_RULES).check(server, sample.at)
         if server.online is False:
             _report_down(server)
         return sample
@@ -200,4 +202,6 @@ def _container(container: ContainerState, metrics: HostMetrics) -> dict[str, Any
     entry: dict[str, Any] = {"name": container.name, "state": container.state}
     if metrics.awg3_dropped and container.name == AWG2.name:
         entry["awg3_dropped"] = True
+    if container.running and container.name in metrics.missing_interfaces:
+        entry["interface_missing"] = True
     return entry

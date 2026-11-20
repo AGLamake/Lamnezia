@@ -128,6 +128,29 @@ class ContainerControl:
         return stack
 
 
+class LostInterfaceRestart(ContainerControl):
+    """Restart of a running WireGuard-family container whose interface is gone.
+
+    The monitor asks for it; under the server lock the container is checked again, so one the
+    administrator stopped meanwhile or one that has its interface back is left as it is.
+    """
+
+    def __init__(self, host: RemoteHost, name: str, ctx: OperationContext) -> None:
+        super().__init__(host, name, ctx)
+        self._awg = AwgContainer(host, ctx, WG_CONTAINERS[name])
+
+    def restart(self) -> None:
+        with self._locked():
+            with self._ctx.step(_("Check the VPN interface")):
+                if self._awg.state() != "running" or self._awg.awg_is_up():
+                    self._ctx.log(_("The container is not running or has its interface again."))
+                    return
+            with self._ctx.step(_("Restart the container")):
+                self._host.docker("restart", self._name)
+            with self._ctx.step(_("Wait for the VPN interface")):
+                self._awg.wait_for_interface()
+
+
 class ContainerLifecycle(ContainerControl):
     """The container of one protocol instance: a restart waits until the VPN serves again."""
 
