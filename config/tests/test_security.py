@@ -68,3 +68,23 @@ def test_csrf_cookie_is_not_readable_by_scripts(client: Client) -> None:
     response = client.get("/accounts/login/")
 
     assert response.cookies["csrftoken"]["httponly"]
+
+
+@pytest.mark.django_db
+@override_settings(ALLOWED_HOSTS=["203.0.113.5"], SITE_URL="https://203.0.113.5")
+@pytest.mark.parametrize(
+    ("origin", "status"), [("https://203.0.113.5", 200), ("https://panel.example.com", 403)]
+)
+def test_a_panel_opened_by_an_ip_address_checks_forms_by_it(origin: str, status: int) -> None:
+    client = Client(enforce_csrf_checks=True, HTTP_HOST="203.0.113.5")
+    client.get("/accounts/login/", secure=True)
+    token = client.cookies["csrftoken"].value
+
+    response = client.post(
+        "/accounts/login/",
+        {"username": "nobody", "password": "wrong", "csrfmiddlewaretoken": token},
+        secure=True,
+        headers={"Origin": origin},
+    )
+
+    assert response.status_code == status

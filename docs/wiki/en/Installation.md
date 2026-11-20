@@ -20,7 +20,8 @@ the server, that is fine: the panel becomes one more site.
 An idle panel with a few users and both bots takes about 800 MB of RAM (seven containers) and the
 images about 700 MB of disk; with 1 GB of RAM add a swap file.
 
-**A domain.** A subdomain such as `panel.example.com` is enough.
+**A domain** (optional). A subdomain such as `panel.example.com` is enough. Without a domain the
+panel opens by the server's IP address, see [Without a domain](#without-a-domain).
 
 ## 2. DNS
 
@@ -59,6 +60,33 @@ The script:
 Options: `--email you@example.com` for Let's Encrypt expiry notices, `--proxy nginx|caddy` to pick the
 proxy, `--dir` for another directory. Help: `bash install.sh --help`.
 
+### Without a domain
+
+Without `--domain` (or with an empty answer to the question) the panel opens by the server's public
+IPv4 address: `https://203.0.113.5/`. The script finds the address from outside, writes it to
+`LAMNEZIA_DOMAIN` and sets `LAMNEZIA_CADDY_TLS=ip`; the bundled Caddy gets a Let's Encrypt
+certificate for the IP address. Such a certificate lives about 6 days, and Caddy renews it by
+itself. The certificate is issued over port 80, so ports 80 and 443 must be open and free.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AGLamake/Lamnezia/releases/install.sh | bash
+```
+
+- Only the bundled Caddy works this way: certbot gives no certificate for an IP address. If nginx
+  is installed, the script stops with an error. Pass `--proxy caddy` if nginx does not hold
+  ports 80/443, or use a domain.
+- Links in letters, notifications and bot messages lead to `https://<IP>/`.
+- Keep the Telegram bot on long polling (the default). The webhook by an IP address has not been
+  checked. Sign-in with Telegram needs a domain linked to the bot in BotFather (`/setdomain`).
+- A [panel move](Panel-move.md) of such a panel installs the copy at the IP address of the new
+  machine. There is no A record to switch: open the panel at the new address.
+
+**Switching to a domain later.** Point the domain's A record to the server, set
+`LAMNEZIA_DOMAIN=panel.example.com` in `/opt/lamnezia/.env` (and `LAMNEZIA_SITE_URL`, if you set it)
+and run the install command again. It keeps `.env`, removes `LAMNEZIA_CADDY_TLS`, and Caddy gets an
+ordinary certificate for the domain. Messengers that use webhooks or sign-in links need the new
+address too.
+
 ### Ready image instead of a build
 
 `--image` takes the built image from GHCR instead of building on the server: faster, and no memory
@@ -84,7 +112,7 @@ Without a terminal — cloud-init, a provider's startup script, `ssh host 'bash 
 
 | Variable | Option | Meaning |
 |---|---|---|
-| `LAMNEZIA_DOMAIN` | `--domain` | panel domain, required for a new installation |
+| `LAMNEZIA_DOMAIN` | `--domain` | panel domain; empty: the server's IP address |
 | `LAMNEZIA_EMAIL` | `--email` | address for Let's Encrypt notices |
 | `LAMNEZIA_PROXY` | `--proxy` | `auto`, `nginx` or `caddy` |
 | `LAMNEZIA_IMAGE` | `--image` | ready image: a version, `latest` or a full reference |

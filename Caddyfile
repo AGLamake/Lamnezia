@@ -1,7 +1,30 @@
 # Used with `docker compose --profile caddy` on servers without their own nginx.
 # Caddy obtains and renews the TLS certificate for LAMNEZIA_DOMAIN automatically.
 # reverse_proxy passes WebSocket upgrades through as is.
+
+# Browsers send no server name (SNI) for an IP address: such connections get this certificate.
+{
+	default_sni {$LAMNEZIA_DOMAIN}
+}
+
+# LAMNEZIA_CADDY_TLS picks the snippet; install.sh sets it to "ip" when LAMNEZIA_DOMAIN is an
+# IP address. A domain gets Caddy's usual certificate; an IP address only the short-lived one of
+# Let's Encrypt (about 6 days), which Caddy renews by itself. The TLS-ALPN challenge fails for
+# an IP address in Caddy 2.10, so it goes by HTTP on port 80.
+(tls-domain) {
+}
+
+(tls-ip) {
+	tls {
+		issuer acme {
+			profile shortlived
+			disable_tlsalpn_challenge
+		}
+	}
+}
+
 {$LAMNEZIA_DOMAIN} {
+	import tls-{$LAMNEZIA_CADDY_TLS:domain}
 	encode zstd gzip
 	# The Telegram webhook (LAMNEZIA_TELEGRAM_WEBHOOK) goes to the bots service.
 	handle /bots/telegram/* {

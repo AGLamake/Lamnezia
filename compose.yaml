@@ -30,6 +30,7 @@ services:
       - "443:443/udp"
     environment:
       LAMNEZIA_DOMAIN: ${LAMNEZIA_DOMAIN}
+      LAMNEZIA_CADDY_TLS: ${LAMNEZIA_CADDY_TLS:-domain}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data

@@ -14,7 +14,8 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_ALLOWED_HOSTS` | empty | Comma-separated host names the panel answers on. |
 | `LAMNEZIA_DATABASE_URL` | SQLite `db.sqlite3` | Database URL, e.g. `postgres://user:pass@host:5432/lamnezia`. |
 | `LAMNEZIA_TIME_ZONE` | `UTC` | Time zone for dates in the interface. |
-| `LAMNEZIA_DOMAIN` | — (required for compose) | Panel domain. |
+| `LAMNEZIA_DOMAIN` | — (required for compose) | Panel domain, or the server's IP address (bundled Caddy only, see [Installation](Installation.md#without-a-domain)). |
+| `LAMNEZIA_CADDY_TLS` | `domain` | Certificate the bundled Caddy gets: `ip` — a short-lived Let's Encrypt certificate for an IP address in `LAMNEZIA_DOMAIN`. `install.sh` sets it on every run. |
 | `LAMNEZIA_DB_PASSWORD` | — (required for compose) | PostgreSQL password, letters and digits only. |
 | `LAMNEZIA_WEB_WORKERS` | `2` | Number of web processes. |
 | `LAMNEZIA_POLL_WORKERS` | `2` | How many servers the `poller` service polls at once (monitoring and traffic). |

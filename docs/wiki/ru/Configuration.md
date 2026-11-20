@@ -14,7 +14,8 @@
 | `LAMNEZIA_ALLOWED_HOSTS` | пусто | Имена хостов панели через запятую. |
 | `LAMNEZIA_DATABASE_URL` | SQLite `db.sqlite3` | Адрес базы, например `postgres://user:pass@host:5432/lamnezia`. |
 | `LAMNEZIA_TIME_ZONE` | `UTC` | Часовой пояс дат в интерфейсе. |
-| `LAMNEZIA_DOMAIN` | — (обязательна для compose) | Домен панели. |
+| `LAMNEZIA_DOMAIN` | — (обязательна для compose) | Домен панели или IP-адрес сервера (только со встроенным Caddy, см. [Установка](Installation.md#без-домена)). |
+| `LAMNEZIA_CADDY_TLS` | `domain` | Какой сертификат получает встроенный Caddy: `ip` — короткий сертификат Let's Encrypt на IP-адрес из `LAMNEZIA_DOMAIN`. `install.sh` ставит его при каждом запуске. |
 | `LAMNEZIA_DB_PASSWORD` | — (обязательна для compose) | Пароль PostgreSQL, только буквы и цифры. |
 | `LAMNEZIA_WEB_WORKERS` | `2` | Число процессов web. |
 | `LAMNEZIA_POLL_WORKERS` | `2` | Число одновременных опросов серверов (мониторинг и трафик) в сервисе `poller`. |

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Installation without a domain**: `install.sh` without `--domain` (or with an empty answer)
+  opens the panel by the server's public IPv4 address. The bundled Caddy gets a short-lived
+  Let's Encrypt certificate for the IP address and renews it itself (`LAMNEZIA_CADDY_TLS=ip`,
+  set by the script). The nginx + certbot way still needs a domain and stops with a clear
+  error. A panel move of such a panel takes the IP address of the new machine. Caddy now also
+  answers connections without a server name (`default_sni`). Switching to a domain later: edit
+  `LAMNEZIA_DOMAIN` in `.env` and run `install.sh` again.
 - **Notification that a key works**: the owner of a new key hears once (`key_connected`) when the
   first traffic reading after the issue sees it in use — a handshake or counters that grew, on any
   member of a server group. A key reissued for the same device does not tell again; imported keys

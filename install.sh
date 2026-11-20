@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Lamnezia installer for Debian/Ubuntu. Run as root:
 #   curl -fsSL https://raw.githubusercontent.com/AGLamake/Lamnezia/releases/install.sh | bash -s -- --domain panel.example.com
+# Without a domain the panel opens at https://<public IPv4 of the server>/ (bundled Caddy only).
 # Running it again updates an existing installation and keeps its .env.
 # A panel archive (System -> Panel archive) is restored on a new server with --restore FILE.
 # Without a terminal (cloud-init) it asks nothing: the options come from LAMNEZIA_* variables,
@@ -32,7 +33,9 @@ usage() {
 Usage: install.sh [--domain NAME] [--email ADDRESS] [--proxy auto|nginx|caddy] [--image TAG] [--dir PATH]
                   [--restore FILE [--moving]]
 
-  --domain  panel domain; its DNS A record must point to this server
+  --domain  panel domain; its DNS A record must point to this server. Without it the panel
+            opens by the server's public IPv4 address with a short-lived Let's Encrypt
+            certificate, which needs the bundled Caddy (--proxy caddy, ports 80/443 free)
   --email   address for Let's Encrypt expiry notices (optional)
   --proxy   nginx: use the nginx already on this server, HTTPS via certbot
             caddy: bundled Caddy container on ports 80/443
@@ -41,14 +44,15 @@ Usage: install.sh [--domain NAME] [--email ADDRESS] [--proxy auto|nginx|caddy] [
             latest or a full image reference; kept in .env for later runs
   --dir     installation directory (default /opt/lamnezia)
   --restore install from a panel archive: its database, secrets and files; the password is
-            asked or taken from LAMNEZIA_ARCHIVE_PASSWORD; --domain overrides the archived one
+            asked or taken from LAMNEZIA_ARCHIVE_PASSWORD; --domain overrides the archived one,
+            and an archived IP address is replaced with the address of this server
   --moving  set by the panel move: the domain still points to the old machine, so a failed
             certificate request is retried every 10 minutes instead of stopping the install
 
-Without a terminal, or with LAMNEZIA_UNATTENDED=1, nothing is asked. The options may then come
-from LAMNEZIA_DOMAIN, LAMNEZIA_EMAIL, LAMNEZIA_PROXY, LAMNEZIA_IMAGE, LAMNEZIA_DIR and
-LAMNEZIA_REF; a new installation also gets the administrator LAMNEZIA_ADMIN_USERNAME (admin)
-with a generated password. The result is written to install-summary.txt (mode 0600) in --dir.
+Without a terminal, or with LAMNEZIA_UNATTENDED=1, nothing is asked and no domain means the
+server's IP address. The options may then come from LAMNEZIA_DOMAIN, LAMNEZIA_EMAIL,
+LAMNEZIA_PROXY, LAMNEZIA_IMAGE, LAMNEZIA_DIR and LAMNEZIA_REF; a new installation also gets
+the administrator LAMNEZIA_ADMIN_USERNAME (admin) with a generated password. The result is written to install-summary.txt (mode 0600) in --dir.
 EOF
 }
 
@@ -151,6 +155,54 @@ choose_proxy() {
     log "Reverse proxy: $PROXY"
 }
 
+# An IPv4 or IPv6 address rather than a domain name.
+is_ip() {
+    [[ "$1" =~ ^[0-9]+(\.[0-9]+){3}$ || "$1" == *:* ]]
+}
+
+# The public IPv4 address of this server as the internet sees it: Let's Encrypt checks it from
+# outside, so an interface address behind NAT would not do.
+public_ip() {
+    local url ip
+    for url in https://api.ipify.org https://ifconfig.me/ip; do
+        ip="$(curl -4fsS --max-time 10 "$url" 2>/dev/null || true)"
+        if [[ "$ip" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
+            printf '%s' "$ip"
+            return
+        fi
+    done
+    die "could not find the public IPv4 address of this server: pass --domain"
+}
+
+# No domain means the panel is opened by the server's IP address.
+resolve_address() {
+    if [ -z "$DOMAIN" ] && [ "$UNATTENDED" = 0 ]; then
+        DOMAIN="$(ask "Panel domain (leave empty to open the panel by this server's IP address)")"
+    fi
+    if [ -z "$DOMAIN" ]; then
+        DOMAIN="$(public_ip)"
+        log "No domain: the panel opens by the IP address $DOMAIN"
+    fi
+    check_address
+}
+
+# certbot gives no certificate for an IP address; the bundled Caddy gets a short-lived one.
+check_address() {
+    is_ip "$DOMAIN" || return 0
+    [ "$PROXY" = "caddy" ] || die "a panel without a domain needs the bundled Caddy on ports 80 and 443, \
+but this server uses nginx: pass --domain, or --proxy caddy if nginx does not hold these ports"
+}
+
+# Caddy takes the certificate kind from .env (see Caddyfile). It follows LAMNEZIA_DOMAIN on every
+# run, so moving the panel from an IP address to a domain is: edit .env, run install.sh again.
+write_tls_mode() {
+    local env_file="$DIR/.env"
+    sed -i '/^LAMNEZIA_CADDY_TLS=/d' "$env_file"
+    if is_ip "$DOMAIN"; then
+        printf 'LAMNEZIA_CADDY_TLS=ip\n' >>"$env_file"
+    fi
+}
+
 # First free localhost port from 8000 up: the host may already run other services.
 free_port() {
     local port=8000
@@ -163,10 +215,10 @@ write_env() {
     if [ -f "$env_file" ]; then
         log "Keeping existing $env_file"
         DOMAIN="$(sed -n 's/^LAMNEZIA_DOMAIN=//p' "$env_file")"
+        check_address
         return
     fi
-    [ -n "$DOMAIN" ] || DOMAIN="$(ask "Panel domain (e.g. panel.example.com)")"
-    [ -n "$DOMAIN" ] || die "a domain is required"
+    resolve_address
     log "Creating $env_file with new secrets"
     sed -e "s|^LAMNEZIA_DOMAIN=.*|LAMNEZIA_DOMAIN=$DOMAIN|" \
         -e "s|^LAMNEZIA_SECRET_KEY=.*|LAMNEZIA_SECRET_KEY=$(openssl rand -hex 32)|" \
@@ -204,13 +256,15 @@ unpack_archive() {
     trap 'rm -rf "$RESTORE_DIR"' EXIT
     log "Decrypting and checking the archive"
     bash "$DIR/deploy/archive/unpack.sh" "$RESTORE" "$RESTORE_DIR" "$DIR"
-    grep -v '^COMPOSE_PROFILES=' "$RESTORE_DIR/env" >"$env_file"
-    chmod 600 "$env_file"
-    if [ -n "$DOMAIN" ]; then
-        sed -i '/^LAMNEZIA_DOMAIN=/d' "$env_file"
-        printf 'LAMNEZIA_DOMAIN=%s\n' "$DOMAIN" >>"$env_file"
+    # A panel opened by an IP address moves to the address of this machine.
+    if [ -z "$DOMAIN" ]; then
+        DOMAIN="$(sed -n 's/^LAMNEZIA_DOMAIN=//p' "$RESTORE_DIR/env")"
+        if is_ip "$DOMAIN"; then DOMAIN=""; fi
     fi
-    DOMAIN="$(sed -n 's/^LAMNEZIA_DOMAIN=//p' "$env_file")"
+    resolve_address
+    grep -v -e '^COMPOSE_PROFILES=' -e '^LAMNEZIA_DOMAIN=' "$RESTORE_DIR/env" >"$env_file"
+    chmod 600 "$env_file"
+    printf 'LAMNEZIA_DOMAIN=%s\n' "$DOMAIN" >>"$env_file"
     bind="$(sed -n 's/^LAMNEZIA_HTTP_BIND=//p' "$env_file")"
     if [ -z "$bind" ] || ss -Htln "sport = :${bind##*:}" | grep -q .; then
         sed -i '/^LAMNEZIA_HTTP_BIND=/d' "$env_file"
@@ -441,6 +495,7 @@ main() {
     fetch_code
     choose_proxy
     if [ -n "$RESTORE" ]; then unpack_archive; else write_env; fi
+    write_tls_mode
     save_image
     prepare_update_dir
     prepare_images
@@ -450,7 +505,11 @@ main() {
     install_update_unit
     if [ "$PROXY" = "nginx" ]; then setup_nginx; fi
     if [ "$MOVING" = 1 ]; then
-        log "The copy is running and waits: confirm the move in the old panel, then point $DOMAIN here"
+        if is_ip "$DOMAIN"; then
+            log "The copy is running and waits: confirm the move in the old panel, then open https://$DOMAIN/"
+        else
+            log "The copy is running and waits: confirm the move in the old panel, then point $DOMAIN here"
+        fi
         return
     fi
     log "Lamnezia is running at https://$DOMAIN/"
