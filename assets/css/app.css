@@ -394,7 +394,7 @@ html[data-loading]::before {
     @apply -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0;
   }
   .tab {
-    @apply inline-flex min-h-9 shrink-0 items-center rounded-full border border-border px-3.5 text-sm
+    @apply inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 text-sm
       font-medium text-muted transition-colors hover:bg-surface-2 hover:text-fg;
   }
   .tab[aria-current="page"] {

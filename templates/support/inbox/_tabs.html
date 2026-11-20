@@ -1,4 +1,4 @@
-{% load i18n %}{# Inbox sections; `tab` is the current one. #}
+{% load i18n support %}{# Inbox sections; `tab` is the current one. Requests and Chats carry their unread counters, refreshed like the menu one. #}
 <div class="page-header">
   <div>
     <h1 class="page-title">{% translate "Inbox" %}</h1>
@@ -6,8 +6,8 @@
   </div>
 </div>
 <nav class="tabs" aria-label="{% translate 'Inbox sections' %}">
-  <a href="{% url 'support:inbox' %}" class="tab"{% if tab == 'requests' %} aria-current="page"{% endif %}>{% translate "Requests" %}</a>
-  <a href="{% url 'support:inbox-chats' %}" class="tab"{% if tab == 'chats' %} aria-current="page"{% endif %}>{% translate "Chats" %}</a>
+  <a href="{% url 'support:inbox' %}" class="tab"{% if tab == 'requests' %} aria-current="page"{% endif %}>{% translate "Requests" %}{% inbox_unread "ticket" as unread %}{% url 'support:inbox-unread-kind' 'ticket' as unread_url %}{% include "support/_badge.html" %}</a>
+  <a href="{% url 'support:inbox-chats' %}" class="tab"{% if tab == 'chats' %} aria-current="page"{% endif %}>{% translate "Chats" %}{% inbox_unread "chat" as unread %}{% url 'support:inbox-unread-kind' 'chat' as unread_url %}{% include "support/_badge.html" %}</a>
   {% if user.is_admin %}
     <a href="{% url 'support:incidents' %}" class="tab"{% if tab == 'incidents' %} aria-current="page"{% endif %}>{% translate "Incidents" %}</a>
     <a href="{% url 'support:templates' %}" class="tab"{% if tab == 'templates' %} aria-current="page"{% endif %}>{% translate "Reply templates" %}</a>

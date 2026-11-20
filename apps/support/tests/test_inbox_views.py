@@ -5,6 +5,7 @@ from django.urls import reverse
 from apps.audit.models import AuditEvent
 from apps.servers.tests.factories import ServerFactory
 from apps.support.models import Conversation, Incident, Kind, ReplyTemplate, TicketStatus
+from apps.support.services.chat import MyChat
 from apps.support.services.inbox import Inbox
 from apps.support.services.thread import post
 from apps.support.services.tickets import MyRequests
@@ -22,6 +23,35 @@ def test_the_menu_counts_unread_messages(client: Client) -> None:
 
     assert page.status_code == 200
     assert b'nav-count nav-count-danger">1<' in page.content
+
+
+def test_only_the_chats_tab_counts_an_unread_chat(client: Client) -> None:
+    MyChat(subscriber()).send("Hello")
+    client.force_login(admin())
+
+    page = client.get(reverse("support:inbox"))
+
+    chats_url = reverse("support:inbox-unread-kind", args=["chat"])
+    requests_url = reverse("support:inbox-unread-kind", args=["ticket"])
+    chats_badge = f'hx-get="{chats_url}"'.encode()
+    requests_badge = f'hx-get="{requests_url}"'.encode()
+    assert chats_badge in page.content and requests_badge in page.content
+    after_chats = page.content.split(chats_badge, 1)[1].split(b"</a>", 1)[0]
+    after_requests = page.content.split(requests_badge, 1)[1].split(b"</a>", 1)[0]
+    assert b'nav-count-danger">1<' in after_chats
+    assert b"nav-count" not in after_requests
+
+
+def test_the_tab_counter_is_refetched_by_kind(client: Client) -> None:
+    MyChat(subscriber()).send("Hello")
+    client.force_login(admin())
+
+    chats = client.get(reverse("support:inbox-unread-kind", args=["chat"]))
+    requests = client.get(reverse("support:inbox-unread-kind", args=["ticket"]))
+
+    assert b'nav-count-danger">1<' in chats.content
+    assert b"nav-count" not in requests.content
+    assert client.get(reverse("support:inbox-unread-kind", args=["other"])).status_code == 404
 
 
 def test_a_moderator_does_not_open_a_request_not_assigned_to_them(client: Client) -> None:

@@ -65,7 +65,9 @@ at once, so an answer is counted once — on the **Support** tab.
 
 The chat, the requests and the inbox update by themselves: a new message reaches the other side in
 a fraction of a second, *seen* shows under one's own messages, and the unread counters in the
-portal and admin menus change without a reload. The page keeps a WebSocket at `/ws/support/` (the
+portal and admin menus change without a reload. In the inbox the **Requests** and **Chats** tabs
+have their own counters: the unread messages of that kind among the conversations the staff
+member sees. The page keeps a WebSocket at `/ws/support/` (the
 proxy must pass WebSocket through — the Caddy of `compose.yaml` and the nginx example do). The
 socket only says "something changed"; the page then fetches the messages with an ordinary request
 that checks permissions, so nobody can follow someone else's conversation. Without WebSocket the

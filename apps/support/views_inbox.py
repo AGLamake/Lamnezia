@@ -5,7 +5,7 @@ from typing import Any
 
 from django.contrib import messages
 from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -143,10 +143,15 @@ class MessagesView(_ConversationView, View):
 
 
 class UnreadView(_InboxView, View):
-    """The menu counter of the inbox; polled while the page has no WebSocket."""
+    """The menu counter of the inbox, or with `kind` the counter of its Chats or Requests tab;
+    polled while the page has no WebSocket.
+    """
 
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context = {"unread": self.inbox.unread(), "unread_url": request.path}
+    def get(self, request: HttpRequest, kind: str = "") -> HttpResponse:
+        if kind and kind not in Kind.values:
+            raise Http404
+        unread = self.inbox.unread(Kind(kind) if kind else None)
+        context = {"unread": unread, "unread_url": request.path}
         return render(request, "support/_badge.html", context)
 
 

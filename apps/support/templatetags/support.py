@@ -3,6 +3,7 @@ from typing import Any
 from django import template
 
 from apps.accounts.models import User
+from apps.support.models import Kind
 from apps.support.services.chat import MyChat
 from apps.support.services.inbox import Inbox
 from apps.support.services.tickets import MyRequests
@@ -11,10 +12,14 @@ register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
-def inbox_unread(context: dict[str, Any]) -> int:
-    """Unread messages in the inbox of the signed-in staff member, for the menu."""
+def inbox_unread(context: dict[str, Any], kind: str = "") -> int:
+    """Unread messages in the inbox of the signed-in staff member, for the menu; with `kind`
+    (`chat`, `ticket`) only in that kind of conversation, for its inbox tab.
+    """
     user = context["request"].user
-    return Inbox(user).unread() if isinstance(user, User) and user.is_staff_member else 0
+    if not isinstance(user, User) or not user.is_staff_member:
+        return 0
+    return Inbox(user).unread(Kind(kind) if kind else None)
 
 
 @register.simple_tag(takes_context=True)

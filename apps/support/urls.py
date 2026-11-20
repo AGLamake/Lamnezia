@@ -32,6 +32,7 @@ urlpatterns = [
     path("inbox/<int:pk>/", views_inbox.ConversationView.as_view(), name="inbox-conversation"),
     path("inbox/<int:pk>/messages/", views_inbox.MessagesView.as_view(), name="inbox-messages"),
     path("inbox/unread/", views_inbox.UnreadView.as_view(), name="inbox-unread"),
+    path("inbox/unread/<str:kind>/", views_inbox.UnreadView.as_view(), name="inbox-unread-kind"),
     path("inbox/<int:pk>/manage/", views_inbox.ManageView.as_view(), name="inbox-manage"),
     path("inbox/incidents/", views_inbox.IncidentListView.as_view(), name="incidents"),
     path("inbox/templates/", views_templates.TemplateListView.as_view(), name="templates"),

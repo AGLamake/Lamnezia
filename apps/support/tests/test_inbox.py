@@ -12,6 +12,7 @@ from apps.portal.services.servers import Health, my_servers
 from apps.servers.tests.factories import ServerFactory
 from apps.support.forms import ChatFilterForm, RequestFilterForm
 from apps.support.models import Conversation, Incident, Kind, TicketStatus, TicketType
+from apps.support.services.chat import MyChat
 from apps.support.services.inbox import Inbox, NotAllowedError, staff
 from apps.support.services.incidents import close_incident, incidents
 from apps.support.services.thread import post
@@ -80,6 +81,14 @@ class TestInbox:
         Inbox(staff).mark_read(conversation)
 
         assert Inbox(staff).unread() == 0
+
+    def test_unread_by_kind_counts_chats_and_requests_apart_within_the_zone(self) -> None:
+        member = moderator()
+        MyChat(served(subscriber(), member)).send("Hello")
+        MyChat(subscriber()).send("Not yours")
+
+        assert Inbox(member).unread(Kind.CHAT) == 1
+        assert Inbox(member).unread(Kind.TICKET) == 0
 
     def test_a_reply_takes_a_new_request_into_work_and_a_note_stays_hidden(self) -> None:
         user = subscriber()

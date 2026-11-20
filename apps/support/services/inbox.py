@@ -96,9 +96,11 @@ class Inbox:
     def requests(self) -> QuerySet[Conversation]:
         return self.conversations().filter(kind=Kind.TICKET)
 
-    def unread(self) -> int:
-        """Unread messages in all visible conversations, for the menu counter."""
-        visible = self.visible()
+    def unread(self, kind: Kind | None = None) -> int:
+        """Unread messages in the visible conversations, of one kind or of all: for the menu
+        counter and the counters of the inbox tabs.
+        """
+        visible = self.visible() if kind is None else self.visible().filter(kind=kind)
         messages = Message.objects.filter(_from_user(), read_at=None, conversation__in=visible)
         return messages.count()
 
