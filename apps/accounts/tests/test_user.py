@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from apps.accounts.models import Role, User
+from apps.accounts.models import Management, Role, User
 from apps.accounts.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -46,23 +46,20 @@ def test_superuser_is_an_admin() -> None:
 class TestModerator:
     def test_the_user_quota_stops_new_users_only(self) -> None:
         moderator = UserFactory(role=Role.MODERATOR, user_quota=1)
-        served = UserFactory(manager=moderator)
-        newcomer = UserFactory()
-        newcomer.manager = moderator
+        served = UserFactory(managers=[moderator])
 
-        served.full_clean()
+        Management.objects.get(user=served).full_clean()
         with pytest.raises(ValidationError, match="as many users as allowed"):
-            newcomer.full_clean()
+            Management(user=UserFactory(), member=moderator).full_clean()
 
     def test_no_quota_means_no_limit(self) -> None:
         moderator = UserFactory(role=Role.MODERATOR)
-        UserFactory.create_batch(3, manager=moderator)
+        UserFactory.create_batch(3, managers=[moderator])
 
-        UserFactory.build(manager=moderator).full_clean(exclude=["password"])
+        Management(user=UserFactory(), member=moderator).full_clean()
 
     def test_nobody_is_their_own_moderator(self) -> None:
         moderator = UserFactory(role=Role.MODERATOR)
-        moderator.manager = moderator
 
         with pytest.raises(ValidationError, match="their own moderator"):
-            moderator.full_clean()
+            Management(user=moderator, member=moderator).full_clean()

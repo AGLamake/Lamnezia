@@ -144,12 +144,14 @@ class Registration:
             username=applicant.username,
             email=applicant.email,
             invite=invite,
-            manager=self._moderator(invite) if invite else None,
             status=Status.PENDING if manual else Status.ACTIVE,
             is_active=not self.confirms_email,
         )
         user.set_password(applicant.password)
         user.save()
+        moderator = self._moderator(invite) if invite else None
+        if moderator is not None:
+            user.managers.add(moderator)
         return user
 
     @staticmethod

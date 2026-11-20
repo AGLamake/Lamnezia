@@ -75,7 +75,7 @@ def moderated(moderator: User) -> tuple[Server, User, AccessKey]:
     """A server the moderator looks after, a user of theirs and the user's key on it."""
     instance = awg_instance()
     moderator.moderated_servers.add(instance.server)
-    user = UserFactory(manager=moderator)
+    user = UserFactory(managers=[moderator])
     return instance.server, user, make_key(instance, user)
 
 

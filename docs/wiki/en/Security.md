@@ -19,7 +19,8 @@ The role is set in **Admin → Users**.
 A moderator serves their own users on their own servers, as a reseller does. An administrator sets
 it up in the Django admin site (`/admin/`, **Users**):
 
-- on a user, **Moderator** names the moderator who serves them;
+- on a user, **Staff members of the user** lists the moderators who serve them; a user may have
+  several, and is then in the zone of each;
 - on a moderator, **Servers of the moderator** lists their servers, **Users at most** and **Keys at
   most** are their quotas (empty: no limit).
 
@@ -31,7 +32,8 @@ Everything outside the zone is as good as missing for the moderator:
 - **Operations**: only the ones they started.
 - **Support**: only the conversations of their users that are assigned to them or to nobody, and
   only their images. An assignment does not take a conversation into the zone: a request is assigned
-  to an administrator or to its user's moderator.
+  to an administrator or to one of its user's moderators. All moderators of a user see their
+  conversations that nobody else has taken.
 - **Users**: only their users — the list, the card, the plan and limits, messenger links and
   bulk actions. A bulk reissue or turn-off touches only the keys on their servers; the report of a
   bulk action is seen only by whoever started it.
@@ -41,9 +43,11 @@ Everything outside the zone is as good as missing for the moderator:
   incident in the bot assigns the moderator only the requests of their users that nobody else has.
 
 A user with no moderator is served by administrators only. The user quota is checked when a user is
-given to a moderator and when someone registers by a moderator's invite: such a user joins the
+given to a moderator (each moderator of the user counts them) and when someone registers by a moderator's invite: such a user joins the
 moderator's zone at once, and with the quota used up the invite does not open registration. The key
-quota applies wherever a new key is issued: the issue form, the portal and the bots.
+quota applies wherever a new key is issued: the issue form, the portal and the bots. A key of a
+user with several moderators counts for each of them, so a new key stops once any of them has
+reached their key quota.
 
 The first administrator is created with a command; it asks for the password:
 

@@ -100,8 +100,7 @@ async def test_a_moderator_follows_only_threads_of_their_users(admin: User, user
     socket = await Page(moderator, f"/ws/support/{conversation.pk}/").open()
 
     assert await closed_code(socket) == CLOSE_FORBIDDEN
-    user.manager = moderator
-    await user.asave(update_fields=["manager"])
+    await user.managers.aadd(moderator)
     socket = await Page(moderator, f"/ws/support/{conversation.pk}/").open()
     assert await socket.receive_nothing()
     await socket.disconnect()

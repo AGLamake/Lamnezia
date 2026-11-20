@@ -48,7 +48,10 @@ class AccountManager(UserManager["User"]):
 
 
 class User(AbstractUser):
-    """Panel account. The role gives the access rights; a moderator's are narrowed to their zone."""
+    """Panel account. The role gives the access rights; a moderator's are narrowed to their zone.
+
+    A user may be served by several staff members (`managers`, through `Management`).
+    """
 
     role = models.CharField(_("role"), max_length=16, choices=Role.choices, default=Role.USER)
     status = models.CharField(
@@ -72,16 +75,15 @@ class User(AbstractUser):
         blank=True,
         help_text=_("Empty: the language of the site."),
     )
-    # A moderator answers for their own users and servers (their zone) within their quotas.
-    manager = models.ForeignKey(
+    # Staff members answer for their own users and servers (their zone) within their quotas.
+    managers = models.ManyToManyField(
         "self",
-        verbose_name=_("moderator"),
-        on_delete=models.SET_NULL,
-        null=True,
+        verbose_name=_("staff members"),
+        through="accounts.Management",
+        through_fields=("user", "member"),
+        symmetrical=False,
         blank=True,
         related_name="managed_users",
-        limit_choices_to={"role": Role.MODERATOR},
-        help_text=_("The moderator who serves the user. Empty: only administrators."),
     )
     moderated_servers = models.ManyToManyField(
         "servers.Server",
@@ -116,13 +118,6 @@ class User(AbstractUser):
     class Meta:
         verbose_name = _("user")
         verbose_name_plural = _("users")
-
-    def clean(self) -> None:
-        super().clean()
-        if self.manager_id is not None and self.manager_id == self.pk:
-            raise ValidationError({"manager": _("A user cannot be their own moderator.")})
-        if self.manager is not None and self.manager.is_over_user_quota(self):
-            raise ValidationError({"manager": _("The moderator has as many users as allowed.")})
 
     def is_over_user_quota(self, newcomer: "User | None" = None) -> bool:
         """Whether serving one more user, `newcomer` or a new account, would take the moderator
@@ -162,6 +157,44 @@ class User(AbstractUser):
     def can_have_keys(self) -> bool:
         """A user waiting for approval or blocked gets no keys (DESIGN.md 6.6)."""
         return self.status == Status.ACTIVE
+
+
+class Management(models.Model):
+    """A staff member serving a user; `via_plan` marks a link that came with the user's plan."""
+
+    user = models.ForeignKey(
+        User, verbose_name=_("user"), on_delete=models.CASCADE, related_name="managements"
+    )
+    member = models.ForeignKey(
+        User,
+        verbose_name=_("staff member"),
+        on_delete=models.CASCADE,
+        related_name="+",
+        limit_choices_to={"role": Role.MODERATOR},
+    )
+    via_plan = models.BooleanField(_("from the plan"), default=False)
+
+    class Meta:
+        verbose_name = _("staff member of the user")
+        verbose_name_plural = _("staff members of the user")
+        constraints = (
+            models.UniqueConstraint(fields=["user", "member"], name="accounts_management_unique"),
+            models.CheckConstraint(
+                condition=~models.Q(user=models.F("member")), name="accounts_management_not_self"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.member_id} serves {self.user_id}"
+
+    def clean(self) -> None:
+        super().clean()
+        if self.user_id is None or self.member_id is None:
+            return
+        if self.user_id == self.member_id:
+            raise ValidationError({"member": _("A user cannot be their own moderator.")})
+        if self.member.is_over_user_quota(self.user):
+            raise ValidationError({"member": _("The moderator has as many users as allowed.")})
 
 
 def _invite_code() -> str:

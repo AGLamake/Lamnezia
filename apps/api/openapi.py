@@ -85,6 +85,7 @@ _SCHEMAS: dict[str, Any] = {
         is_active={"type": "boolean"},
         joined_at={"type": "string", "format": "date-time"},
         moderator_id=_NULL_ID,
+        moderator_ids={"type": "array", "items": _ID},
         plan={
             "oneOf": [
                 _object(id=_ID, name={"type": "string"}, is_trial={"type": "boolean"}),

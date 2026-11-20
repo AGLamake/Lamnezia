@@ -43,8 +43,8 @@ def test_a_moderator_counts_own_clients_whose_access_ends_soon() -> None:
     moderator = UserFactory(role=Role.MODERATOR)
     now = timezone.now()
     plan = PlanFactory()
-    for owner, days in ((moderator, 3), (moderator, 30), (moderator, -1), (None, 3)):
-        client = UserFactory(role=Role.USER, status=Status.ACTIVE, manager=owner)
+    for owners, days in (([moderator], 3), ([moderator], 30), ([moderator], -1), ([], 3)):
+        client = UserFactory(role=Role.USER, status=Status.ACTIVE, managers=owners)
         UserLimits.objects.create(user=client, plan=plan, access_until=now + timedelta(days=days))
 
     assert Overview(moderator, [], now).access_ending() == 1

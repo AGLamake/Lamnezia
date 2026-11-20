@@ -110,7 +110,7 @@ def test_internal_notes_and_their_images_stay_hidden(client: Client) -> None:
 
 def test_a_moderator_sees_images_of_their_zone_only(client: Client) -> None:
     moderator = UserFactory(role="moderator")
-    mine = MyRequests(UserFactory(manager=moderator)).open(TicketType.BUG, "x", png())
+    mine = MyRequests(UserFactory(managers=[moderator])).open(TicketType.BUG, "x", png())
     foreign = MyRequests(subscriber()).open(TicketType.BUG, "y", png())
     # Assigning a conversation does not take it into the moderator's zone.
     Conversation.objects.filter(pk=foreign.pk).update(assignee=moderator)

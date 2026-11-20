@@ -134,7 +134,7 @@ class TestIncidents:
         server = ServerFactory()
         member.moderated_servers.add(server)
         request = report(server)
-        User.objects.filter(pk=request.user_id).update(manager=member)
+        request.user.managers.add(member)
         incident = Incident.objects.get()
 
         card = bot.press(f"incident {incident.pk}")
@@ -155,7 +155,7 @@ class TestIncidents:
         server = ServerFactory()
         member.moderated_servers.add(server)
         own, foreign = report(server), report(server)
-        User.objects.filter(pk=own.user_id).update(manager=member)
+        own.user.managers.add(member)
         incident = Incident.objects.get()
 
         taken = bot.press(f"take {incident.pk}")
@@ -237,7 +237,7 @@ class TestReply:
 
     def test_a_moderator_answers_only_their_users(self, bot: FakeAdapter) -> None:
         member = staff(Role.MODERATOR)
-        theirs = MyRequests(UserFactory(manager=member)).open(TicketType.BUG, "It is broken")
+        theirs = MyRequests(UserFactory(managers=[member])).open(TicketType.BUG, "It is broken")
         other = MyRequests(subscriber()).open(TicketType.BUG, "Also broken")
         Inbox(UserFactory(role=Role.ADMIN)).assign(other, member)
 

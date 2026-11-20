@@ -58,7 +58,7 @@ class Side:
 
 def side(name: str) -> Side:
     moderator = UserFactory(username=f"{name}-moderator", role=Role.MODERATOR)
-    user = UserFactory(username=f"{name}-user", manager=moderator)
+    user = UserFactory(username=f"{name}-user", managers=[moderator])
     server = ServerFactory(name=f"{name}-server")
     moderator.moderated_servers.add(server)
     key = AccessKey.objects.create(
@@ -352,7 +352,7 @@ class TestInvites:
         client.post(reverse("accounts:invite", args=[invite.code]), applicant())
 
         assert invite.created_by == anna.moderator
-        assert User.objects.get(username="newcomer").manager == anna.moderator
+        assert list(User.objects.get(username="newcomer").managers.all()) == [anna.moderator]
 
     def test_the_user_quota_closes_the_moderators_invites(self, client: Client, anna: Side) -> None:
         anna.moderator.user_quota = 1
@@ -371,7 +371,7 @@ class TestInvites:
 
         client.post(reverse("accounts:invite", args=[invite.code]), applicant())
 
-        assert User.objects.get(username="newcomer").manager is None
+        assert not User.objects.get(username="newcomer").managers.exists()
 
     def test_a_moderator_sees_and_deletes_only_their_own_invites(
         self, client: Client, anna: Side, boris: Side

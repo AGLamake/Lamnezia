@@ -31,10 +31,10 @@ class NotAllowedError(Exception):
 
 
 def staff(owner: User | None = None) -> QuerySet[User]:
-    """Who a conversation can be assigned to: of the moderators, only the one serving `owner`."""
+    """Who a conversation can be assigned to: of the moderators, only those serving `owner`."""
     members = User.objects.filter(role__in=STAFF_ROLES)
     if owner is not None:
-        members = members.filter(Q(role=Role.ADMIN) | Q(pk=owner.manager_id))
+        members = members.filter(Q(role=Role.ADMIN) | Q(pk__in=owner.managers.values("pk")))
     return members.order_by("username")
 
 

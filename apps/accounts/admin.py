@@ -2,7 +2,16 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from apps.accounts.models import User
+from apps.accounts.models import Management, User
+
+
+class ManagementInline(admin.TabularInline):  # type: ignore[type-arg]
+    """The staff members who serve the user; the quota of each is checked on save."""
+
+    model = Management
+    fk_name = "user"
+    fields = ("member", "via_plan")
+    extra = 0
 
 
 @admin.register(User)
@@ -10,13 +19,14 @@ class AccountAdmin(UserAdmin):  # type: ignore[type-arg]
     """Rights come from the role and a moderator's zone: Django's staff flags, groups and
     permissions are hidden."""
 
-    list_display = ("username", "email", "role", "manager", "is_active", "last_login")
+    list_display = ("username", "email", "role", "is_active", "last_login")
     list_filter = ("role", "is_active")
     filter_horizontal = ("moderated_servers",)
+    inlines = (ManagementInline,)
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         (_("Personal info"), {"fields": ("first_name", "last_name", "email")}),
-        (_("Access"), {"fields": ("role", "is_active", "manager")}),
+        (_("Access"), {"fields": ("role", "is_active")}),
         (
             _("Moderator's zone"),
             {"fields": ("moderated_servers", "user_quota", "key_quota")},

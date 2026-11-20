@@ -1,7 +1,7 @@
 """What a client may do with their own keys, within their plan (DESIGN.md 6.2, 6.5)."""
 
 from django.db import transaction
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -62,12 +62,12 @@ class MyKeys:
     def issue(self, source: str, name: str) -> AccessKey:
         """Start issuing a key; the key is `issuing` until its operation ends.
 
-        The rows of the user and of their moderator stay locked until commit, so two requests
+        The rows of the user and of their moderators stay locked until commit, so two requests
         at once cannot both pass the key limit or the moderator's quota.
         """
         with transaction.atomic():
-            owners = Q(pk=self._user.pk) | Q(pk=self._user.manager_id)
-            list(User.objects.select_for_update().filter(owners).order_by("pk"))
+            owners = [self._user.pk, *self._user.managers.values_list("pk", flat=True)]
+            list(User.objects.select_for_update().filter(pk__in=owners).order_by("pk"))
             if not self._user.can_have_keys:
                 raise OwnerCannotHaveKeysError(self._user.get_username())
             if not self.can_get_key():

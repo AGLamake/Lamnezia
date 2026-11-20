@@ -8,10 +8,21 @@ from apps.accounts.models import User
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
+        skip_postgeneration_save = True
 
     username = factory.Sequence(lambda n: f"user{n}")
     email = factory.LazyAttribute(lambda user: f"{user.username}@example.com")
     password = factory.django.Password("password")
+
+    managers = factory.PostGeneration(
+        lambda user, create, extracted, **kwargs: _link(user, extracted)
+    )
+
+
+def _link(user: User, managers: list[User] | None) -> None:
+    """`UserFactory(managers=[moderator])` links the user to their staff members."""
+    if managers:
+        user.managers.add(*managers)
 
 
 class TOTPDeviceFactory(factory.django.DjangoModelFactory):

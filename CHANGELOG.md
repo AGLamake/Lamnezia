@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Several moderators per user**: a user may be served by several moderators (Django admin,
+  **Staff members of the user**) and is then in the zone of each; all of them see the user's
+  requests, and a request can be assigned to any of them or to an administrator. The user quota
+  of each moderator still limits linking users by hand and by invite; a key of a shared user
+  counts for the key quota of each moderator. A plan can name its staff members too (`Plan.staff`),
+  for the plan-based serving that comes later. The API adds `moderator_ids` to users;
+  `moderator_id` stays and gives the first moderator. **Upgrade from 1.0.0**: migrations only —
+  each user's moderator becomes their single staff member, and the users, servers, quotas and
+  requests of every moderator stay the same.
 - **Screens and notifications of split routing**: the group page and the relay card show the mode
   the agent keeps a split group in (split routing or emergency forwarding, and since when), the
   active exit and whether the uplink works; the relay card also shows the CPU load of the relay

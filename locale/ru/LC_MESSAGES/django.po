@@ -3700,9 +3700,6 @@ msgstr "Причина — в журнале шага. Устраните её �
 msgid "The moderator has as many users as allowed."
 msgstr "У модератора уже столько пользователей, сколько разрешено."
 
-msgid "The moderator who serves the user. Empty: only administrators."
-msgstr "Модератор, который обслуживает пользователя. Пусто — только администраторы."
-
 msgid "The monitor did not find the probe running. Users are not warned about this server until it runs again: reinstall it."
 msgstr "Монитор не нашёл запущенный пробник. Пока он не заработает снова, пользователей не предупреждают о недоступности этого сервера: установите его заново."
 
@@ -4880,6 +4877,9 @@ msgstr "проброс"
 msgid "found, not supported"
 msgstr "найден, не поддерживается"
 
+msgid "from the plan"
+msgstr "от тарифа"
+
 msgid "group"
 msgstr "группа"
 
@@ -5028,9 +5028,6 @@ msgstr "пропустил изменение ключей или настрое
 
 msgid "model"
 msgstr "модель"
-
-msgid "moderator"
-msgstr "модератор"
 
 msgid "name"
 msgstr "название"
@@ -5413,6 +5410,20 @@ msgstr "раздельная"
 
 msgid "split routing"
 msgstr "раздельный режим"
+
+msgid "staff member"
+msgstr "сотрудник"
+
+#
+msgid "staff member of the user"
+msgstr "сотрудник пользователя"
+
+msgid "staff members"
+msgstr "сотрудники"
+
+#
+msgid "staff members of the user"
+msgstr "сотрудники пользователя"
 
 msgid "started at"
 msgstr "начат"

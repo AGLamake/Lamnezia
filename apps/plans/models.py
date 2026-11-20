@@ -69,6 +69,12 @@ class Plan(models.Model):
     protocols = models.JSONField(
         _("protocols"), default=list, blank=True, help_text=_("None selected: all protocols.")
     )
+    staff = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("staff members"),
+        blank=True,
+        related_name="staffed_plans",
+    )
     is_trial = models.BooleanField(_("trial"), default=False)
     price = models.DecimalField(_("price"), max_digits=10, decimal_places=2, null=True, blank=True)
     currency = models.CharField(_("currency"), max_length=3, blank=True)

@@ -81,21 +81,26 @@ class KeyZone:
 
 
 class KeyQuota:
-    """The keys a moderator's users may hold together (`User.key_quota`); revoked ones do not
-    count. A user without a moderator, or a moderator without a quota, has no such limit.
+    """The keys the users of moderators may hold together (`User.key_quota` of each); revoked
+    ones do not count. A key of a user served by several moderators counts for each of them, so
+    the quota is reached once any of them has reached theirs. A user without a moderator, or a
+    moderator without a quota, has no such limit.
     """
 
-    def __init__(self, moderator: User | None) -> None:
-        self._moderator = moderator
+    def __init__(self, *moderators: User) -> None:
+        self._moderators = moderators
 
     @classmethod
     def of(cls, user: User) -> "KeyQuota":
-        """The quota of the moderator who serves `user`."""
-        return cls(user.manager)
+        """The quotas of the moderators who serve `user`."""
+        return cls(*user.managers.all())
 
     def reached(self) -> bool:
-        moderator = self._moderator
-        if moderator is None or moderator.role != Role.MODERATOR or moderator.key_quota is None:
+        return any(self._reached(moderator) for moderator in self._moderators)
+
+    @staticmethod
+    def _reached(moderator: User) -> bool:
+        if moderator.role != Role.MODERATOR or moderator.key_quota is None:
             return False
-        held = AccessKey.objects.filter(user__manager=moderator).exclude(status__in=GONE_STATUSES)
-        return held.count() >= moderator.key_quota
+        held = AccessKey.objects.filter(user__managers=moderator)
+        return held.exclude(status__in=GONE_STATUSES).count() >= moderator.key_quota

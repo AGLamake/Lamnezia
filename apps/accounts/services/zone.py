@@ -1,8 +1,9 @@
 """The zone of a staff member: the users and servers they answer for.
 
 An administrator's zone is the whole panel. A moderator's zone is the users they serve
-(`User.manager`) and the servers given to them (`User.moderated_servers`); everything else is
-as good as missing for them.
+(`User.managers`), the servers given to them (`User.moderated_servers`) and the plans they staff
+(`Plan.staff`); everything else is as good as missing for them. A user served by several staff
+members is in the zone of each.
 """
 
 from functools import cached_property
@@ -10,6 +11,7 @@ from functools import cached_property
 from django.db.models import Model, QuerySet
 
 from apps.accounts.models import User
+from apps.plans.models import Plan
 
 
 class Zone:
@@ -23,7 +25,12 @@ class Zone:
     def users(self) -> QuerySet[User]:
         if self.is_whole:
             return User.objects.all()
-        return User.objects.filter(manager=self._member)
+        return User.objects.filter(managers=self._member)
+
+    def plans(self) -> QuerySet[Plan]:
+        if self.is_whole:
+            return Plan.objects.all()
+        return Plan.objects.filter(staff=self._member)
 
     def narrow[M: Model](
         self, items: QuerySet[M], *, user: str | None = None, server: str | None = None

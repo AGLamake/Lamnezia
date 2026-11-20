@@ -12,7 +12,7 @@ from apps.portal.services.servers import Health, my_servers
 from apps.servers.tests.factories import ServerFactory
 from apps.support.forms import ChatFilterForm, RequestFilterForm
 from apps.support.models import Conversation, Incident, Kind, TicketStatus, TicketType
-from apps.support.services.inbox import Inbox, NotAllowedError
+from apps.support.services.inbox import Inbox, NotAllowedError, staff
 from apps.support.services.incidents import close_incident, incidents
 from apps.support.services.thread import post
 from apps.support.services.tickets import ClosedConversationError, MyRequests
@@ -30,8 +30,7 @@ def moderator() -> User:
 
 
 def served(user: User, member: User) -> User:
-    user.manager = member
-    user.save(update_fields=["manager"])
+    user.managers.add(member)
     return user
 
 
@@ -50,6 +49,16 @@ class TestInbox:
 
         assert Inbox(admin()).requests().count() == 3
         assert list(Inbox(member).requests()) == [mine]
+
+    def test_both_staff_members_of_a_user_see_the_request_and_may_take_it(self) -> None:
+        first, second, chief = moderator(), moderator(), admin()
+        user = served(served(subscriber(), first), second)
+        conversation = request_of(user)
+
+        assert list(Inbox(first).requests()) == [conversation]
+        assert list(Inbox(second).requests()) == [conversation]
+        assert set(staff(user)) == {first, second, chief}
+        assert list(staff(user)).count(first) == 1
 
     def test_only_an_admin_assigns(self) -> None:
         conversation = request_of(subscriber())

@@ -126,6 +126,9 @@ msgstr "серверы"
 msgid "speed, Mbit/s"
 msgstr "скорость, Мбит/с"
 
+msgid "staff members"
+msgstr "сотрудники"
+
 msgid "subscription devices at most"
 msgstr "устройств подписки не больше"
 

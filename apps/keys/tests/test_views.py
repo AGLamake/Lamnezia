@@ -264,14 +264,14 @@ class TestModeratorKeyQuota:
     def test_a_key_within_the_quota_is_issued(self, client: Client, moderator: User) -> None:
         client.force_login(moderator)
 
-        self.issue(client, UserFactory(manager=moderator))
+        self.issue(client, UserFactory(managers=[moderator]))
 
         assert AccessKey.objects.filter(status=KeyStatus.ISSUING).count() == 1
 
     def test_a_key_issued_meanwhile_by_another_request_stops_this_one(
         self, client: Client, moderator: User, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        owner = UserFactory(manager=moderator)
+        owner = UserFactory(managers=[moderator])
         client.force_login(moderator)
         # Both requests passed the form while the quota had room; the other one issued first.
         monkeypatch.setattr(KeyZone, "quota_reached", lambda zone: False)

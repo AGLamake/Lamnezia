@@ -26,7 +26,7 @@ class UserRecords:
         self._now = now or timezone.now()
 
     def rows(self) -> QuerySet[User]:
-        return self._zone.users().order_by("pk")
+        return self._zone.users().order_by("pk").prefetch_related("managements")
 
     def get(self, pk: int) -> User:
         user = self.rows().filter(pk=pk).first()
@@ -68,7 +68,8 @@ class UserRecords:
             "status": user.status,
             "is_active": user.is_active,
             "joined_at": user.date_joined,
-            "moderator_id": user.manager_id,
+            "moderator_id": _first_moderator(user),
+            "moderator_ids": sorted(link.member_id for link in user.managements.all()),
             "plan": {"id": plan.pk, "name": plan.name, "is_trial": plan.is_trial} if plan else None,
             "limits": {
                 "traffic_bytes": limits.traffic_limit,
@@ -85,3 +86,9 @@ class UserRecords:
                 "expired": usage.expired,
             },
         }
+
+
+def _first_moderator(user: User) -> int | None:
+    """The staff member linked by hand first, else the first one: the single moderator of 1.0."""
+    links = sorted(user.managements.all(), key=lambda link: (link.via_plan, link.pk))
+    return links[0].member_id if links else None

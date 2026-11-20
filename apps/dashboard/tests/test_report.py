@@ -159,7 +159,7 @@ class TestModerators:
         mine = down("Mine")
         down("Theirs")
         moderator.moderated_servers.add(mine)
-        Conversation.objects.create(user=UserFactory(manager=moderator), kind=Kind.TICKET)
+        Conversation.objects.create(user=UserFactory(managers=[moderator]), kind=Kind.TICKET)
         Conversation.objects.create(user=UserFactory(), kind=Kind.TICKET)
         key_with_traffic("not-mine", GB)
 

@@ -54,7 +54,7 @@ All under `/api/v1/`:
 |---|---|
 | `token` | The token of the call: name, scope, expiry, owner, `zone` (`whole` or `moderator`). |
 | `servers`, `servers/<id>` | State, online, maintenance, paid until, the latest load reading, protocols. |
-| `users`, `users/<id>` | Role, status, plan, effective limits and usage of the period and in total. |
+| `users`, `users/<id>` | Role, status, plan, moderators (`moderator_ids`; `moderator_id` is the first of them), effective limits and usage of the period and in total. |
 | `keys`, `keys/<id>` | Owner, server, protocol, status, dates. Filters: `user`, `server`, `status`. |
 | `traffic` | Traffic by hour (`period=day`) or by day (`week`, `month`) and per key. Filters: `server`, `user`, `key`. |
 

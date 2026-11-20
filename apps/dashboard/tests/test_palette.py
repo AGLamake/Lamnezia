@@ -29,7 +29,7 @@ def test_admin_finds_servers_users_and_keys() -> None:
 def test_moderator_finds_only_their_users_and_no_servers() -> None:
     moderator = UserFactory(role=Role.MODERATOR)
     ServerFactory(name="Ameland")
-    UserFactory(username="amelia", manager=moderator)
+    UserFactory(username="amelia", managers=[moderator])
     UserFactory(username="amelie")
 
     assert titles(moderator, "amel") == {"Users": ["amelia"]}
