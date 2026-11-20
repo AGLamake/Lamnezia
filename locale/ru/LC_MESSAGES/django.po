@@ -668,6 +668,10 @@ msgstr "Блокировки"
 msgid "Body text for descriptions and table cells."
 msgstr "Основной текст описаний и ячеек таблиц."
 
+#, python-format
+msgid "Bot API server: %(server)s"
+msgstr "Сервер Bot API: %(server)s"
+
 msgid "Bots"
 msgstr "Боты"
 
@@ -4240,6 +4244,10 @@ msgstr "Этот сервер вам недоступен."
 
 msgid "This version is not the latest release newer than the panel."
 msgstr "Эта версия — не последний релиз новее панели."
+
+#, python-format
+msgid "Through the proxy %(proxy)s"
+msgstr "Через прокси %(proxy)s"
 
 msgid "Tick all"
 msgstr "Отметить все"

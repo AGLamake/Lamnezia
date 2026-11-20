@@ -10,6 +10,13 @@
         <span class="badge {{ card.badge }}">{% if runtime is None %}{% translate "unknown" %}{% elif not card.responding %}{% translate "not responding" %}{% else %}{{ runtime.get_status_display }}{% endif %}</span>
       </div>
 
+      {% if card.proxy %}
+        <p class="help-text">{% blocktranslate with proxy=card.proxy %}Through the proxy {{ proxy }}{% endblocktranslate %}</p>
+      {% endif %}
+      {% if card.api_server %}
+        <p class="help-text">{% blocktranslate with server=card.api_server %}Bot API server: {{ server }}{% endblocktranslate %}</p>
+      {% endif %}
+
       {% if runtime is None %}
         <p class="help-text">{% translate "No report from the bots service about this bot yet." %}</p>
       {% else %}

@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from apps.accounts.models import LinkedAccount, Messenger
 from apps.bots.models import BotRuntime, BotStatus
+from apps.core.services.outbound import TELEGRAM_API_SERVER, TelegramApi
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,10 @@ class BotCard:
     runtime: BotRuntime | None
     responding: bool
     linked_users: int
+    # How the bot reaches its messenger when it is not directly: the proxy without its password
+    # and a self-hosted API server; empty for the default way.
+    proxy: str = ""
+    api_server: str = ""
 
     @property
     def badge(self) -> str:
@@ -44,9 +49,19 @@ class BotControl:
                 runtimes.get(messenger),
                 runtimes[messenger].is_responding(now) if messenger in runtimes else False,
                 linked.get(messenger, 0),
+                *self._route(messenger),
             )
             for messenger in Messenger
         ]
+
+    @staticmethod
+    def _route(messenger: Messenger) -> tuple[str, str]:
+        """The proxy without its password and the API server, if the settings change them."""
+        if messenger != Messenger.TELEGRAM:
+            return "", ""
+        api = TelegramApi.from_settings()
+        server = api.server if api.server != TELEGRAM_API_SERVER else ""
+        return (api.proxy.safe if api.proxy else ""), server
 
     def turn(self, runtime: BotRuntime, *, on: bool) -> None:
         runtime.enabled = on

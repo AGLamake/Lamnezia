@@ -97,6 +97,9 @@ of a proxy, or with it, the panel can call a self-hosted
 the VPN servers and the webhooks to other sites never go through these proxies. The proxy password
 is a secret: the panel does not log it, and errors show the proxy without it.
 
+The Telegram card in **Settings → Integrations → Bots** shows the proxy (without the password)
+and the Bot API server when they are set, so you can see how the bot reaches Telegram.
+
 ### Discord through a proxy
 
 Where discord.com is blocked, set its proxy the same way:

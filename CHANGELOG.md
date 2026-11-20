@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Telegram route in the Bots block**: the Telegram card in Settings → Integrations shows the
+  proxy (without its password) and the self-hosted Bot API server when they are set.
 - **Proxy for Discord and for the material link check**: `LAMNEZIA_DISCORD_PROXY` takes the
   Discord bot (API and gateway), its direct messages and the notification webhooks on discord.com
   through a proxy, like `LAMNEZIA_TELEGRAM_PROXY`; webhooks to other hosts go directly, with their

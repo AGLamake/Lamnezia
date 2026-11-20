@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Any
 
 import pytest
 from django.test import Client
@@ -53,6 +54,29 @@ def test_the_block_shows_the_bot_its_servers_and_a_missing_report(
     assert "Friends" in html
     assert 'hx-trigger="every 5s"' in html
     assert "No report from the bots service about this bot yet." in html  # Telegram has no row
+
+
+def test_the_block_shows_the_telegram_proxy_without_its_password_and_the_api_server(
+    admin: Client, settings: Any
+) -> None:
+    settings.TELEGRAM_PROXY = "socks5://user:s3cret@proxy.example:1080"
+    settings.TELEGRAM_API_SERVER = "http://bot-api:8081"
+
+    html = admin.get(STATUS).content.decode()
+
+    assert "Through the proxy socks5://proxy.example:1080" in html
+    assert "Bot API server: http://bot-api:8081" in html
+    assert "s3cret" not in html
+
+
+def test_without_a_proxy_the_block_shows_no_route(admin: Client, settings: Any) -> None:
+    settings.TELEGRAM_PROXY = ""
+    settings.TELEGRAM_API_SERVER = ""
+
+    html = admin.get(STATUS).content.decode()
+
+    assert "Through the proxy" not in html
+    assert "Bot API server" not in html
 
 
 def test_a_bot_whose_service_went_quiet_is_not_responding(
