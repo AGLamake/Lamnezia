@@ -1,7 +1,12 @@
 import base64
+import hashlib
 import io
+import shutil
+import subprocess
 import tarfile
 from collections.abc import Callable
+from dataclasses import replace
+from pathlib import Path
 
 import pytest
 from cryptography.hazmat.primitives import serialization
@@ -11,6 +16,7 @@ from amnezia_core.container_archive import (
     AWG_LEGACY_STATE,
     IPSEC_STATE,
     OPENVPN_STATE,
+    TOR_STATE,
     WIREGUARD_STATE,
     XRAY_STATE,
     ArchiveFormatError,
@@ -116,3 +122,37 @@ def test_repr_hides_the_contents() -> None:
     archive = ContainerArchive(XRAY_STATE, tar_gz({"/opt/amnezia/xray/key": b"secret"}))
 
     assert "secret" not in repr(archive)
+
+
+def find_tar() -> str | None:
+    """The tar next to sh: on Windows the one on PATH may be another tar."""
+    sh = shutil.which("sh")
+    if sh:
+        for name in ("tar", "tar.exe"):
+            beside = Path(sh).with_name(name)
+            if beside.exists():
+                return str(beside)
+    return shutil.which("tar")
+
+
+@pytest.mark.skipif(find_tar() is None, reason="no tar")
+def test_the_digest_of_a_copy_is_the_hash_of_the_plain_tar(tmp_path: Path) -> None:
+    (tmp_path / "data" / "sub").mkdir(parents=True)
+    (tmp_path / "data" / "secret").write_bytes(bytes(range(256)) * 400)
+    (tmp_path / "data" / "sub" / "config.toml").write_text("port = 443\n")
+    tar = find_tar() or "tar"
+
+    def run(*options: str) -> bytes:
+        command = [tar, *options, "-", "-C", tmp_path.as_posix(), "data"]
+        return subprocess.run(command, capture_output=True, check=True).stdout
+
+    copy = ContainerArchive(replace(XRAY_STATE, directories=("/data",)), run("-czf"))
+
+    assert copy.digest() == hashlib.sha256(run("-cf")).hexdigest()
+
+
+def test_the_dump_in_a_copy_is_pinned_as_for_the_fingerprint() -> None:
+    pin = "touch -t 197001010000"
+
+    assert pin in TOR_STATE.archive_command()
+    assert pin in TOR_STATE.fingerprint_command()

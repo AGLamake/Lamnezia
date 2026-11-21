@@ -1,5 +1,6 @@
 """Protocol and service fakes that also run the tar and cp commands of the backups."""
 
+import gzip
 import hashlib
 import io
 import shlex
@@ -34,37 +35,37 @@ NSS_DATABASE = "/etc/ipsec.d/cert9.db"
 SITE_DATABASE = "/var/lib/mysql/wp.sql"
 
 
-def pack(files: dict[str, bytes], script: str) -> CommandResult:
-    words = shlex.split(script[script.index(_ARCHIVE) :].partition(";")[0])
+def _tarred(files: dict[str, bytes], script: str, tar: str) -> tuple[bytes, int]:
+    """The plain tar of the files the tar command of a script names, and their size.
+
+    Both the copy and the fingerprint come from it, as from `tar` on a server.
+    """
+    words = shlex.split(script[script.index(tar) :].partition(";")[0].partition(" 2>")[0])
     folders = [f"/{folder}" for folder in words[words.index("-C") + 2 :]]
     dumped = TOR_DATABASE_DUMP.dump in script and SITE_DATABASE in files
-    if dumped:
-        files[TOR_DATABASE_DUMP.path] = files[SITE_DATABASE]
+    found = {**files, TOR_DATABASE_DUMP.path: files[SITE_DATABASE]} if dumped else files
     buffer = io.BytesIO()
-    with tarfile.open(fileobj=buffer, mode="w:gz") as archive:
-        for path, content in sorted(files.items()):
+    size = 0
+    with tarfile.open(fileobj=buffer, mode="w") as archive:
+        for path, content in sorted(found.items()):
             if any(path == folder or path.startswith(f"{folder}/") for folder in folders):
                 info = tarfile.TarInfo(path.lstrip("/"))
                 info.size = len(content)
                 archive.addfile(info, io.BytesIO(content))
-    if dumped:
-        del files[TOR_DATABASE_DUMP.path]
-    return result(stdout=buffer.getvalue())
+                size += len(content)
+    return buffer.getvalue(), size
+
+
+def pack(files: dict[str, bytes], script: str) -> CommandResult:
+    plain, _ = _tarred(files, script, _ARCHIVE)
+    return result(stdout=gzip.compress(plain))
 
 
 def fingerprint(files: dict[str, bytes], script: str) -> CommandResult:
     """The size and hash of the files a fingerprint command names, as the server prints them."""
-    words = shlex.split(script[script.index(_FINGERPRINT) :].partition(" 2>")[0])
-    folders = [f"/{folder}" for folder in words[words.index("-C") + 2 :]]
-    dumped = TOR_DATABASE_DUMP.dump in script and SITE_DATABASE in files
-    found = {**files, TOR_DATABASE_DUMP.path: files[SITE_DATABASE]} if dumped else files
-    digest = hashlib.sha256()
-    size = 0
-    for path, content in sorted(found.items()):
-        if any(path == folder or path.startswith(f"{folder}/") for folder in folders):
-            digest.update(path.encode() + b"\0" + content)
-            size += len(content)
-    return result(stdout=f"{-(-size // 1024)} {digest.hexdigest()}\n".encode())
+    plain, size = _tarred(files, script, _FINGERPRINT)
+    digest = hashlib.sha256(plain).hexdigest()
+    return result(stdout=f"{-(-size // 1024)} {digest}\n".encode())
 
 
 def unpack(data: bytes) -> dict[str, bytes]:

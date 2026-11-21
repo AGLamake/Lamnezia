@@ -105,10 +105,15 @@ def service_restorable(service: ServiceInstance) -> bool:
     return bool(service.backup.has_copy)
 
 
-def save_service_backup(service: ServiceInstance, host: RemoteHost) -> ServiceBackup | None:
-    """Copy the files of a service with a backup; None if it has none or other keys."""
+def save_service_backup(
+    service: ServiceInstance, host: RemoteHost, *, changed: bool = False
+) -> ServiceBackup | None:
+    """Copy the files of a service with a backup; None if it has none or other keys.
+
+    `changed`: the panel has just changed the service, so its files are read once, for the copy.
+    """
     archived = archived_services.find(service.container)
-    return archived.save(service, host) if archived else None
+    return archived.save(service, host, changed=changed) if archived else None
 
 
 def save_instance_backup(instance_id: int) -> None:
@@ -134,7 +139,8 @@ def save_service_copy(service_id: int) -> None:
         .first()
     )
     if service is not None:
-        _save_logged(str(service), service.server, partial(save_service_backup, service))
+        save = partial(save_service_backup, service, changed=True)
+        _save_logged(str(service), service.server, save)
 
 
 def save_all_backups() -> None:

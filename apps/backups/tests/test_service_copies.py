@@ -1,5 +1,7 @@
 """Service copies as files: unchanged and oversized files, old copies, interrupted restores."""
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -23,12 +25,14 @@ from apps.accounts.models import Role
 from apps.accounts.tests.factories import UserFactory
 from apps.backups.models import ServiceBackup
 from apps.backups.services import archived_services as archived_module
+from apps.backups.services import snapshot
 from apps.backups.services.archive_restore import ArchiveSeed
 from apps.backups.services.sealed_files import MAGIC, is_sealed, is_stream_key
 from apps.backups.services.service_copies import FOLDER, service_copies
 from apps.backups.tests.fake_containers import TarServiceHost
 from apps.backups.tests.test_services import CASES, OTHER_SECRET, installed, restore
 from apps.servers.models import Server
+from apps.ssh.services import CommandResult, RemoteHost
 
 pytestmark = pytest.mark.django_db
 
@@ -272,3 +276,87 @@ def test_a_damaged_file_says_why() -> None:
 
     with pytest.raises(ArchiveFormatError, match="damaged"):
         service_copies.archive(backup, archived.state)
+
+
+def tar_reads(monkeypatch: pytest.MonkeyPatch, fake: TarServiceHost) -> list[str]:
+    """The tar scripts that read the files of the containers of `fake` from now on."""
+    reads: list[str] = []
+    answer = fake._tar
+
+    def counted(name: str, script: str, stdin: bytes) -> CommandResult | None:
+        if "tar -c" in script:
+            reads.append(script)
+        return answer(name, script, stdin)
+
+    monkeypatch.setattr(fake, "_tar", counted)
+    return reads
+
+
+def test_after_a_change_the_files_are_read_once(
+    monkeypatch: pytest.MonkeyPatch,
+    media_root: Path,
+    django_capture_on_commit_callbacks: Any,
+) -> None:
+    service, archived, fake = installed(CASES["sftp"])
+    first = archived.save(service, fake.host())
+    fake.put(SFTP_CONTAINER, UPLOAD, "report")
+    reads = tar_reads(monkeypatch, fake)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        second = archived.save(service, fake.host(), changed=True)
+
+    assert len(reads) == 1
+    assert first is not None
+    assert second is not None
+    assert second.digest != first.digest
+    assert copy_files(media_root) == [media_root / str(second.file.name)]
+    assert service_copies.archive(second, archived.state).files()[UPLOAD] == b"report"
+
+
+def test_a_copy_of_the_same_files_keeps_the_saved_file(
+    monkeypatch: pytest.MonkeyPatch, media_root: Path
+) -> None:
+    service, archived, fake = installed(CASES["sftp"])
+    first = archived.save(service, fake.host())
+    reads = tar_reads(monkeypatch, fake)
+
+    second = archived.save(service, fake.host(), changed=True)
+
+    assert len(reads) == 1
+    assert first is not None
+    assert second is not None
+    assert second.file.name == first.file.name
+    assert second.unchanged_since
+    assert len(copy_files(media_root)) == 1
+
+
+@pytest.mark.parametrize("case", sorted(CASES))
+def test_the_hash_of_a_copy_is_the_fingerprint_of_its_files(
+    case: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, archived, fake = installed(CASES[case])
+    first = archived.save(service, fake.host(), changed=True)
+    reads = tar_reads(monkeypatch, fake)
+
+    second = archived.save(service, fake.host())
+
+    assert first is not None
+    assert second is not None
+    assert [read for read in reads if "tar -czf" in read] == []
+    assert second.file.name == first.file.name
+
+
+def test_a_service_change_reads_the_files_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    service, _archived, fake = installed(CASES["mtproxy"])
+    reads = tar_reads(monkeypatch, fake)
+
+    @contextmanager
+    def connect(target: Server) -> Iterator[RemoteHost]:
+        yield fake.host()
+
+    monkeypatch.setattr(snapshot, "connect", connect)
+
+    snapshot.save_service_copy(service.pk)
+
+    assert len(reads) == 1
+    assert ServiceBackup.objects.get(service=service).has_copy

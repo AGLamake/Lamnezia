@@ -9,6 +9,7 @@ the server as it was.
 
 import base64
 import binascii
+import gzip
 import hashlib
 import io
 import shlex
@@ -62,6 +63,7 @@ FINISH_COMMAND = f"rm -f {RESTORE_MARKER} && touch {RESTORE_DONE}"
 _PINNED_TIME = "197001010000"
 _ALLOWED_TYPES = (tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE)
 _SHA256_LENGTH = 64
+_DIGEST_CHUNK = 1024 * 1024
 
 
 class ArchiveFormatError(AmneziaFormatError):
@@ -156,9 +158,13 @@ class ContainerState:
     timeout: float | None = None
 
     def archive_command(self) -> str:
-        """The tar command that writes the folders to stdout, with paths relative to /."""
+        """The tar command that writes the folders to stdout, with paths relative to /.
+
+        The dump is pinned as for the fingerprint, so `ContainerArchive.digest` of the copy is
+        the fingerprint the same files give.
+        """
         archive = shlex.join(["tar", "-czf", "-", *self._tar_options()])
-        return self.database.around(archive) if self.database else archive
+        return self.database.around(archive, pinned=True) if self.database else archive
 
     def fingerprint_command(self) -> str:
         """Prints the kilobytes of the folders and a SHA-256 of their uncompressed tar.
@@ -215,6 +221,18 @@ class ContainerArchive:
         except (tarfile.TarError, EOFError, OSError) as error:
             name = self.state.container
             raise ArchiveFormatError(f"the copy of {name} cannot be read") from error
+
+    def digest(self) -> str:
+        """The SHA-256 of the uncompressed tar: what `fingerprint_command` prints for these files.
+
+        `tar -czf` gzips the same tar stream `tar -cf` writes, so the copy tells whether the
+        files changed without the server reading them again.
+        """
+        digest = hashlib.sha256()
+        with gzip.GzipFile(fileobj=io.BytesIO(self.data)) as tar:
+            while chunk := tar.read(_DIGEST_CHUNK):
+                digest.update(chunk)
+        return digest.hexdigest()
 
     def identity(self) -> str:
         """The server key or CA fingerprint the files of the copy hold."""

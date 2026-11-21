@@ -457,6 +457,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Service copies: files read once after a change**: after a new secret or new settings the
+  panel no longer asks the server for a checksum before the copy, so the server reads the files
+  of the service once instead of twice. The checksum comes from the copy itself, and a copy of
+  the same files keeps the saved file. The hourly copy still checks first and sends nothing while
+  the files are unchanged.
+
 - **Service copies are encrypted in chunks**: AES-256-GCM over 64 KiB chunks instead of Fernet
   over the whole file, so saving and restoring a large copy no longer needs it twice in memory.
   A damaged, cut or reordered file is refused with the reason. Copies encrypted by an older panel

@@ -88,14 +88,18 @@ class ArchivedService(ABC):
             refusal=RestoreError(RestoreErrorCode.OTHER_CONTAINER, str(service)),
         )
 
-    def save(self, service: ServiceInstance, host: RemoteHost) -> ServiceBackup | None:
+    def save(
+        self, service: ServiceInstance, host: RemoteHost, *, changed: bool = False
+    ) -> ServiceBackup | None:
         """Copy the container into the panel; one with other keys keeps the last copy (None).
 
         The files are fingerprinted on the server first. Unchanged since the last copy, they
         are not sent again; larger than the copy may hold, they are not sent at all, and the
-        panel shows it. A container that cannot fingerprint them is copied every time.
+        panel shows it. After a change the panel made (`changed`) they are most likely new:
+        the server reads them once, for the copy, and the hash of the copy tells whether they
+        differ from the saved one. A copy of the same files does not replace the saved one.
         """
-        fingerprint = self._fingerprint(host)
+        fingerprint = None if changed else self._fingerprint(host)
         if fingerprint is not None:
             if fingerprint.size > self.state.max_size:
                 return self._too_large(service, fingerprint.size)
@@ -108,7 +112,19 @@ class ArchivedService(ABC):
         if not self._runs_service(service, host, copy):
             logger.warning("%s has other keys, its backup is kept", self.state.container)
             return None
-        return service_copies.save(service, copy, fingerprint.digest if fingerprint else "")
+        return self._kept(service, copy, fingerprint)
+
+    @staticmethod
+    def _kept(
+        service: ServiceInstance, copy: ContainerArchive, fingerprint: StateFingerprint | None
+    ) -> ServiceBackup:
+        """Save the copy, unless it holds the files of the saved one: then that one stays."""
+        if fingerprint is not None:  # already compared with the saved copy
+            return service_copies.save(service, copy, fingerprint.digest)
+        digest = copy.digest()
+        if service_copies.holds(service, digest):
+            return service_copies.checked(service)
+        return service_copies.save(service, copy, digest)
 
     def _fingerprint(self, host: RemoteHost) -> StateFingerprint | None:
         container = host.container(self.state.container)
