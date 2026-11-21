@@ -4,10 +4,12 @@ from django.utils import timezone
 
 from apps.accounts.models import Status
 from apps.accounts.tests.factories import UserFactory
+from apps.groups.models import GroupMember, ServerGroup
 from apps.plans.services.limits import effective_limits
 from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
 from apps.portal.services.servers import Health, my_servers
 from apps.portal.tests.test_portal import subscriber
+from apps.protocols.models import ProtocolInstance
 from apps.servers.models import Server, ServerSample, ServerStatus
 from apps.servers.tests.factories import ServerFactory
 
@@ -108,3 +110,64 @@ def test_a_pending_user_sees_no_servers(client: Client) -> None:
 
     assert "Frankfurt" not in page
     assert "No servers are available" in page
+
+
+def grouped(group: ServerGroup, server: Server, *, leading: bool = False) -> Server:
+    instance = ProtocolInstance.objects.create(
+        server=server, container="amnezia-awg2", port=group.port
+    )
+    GroupMember.objects.create(group=group, instance=instance, priority=1, leading=leading)
+    return server
+
+
+def group_line(group: ServerGroup) -> tuple[str, Health]:
+    (state,) = [s for s in my_servers(effective_limits(subscriber())) if s.name == group.name]
+    return state.location, state.health
+
+
+def test_a_group_is_one_line_without_its_members() -> None:
+    group = ServerGroup.objects.create(name="Europe", port=51820)
+    leader = grouped(group, answered(ServerFactory(name="de1")), leading=True)
+    grouped(group, answered(ServerFactory(name="nl1")))
+    ServerFactory(name="alone")
+
+    states = my_servers(effective_limits(subscriber()))
+
+    assert sorted(s.name for s in states) == ["Europe", "alone"]
+    assert next(s for s in states if s.name == "Europe").pk == leader.pk
+
+
+def test_a_group_works_while_one_member_answers() -> None:
+    group = ServerGroup.objects.create(name="Europe", port=51820)
+    grouped(group, answered(ServerFactory(), error="timeout"))
+    grouped(group, answered(ServerFactory()))
+
+    assert group_line(group) == ("", Health.WORKING)
+
+
+def test_a_group_works_while_its_relay_answers() -> None:
+    group = ServerGroup.objects.create(name="Europe", port=51820, relay=answered(ServerFactory()))
+    grouped(group, answered(ServerFactory(), error="timeout"))
+
+    assert group_line(group) == ("", Health.WORKING)
+
+
+def test_a_group_whose_members_and_relay_are_silent_is_a_problem() -> None:
+    relay = answered(ServerFactory(), error="timeout")
+    group = ServerGroup.objects.create(name="Europe", port=51820, relay=relay)
+    grouped(group, answered(ServerFactory(), error="timeout"))
+    grouped(group, ServerFactory(maintenance=True))
+
+    assert group_line(group) == ("", Health.PROBLEMS)
+
+
+def test_the_page_shows_a_group_but_not_its_members(client: Client) -> None:
+    group = ServerGroup.objects.create(name="Europe", port=51820)
+    grouped(group, answered(ServerFactory(name="Frankfurt", host="198.51.100.7")))
+    client.force_login(subscriber())
+
+    page = client.get("/portal/servers/").content.decode()
+
+    assert "Europe" in page
+    assert "Frankfurt" not in page
+    assert "198.51.100.7" not in page

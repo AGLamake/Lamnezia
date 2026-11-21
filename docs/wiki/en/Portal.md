@@ -139,6 +139,10 @@ server does not answer, its check failed or an Amnezia container is stopped), *m
 the administrator on the server form) or *no data yet*. The page shows only the name and location:
 no address and no host metrics.
 
+A server group is one line with the group name, without its members: it is *working* while its
+relay or at least one of its servers answers, and *problems* once users report one of its servers.
+**Does not work** on the group line reports its leading server.
+
 A server that does not work for the user is reported with **Does not work** on this page or on
 the key page, see [Support requests](Support-and-incidents.md).
 

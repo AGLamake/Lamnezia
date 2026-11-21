@@ -499,6 +499,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Server groups on the portal**: **Servers** on the portal and the bot show a group as one line
+  with its name, working while its relay or one of its servers answers; the names of its servers
+  are not shown. Nothing to do on upgrade.
 - **Snapshot restore and foreign peers**: peers that are not clients of the server — keys living
   on another server and the panel's service peers, such as the relay probe — are taken out of
   `awg0.conf` and `clientsTable` before a snapshot is written back, so their clients no longer
