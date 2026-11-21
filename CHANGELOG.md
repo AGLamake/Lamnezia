@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Install on a host without systemd**: `install.sh` no longer stops at `systemctl` in a
+  container, WSL or a VPS image without systemd. It skips the certificate retry, the stop timer
+  after a panel move and the update unit, and at the end lists what does not work and how to do it
+  by hand. A host with systemd installs as before.
+
 - **Panel move: warning when the host has no stop timer**: if the request to stop the old copy
   waits longer than five minutes, the move progress screen says the host probably has no
   `lamnezia-stop` timer and shows how to stop the copy by hand or rerun `install.sh`.

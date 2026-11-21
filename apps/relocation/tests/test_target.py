@@ -316,5 +316,5 @@ def test_the_installer_stops_the_stack_on_the_panel_request() -> None:
     script = (settings.BASE_DIR / "install.sh").read_text(encoding="utf-8")
 
     assert f"/app/archives/{STOP_REQUEST}" in script
-    assert "systemctl enable --now lamnezia-stop.timer" in script
+    assert "enable_unit lamnezia-stop.timer" in script
     assert "\n    install_stop_timer\n" in script

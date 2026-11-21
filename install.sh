@@ -27,6 +27,12 @@ UNATTENDED=0
 NEW_ENV=0
 ADMIN_PASSWORD=""
 SUMMARY_FILE="install-summary.txt"
+# Where the timers and units go, and the folder that exists only while systemd runs the host.
+SYSTEMD_DIR=/etc/systemd/system
+SYSTEMD_RUN=/run/systemd/system
+DEPLOY_SCRIPT=/usr/local/sbin/lamnezia-deploy
+# What the host cannot do without systemd, each with the way to do it by hand.
+NO_SYSTEMD=()
 
 usage() {
     cat <<EOF
@@ -57,6 +63,7 @@ EOF
 }
 
 log() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
+warn() { printf '\033[1;33mWarning:\033[0m %s\n' "$*" >&2; }
 die() { printf '\033[1;31mError:\033[0m %s\n' "$*" >&2; exit 1; }
 
 parse_args() {
@@ -115,6 +122,28 @@ install_packages() {
         log "Installing Docker"
         curl -fsSL https://get.docker.com | sh
     fi
+}
+
+# The timers and units below need systemd. A host without it (a container, WSL, some VPS images)
+# gets the panel without them, and the end of the install lists what does not work.
+has_systemd() {
+    [ -d "$SYSTEMD_RUN" ] && command -v systemctl >/dev/null
+}
+
+enable_unit() {
+    systemctl daemon-reload
+    systemctl enable --now "$1"
+}
+
+reload_nginx() {
+    if has_systemd; then systemctl reload nginx; else nginx -s reload 2>/dev/null || nginx; fi
+}
+
+warn_no_systemd() {
+    [ ${#NO_SYSTEMD[@]} -gt 0 ] || return 0
+    warn "this host has no systemd, so these do not work:"
+    local feature
+    for feature in "${NO_SYSTEMD[@]}"; do printf '  - %s\n' "$feature" >&2; done
 }
 
 fetch_code() {
@@ -324,6 +353,7 @@ start_stack() {
 setup_nginx() {
     local site="/etc/nginx/sites-available/lamnezia"
     local bind port
+    has_systemd || NO_SYSTEMD+=("renewal of the Let's Encrypt certificate unless cron runs: certbot renews it from /etc/cron.d/certbot; without cron run certbot renew every month")
     bind="$(sed -n 's/^LAMNEZIA_HTTP_BIND=//p' "$DIR/.env")"
     port="${bind##*:}"
     if [ -f "$site" ]; then
@@ -334,7 +364,7 @@ setup_nginx() {
             "$DIR/deploy/nginx/lamnezia.conf" >"$site"
         ln -sf "$site" /etc/nginx/sites-enabled/lamnezia
         nginx -t || { rm -f /etc/nginx/sites-enabled/lamnezia; die "nginx rejected the site, it was disabled"; }
-        systemctl reload nginx
+        reload_nginx
     fi
     if [ ! -d "/etc/letsencrypt/live/$DOMAIN" ]; then
         command -v certbot >/dev/null || apt-get install -y -q certbot python3-certbot-nginx
@@ -350,7 +380,11 @@ setup_nginx() {
 # During a panel move the domain points to the old machine until the admin switches DNS:
 # a systemd timer asks for the certificate every 10 minutes and turns itself off on success.
 retry_certificate() {
-    local unit=/etc/systemd/system/lamnezia-certificate
+    local unit=$SYSTEMD_DIR/lamnezia-certificate
+    if ! has_systemd; then
+        NO_SYSTEMD+=("the certificate retry: once $DOMAIN points here, run certbot --nginx -d $DOMAIN --redirect")
+        return 0
+    fi
     log "No certificate yet: retrying every 10 minutes until $DOMAIN points to this server"
     cat >"$unit.service" <<UNIT
 [Unit]
@@ -372,14 +406,17 @@ OnUnitActiveSec=10min
 [Install]
 WantedBy=timers.target
 UNIT
-    systemctl daemon-reload
-    systemctl enable --now lamnezia-certificate.timer
+    enable_unit lamnezia-certificate.timer
 }
 
 # The panel has no access to Docker: after a move it leaves stop-after-move in its archives
 # volume, and this timer stops the stack once a minute after it finds the file.
 install_stop_timer() {
-    local unit=/etc/systemd/system/lamnezia-stop
+    local unit=$SYSTEMD_DIR/lamnezia-stop
+    if ! has_systemd; then
+        NO_SYSTEMD+=("the stop of this copy after a panel move: once the domain points to the new machine, run cd $DIR && docker compose down")
+        return 0
+    fi
     local request=/app/archives/stop-after-move
     cat >"$unit.service" <<UNIT
 [Unit]
@@ -400,8 +437,7 @@ OnUnitActiveSec=1min
 [Install]
 WantedBy=timers.target
 UNIT
-    systemctl daemon-reload
-    systemctl enable --now lamnezia-stop.timer
+    enable_unit lamnezia-stop.timer
 }
 
 # The panel asks for a release update by a file in update/request (it writes there as uid 1000);
@@ -418,9 +454,13 @@ prepare_update_dir() {
 # The panel has no access to Docker or to the host: lamnezia-update.path starts the update script
 # when the panel leaves a request. Only a git checkout can be updated this way.
 install_update_unit() {
-    local unit=/etc/systemd/system/lamnezia-update
+    local unit=$SYSTEMD_DIR/lamnezia-update
     [ -d "$DIR/.git" ] || return 0
-    install -m 755 "$DIR/deploy/update/lamnezia-deploy.sh" /usr/local/sbin/lamnezia-deploy
+    if ! has_systemd; then
+        NO_SYSTEMD+=("updates from the Update page: update by hand with cd $DIR && git pull && docker compose up -d --build")
+        return 0
+    fi
+    install -m 755 "$DIR/deploy/update/lamnezia-deploy.sh" "$DEPLOY_SCRIPT"
     cat >"$unit.service" <<UNIT
 [Unit]
 Description=Lamnezia: update the panel to the release it asks for
@@ -428,7 +468,7 @@ Description=Lamnezia: update the panel to the release it asks for
 [Service]
 Type=oneshot
 Environment=LAMNEZIA_DIR=$DIR
-ExecStart=/usr/local/sbin/lamnezia-deploy release
+ExecStart=$DEPLOY_SCRIPT release
 TimeoutStartSec=40min
 UNIT
     cat >"$unit.path" <<UNIT
@@ -444,8 +484,7 @@ UNIT
     # The channel the panel shows; the update script refreshes it on every run.
     git -C "$DIR" symbolic-ref -q --short HEAD >"$DIR/update/status/agent" ||
         echo releases >"$DIR/update/status/agent"
-    systemctl daemon-reload
-    systemctl enable --now lamnezia-update.path
+    enable_unit lamnezia-update.path
 }
 
 # Unattended, a new panel gets its first administrator at once: nobody is there to run
@@ -504,6 +543,7 @@ main() {
     install_stop_timer
     install_update_unit
     if [ "$PROXY" = "nginx" ]; then setup_nginx; fi
+    warn_no_systemd
     if [ "$MOVING" = 1 ]; then
         if is_ip "$DOMAIN"; then
             log "The copy is running and waits: confirm the move in the old panel, then open https://$DOMAIN/"
@@ -523,4 +563,5 @@ main() {
     fi
 }
 
-main "$@"
+# The tests source the functions without running the install.
+[ "${LAMNEZIA_INSTALL_FUNCTIONS_ONLY:-0}" = 1 ] || main "$@"

@@ -60,6 +60,22 @@ The script:
 Options: `--email you@example.com` for Let's Encrypt expiry notices, `--proxy nginx|caddy` to pick the
 proxy, `--dir` for another directory. Help: `bash install.sh --help`.
 
+### Without systemd
+
+The installer adds systemd timers and units: the certificate retry during a
+[panel move](Panel-move.md), the stop of the old copy after a move and updates from the **Update**
+page. A host without systemd (a container, WSL, some VPS images) gets the panel without them: the
+install goes on, and at the end it prints what does not work and how to do it by hand:
+
+| Does not work | By hand |
+|---|---|
+| Certificate retry while the domain points elsewhere | once the domain points here: `certbot --nginx -d panel.example.com --redirect` |
+| Stop of this copy after a panel move | once the domain points to the new machine: `cd /opt/lamnezia && docker compose down` |
+| Updates from the **Update** page | `cd /opt/lamnezia && git pull && docker compose up -d --build`, see [Upgrade](Upgrade.md) |
+| Let's Encrypt renewal with nginx, if cron does not run either | `certbot renew` once a month |
+
+nginx is reloaded with `nginx -s reload` instead of `systemctl`.
+
 ### Without a domain
 
 Without `--domain` (or with an empty answer to the question) the panel opens by the server's public
