@@ -74,6 +74,11 @@ class GroupKeyAddress:
     That is the address of the group behind its running relay, and the leading server without
     one; `host` replaces it. The old address goes on working while it is up, so nothing changes
     on the server: the profile gets the new address, and the owner imports the key again.
+
+    A key may be issued while the address changes, e.g. while the relay is installed. `apply`
+    locks the key rows of the leading server, as saving an issued key does (keys/services/
+    issued.py), and only then finds the outdated ones: a key saved before is found and moved,
+    and a key saved after takes the new address itself.
     """
 
     def __init__(self, group: ServerGroup, host: str | None = None) -> None:
@@ -82,29 +87,38 @@ class GroupKeyAddress:
         self._host = host or client_host(group)
         if self._host is None and self._leader is not None:
             self._host = self._leader.instance.server.host
-        self.outdated: list[AccessKey] = []
-        if self._leader is not None and self._host is not None:
-            keys = (
-                AccessKey.objects.filter(source=self._leader.instance.source)
-                .exclude(status__in=GONE_STATUSES)
-                .select_related("user")
-            )
-            # The profile is encrypted, so an empty one is only seen after it is read: an
-            # imported key has none and keeps working through the old address.
-            self.outdated = [
-                key for key in keys if key.profile and _endpoint(key) != (self._host, group.port)
-            ]
+
+    @property
+    def outdated(self) -> list[AccessKey]:
+        """The outdated keys as they are now, without locking them."""
+        return self._outdated(lock=False)
 
     @transaction.atomic
     def apply(self) -> int:
         """Write the address of the group into the outdated profiles; the number of keys moved."""
         if self._leader is None or self._host is None:
             return 0
-        for key in self.outdated:
+        outdated = self._outdated(lock=True)
+        for key in outdated:
             key.profile = _with_endpoint(key.profile, self._host, self.group.port)
             key.save(update_fields=["profile"])
-        tell_owners(self.outdated, self._leader.instance.server.name)
-        return len(self.outdated)
+        tell_owners(outdated, self._leader.instance.server.name)
+        return len(outdated)
+
+    def _outdated(self, *, lock: bool) -> list[AccessKey]:
+        if self._leader is None or self._host is None:
+            return []
+        keys = AccessKey.objects.filter(source=self._leader.instance.source).exclude(
+            status__in=GONE_STATUSES
+        )
+        if lock:
+            keys = keys.select_for_update(of=("self",))
+        # The profile is encrypted, so an empty one is only seen after it is read: an imported
+        # key has none and keeps working through the old address.
+        endpoint = (self._host, self.group.port)
+        return [
+            key for key in keys.select_related("user") if key.profile and _endpoint(key) != endpoint
+        ]
 
 
 def _endpoint(key: AccessKey) -> tuple[str, int]:

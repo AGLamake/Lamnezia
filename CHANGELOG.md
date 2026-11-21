@@ -499,6 +499,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A key issued while a relay installs**: a key of a group saved at the moment the relay
+  started counting as installed kept the address of the server until the next relay update;
+  the move of the keys now waits for a key being saved and moves it too.
 - **Relay agent of a new version**: a panel version with a changed relay agent now
   delivers it to installed relays without a reinstall: the sync updates each relay once after the
   upgrade, and nothing more while the agent and the settings stay the same.

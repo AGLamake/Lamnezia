@@ -12,6 +12,7 @@ from amnezia_core.keys import KeyPair
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
 from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.services.addressing import GroupKeyAddress
 from apps.groups.services.replication import catch_up_lagging
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT, Fakes, succeeded
 from apps.keys.models import AccessKey
@@ -81,6 +82,36 @@ def test_install_moves_the_keys_of_the_group_to_the_relay(
     profile = json.loads(key.profile)
     assert (profile["host"], profile["port"]) == (RELAY_HOST, PORT)
     assert Notification.objects.get(event=Event.KEYS_UPDATED).user == owner
+
+
+def test_a_key_issued_while_the_relay_installs_gets_its_address(  # noqa: PLR0913, PLR0917
+    relayed: ServerGroup,
+    leader: ProtocolInstance,
+    relay_server: Server,
+    admin: User,
+    start: Start,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """A key saved with the address of the server after the relay counts as installed, but
+    before its keys are moved, is moved too."""
+    issued: list[AccessKey] = []
+
+    def racing(group: ServerGroup, host: str | None = None) -> GroupKeyAddress:
+        move = GroupKeyAddress(group, host)
+        key = issued_key(leader, UserFactory())
+        key.profile = json.dumps({**json.loads(key.profile), "host": LEADER_HOST}, sort_keys=True)
+        key.save(update_fields=["profile"])
+        issued.append(key)
+        return move
+
+    monkeypatch.setattr(deployment, "GroupKeyAddress", racing)
+
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+
+    (key,) = issued
+    key.refresh_from_db()
+    profile = json.loads(key.profile)
+    assert (profile["host"], profile["port"]) == (RELAY_HOST, PORT)
 
 
 @pytest.mark.usefixtures("relayed")

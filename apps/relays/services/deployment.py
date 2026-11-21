@@ -204,13 +204,15 @@ class RelayDeployment:
         self._move_keys(moves, _("Move the keys of the groups to the relay address"))
 
     def _move_keys(self, moves: list[GroupKeyAddress], title: str) -> None:
-        if not any(move.outdated for move in moves):
+        """Move the keys of each group. The moves find the outdated keys themselves, after
+        a key being saved meanwhile; the step only reports what moved."""
+        moved = [(move.group.name, move.apply()) for move in moves]
+        if not any(count for _group, count in moved):
             return
         with self._ctx.step(title):
-            for move in moves:
+            for group, count in moved:
                 self._ctx.log(
-                    _("%(group)s: keys moved: %(count)d.")
-                    % {"group": move.group.name, "count": move.apply()}
+                    _("%(group)s: keys moved: %(count)d.") % {"group": group, "count": count}
                 )
 
 
