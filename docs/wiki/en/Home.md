@@ -14,7 +14,8 @@ the server files in the format of the Amnezia app, so the app keeps working with
 - [Configuration](Configuration.md): every `LAMNEZIA_*` variable and the panel settings.
 - [Upgrade](Upgrade.md): updating and releases.
 - [Backup](Backup.md): panel backups, restoring the panel and a VPN server.
-- [Security](Security.md): roles, two-factor login, secrets, checklist.
+- [Roles and access](Roles-and-access.md): roles, section levels, zones, invites, bots.
+- [Security](Security.md): two-factor login, secrets, checklist.
 - [Troubleshooting](Troubleshooting.md): common errors and FAQ for the administrator.
 
 ## Features

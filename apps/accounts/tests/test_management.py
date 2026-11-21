@@ -69,6 +69,17 @@ class TestZone:
         assert list(Zone(member).plans()) == [staffed]
         assert set(Zone(UserFactory(role=Role.ADMIN)).plans()) == {staffed, other}
 
+    def test_a_moderator_offers_the_administrators_plans_and_their_own_not_an_owners(
+        self,
+    ) -> None:
+        member, owner = moderator(), UserFactory(role=Role.OWNER)
+        admins, staffed, owners = PlanFactory(), PlanFactory(), PlanFactory()
+        staffed.staff.add(member, owner)
+        owners.staff.add(owner)
+
+        assert set(Zone(member).offered_plans()) == {admins, staffed}
+        assert set(Zone(owner).offered_plans()) == {staffed, owners}
+
     def test_the_servers_stay_those_given_to_the_moderator(self) -> None:
         member = moderator()
         given, other = ServerFactory(), ServerFactory()

@@ -19,6 +19,8 @@ from apps.plans.models import Plan
 from apps.plans.services.limits import assign_plan
 
 _HOUR = 60 * 60
+# Staff members whose invites bring users into their own zone.
+_ZONED = frozenset({Role.OWNER, Role.MODERATOR})
 
 
 class RegistrationError(Exception):
@@ -69,8 +71,8 @@ class RegistrationThrottle:
 
 
 class Registration:
-    """An invite gives its plan and skips the queue in every mode; a moderator's invite also
-    puts the user into the moderator's zone, while the moderator's user quota allows.
+    """An invite gives its plan and skips the queue in every mode; an owner's or a moderator's
+    invite also puts the user into their zone, while their user quota allows.
 
     Without one, `open_auto` gives the default plan and `open_manual` puts the user in the
     queue (status `pending`). Every registration, by invite too, confirms the email when mail is set
@@ -124,10 +126,10 @@ class Registration:
         # Locked: two registrations at once must not use an invite beyond its limit, nor take
         # the moderator past their user quota.
         invite = self.invite(code, now, lock=True)
-        moderator = self._moderator(invite)
-        if moderator is not None:
-            User.objects.select_for_update().filter(pk=moderator.pk).exists()
-            if moderator.is_over_user_quota():
+        author = self._author(invite)
+        if author is not None:
+            User.objects.select_for_update().filter(pk=author.pk).exists()
+            if author.is_over_user_quota():
                 raise ModeratorFullError
         invite.uses += 1
         invite.save(update_fields=["uses"])
@@ -149,16 +151,17 @@ class Registration:
         )
         user.set_password(applicant.password)
         user.save()
-        moderator = self._moderator(invite) if invite else None
-        if moderator is not None:
-            user.managers.add(moderator)
+        author = self._author(invite) if invite else None
+        if author is not None:
+            user.managers.add(author)
         return user
 
     @staticmethod
-    def _moderator(invite: Invite) -> User | None:
-        """The moderator who made the invite and whose zone its users join."""
+    def _author(invite: Invite) -> User | None:
+        """The owner or moderator who made the invite and whose zone its users join; None for
+        the administrator's invites, whose users belong to the whole panel."""
         author = invite.created_by
-        return author if author is not None and author.role == Role.MODERATOR else None
+        return author if author is not None and author.role in _ZONED else None
 
     def _open_plan(self) -> Plan | None:
         if self._site.registration_mode == RegistrationMode.OPEN_AUTO:

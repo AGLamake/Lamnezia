@@ -139,17 +139,17 @@ after the bots restart. Users never see these commands.
 - **Traffic today**: traffic since midnight in the panel time zone, in total and by server.
 - **Incidents**: open incidents with the number of reports. **Take** assigns the incident's open
   requests to you and puts new ones in work, so the users hear someone is on it. **Close** closes
-  the incident and its requests and tells the users; as on the incidents page, only an
-  administrator closes, after a confirmation. For a moderator, **Take** assigns only the requests
+  the incident and its requests and tells the users, after a confirmation; as on the
+  incidents page, it needs the servers section at manage. For a moderator, **Take** assigns only the requests
   of their users that nobody else has. The incident card names who took it, even after its
   requests are closed.
 
 To answer a user, reply (the messenger's **Reply**) to the bot notification about a new request
 or chat message: the text goes to that request or chat as the staff's answer. The notification
-title carries the number, `#12`. A moderator answers only the requests of their users and sees only their servers and incidents
-([moderator's zone](Security.md)).
+title carries the number, `#12`. A moderator answers only the requests of their users and sees only their servers and incidents;
+each command needs its section level ([bot commands](Roles-and-access.md#bot-commands)).
 
-Users without the administrator or moderator role get "This is not available to you." for all of
+Users without a staff role get "This is not available to you." for all of
 these commands, and their replies to the bot are ordinary messages.
 
 ## If something does not work

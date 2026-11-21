@@ -1,9 +1,10 @@
 """Staff commands in the bots (DESIGN.md 6.8): a summary of the servers, today's traffic, open
 incidents with «Take» and «Close», and answers to users by replying to a support notification.
 
-Only administrators and moderators run them; anyone else hears they are not available.
-Closing an incident is for administrators, as on the incidents page. A moderator sees only the
-servers of their zone and their incidents.
+Only staff members run them; anyone else hears they are not available. Each command needs a
+level in a section of the panel (`Access`), and a member sees only the servers of their zone and
+their incidents (`Zone`). The summaries belong to the overview; incidents and answers belong to the
+inbox, as in 1.0.0; closing an incident is managing the servers, as on the incidents page.
 """
 
 import re
@@ -14,6 +15,7 @@ from django.template.defaultfilters import filesizeformat
 from django.utils import formats, timezone
 from django.utils.translation import gettext as _
 
+from apps.accounts.services.access import Access, Level, Section
 from apps.accounts.services.zone import Zone
 from apps.bots.commands.base import CommandSet, Handler, bullets, nav, number, unavailable
 from apps.bots.services.replies import Button, Command, Reply
@@ -36,6 +38,16 @@ REPLY = "reply"
 # The number of the request or chat in the title of a support notification: «New request #12 …».
 _NUMBER = re.compile(r"#(\d+)")
 _LISTED = 10
+# The section and the level each command needs.
+_NEEDS: dict[str, tuple[Section, Level]] = {
+    "overview": (Section.OVERVIEW, Level.VIEW),
+    "today": (Section.OVERVIEW, Level.VIEW),
+    "incidents": (Section.INBOX, Level.VIEW),
+    "incident": (Section.INBOX, Level.VIEW),
+    "take": (Section.INBOX, Level.MANAGE),
+    "close": (Section.SERVERS, Level.MANAGE),
+    REPLY: (Section.INBOX, Level.MANAGE),
+}
 
 
 def replied_number(text: str) -> int | None:
@@ -56,19 +68,20 @@ class AdminCommands(CommandSet):
             "close": self.close,
             REPLY: self.reply,
         }
-        if self.user.is_staff_member:
-            return handlers
-        return dict.fromkeys(handlers, _not_for_users)
+        return {
+            name: handler if self._may(name) else _not_for_users
+            for name, handler in handlers.items()
+        }
 
     def admin(self, command: Command) -> Reply:
+        offered = (
+            Button(_("Server summary"), "overview"),
+            Button(_("Traffic today"), "today"),
+            Button(_("Incidents"), "incidents"),
+        )
         return Reply(
             _("What would you like to check?"),
-            (
-                Button(_("Server summary"), "overview"),
-                Button(_("Traffic today"), "today"),
-                Button(_("Incidents"), "incidents"),
-                *nav(),
-            ),
+            (*(button for button in offered if self._may(button.action)), *nav()),
             title=_("Administration"),
         )
 
@@ -118,7 +131,7 @@ class AdminCommands(CommandSet):
     def close(self, command: Command) -> Reply:
         """`close <id>`: ask; `close <id> yes`: close it, the reporters hear the server works."""
         incident = self._find(command)
-        if incident is None or not self.user.is_admin:
+        if incident is None:
             return unavailable()
         if not incident.is_open:
             return self._card(incident)
@@ -150,6 +163,13 @@ class AdminCommands(CommandSet):
         inbox.mark_read(conversation)
         return Reply(_("Sent to %(user)s.") % {"user": conversation.user.get_username()}, nav())
 
+    def _may(self, command: str) -> bool:
+        """Whether the member may run `command`: staff only, with the level it needs."""
+        if not self.user.is_staff_member:
+            return False
+        needs = _NEEDS.get(command)
+        return needs is None or Access(self.user).allows(*needs)
+
     def _find(self, command: Command) -> Incident | None:
         pk = number(command.arg(0))
         return None if pk is None else self._incidents().filter(pk=pk).first()
@@ -171,9 +191,9 @@ class AdminCommands(CommandSet):
             lines.append(_("Closed."))
         buttons: list[Button] = []
         if incident.is_open:
-            buttons.append(Button(_("Take"), f"take {incident.pk}"))
-            if self.user.is_admin:
-                buttons.append(Button(_("Close"), f"close {incident.pk}"))
+            for label, action in ((_("Take"), "take"), (_("Close"), "close")):
+                if self._may(action):
+                    buttons.append(Button(label, f"{action} {incident.pk}"))
         text = bullets(lines)
         return Reply(
             f"{note}\n\n{text}" if note else text,

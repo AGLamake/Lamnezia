@@ -42,10 +42,11 @@ class Zone:
 
     def offered_plans(self) -> QuerySet[Plan]:
         """Plans the member may give a user: an owner gives their own; a moderator, as in 1.0.0,
-        any plan."""
-        if self._member.role == Role.OWNER:
+        the administrator's plans (those of no owner) and the plans they staff."""
+        if self._member.role != Role.MODERATOR:
             return self.plans()
-        return Plan.objects.all()
+        owned = Plan.objects.filter(staff__role=Role.OWNER).values("pk")
+        return Plan.objects.filter(~Q(pk__in=owned) | Q(pk__in=self.plans().values("pk")))
 
     def groups(self) -> QuerySet[ServerGroup]:
         """Groups join servers across the panel, so they stay with the whole zone."""

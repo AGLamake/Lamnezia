@@ -4,6 +4,7 @@ import pytest
 from django.utils import timezone
 
 from apps.accounts.models import Role, User
+from apps.accounts.services.zone import Zone
 from apps.accounts.tests.factories import UserFactory
 from apps.notifications.events import Event
 from apps.notifications.models import Channel, ChannelKind, Notification, Route
@@ -122,7 +123,7 @@ class TestFilters:
         requests = Inbox(admin()).requests()
 
         def found(**data: object) -> list[Conversation]:
-            return list(RequestFilterForm(data).filter(requests))
+            return list(RequestFilterForm(data, zone=Zone(admin())).filter(requests))
 
         assert found(type=TicketType.BUG) == [bug]
         assert found(assignee=str(member.pk)) == [bug]
@@ -136,11 +137,12 @@ class TestFilters:
         post(old, waiting, "Hello?")
         new = Conversation.objects.create(user=quiet, kind=Kind.CHAT)
         post(new, admin(), "Welcome")
-        chats = Inbox(admin()).chats()
+        chats, zone = Inbox(admin()).chats(), Zone(admin())
 
-        assert list(ChatFilterForm(None).filter(chats)) == [old, new]
-        assert list(ChatFilterForm({"sort": "recent"}).filter(chats)) == [new, old]
-        assert list(ChatFilterForm({"plan": quiet.limits.plan_id}).filter(chats)) == [new]
+        assert list(ChatFilterForm(None, zone=zone).filter(chats)) == [old, new]
+        assert list(ChatFilterForm({"sort": "recent"}, zone=zone).filter(chats)) == [new, old]
+        by_plan = ChatFilterForm({"plan": quiet.limits.plan_id}, zone=zone)
+        assert list(by_plan.filter(chats)) == [new]
 
     def test_chats_waiting_for_an_answer_come_first_with_the_last_message(self) -> None:
         answered, waiting = subscriber(), subscriber()
@@ -153,7 +155,7 @@ class TestFilters:
         Inbox(staff).reply(second, "Hi! How can we help?")
         Inbox(staff).note(second, "Asked twice before")
 
-        chats = ChatFilterForm(None).filter(Inbox(staff).chats())
+        chats = ChatFilterForm(None, zone=Zone(staff)).filter(Inbox(staff).chats())
 
         assert list(chats.values_list("pk", "waiting", "unread", "last_text")) == [  # type: ignore[misc]
             (first.pk, True, 0, "Keys do not work"),
@@ -161,7 +163,7 @@ class TestFilters:
         ]
 
     def test_requests_are_not_sorted_by_waiting(self) -> None:
-        assert "waiting" not in dict(RequestFilterForm().fields["sort"].choices)  # type: ignore[attr-defined]
+        assert "waiting" not in dict(RequestFilterForm(zone=Zone(admin())).fields["sort"].choices)  # type: ignore[attr-defined]
 
 
 class TestIncidents:

@@ -5,7 +5,8 @@ from django.db import models
 from django.db.models import Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 
-from apps.accounts.models import Status, User
+from apps.accounts.models import Role, Status, User
+from apps.accounts.services.zone import Zone
 from apps.dashboard.services.users import users_on_server
 from apps.plans.models import Plan
 from apps.servers.models import Server
@@ -107,7 +108,8 @@ NOBODY = "none"
 
 
 class _InboxFilterForm(forms.Form):
-    """Filters both lists share; a wrong value is ignored instead of an error page."""
+    """Filters both lists share; a wrong value is ignored instead of an error page. The choices
+    are those of the member's `zone`."""
 
     search = forms.CharField(label=_("User or text"), required=False)
     plan = forms.ModelChoiceField(
@@ -117,10 +119,15 @@ class _InboxFilterForm(forms.Form):
     sorts: ClassVar[tuple[Sort, ...]] = (Sort.UNREAD, Sort.RECENT, Sort.NEWEST, Sort.OLDEST)
     default_sort = Sort.UNREAD
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, zone: Zone, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self.zone = zone
         choices = [(sort.value, sort.label) for sort in self.sorts]
         cast(forms.ChoiceField, self.fields["sort"]).choices = choices
+        cast(forms.ModelChoiceField, self.fields["plan"]).queryset = zone.offered_plans()  # type: ignore[type-arg]
+        if "server" in self.fields:
+            servers = zone.servers().order_by("name")
+            cast(forms.ModelChoiceField, self.fields["server"]).queryset = servers  # type: ignore[type-arg]
 
     def filter(self, conversations: QuerySet[Conversation]) -> QuerySet[Conversation]:
         data = self.cleaned_data if self.is_valid() else {}
@@ -194,7 +201,9 @@ class RequestFilterForm(_InboxFilterForm):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        members = [(str(member.pk), member.username) for member in staff()]
+        # The administrators serve every user, so their requests may be anyone's.
+        team = Q(role=Role.ADMIN) | Q(pk__in=self.zone.team())
+        members = [(str(member.pk), member.username) for member in staff().filter(team)]
         cast(forms.ChoiceField, self.fields["assignee"]).choices = [
             ("", _("Any")),
             (NOBODY, _("Nobody")),

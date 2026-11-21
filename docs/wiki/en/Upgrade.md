@@ -40,7 +40,8 @@ Database migrations run by themselves on every `web` start. VPN servers keep wor
 restarts; background operations that were running are marked interrupted after
 `LAMNEZIA_OPERATION_TIMEOUT` and can be retried. An update from 1.0.0 needs nothing but these
 migrations: the moderator of each user becomes their only staff member, and every moderator keeps
-their users, servers, quotas and requests ([Moderator's zone](Security.md#moderators-zone)).
+their users, servers, quotas and requests; the access of administrators and moderators stays
+the same ([Roles and access](Roles-and-access.md#update-from-100)).
 
 New optional settings get their defaults; compare your `.env` with `.env.example` to see them
 ([Configuration](Configuration.md)).

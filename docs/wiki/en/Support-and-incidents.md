@@ -100,7 +100,7 @@ itself when a user writes or another staff member answers.
 
 An administrator sees every conversation and assigns it to an administrator or to the user's
 moderator. A moderator sees only the conversations of their users that are assigned to them or to
-nobody ([moderator's zone](Security.md)); they reply, leave notes and change the
+nobody ([moderator's zone](Roles-and-access.md#moderators-zone)); they reply, leave notes and change the
 status there.
 
 On a request page the staff see the plan, keys, browser and the server check, reply to the user or

@@ -46,7 +46,7 @@ class ChatListView(_InboxView, ListView):  # type: ignore[type-arg]
     paginate_by = _PAGE_SIZE
 
     def get_queryset(self) -> QuerySet[Conversation]:
-        self.filter_form = ChatFilterForm(self.request.GET or None)
+        self.filter_form = ChatFilterForm(self.request.GET or None, zone=self.zone)
         return self.filter_form.filter(self.inbox.chats())
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -58,7 +58,7 @@ class RequestListView(_InboxView, ListView):  # type: ignore[type-arg]
     paginate_by = _PAGE_SIZE
 
     def get_queryset(self) -> QuerySet[Conversation]:
-        self.filter_form = RequestFilterForm(self.request.GET or None)
+        self.filter_form = RequestFilterForm(self.request.GET or None, zone=self.zone)
         return self.filter_form.filter(self.inbox.requests())
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:

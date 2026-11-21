@@ -135,7 +135,7 @@ if the xray statistics API does not answer after it, and is then not repeated by
 
 The **Users** page of the admin interface (`/users/`, administrators and moderators) lists everyone
 registered in the panel with their plan, access term and number of active keys. A moderator sees and
-changes only their own users ([moderator's zone](Security.md#moderators-zone)).
+changes only their own users ([moderator's zone](Roles-and-access.md#moderators-zone)).
 
 ### Filters
 

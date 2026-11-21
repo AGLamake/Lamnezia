@@ -2,7 +2,7 @@
 
 A key is one client (peer) of a protocol on a server. Keys are managed in **Keys** in the admin
 interface (`/keys/`, administrators and moderators; a moderator only within their
-[zone](Security.md)).
+[zone](Roles-and-access.md)).
 
 ## Issuing
 

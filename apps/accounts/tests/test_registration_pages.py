@@ -245,3 +245,33 @@ class TestPendingUserGetsNoKeys:
 
         assert active in users
         assert pending not in users
+
+
+class TestOwnerInvites:
+    def test_an_owner_sees_and_deletes_only_their_own_invites(self, client: Client) -> None:
+        owner, other = UserFactory(role=Role.OWNER), UserFactory(role=Role.OWNER)
+        own, foreign = InviteFactory(created_by=owner), InviteFactory(created_by=other)
+        client.force_login(owner)
+
+        page = client.get("/accounts/registrations/").content.decode()
+        refused = client.post(f"/accounts/invites/{foreign.pk}/delete/")
+
+        assert own.code in page
+        assert foreign.code not in page
+        assert refused.status_code == 404
+        assert Invite.objects.filter(pk=foreign.pk).exists()
+
+    def test_an_owner_invites_only_to_their_own_plans(self, client: Client) -> None:
+        owner = UserFactory(role=Role.OWNER)
+        own, foreign = PlanFactory(name="Own plan"), PlanFactory(name="Foreign plan")
+        own.staff.add(owner)
+        client.force_login(owner)
+
+        form = client.get("/accounts/invites/add/").content.decode()
+        refused = client.post("/accounts/invites/add/", {"plan": foreign.pk, "max_uses": 1})
+        client.post("/accounts/invites/add/", {"plan": own.pk, "max_uses": 1})
+
+        assert "Own plan" in form
+        assert "Foreign plan" not in form
+        assert refused.status_code == 200
+        assert list(Invite.objects.values_list("plan", "created_by")) == [(own.pk, owner.pk)]

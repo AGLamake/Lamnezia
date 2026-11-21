@@ -2,6 +2,7 @@ from typing import Any, ClassVar
 
 from django import forms
 from django.contrib.auth.forms import BaseUserCreationForm
+from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.models import Invite, NotifyVia, User
@@ -73,6 +74,12 @@ class MagicLinkForm(forms.Form):
 
 
 class InviteForm(forms.ModelForm):  # type: ignore[type-arg]
+    """A new invite; its plan is one of `plans`, those the member may give."""
+
+    def __init__(self, *args: Any, plans: "QuerySet[Plan]", **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["plan"].queryset = plans  # type: ignore[attr-defined]
+
     class Meta:
         model = Invite
         fields = ("plan", "max_uses", "expires_at", "note")

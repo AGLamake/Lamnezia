@@ -416,6 +416,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Staff in the bots and invites**: every staff command of the bots needs its section level —
+  summaries the overview, incidents the inbox at view, **Take** and replies the inbox at manage,
+  **Close** the servers at manage — and shows only the zone; a command not allowed is not offered,
+  and at view an incident card has no buttons. A server administrator closes the incidents of
+  their servers. A server administrator's invite links the newcomer to them like a moderator's,
+  both see only their own invites and offer only the plans they may give; the inbox filters list
+  only the servers, plans and assignees of the zone. Roles have their own wiki page **Roles and
+  access**. With the defaults a moderator keeps the access of 1.0.0; upgrading needs only the
+  migrations.
 - **Upload speed limits are shaped, not policed**: upload goes through an IFB device with the same
   HTB classes as download, so packets over the limit wait instead of being dropped. The operation
   loads the `ifb` module on the host and keeps it loaded after a reboot; without the module upload

@@ -91,6 +91,9 @@ class InviteCreateView(_RegistrationView, CreateView):  # type: ignore[type-arg]
     template_name = "accounts/invite_form.html"
     success_url = reverse_lazy("accounts:registrations")
 
+    def get_form_kwargs(self) -> dict[str, Any]:
+        return {**super().get_form_kwargs(), "plans": self.zone.offered_plans()}
+
     def form_valid(self, form: "ModelForm[Invite]") -> HttpResponse:
         form.instance.created_by = self.member
         response = super().form_valid(form)

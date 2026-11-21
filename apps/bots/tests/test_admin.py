@@ -247,3 +247,54 @@ class TestReply:
         assert refused.text == NOT_AVAILABLE
         assert not other.messages.filter(text="On it").exists()
         assert sent.text.startswith("Sent to")
+
+
+class TestSectionLevels:
+    """The commands follow the member's zone and the level of their section."""
+
+    def test_an_owner_sees_and_closes_only_the_incidents_of_their_servers(
+        self, bot: FakeAdapter
+    ) -> None:
+        owner = staff(Role.OWNER)
+        own = ServerFactory(name="Amsterdam")
+        owner.moderated_servers.add(own)
+        report(own)
+        report(ServerFactory(name="Berlin"))
+        foreign = Incident.objects.get(server__name="Berlin")
+
+        listed = bot.press("incidents").text
+        closed = bot.press(f"close {Incident.objects.get(server=own).pk} yes").text
+
+        assert "Amsterdam" in listed
+        assert "Berlin" not in listed
+        assert closed == "The incident is closed; the users are told."
+        assert bot.press(f"close {foreign.pk} yes").text == NOT_AVAILABLE
+        assert Incident.objects.get(pk=foreign.pk).closed_at is None
+
+    def test_a_section_at_view_shows_without_actions(self, bot: FakeAdapter) -> None:
+        member = link(UserFactory(role=Role.MODERATOR, access={"inbox": "view"}))
+        server = ServerFactory()
+        member.moderated_servers.add(server)
+        request = report(server)
+        request.user.managers.add(member)
+        incident = Incident.objects.get()
+
+        card = bot.press(f"incident {incident.pk}")
+        assert "Take" not in labels(bot)
+        assert bot.press(f"take {incident.pk}").text == NOT_AVAILABLE
+        refused = bot.reply_to(f"New request #{request.pk} from boris: Broken", "On it")
+
+        assert "Nobody has taken it." in card.text
+        assert refused.text == NOT_AVAILABLE
+        request.refresh_from_db()
+        assert request.assignee is None
+        assert not request.messages.filter(text="On it").exists()
+
+    def test_a_closed_section_is_neither_offered_nor_run(self, bot: FakeAdapter) -> None:
+        link(UserFactory(role=Role.MODERATOR, access={"overview": "none"}))
+
+        bot.press("admin")
+
+        assert labels(bot) == ["Incidents", "Menu"]
+        assert bot.press("overview").text == NOT_AVAILABLE
+        assert bot.press("today").text == NOT_AVAILABLE

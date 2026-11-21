@@ -246,3 +246,23 @@ class TestRateLimit:
 
         for name in ("a1", "a2", "a3"):
             signup.register(applicant(name))
+
+
+class TestInviteAuthor:
+    """An owner's or a moderator's invite brings the newcomer into their zone."""
+
+    @pytest.mark.parametrize("role", [Role.OWNER, Role.MODERATOR])
+    def test_the_newcomer_joins_the_zone_of_the_author(self, role: Role) -> None:
+        author = UserFactory(role=role)
+        invite = InviteFactory(created_by=author)
+
+        user = registration(RegistrationMode.INVITE_ONLY).register(applicant(), invite.code)
+
+        assert list(user.managers.all()) == [author]
+
+    def test_the_administrators_invite_joins_nobody(self) -> None:
+        invite = InviteFactory(created_by=UserFactory(role=Role.ADMIN))
+
+        user = registration(RegistrationMode.INVITE_ONLY).register(applicant(), invite.code)
+
+        assert not user.managers.exists()
