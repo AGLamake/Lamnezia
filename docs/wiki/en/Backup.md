@@ -241,10 +241,15 @@ service has no state.
 
 **Where the copies are kept.** A service copy is a file in the `media` volume of the panel
 (`service-backups/`), encrypted under a key of its own; that key is kept encrypted in the
-database. The panel archive and the backup service take the folder along. Before each copy the
-panel asks the server for the size and a checksum of the files: unchanged since the last copy,
-they are not sent again, and the **Backup** section says when they were last checked. A copy made
-by an older panel is still restored and is replaced by a file with the next one.
+database. The file is encrypted in chunks of 64 KiB (AES-256-GCM, each chunk checked on its own),
+so saving and restoring a copy of hundreds of megabytes needs no second copy of it in memory; a
+damaged, cut or reordered file is refused with the reason, and the restore stops before it
+touches the server. The panel archive and the backup service take the folder along. Before each
+copy the panel asks the server for the size and a checksum of the files: unchanged since the last
+copy, they are not sent again, and the **Backup** section says when they were last checked. A copy
+made by an older panel (kept in the database, or a file encrypted whole) is still restored and is
+replaced by a file in chunks with the next read of the service, even if the files have not
+changed.
 
 **A new proxy secret is in the copy at once.** **New secret** or new settings of a Telegram proxy
 ask for a copy of the service right after the operation: the old copy holds the old secret, which

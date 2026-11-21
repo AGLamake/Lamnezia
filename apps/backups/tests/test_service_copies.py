@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from cryptography.fernet import Fernet
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.test import Client
 
@@ -22,6 +24,7 @@ from apps.accounts.tests.factories import UserFactory
 from apps.backups.models import ServiceBackup
 from apps.backups.services import archived_services as archived_module
 from apps.backups.services.archive_restore import ArchiveSeed
+from apps.backups.services.sealed_files import MAGIC, is_sealed, is_stream_key
 from apps.backups.services.service_copies import FOLDER, service_copies
 from apps.backups.tests.fake_containers import TarServiceHost
 from apps.backups.tests.test_services import CASES, OTHER_SECRET, installed, restore
@@ -212,3 +215,60 @@ def test_card_warns_of_a_copy_too_large(client: Client) -> None:
     assert "Copy of the files from" in html
     assert "300.0\xa0MB, more than a copy may hold" in html
     assert "The last copy stays." in html
+
+
+def fernet_sealed(backup: ServiceBackup, data: bytes) -> None:
+    """Seal the file whole by Fernet, as an older panel did."""
+    key = Fernet.generate_key()
+    default_storage.delete(str(backup.file.name))
+    backup.file.name = default_storage.save(
+        f"{FOLDER}/old.bin", ContentFile(Fernet(key).encrypt(data))
+    )
+    backup.file_key = key.decode()
+    backup.save()
+
+
+def test_new_copies_are_sealed_in_chunks() -> None:
+    service, archived, fake = installed(CASES["mtproxy"])
+    backup = archived.save(service, fake.host())
+    assert backup is not None
+
+    with default_storage.open(str(backup.file.name), "rb") as sealed:
+        assert is_sealed(sealed.read(len(MAGIC)))
+    assert is_stream_key(backup.file_key)
+
+
+def test_a_fernet_copy_is_restored_and_replaced_by_the_next_read(
+    media_root: Path, django_capture_on_commit_callbacks: Any
+) -> None:
+    service, archived, fake = installed(CASES["mtproxy"])
+    backup = archived.save(service, fake.host())
+    assert backup is not None
+    data = service_copies.archive(backup, archived.state).data
+    fernet_sealed(backup, data)
+
+    assert service_copies.archive(backup, archived.state).data == data
+    assert not service_copies.holds(service, backup.digest)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        again = archived.save(service, fake.host())
+
+    assert again is not None
+    assert is_stream_key(again.file_key)
+    assert again.digest == backup.digest
+    assert service_copies.archive(again, archived.state).data == data
+    assert [path.name for path in copy_files(media_root)] == [Path(str(again.file.name)).name]
+
+
+def test_a_damaged_file_says_why() -> None:
+    service, archived, fake = installed(CASES["mtproxy"])
+    backup = archived.save(service, fake.host())
+    assert backup is not None
+    name = str(backup.file.name)
+    with default_storage.open(name, "rb") as sealed:
+        data = sealed.read()
+    default_storage.delete(name)
+    default_storage.save(name, ContentFile(data[:-1]))
+
+    with pytest.raises(ArchiveFormatError, match="damaged"):
+        service_copies.archive(backup, archived.state)

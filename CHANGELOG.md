@@ -452,6 +452,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Service copies are encrypted in chunks**: AES-256-GCM over 64 KiB chunks instead of Fernet
+  over the whole file, so saving and restoring a large copy no longer needs it twice in memory.
+  A damaged, cut or reordered file is refused with the reason. Copies encrypted by an older panel
+  are still restored and are replaced at the next read of the service.
 - **Published ports of the relay container are checked**: on every reading the relay monitor
   also reads the UDP ports the container publishes, over the same SSH connection. A port of a
   group the container does not publish, or a port it publishes for no group, shows on the relay
