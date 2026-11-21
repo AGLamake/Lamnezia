@@ -16,6 +16,10 @@ msgid "Another AmneziaWG 2.0 server with other keys already runs on this server.
 msgstr "На этом сервере уже работает другой AmneziaWG 2.0 с другими ключами."
 
 #, python-format
+msgid "Answer: %(detail)s"
+msgstr "Ответ: %(detail)s"
+
+#, python-format
 msgid "Archive %(name)s, %(size)s."
 msgstr "Архив %(name)s, %(size)s."
 
@@ -32,11 +36,20 @@ msgstr "Не короче %(count)d символов. Панель его не �
 msgid "Change the port of the protocol back in its settings, then restore the snapshot."
 msgstr "Верните порт протокола в его настройках и восстановите снимок снова."
 
+msgid "Check LAMNEZIA_PANEL_ARCHIVE_REMOTE in .env: s3://bucket/folder or sftp://user@host:port/folder, and the other variables of its kind."
+msgstr "Проверьте LAMNEZIA_PANEL_ARCHIVE_REMOTE в .env: s3://bucket/folder или sftp://user@host:port/folder, и остальные переменные этого вида хранилища."
+
+msgid "Check its address and that the panel reaches it. The archive stays on the panel: download it or make a new one once the storage works."
+msgstr "Проверьте его адрес и что панель до него достаёт. Архив остался на панели: скачайте его или создайте новый, когда хранилище заработает."
+
 msgid "Check that the postgres service runs: docker compose ps. Then make the archive again."
 msgstr "Проверьте, что сервис postgres работает: docker compose ps. Затем создайте архив снова."
 
 msgid "Check the password. A damaged or incomplete file does not open either."
 msgstr "Проверьте пароль. Повреждённый или недокачанный файл тоже не открывается."
+
+msgid "Check the user and the password or the keys of the storage in .env."
+msgstr "Проверьте пользователя и пароль или ключи хранилища в .env."
 
 #, python-format
 msgid "Clients to restore: %(count)d."
@@ -139,6 +152,13 @@ msgstr "Сохранение базы, настроек и файлов в ар�
 msgid "Save the result in the panel"
 msgstr "Сохранить результат в панели"
 
+#, python-format
+msgid "Send a copy to %(storage)s"
+msgstr "Отправить копию в %(storage)s"
+
+msgid "Set LAMNEZIA_PANEL_ARCHIVE_PASSWORD of at least 12 characters in .env and restart the panel."
+msgstr "Задайте в .env LAMNEZIA_PANEL_ARCHIVE_PASSWORD не короче 12 символов и перезапустите панель."
+
 msgid "Take the server out of the group first, then restore the snapshot."
 msgstr "Сначала выведите сервер из группы, затем восстановите снимок."
 
@@ -169,12 +189,31 @@ msgstr "В контейнере те же ключи, что хранит пан
 msgid "The container of this protocol on the server has other keys."
 msgstr "Контейнер этого протокола на сервере работает с другими ключами."
 
+#, python-format
+msgid "The copy %(name)s is in the storage."
+msgstr "Копия %(name)s в хранилище."
+
 msgid "The database could not be saved."
 msgstr "Не удалось сохранить базу данных."
+
+msgid "The external storage did not answer."
+msgstr "Внешнее хранилище не ответило."
+
+msgid "The external storage did not take the archive."
+msgstr "Внешнее хранилище не приняло архив."
+
+msgid "The external storage of the archives is set wrong."
+msgstr "Внешнее хранилище архивов настроено неверно."
+
+msgid "The external storage refused the login."
+msgstr "Внешнее хранилище отказало во входе."
 
 #, python-format
 msgid "The key %(name)s has no address and is skipped."
 msgstr "У ключа %(name)s нет адреса, он пропущен."
+
+msgid "The key of the SFTP server differs from LAMNEZIA_PANEL_ARCHIVE_REMOTE_HOST_KEY."
+msgstr "Ключ сервера SFTP не совпадает с LAMNEZIA_PANEL_ARCHIVE_REMOTE_HOST_KEY."
 
 msgid "The panel archive needs the PostgreSQL database of docker compose."
 msgstr "Архиву панели нужна база PostgreSQL из docker compose."
@@ -187,6 +226,9 @@ msgstr "Панель его не перезаписывает. Удалите к
 
 msgid "The panel has no copy of the files of this protocol."
 msgstr "В панели нет копии файлов этого протокола."
+
+msgid "The password of scheduled archives is too short."
+msgstr "Пароль архивов по расписанию слишком короткий."
 
 msgid "The passwords differ."
 msgstr "Пароли не совпадают."
@@ -212,8 +254,17 @@ msgstr "Снимок удалён."
 msgid "The snapshot listens on another port than the protocol now."
 msgstr "В снимке другой порт, чем сейчас у протокола."
 
+msgid "The step log shows its answer. Check the rights to the folder or the bucket and the free space. The archive stays on the panel."
+msgstr "Журнал шага показывает его ответ. Проверьте права на папку или бакет и свободное место. Архив остался на панели."
+
+msgid "The step log shows the key the server presented. Check it with ssh-keyscan on a machine you trust and put it into .env."
+msgstr "Журнал шага показывает ключ, который предъявил сервер. Сверьте его через ssh-keyscan на машине, которой доверяете, и впишите в .env."
+
 msgid "There is no copy of the server files: the panel settings are used."
 msgstr "Копии файлов сервера нет: используются настройки из панели."
+
+msgid "Unexpected error."
+msgstr "Непредвиденная ошибка."
 
 msgid "Wait for other operations on the server"
 msgstr "Дождаться других операций на сервере"

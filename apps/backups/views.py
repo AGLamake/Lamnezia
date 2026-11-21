@@ -11,14 +11,17 @@ from django.views.generic import FormView
 
 from apps.accounts.permissions import AdminRequiredMixin, SectionRequiredMixin
 from apps.accounts.services.access import Section
-from apps.backups.errors import RestoreError
+from apps.backups.errors import PanelArchiveError, RestoreError
 from apps.backups.forms import PanelArchiveForm
 from apps.backups.models import ProtocolSnapshot
+from apps.backups.services.archive_remote import remote_from_settings
+from apps.backups.services.archive_schedule import ArchiveSchedule
 from apps.backups.services.panel_archives import (
     ArchiveNotFoundError,
     PanelArchiveFolder,
     active_archive_operation,
     delete_archive,
+    failed_archive_operation,
     log_download,
     start_panel_archive,
 )
@@ -93,12 +96,24 @@ class PanelArchiveListView(AdminRequiredMixin, FormView):  # type: ignore[type-a
             archives=folder.archives(),
             active=active_archive_operation(),
             keep=settings.PANEL_ARCHIVE_KEEP,
+            failed=failed_archive_operation(),
+            schedule=ArchiveSchedule.from_settings(),
+            storage=_storage_label(),
             **kwargs,
         )
 
     def form_valid(self, form: PanelArchiveForm) -> HttpResponse:
         operation = start_panel_archive(form.cleaned_data["password"], self.member, self.client_ip)
         return redirect("operations:detail", pk=operation.pk)
+
+
+def _storage_label() -> str | None:
+    """Where copies go; None when nowhere, and an empty string when the settings are wrong."""
+    try:
+        remote = remote_from_settings()
+    except PanelArchiveError:
+        return ""
+    return remote.label if remote is not None else None
 
 
 class PanelArchiveDownloadView(AdminRequiredMixin, View):

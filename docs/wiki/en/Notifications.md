@@ -72,6 +72,7 @@ channels hear each event.
 | Group server reachable again | `group_reachable` | `group`, `relay` |
 | Relay answers again | `relay_up` | `relay`, `host`, `last_seen` |
 | Group server caught up | `member_caught_up` | `group`, `server`, `since` |
+| Panel archive failed | `panel_archive_failed` | `error` |
 | Network list not updated | `split_list_stale` | `group`, `source`, `days`, `error` |
 | Emergency forwarding | `split_emergency` | `group`, `relay`, `server` |
 | Split routing again | `split_restored` | `group`, `relay` |

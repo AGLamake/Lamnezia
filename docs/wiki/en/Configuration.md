@@ -37,6 +37,14 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_BACKUP_INTERVAL` | `86400` | Seconds between backups of the database and uploaded files. |
 | `LAMNEZIA_BACKUP_KEEP` | `14` | Backups of each kind to keep. |
 | `LAMNEZIA_PANEL_ARCHIVE_KEEP` | `3` | Newest panel archives kept in the `archives` volume ([Panel archive](Backup.md#panel-archive)). |
+| `LAMNEZIA_PANEL_ARCHIVE_PASSWORD` | empty | Password of [scheduled archives](Backup.md#on-schedule), at least 12 characters; empty turns the schedule off. It is not put into the archive. |
+| `LAMNEZIA_PANEL_ARCHIVE_INTERVAL` | `24` | Hours between scheduled archives. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE` | empty | Where a copy of every archive goes: `s3://bucket/folder` or `sftp://user@host:22/folder` ([External storage](Backup.md#external-storage)). |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_ENDPOINT` | `https://s3.amazonaws.com` | Address of the S3-compatible storage. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_REGION` | `us-east-1` | Region the S3 signature names. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_ACCESS_KEY`, `LAMNEZIA_PANEL_ARCHIVE_REMOTE_SECRET_KEY` | empty | S3 keys. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_PASSWORD` | empty | SFTP password. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_HOST_KEY` | empty | SFTP server key, a line of `ssh-keyscan HOST`. |
 | `LAMNEZIA_UPDATE_CHECK` | `True` | Ask GitHub twice a day for a new release of the panel and offer the update ([Update from the panel](Upgrade.md#update-from-the-panel)). Only the release tag is fetched; nothing is sent. |
 | `LAMNEZIA_BACKUP_DIR` | `./backups` | Host directory for the backups. |
 | `LAMNEZIA_MONITOR_INTERVAL` | `60` | Seconds between server health readings. A server that does not answer for two intervals is shown offline. |

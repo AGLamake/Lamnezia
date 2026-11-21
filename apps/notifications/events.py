@@ -75,6 +75,7 @@ class Event(StrEnum):
     SPLIT_RESTORED = "split_restored"
     STAFF_REPORT = "staff_report"
     ZONE_REPORT = "zone_report"
+    PANEL_ARCHIVE_FAILED = "panel_archive_failed"
     TEST = "test"
 
 
@@ -143,7 +144,7 @@ class EventType:
             return value
 
 
-def english(label: Promise) -> str:
+def english(label: str | Promise) -> str:
     """A panel word as the details of an event keep it, whatever language is active."""
     with translation.override("en"):
         return str(label)
@@ -524,6 +525,16 @@ EVENTS: dict[Event, EventType] = {
     # Once a day while a source of a split group's network list fails (docs/SPLIT.md 4.5): the
     # group keeps its list. `source` is the host of the address, `days` count from the last
     # good list.
+    # Once a day at most; `error` is the message of the failed archive operation.
+    Event.PANEL_ARCHIVE_FAILED: EventType(
+        _("Panel archive failed"),
+        _("The panel archive was not made or not sent"),
+        _(
+            "{error} The archive operation in Operations shows the details; archives already "
+            "made stay in System → Panel archive."
+        ),
+        translated=("error",),
+    ),
     Event.SPLIT_LIST_STALE: EventType(
         _("Network list not updated"),
         _("{group}: network list not updated for {days} days"),

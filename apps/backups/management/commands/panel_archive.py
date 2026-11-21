@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.template.defaultfilters import filesizeformat
 
 from apps.backups.errors import PanelArchiveError
-from apps.backups.forms import MIN_PASSWORD_LENGTH
+from apps.backups.services.archive_cipher import MIN_PASSWORD_LENGTH
 from apps.backups.services.panel_archive import PanelArchiveReader
 from apps.backups.services.panel_archives import PanelArchiveFolder
 

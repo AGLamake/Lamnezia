@@ -4,7 +4,8 @@ Inside the encryption (`archive_cipher`) the archive is a tar.gz that ``deploy/a
 unpacks on a new machine:
 
 - ``manifest.json`` — format, panel version and time of the archive;
-- ``env`` — the .env of the panel, rebuilt from its ``LAMNEZIA_*`` and ``COMPOSE_*`` variables;
+- ``env`` — the .env of the panel, rebuilt from its ``LAMNEZIA_*`` and ``COMPOSE_*`` variables
+  but the password of scheduled archives;
 - ``migrations.txt`` — the applied migration files, so an older panel refuses a newer archive;
 - ``database.dump`` — ``pg_dump --format=custom``;
 - ``media/`` — the uploaded files;
@@ -45,20 +46,30 @@ MANIFEST, ENV, MIGRATIONS, DATABASE, MEDIA, SUMS = (
     "SHA256SUMS",
 )
 _ENV_PREFIXES = ("LAMNEZIA_", "COMPOSE_")
-# compose.yaml derives these from other variables; the database URL carries the password.
-_COMPOSE_DERIVED = frozenset(
-    {"LAMNEZIA_ALLOWED_HOSTS", "LAMNEZIA_DATABASE_URL", "LAMNEZIA_REDIS_URL"}
+ARCHIVE_PASSWORD_VARIABLE = "LAMNEZIA_PANEL_ARCHIVE_PASSWORD"
+# compose.yaml derives the URLs and hosts from other variables, and the database URL carries its
+# password; the password of scheduled archives would open every archive made with it.
+_NOT_ARCHIVED = frozenset(
+    {
+        "LAMNEZIA_ALLOWED_HOSTS",
+        "LAMNEZIA_DATABASE_URL",
+        "LAMNEZIA_REDIS_URL",
+        ARCHIVE_PASSWORD_VARIABLE,
+    }
 )
 _PLAIN_VALUE = re.compile(r"[\w@%+=:,./-]*")
 DUMP_DIR_PREFIX = ".dump-"
 
 
 def env_file(environ: Mapping[str, str]) -> str:
-    """The .env of the panel from its environment: docker compose passed the file in whole."""
+    """The .env of the panel from its environment: docker compose passed the file in whole.
+
+    The password of scheduled archives stays out: an archive must not hold its own key.
+    """
     lines = [
         f"{name}={_env_value(value)}"
         for name, value in sorted(environ.items())
-        if name.startswith(_ENV_PREFIXES) and name not in _COMPOSE_DERIVED
+        if name.startswith(_ENV_PREFIXES) and name not in _NOT_ARCHIVED
     ]
     return "\n".join(lines) + "\n"
 

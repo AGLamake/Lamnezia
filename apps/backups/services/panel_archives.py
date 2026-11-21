@@ -27,6 +27,8 @@ PANEL_ARCHIVE_KIND = "backups.panel_archive"
 PANEL_ARCHIVE_DOWNLOAD = "backups.download_panel_archive"
 PANEL_ARCHIVE_DELETE = "backups.delete_panel_archive"
 PASSWORD_PARAM = "password_token"
+# A scheduled archive takes the password from the settings in the worker, never in its params.
+SCHEDULED_PARAM = "scheduled"
 _NAME = re.compile(r"lamnezia-\d{8}-\d{6}\.lamnezia")
 _STAGING_PREFIX = ".staging-"
 _LEFTOVER_PREFIXES = (_STAGING_PREFIX, DUMP_DIR_PREFIX)
@@ -115,6 +117,19 @@ def _archive_file(path: Path) -> ArchiveFile:
     return ArchiveFile(path, stat.st_size, datetime.fromtimestamp(stat.st_mtime, tz=UTC))
 
 
+def failed_archive_operation() -> Operation | None:
+    """The latest finished archive operation when it failed; shown until one succeeds."""
+    last = (
+        Operation.objects.filter(
+            kind=PANEL_ARCHIVE_KIND,
+            status__in=(OperationStatus.SUCCEEDED, OperationStatus.FAILED),
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    return last if last is not None and last.status == OperationStatus.FAILED else None
+
+
 def active_archive_operation() -> Operation | None:
     """The archive being made now, if any: one at a time is enough."""
     return (
@@ -140,6 +155,15 @@ def start_panel_archive(password: str, user: User, ip: str | None) -> Operation:
         operation = launch(PANEL_ARCHIVE_KIND, {PASSWORD_PARAM: token}, user=user)
         audit.log(PANEL_ARCHIVE_KIND, actor=user, ip=ip)
     return operation
+
+
+def start_scheduled_archive() -> Operation:
+    """Queue an archive with the password of the settings, unless one is being made already."""
+    with transaction.atomic():
+        active = active_archive_operation()
+        if active is not None:
+            return active
+        return launch(PANEL_ARCHIVE_KIND, {SCHEDULED_PARAM: True})
 
 
 def log_download(archive: ArchiveFile, user: User, ip: str | None) -> None:

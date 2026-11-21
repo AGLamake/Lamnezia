@@ -5,8 +5,7 @@ from typing import Any
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-# The archive may leave the server: the password is all that guards the secrets in it.
-MIN_PASSWORD_LENGTH = 12
+from apps.backups.services.archive_cipher import MIN_PASSWORD_LENGTH
 
 
 class ArchivePasswordField(forms.CharField):

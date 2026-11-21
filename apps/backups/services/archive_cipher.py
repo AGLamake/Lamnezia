@@ -15,6 +15,8 @@ from cryptography.hazmat.primitives.ciphers import Cipher, CipherContext, algori
 
 HEADER = b"LAMNEZIA-PANEL-ARCHIVE 1\n"
 ITERATIONS = 600_000
+# The archive may leave the server: the password is all that guards the secrets in it.
+MIN_PASSWORD_LENGTH = 12
 _MAGIC = b"Salted__"
 _SALT_SIZE = 8
 _KEY_SIZE = 32

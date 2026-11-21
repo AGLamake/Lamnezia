@@ -48,12 +48,54 @@ checksums): `docker compose exec web python manage.py panel_archive verify /app/
 Archives live in the `archives` volume; the newest `LAMNEZIA_PANEL_ARCHIVE_KEEP` (3 by default)
 stay, older ones are removed when a new one is made. Only the panel user can read the files.
 
+### On schedule
+
+Set the password in `.env` and restart the panel (`docker compose up -d`):
+
+```bash
+LAMNEZIA_PANEL_ARCHIVE_PASSWORD='a long password, 12 characters or more'
+LAMNEZIA_PANEL_ARCHIVE_INTERVAL=24
+```
+
+Every hour the panel checks the newest archive in the folder, made by hand too: when it is
+`LAMNEZIA_PANEL_ARCHIVE_INTERVAL` hours old (half an hour of slack), a new archive is made by the
+same background operation; one runs at a time. **System → Panel archive** shows the schedule.
+
+The password stays only in `.env`: it does not get into the archive, the database or the operation
+log. The panel cannot keep it in the database encrypted: the database and the encryption key are
+inside the archive themselves. Keep the password elsewhere too — without it the archive cannot be
+restored. A panel restored from an archive or moved does not have it: set it again there.
+
+### External storage
+
+To send a copy of every archive, by hand or on schedule, set `LAMNEZIA_PANEL_ARCHIVE_REMOTE`:
+
+- **S3-compatible** (AWS S3, MinIO, Backblaze B2, Yandex Object Storage and the like):
+  `s3://bucket/folder` with `LAMNEZIA_PANEL_ARCHIVE_REMOTE_ENDPOINT` (for example
+  `https://storage.yandexcloud.net`), `LAMNEZIA_PANEL_ARCHIVE_REMOTE_REGION`,
+  `LAMNEZIA_PANEL_ARCHIVE_REMOTE_ACCESS_KEY` and `LAMNEZIA_PANEL_ARCHIVE_REMOTE_SECRET_KEY`. The key
+  needs only the right to put objects. One file up to 5 GB.
+- **SFTP**: `sftp://user@host:22/folder` (a folder from the user's home; `//srv/folder` for an
+  absolute one) with `LAMNEZIA_PANEL_ARCHIVE_REMOTE_PASSWORD` and the server key
+  `LAMNEZIA_PANEL_ARCHIVE_REMOTE_HOST_KEY` — a line of `ssh-keyscan -p 22 host`. A server with
+  another key is refused. The copy is written as `NAME.part` and renamed when complete.
+
+The copy is the same encrypted file. The panel does not remove old copies: set a lifetime rule in
+the storage. The storage keys go into the archive with the rest of `.env`, so a restored panel
+keeps sending copies.
+
+If the copy fails, the archive stays on the panel, the operation shows the step and the storage
+answer, **System → Panel archive** shows the error until the next archive succeeds, and the
+**Panel archive failed** notification (`panel_archive_failed`) goes to the subscribed channels,
+once a day. Wrong storage settings do the same after the archive is made. The panel update archive
+is not sent.
+
 What is inside (a `tar.gz` under the encryption):
 
 | File | What it is |
 |---|---|
 | `database.dump` | The database, `pg_dump --format=custom`. |
-| `env` | The panel `.env`: every `LAMNEZIA_*` and `COMPOSE_*` variable. |
+| `env` | The panel `.env`: every `LAMNEZIA_*` and `COMPOSE_*` variable but the scheduled archive password. |
 | `media/` | Uploaded files. |
 | `migrations.txt` | Applied migrations: a panel older than the archive refuses it. |
 | `manifest.json`, `SHA256SUMS` | Panel version, time, checksums. |

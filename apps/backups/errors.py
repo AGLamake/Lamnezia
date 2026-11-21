@@ -74,6 +74,12 @@ class PanelArchiveErrorCode(StrEnum):
     DUMP_FAILED = "dump_failed"
     NO_PASSWORD = "no_password"
     WRONG_PASSWORD = "wrong_password"
+    SHORT_PASSWORD = "short_password"
+    REMOTE_INVALID = "remote_invalid"
+    REMOTE_UNREACHABLE = "remote_unreachable"
+    REMOTE_LOGIN = "remote_login"
+    REMOTE_HOST_KEY = "remote_host_key"
+    REMOTE_REFUSED = "remote_refused"
 
 
 PANEL_ARCHIVE_ERRORS: dict[PanelArchiveErrorCode, ErrorDescription] = {
@@ -92,6 +98,45 @@ PANEL_ARCHIVE_ERRORS: dict[PanelArchiveErrorCode, ErrorDescription] = {
     PanelArchiveErrorCode.WRONG_PASSWORD: ErrorDescription(
         _("The archive cannot be read with this password."),
         _("Check the password. A damaged or incomplete file does not open either."),
+    ),
+    PanelArchiveErrorCode.SHORT_PASSWORD: ErrorDescription(
+        _("The password of scheduled archives is too short."),
+        _(
+            "Set LAMNEZIA_PANEL_ARCHIVE_PASSWORD of at least 12 characters in .env and restart "
+            "the panel."
+        ),
+    ),
+    PanelArchiveErrorCode.REMOTE_INVALID: ErrorDescription(
+        _("The external storage of the archives is set wrong."),
+        _(
+            "Check LAMNEZIA_PANEL_ARCHIVE_REMOTE in .env: s3://bucket/folder or "
+            "sftp://user@host:port/folder, and the other variables of its kind."
+        ),
+    ),
+    PanelArchiveErrorCode.REMOTE_UNREACHABLE: ErrorDescription(
+        _("The external storage did not answer."),
+        _(
+            "Check its address and that the panel reaches it. The archive stays on the panel: "
+            "download it or make a new one once the storage works."
+        ),
+    ),
+    PanelArchiveErrorCode.REMOTE_LOGIN: ErrorDescription(
+        _("The external storage refused the login."),
+        _("Check the user and the password or the keys of the storage in .env."),
+    ),
+    PanelArchiveErrorCode.REMOTE_HOST_KEY: ErrorDescription(
+        _("The key of the SFTP server differs from LAMNEZIA_PANEL_ARCHIVE_REMOTE_HOST_KEY."),
+        _(
+            "The step log shows the key the server presented. Check it with ssh-keyscan on a "
+            "machine you trust and put it into .env."
+        ),
+    ),
+    PanelArchiveErrorCode.REMOTE_REFUSED: ErrorDescription(
+        _("The external storage did not take the archive."),
+        _(
+            "The step log shows its answer. Check the rights to the folder or the bucket and "
+            "the free space. The archive stays on the panel."
+        ),
     ),
 }
 

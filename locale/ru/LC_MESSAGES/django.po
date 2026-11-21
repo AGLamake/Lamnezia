@@ -510,6 +510,13 @@ msgid "An archive is being made now."
 msgstr "Сейчас создаётся архив."
 
 #, python-format
+msgid "An archive is made every hour."
+msgid_plural "An archive is made every %(hours)s hours."
+msgstr[0] "Архив создаётся каждые %(hours)s час."
+msgstr[1] "Архив создаётся каждые %(hours)s часа."
+msgstr[2] "Архив создаётся каждые %(hours)s часов."
+
+#, python-format
 msgid "An empty field keeps port %(default_port)s of the Amnezia app, which is above 9999. Where UDP on high ports is throttled, enter a port up to 9999, for example %(low_port)s."
 msgstr "Пустое поле оставляет порт %(default_port)s приложения Amnezia, он выше 9999. Если провайдер режет UDP на высоких портах, укажите порт до 9999, например %(low_port)s."
 
@@ -970,6 +977,13 @@ msgstr "Панель управления"
 
 msgid "Copied"
 msgstr "Скопировано"
+
+msgid "Copies are not sent to an external storage."
+msgstr "Копии во внешнее хранилище не отправляются."
+
+#, python-format
+msgid "Copies go to <span class=\"font-mono text-xs break-all\">%(storage)s</span>."
+msgstr "Копии уходят в <span class=\"font-mono text-xs break-all\">%(storage)s</span>."
 
 msgid "Copy"
 msgstr "Скопировать"
@@ -2453,8 +2467,14 @@ msgstr "Числа и динамика"
 msgid "Object"
 msgstr "Объект"
 
+msgid "Off: set the archive password in the .env of the panel to turn it on."
+msgstr "Выключено: чтобы включить, задайте пароль архивов в .env панели."
+
 msgid "On iPhone and iPad (iOS 16.4 or later), add the panel to the Home Screen first: Share → Add to Home Screen. Then open it from there and turn notifications on."
 msgstr "На iPhone и iPad (iOS 16.4 и новее) сначала добавьте панель на экран «Домой»: «Поделиться» → «На экран „Домой“». Затем откройте её оттуда и включите уведомления."
+
+msgid "On schedule"
+msgstr "По расписанию"
 
 msgid "On some VPS upload through the VPN drops several times: the network interface of the AmneziaWG or WireGuard container glues TCP packets together (TSO/GSO) and the glued packets are lost on the way. The workaround turns TSO/GSO off on that interface and a systemd timer on the server keeps it off after container restarts and reboots. Configs and keys do not change."
 msgstr "На некоторых VPS отдача через VPN падает в разы: сетевой интерфейс контейнера AmneziaWG или WireGuard склеивает TCP-пакеты (TSO/GSO), и склеенные пакеты теряются по дороге. Обход выключает TSO/GSO на этом интерфейсе, а таймер systemd на сервере держит их выключенными после перезапуска контейнеров и сервера. Конфиги и ключи не меняются."
@@ -3683,6 +3703,9 @@ msgstr "Домен указывает на новую машину. Когда �
 msgid "The domain points to this machine: the move is over."
 msgstr "Домен указывает на эту машину: перенос завершён."
 
+msgid "The external storage is set wrong: copies are not sent."
+msgstr "Внешнее хранилище настроено неверно: копии не отправляются."
+
 #, python-format
 msgid "The files of %(server)s are read."
 msgstr "Файлы %(server)s прочитаны."
@@ -3809,6 +3832,9 @@ msgstr "Ключ будет переименован через мгновени
 
 msgid "The keys and the backup are kept: restore the protocol in the Backup section."
 msgstr "Ключи и бэкап сохранены: восстановите протокол в разделе «Резервная копия»."
+
+msgid "The last archive failed:"
+msgstr "Последний архив не удался:"
 
 msgid "The last copy stays."
 msgstr "Последняя копия сохранена."
@@ -4149,6 +4175,9 @@ msgstr "Роль изменена."
 
 msgid "The same notifications in this browser or the installed app, even when the panel is closed. A click opens the page they are about."
 msgstr "Те же уведомления в этом браузере или установленном приложении, даже когда панель закрыта. Нажатие открывает страницу, о которой уведомление."
+
+msgid "The schedule, its password and the storage are set in the .env of the panel; the password never goes into the archive. See the wiki page on the panel archive."
+msgstr "Расписание, его пароль и хранилище задаются в .env панели; пароль в архив не попадает. Подробнее — на странице вики об архиве панели."
 
 #, python-format
 msgid "The server address is now <strong>%(host)s</strong>. The vpn:// link of every key carries the address, so the clients must import their keys again."

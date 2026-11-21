@@ -3,7 +3,7 @@
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from apps.backups.operations import archive_panel
+from apps.backups.operations import write_panel_archive
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
 from apps.updates.errors import UpdateError, UpdateErrorCode
@@ -21,7 +21,7 @@ def update_panel(ctx: OperationContext) -> None:
     host = HostUpdater.from_settings()
     if not host.available:
         raise UpdateError(UpdateErrorCode.NO_HOST)
-    archive_panel(ctx)
+    write_panel_archive(ctx)
     with ctx.step(_("Ask the host to update the panel")):
         host.request(version, ctx.params[RUN_PARAM])
         ctx.log(

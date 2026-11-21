@@ -228,6 +228,9 @@ msgstr "Уведомления Lamnezia доходят до канала {channe
 msgid "One or more, separated by commas."
 msgstr "Один или несколько через запятую."
 
+msgid "Panel archive failed"
+msgstr "Архив панели не создан"
+
 #, python-brace-format
 msgid "Panel report since {since}"
 msgstr "Отчёт панели с {since}"
@@ -430,6 +433,9 @@ msgstr "Ключи пользователя {user} отключены: {reason}.
 #, python-brace-format
 msgid "The list from {source} for the split group {group} was not taken: {error}. The relay keeps the list it has."
 msgstr "Список с {source} для группы {group} с раздельной маршрутизацией не принят: {error}. Ретранслятор работает с прежним списком."
+
+msgid "The panel archive was not made or not sent"
+msgstr "Архив панели не создан или не отправлен"
 
 #, python-brace-format
 msgid "The panel cannot read the state of the relay {relay} ({host}). Last reading: {last_seen}. The relay may still forward the clients on its own."
@@ -690,6 +696,10 @@ msgstr "{container} на {server} по-прежнему без интерфей�
 #, python-brace-format
 msgid "{container} on {server} lost its interface"
 msgstr "{container} на {server} потерял интерфейс"
+
+#, python-brace-format
+msgid "{error} The archive operation in Operations shows the details; archives already made stay in System → Panel archive."
+msgstr "{error} Подробности — в операции архива в разделе «Операции»; уже созданные архивы остаются в «Система → Архив панели»."
 
 #, python-brace-format
 msgid "{group}: a server is reachable again"

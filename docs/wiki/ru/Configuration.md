@@ -38,6 +38,14 @@
 | `LAMNEZIA_BACKUP_KEEP` | `14` | Сколько бэкапов каждого вида хранить. |
 | `LAMNEZIA_BACKUP_DIR` | `./backups` | Каталог для бэкапов на хосте. |
 | `LAMNEZIA_PANEL_ARCHIVE_KEEP` | `3` | Сколько последних архивов панели хранить в томе `archives` ([Архив панели](Backup.md#архив-панели)). |
+| `LAMNEZIA_PANEL_ARCHIVE_PASSWORD` | пусто | Пароль [архивов по расписанию](Backup.md#по-расписанию), не короче 12 символов; пусто — расписание выключено. В архив не попадает. |
+| `LAMNEZIA_PANEL_ARCHIVE_INTERVAL` | `24` | Часов между архивами по расписанию. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE` | пусто | Куда отправлять копию каждого архива: `s3://bucket/folder` или `sftp://user@host:22/folder` ([Внешнее хранилище](Backup.md#внешнее-хранилище)). |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_ENDPOINT` | `https://s3.amazonaws.com` | Адрес S3-совместимого хранилища. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_REGION` | `us-east-1` | Регион в подписи S3. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_ACCESS_KEY`, `LAMNEZIA_PANEL_ARCHIVE_REMOTE_SECRET_KEY` | пусто | Ключи S3. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_PASSWORD` | пусто | Пароль SFTP. |
+| `LAMNEZIA_PANEL_ARCHIVE_REMOTE_HOST_KEY` | пусто | Ключ сервера SFTP, строка `ssh-keyscan ХОСТ`. |
 | `LAMNEZIA_UPDATE_CHECK` | `True` | Дважды в день спрашивать у GitHub новый релиз панели и предлагать обновление ([Обновление из панели](Upgrade.md#обновление-из-панели)). Запрашивается только тег релиза, ничего не отправляется. |
 | `LAMNEZIA_MONITOR_INTERVAL` | `60` | Секунд между замерами состояния серверов. Сервер, не отвечающий два интервала, показывается офлайн. |
 | `LAMNEZIA_METRICS_TOKEN` | пусто | Токен эндпоинта Prometheus `/metrics`. Пусто — эндпоинт выключен. |

@@ -19,6 +19,31 @@
     <p class="min-w-0 flex-1 break-words">{% translate "An archive is being made now." %} <a href="{% url 'operations:detail' active.pk %}" class="font-medium underline">{% translate "Progress" %}</a></p>
   </div>
   {% endif %}
+  {% if failed and not active %}
+  <div class="alert alert-error" role="alert">
+    {% icon "error" "icon mt-px" %}
+    <p class="min-w-0 flex-1 break-words">{% translate "The last archive failed:" %} {{ failed.error_message }} <a href="{% url 'operations:detail' failed.pk %}" class="font-medium underline">{% translate "Details" %}</a></p>
+  </div>
+  {% endif %}
+
+  <section class="form-section">
+    <h2 class="section-title flex items-center gap-2">{% icon "clock" "icon-sm text-muted" %}{% translate "On schedule" %}</h2>
+    <div class="form-section-body">
+      {% if schedule.enabled %}
+      <p>{% blocktranslate count hours=schedule.interval_hours %}An archive is made every hour.{% plural %}An archive is made every {{ hours }} hours.{% endblocktranslate %}</p>
+      {% else %}
+      <p>{% translate "Off: set the archive password in the .env of the panel to turn it on." %}</p>
+      {% endif %}
+      {% if storage %}
+      <p>{% blocktranslate %}Copies go to <span class="font-mono text-xs break-all">{{ storage }}</span>.{% endblocktranslate %}</p>
+      {% elif storage == "" %}
+      <p>{% translate "The external storage is set wrong: copies are not sent." %}</p>
+      {% else %}
+      <p class="help-text">{% translate "Copies are not sent to an external storage." %}</p>
+      {% endif %}
+      <p class="help-text">{% translate "The schedule, its password and the storage are set in the .env of the panel; the password never goes into the archive. See the wiki page on the panel archive." %}</p>
+    </div>
+  </section>
 
   <form method="post" class="form-section">
     {% csrf_token %}

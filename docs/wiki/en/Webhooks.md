@@ -67,6 +67,7 @@ zone), `data` depends on the event.
 | `group_reachable` | The relay reaches again a member of a group that had none (`group_unreachable`): its clients have a connection. Once per outage. | `group`, `relay` |
 | `relay_up` | The panel reads the state of a relay again after an outage (`relay_down`). Once per outage, even when no channel heard of `relay_down`. | `relay`, `host`, `last_seen` — time of the last reading before the outage or an empty string |
 | `member_caught_up` | A lagging member (`member_lagging`) has the files of its group again. Once per lag, even when no channel heard of `member_lagging`. | `group`, `server`, `since` — when it started to lag |
+| `panel_archive_failed` | The panel archive operation failed: the archive was not made, or its copy did not reach the external storage. Once a day. | `error` — what went wrong |
 | `split_list_stale` | A network list source of a split group did not give a list the panel takes: it did not download, did not read or has less than half of the networks before. The relay keeps the list it has. Once a day while the source fails. | `group`, `source` — host of the source address, `days` — days since the last good list, `error` |
 | `split_emergency` | The relay agent moved a split group to forwarding by itself: the uplink fails on every member while a member answers the usual probe. | `group`, `relay`, `server` — the member it forwards to, or `null` |
 | `split_restored` | The uplink works again and the agent moved the group back to split routing. | `group`, `relay` |
@@ -163,6 +164,8 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/relay_up"}}}},
     {"if": {"properties": {"event": {"const": "member_caught_up"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/member_caught_up"}}}},
+    {"if": {"properties": {"event": {"const": "panel_archive_failed"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/panel_archive_failed"}}}},
     {"if": {"properties": {"event": {"const": "split_list_stale"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/split_list_stale"}}}},
     {"if": {"properties": {"event": {"const": "split_emergency"}}},
@@ -430,6 +433,11 @@ may be added: ignore what you do not know.
       "type": "object",
       "required": ["group", "server", "since"],
       "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
+    },
+    "panel_archive_failed": {
+      "type": "object",
+      "required": ["error"],
+      "properties": {"error": {"type": "string"}}
     },
     "split_list_stale": {
       "type": "object",

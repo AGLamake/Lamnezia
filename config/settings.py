@@ -283,6 +283,23 @@ PROTOCOL_BACKUP_INTERVAL = env.int("PROTOCOL_BACKUP_INTERVAL", default=3600)
 # Encrypted panel archives (database, .env, uploaded files); the newest PANEL_ARCHIVE_KEEP stay.
 PANEL_ARCHIVE_DIR = BASE_DIR / "archives"
 PANEL_ARCHIVE_KEEP = env.int("PANEL_ARCHIVE_KEEP", default=3)
+# Archives on schedule: one every PANEL_ARCHIVE_INTERVAL hours with this password, only while it is
+# set. The password never goes into the archive itself.
+PANEL_ARCHIVE_PASSWORD = env.str("PANEL_ARCHIVE_PASSWORD", default="")
+PANEL_ARCHIVE_INTERVAL = env.int("PANEL_ARCHIVE_INTERVAL", default=24)
+# A copy of every archive made in System -> Panel archive or on schedule goes to
+# s3://bucket/folder or sftp://user@host:port/folder when PANEL_ARCHIVE_REMOTE is set.
+PANEL_ARCHIVE_REMOTE = env.str("PANEL_ARCHIVE_REMOTE", default="")
+PANEL_ARCHIVE_REMOTE_ENDPOINT = env.str(
+    "PANEL_ARCHIVE_REMOTE_ENDPOINT", default="https://s3.amazonaws.com"
+)
+PANEL_ARCHIVE_REMOTE_REGION = env.str("PANEL_ARCHIVE_REMOTE_REGION", default="us-east-1")
+PANEL_ARCHIVE_REMOTE_ACCESS_KEY = env.str("PANEL_ARCHIVE_REMOTE_ACCESS_KEY", default="")
+PANEL_ARCHIVE_REMOTE_SECRET_KEY = env.str("PANEL_ARCHIVE_REMOTE_SECRET_KEY", default="")
+PANEL_ARCHIVE_REMOTE_PASSWORD = env.str("PANEL_ARCHIVE_REMOTE_PASSWORD", default="")
+PANEL_ARCHIVE_REMOTE_HOST_KEY = env.str("PANEL_ARCHIVE_REMOTE_HOST_KEY", default="")
+# Seconds a silent storage may keep the copy waiting.
+PANEL_ARCHIVE_REMOTE_TIMEOUT = 60
 # Panel update (System -> Panel update). Beat reads the latest release of UPDATE_REPOSITORY from
 # GitHub (updates-check-release); nothing about the installation is sent. UPDATE_CHECK=False
 # turns the check off, and with it the update from the panel.
@@ -341,6 +358,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "backups.save_protocols",
         "schedule": PROTOCOL_BACKUP_INTERVAL,
     },
+    # Hourly, so a restart of beat does not put an archive off; it is due by the newest archive.
+    "backups-archive-panel": {"task": "backups.archive_panel", "schedule": 60 * 60},
     # A reading that waited in the queue longer than an interval is stale: the next one replaces it.
     "servers-monitor": {
         "task": "servers.monitor",

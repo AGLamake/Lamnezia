@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Panel archives on schedule and in an external storage**: with
+  `LAMNEZIA_PANEL_ARCHIVE_PASSWORD` in `.env` the panel makes an archive every
+  `LAMNEZIA_PANEL_ARCHIVE_INTERVAL` hours (24 by default); the password does not go into the
+  archive. `LAMNEZIA_PANEL_ARCHIVE_REMOTE` sends a copy of every archive to an S3-compatible
+  storage or over SFTP. A failed archive or copy shows on **System → Panel archive** and comes
+  as the new **Panel archive failed** notification (`panel_archive_failed`). Off by default.
 - **MTU in the AmneziaWG settings** of a protocol and of a server group: from 576 to 65535, 1376
   by default. It goes into the client settings of the `vpn://` key as the Amnezia app keeps it,
   changes only the client profiles and does not touch the server.
