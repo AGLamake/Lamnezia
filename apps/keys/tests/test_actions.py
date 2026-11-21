@@ -1,3 +1,6 @@
+import json
+from contextlib import nullcontext
+
 import pytest
 from django.db import connection
 from django.utils import timezone
@@ -11,7 +14,7 @@ from apps.audit.models import AuditEvent
 from apps.keys import operations as key_operations
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.actions import REVOKE, KeyActions, KeyRevokingError
-from apps.keys.services.instances import UnknownInstanceError
+from apps.keys.services.instances import Instance, UnknownInstanceError, instances
 from apps.keys.services.profile import KeyExport
 from apps.keys.services.reissue import REISSUE
 from apps.keys.signals import clients_adding, keys_written
@@ -70,6 +73,22 @@ def test_issued_key_exports_for_the_amnezia_app(
     assert key.public_key in config["containers"][0]["awg"]["last_config"]
     assert f"PrivateKey = {key.private_key}" in _content(export, "conf")
     assert export.qr_codes()[0].startswith("<svg")
+
+
+def test_issued_key_takes_the_mtu_of_the_instance(
+    awg_server: FakeAwgServer, actions: KeyActions, run: Run
+) -> None:
+    def provider() -> list[Instance]:
+        return [Instance("awg:2", "Riga", HOST, lambda: nullcontext(awg_server.host()), mtu="1280")]
+
+    instances.register(provider)
+    try:
+        run(lambda: actions.issue("awg:2", "iPhone", None))
+    finally:
+        instances.unregister(provider)
+
+    config = decode_vpn_link(KeyExport.of(AccessKey.objects.get(source="awg:2")).vpn_link)
+    assert json.loads(config["containers"][0]["awg"]["last_config"])["mtu"] == "1280"
 
 
 def test_issue_is_idempotent(awg_server: FakeAwgServer, actions: KeyActions, run: Run) -> None:

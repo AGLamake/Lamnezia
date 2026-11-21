@@ -103,7 +103,7 @@ class GroupSettingsChange:
             keys = self._change_servers(settings)
         else:
             with self._ctx.step(_("Update the keys")):
-                self._ctx.log(_("Only the DNS changes: the servers are not touched."))
+                self._ctx.log(_("Only the DNS or the MTU changes: the servers are not touched."))
                 keys = self._save(settings, changed=[])
         panel = InstanceSettings(self._leader, self._ctx)
         with self._ctx.step(_("Tell the owners of the keys")):
@@ -169,7 +169,8 @@ class GroupSettingsChange:
     @transaction.atomic
     def _save(self, settings: AwgSettings, *, changed: list[ProtocolInstance]) -> list[AccessKey]:
         """The leading instance and the keys of the group take the settings; every member takes
-        the DNS, and those that run with the new settings take them all. Returns the keys.
+        the DNS and the MTU, and those that run with the new settings take them all. Returns
+        the keys.
         """
         keys = InstanceSettings(self._leader, self._ctx).save(settings)
         changed_ids = {instance.pk for instance in changed}
@@ -178,7 +179,8 @@ class GroupSettingsChange:
         )
         for instance in members:
             instance.primary_dns, instance.secondary_dns = settings.dns
-            fields = ["primary_dns", "secondary_dns"]
+            instance.mtu = self._leader.mtu
+            fields = ["primary_dns", "secondary_dns", "mtu"]
             if instance.pk in changed_ids:
                 instance.params = settings.params
                 instance.subnet = settings.subnet

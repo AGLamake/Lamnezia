@@ -1,5 +1,6 @@
 """Forms of the server groups: a new group, its name, domain and relay, its protocol settings."""
 
+from dataclasses import replace
 from ipaddress import IPv4Network
 from typing import Any
 
@@ -47,7 +48,7 @@ class GroupForm(GroupEditForm):
 
 
 class GroupSettingsForm(ProtocolSettingsForm):
-    """DNS, subnet and AmneziaWG parameters of every member of a group, on one form.
+    """DNS, MTU, subnet and AmneziaWG parameters of every member of a group, on one form.
 
     The port is the port of the group and the container log belongs to each server: neither is
     on the form. The subnet must stay apart from the other networks of every member server.
@@ -89,13 +90,14 @@ class GroupSettingsForm(ProtocolSettingsForm):
         data = self.cleaned_data
         params = {name: data.get(name) or "" for name in self.param_names}
         dns = (data["primary_dns"], data["secondary_dns"])
-        return AwgSettings.build(
+        built = AwgSettings.build(
             self.instance.port,
             params,
             dns,
             logs=self.instance.container_logs,
             subnet=data["subnet"],
         )
+        return replace(built, mtu=data["mtu"])
 
     def start(self, user: User, ip: str | None = None) -> Operation:
         reissue = self.cleaned_data["reissue"]

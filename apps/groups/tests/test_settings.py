@@ -53,6 +53,7 @@ class Change:
         params: dict[str, str] | None = None,
         dns: tuple[str, str] | None = None,
         subnet: str = "",
+        mtu: int = 0,
     ) -> Operation:
         self._leader.refresh_from_db()
         current = AwgSettings.of(self._leader)
@@ -62,6 +63,7 @@ class Change:
             dns or current.dns,
             current.logs,
             subnet or current.subnet,
+            mtu or current.mtu,
         )
         return self._start(
             lambda: start_group_settings(self._group, settings, user=self._admin, reissue=False)
@@ -163,6 +165,18 @@ def test_dns_alone_leaves_the_servers(servers: Fakes, joined: GroupMember, chang
     assert not lagging(joined)
 
 
+def test_mtu_reaches_every_member_and_the_keys_of_the_group(
+    servers: Fakes, joined: GroupMember, change: Change
+) -> None:
+    before = server_files(servers[JOINER_HOST]), server_files(servers[LEADER_HOST])
+
+    succeeded(change(mtu=1280))
+
+    assert (server_files(servers[JOINER_HOST]), server_files(servers[LEADER_HOST])) == before
+    assert set(ProtocolInstance.objects.values_list("mtu", flat=True)) == {1280}
+    assert not lagging(joined)
+
+
 def test_no_member_answers_nothing_changes(
     down: set[str], joined: GroupMember, change: Change
 ) -> None:
@@ -249,6 +263,7 @@ def test_group_page_starts_the_change(
         "subnet": leader.subnet,
         "primary_dns": leader.primary_dns,
         "secondary_dns": leader.secondary_dns,
+        "mtu": str(leader.mtu),
         **leader.params,
         "Jc": "7",
     }
@@ -301,6 +316,7 @@ def settings_data(leader: ProtocolInstance, **changes: str) -> dict[str, str]:
         "subnet": leader.subnet,
         "primary_dns": leader.primary_dns,
         "secondary_dns": leader.secondary_dns,
+        "mtu": str(leader.mtu),
         **leader.params,
         "confirm": "on",
         **changes,

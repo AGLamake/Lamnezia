@@ -67,6 +67,7 @@ def key_instances() -> Iterator[Instance]:
             port=instance.port,
             server_id=server.pk,
             dns=instance.dns,
+            mtu=str(instance.mtu),
             container=_KEY_CONTAINERS[instance.container],
             short_id=str(instance.params.get("short_id", "")),
             server_ip=str(instance.params.get("server_ip", "")),

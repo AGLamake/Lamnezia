@@ -8,7 +8,7 @@ from typing import Any
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
-from amnezia_core.awg_export import AwgClientProfile, AwgServerSettings
+from amnezia_core.awg_export import DEFAULT_MTU, AwgClientProfile, AwgServerSettings
 from amnezia_core.containers import WG_CONTAINERS, WgContainer
 from amnezia_core.ipsec import IPSEC_CONTAINER
 from amnezia_core.ipsec_profile import IpsecClientProfile
@@ -34,6 +34,7 @@ class ServerProfile:
     server_public_key: str
     preshared_key: str
     dns: tuple[str, str] = DEFAULT_DNS
+    mtu: str = DEFAULT_MTU
 
     @classmethod
     def build(
@@ -290,6 +291,7 @@ class KeyExport:
             preshared_key=server.preshared_key,
             keys=KeyPair.from_private_key(key.private_key),
             client_ip=IPv4Address(key.client_ip),
+            mtu=server.mtu,
             container=WG_CONTAINERS[server.container],
         )
         conf = ExportFile(

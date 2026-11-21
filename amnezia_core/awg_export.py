@@ -23,6 +23,8 @@ from amnezia_core.vpn_link import DEFAULT_DNS, connection_config
 
 AWG_CONTAINER = AWG2.name
 DEFAULT_MTU = "1376"
+# The MTU the app takes in its client settings (IntValidator of PageProtocolAwgClientSettings).
+MIN_MTU, MAX_MTU = 576, 65535
 
 _TRANSPORT_PROTO = "udp"
 _ALLOWED_IPS = ["0.0.0.0/0", "::/0"]

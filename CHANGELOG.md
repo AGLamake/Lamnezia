@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **MTU in the AmneziaWG settings** of a protocol and of a server group: from 576 to 65535, 1376
+  by default. It goes into the client settings of the `vpn://` key as the Amnezia app keeps it,
+  changes only the client profiles and does not touch the server.
 - **Keys reissued notification** (`keys_reissued`): the owner hears that their keys on a server
   are reissued and must be imported into the Amnezia app again, unless they reissued the key
   themselves. Subscribe a channel to it in **Notifications** if needed.

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from ipaddress import IPv4Network
 from typing import Any
 
@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
 from amnezia_core.awg import SPECIAL_JUNK, interface_params
-from amnezia_core.awg_export import AWG3_PARAMS
+from amnezia_core.awg_export import AWG3_PARAMS, MAX_MTU, MIN_MTU
 from amnezia_core.awg_masking import is_app_masking
 from amnezia_core.awg_params import MAX_PORT, Problem, check_awg_params
 from amnezia_core.containers import WG_CONTAINERS
@@ -113,6 +113,7 @@ class ProtocolSettingsForm(SettingsForm):
     )
     primary_dns = forms.GenericIPAddressField(label=_("DNS"), protocol="IPv4")
     secondary_dns = forms.GenericIPAddressField(label=_("Secondary DNS"), protocol="IPv4")
+    mtu = forms.IntegerField(label=_("MTU"), min_value=MIN_MTU, max_value=MAX_MTU)
 
     def __init__(self, *args: Any, instance: ProtocolInstance, **kwargs: Any) -> None:
         super().__init__(*args, instance=instance, **kwargs)
@@ -128,6 +129,7 @@ class ProtocolSettingsForm(SettingsForm):
             "subnet": instance.subnet,
             "primary_dns": instance.primary_dns,
             "secondary_dns": instance.secondary_dns,
+            "mtu": instance.mtu,
             **instance.params,
         }
 
@@ -205,9 +207,10 @@ class ProtocolSettingsForm(SettingsForm):
         data = self.cleaned_data
         params = {name: data.get(name) or "" for name in self.param_names}
         dns = (data["primary_dns"], data["secondary_dns"])
-        return AwgSettings.build(
+        built = AwgSettings.build(
             data["port"], params, dns, logs=data["container_logs"], subnet=data["subnet"]
         )
+        return replace(built, mtu=data["mtu"])
 
     @property
     def changes_server(self) -> bool:

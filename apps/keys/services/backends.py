@@ -198,7 +198,7 @@ class WgKeys:
             self._kind, self._instance.host, server, server_public_key, peer.preshared_key or ""
         )
         key.client_ip = str(peer.addresses[0])
-        key.profile = replace(profile, dns=self._instance.dns).to_json()
+        key.profile = replace(profile, dns=self._instance.dns, mtu=self._instance.mtu).to_json()
 
     def disable(self, key: AccessKey) -> None:
         self.peers.disable(key.public_key)

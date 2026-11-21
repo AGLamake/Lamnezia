@@ -546,6 +546,9 @@ msgstr "Let's Encrypt выдаёт сертификат только серве�
 msgid "Lines of server.conf, without the characters $ ` and \\."
 msgstr "Строки server.conf, без символов $ ` и \\."
 
+msgid "MTU"
+msgstr "MTU"
+
 msgid "Making the certificate authority."
 msgstr "Создаётся центр сертификации."
 

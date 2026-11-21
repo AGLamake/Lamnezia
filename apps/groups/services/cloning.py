@@ -26,7 +26,7 @@ from apps.backups.services.guard import IdentityGuard
 from apps.backups.services.snapshot import read_awg_files, save_backup, take_snapshot
 from apps.groups.errors import GroupError, GroupErrorCode
 from apps.groups.models import GroupMember, LagReason, MemberState, ServerGroup
-from apps.groups.services.membership import add_installed, take_group_dns
+from apps.groups.services.membership import add_installed, take_group_client_settings
 from apps.keys.models import AccessKey
 from apps.keys.services.actions import KeyActions
 from apps.operations.services.context import OperationContext
@@ -184,7 +184,7 @@ class GroupJoin(_Cloning):
     def _save(self, host: RemoteHost, files: AwgServerFiles) -> None:
         with transaction.atomic():
             revoked = take_identity(self._instance, files)
-            take_group_dns(self._instance, self._member.group)
+            take_group_client_settings(self._instance, self._member.group)
             GroupMember.objects.filter(pk=self._member.pk, state=MemberState.JOINING).update(
                 state=MemberState.MEMBER,
                 joined_at=timezone.now(),

@@ -68,14 +68,14 @@ each member with the leading server. A member where a peer was added in the Amne
 by hand is marked lagging too, and catch-up gives it the group files back. The keys of the panel
 stay as they are: the comparison with the panel (drift) reads only the leading server.
 
-**Protocol settings** on the group page change the DNS, the client subnet and the AmneziaWG
+**Protocol settings** on the group page change the DNS, the MTU, the client subnet and the AmneziaWG
 parameters of every member at once; the card of a member shows them read only with a link to the
 group. The port stays the port of the group, and the container log is set on each server. The
 background operation "Change the protocol settings of a group" locks every member that answers,
 applies the settings on each and keeps them clones. A member that does not answer or does not take
 the settings is marked lagging and catch-up gives it the new settings, moving its container into a
-new subnet if needed. If no member answers, nothing changes. A DNS-only change does not touch the
-servers. A settings change and a handover of one group do not run at the same time.
+new subnet if needed. If no member answers, nothing changes. A change of only the DNS or the MTU does not
+touch the servers. A settings change and a handover of one group do not run at the same time.
 
 **Short timers** on the same page set `KeepaliveTimeout = 3-5` and `RekeyTimeout = 2-3` for the
 group. A client notices the switch of the [relay](#relay) by these timers: with them it reconnects

@@ -320,13 +320,14 @@ def _launch_member(
     return operation
 
 
-def take_group_dns(instance: ProtocolInstance, group: ServerGroup) -> None:
-    """Give a joining server the DNS of the group: keys of the group carry the same DNS."""
+def take_group_client_settings(instance: ProtocolInstance, group: ServerGroup) -> None:
+    """Give a joining server the DNS and the MTU of the group: keys of the group carry them."""
     leader = group.leader
     if leader is None or leader.instance_id == instance.pk:
         return
     instance.primary_dns, instance.secondary_dns = leader.instance.dns
-    instance.save(update_fields=["primary_dns", "secondary_dns"])
+    instance.mtu = leader.instance.mtu
+    instance.save(update_fields=["primary_dns", "secondary_dns", "mtu"])
 
 
 @transaction.atomic
@@ -358,7 +359,7 @@ def add_installed(group: ServerGroup, server: Server, files: AwgServerFiles) -> 
     )
     others = [c for c in server.containers if c.get("name") != AWG2.name]
     server.record_containers([*others, {"name": AWG2.name, "port": port, "transport": "udp"}])
-    take_group_dns(instance, group)
+    take_group_client_settings(instance, group)
     return _add_member(group, instance, state=MemberState.MEMBER, joined_at=timezone.now())
 
 

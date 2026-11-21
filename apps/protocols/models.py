@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from amnezia_core.awg_export import AWG3_VERSION, awg_version
+from amnezia_core.awg_export import AWG3_VERSION, DEFAULT_MTU, MAX_MTU, MIN_MTU, awg_version
 from amnezia_core.containers import AWG2, WG_CONTAINERS
 from amnezia_core.proxies import SOCKS5_CONTAINER, ProxyLinks, proxy_links
 from amnezia_core.services import DNS_CONTAINER, SFTP_CONTAINER, TOR_CONTAINER
@@ -52,6 +53,12 @@ class ProtocolInstance(models.Model):
     primary_dns = models.GenericIPAddressField(_("DNS"), protocol="IPv4", default=DEFAULT_DNS[0])
     secondary_dns = models.GenericIPAddressField(
         _("secondary DNS"), protocol="IPv4", default=DEFAULT_DNS[1]
+    )
+    # The MTU of the client interface, in `last_config` of every profile; the server ignores it.
+    mtu = models.PositiveIntegerField(
+        _("MTU"),
+        default=int(DEFAULT_MTU),
+        validators=[MinValueValidator(MIN_MTU), MaxValueValidator(MAX_MTU)],
     )
     public_key = models.CharField(_("server public key"), max_length=64)
     private_key = EncryptedTextField(_("server private key"))

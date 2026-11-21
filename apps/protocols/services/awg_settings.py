@@ -67,6 +67,7 @@ class AwgSettings:
 
     `logs`: docker keeps the container log. `subnet` is the client network, 10.8.1.0/24; empty
     in an operation queued before it could be changed, which keeps the one of the instance.
+    `mtu` goes only into the client profiles, as DNS does; 0 keeps the one of the instance too.
     """
 
     kind: ClassVar[str] = SETTINGS_KIND
@@ -76,6 +77,7 @@ class AwgSettings:
     dns: tuple[str, str]
     logs: bool = False
     subnet: str = ""
+    mtu: int = 0
 
     @classmethod
     def of(cls, instance: ProtocolInstance) -> "AwgSettings":
@@ -85,6 +87,7 @@ class AwgSettings:
             instance.dns,
             instance.container_logs,
             instance.subnet,
+            instance.mtu,
         )
 
     @classmethod
@@ -109,7 +112,8 @@ class AwgSettings:
         params = dict(data["params"])
         if token := data.get(_HPK_TOKEN):
             params[_HPK] = SecretCipher.from_settings().decrypt(token)
-        return cls(data["port"], params, (primary, secondary), logs, subnet)
+        mtu = data.get("mtu", 0)
+        return cls(data["port"], params, (primary, secondary), logs, subnet, mtu)
 
     def to_params(self) -> dict[str, Any]:
         """HeaderProtectionKey goes in encrypted, outside `params`: it is a secret."""
@@ -121,14 +125,15 @@ class AwgSettings:
             "dns": list(self.dns),
             "logs": self.logs,
             "subnet": self.subnet,
+            "mtu": self.mtu,
         }
         if key:
             data[_HPK_TOKEN] = SecretCipher.from_settings().encrypt(key)
         return data
 
     def within(self, current: "AwgSettings") -> "AwgSettings":
-        """These settings with the subnet of `current` if they have none."""
-        return self if self.subnet else replace(self, subnet=current.subnet)
+        """These settings with the subnet and the MTU of `current` where they have none."""
+        return replace(self, subnet=self.subnet or current.subnet, mtu=self.mtu or current.mtu)
 
     def changes_server(self, other: "AwgSettings") -> bool:
         """The port, the subnet or the obfuscation differ: the old profile does not connect.
@@ -141,7 +146,7 @@ class AwgSettings:
 
     def changes_profiles(self, other: "AwgSettings") -> bool:
         """Clients must import their keys again; the container log is no concern of theirs."""
-        return self.changes_server(other) or self.dns != other.dns
+        return self.changes_server(other) or (self.dns, self.mtu) != (other.dns, other.mtu)
 
     def touches_server(self, other: "AwgSettings") -> bool:
         return self.changes_server(other) or self.params != other.params or self.logs != other.logs
@@ -296,6 +301,7 @@ class InstanceSettings:
             instance.primary_dns, instance.secondary_dns = settings.dns
             instance.container_logs = settings.logs
             instance.subnet = settings.subnet or instance.subnet
+            instance.mtu = settings.mtu or instance.mtu
             instance.save(
                 update_fields=[
                     "port",
@@ -304,6 +310,7 @@ class InstanceSettings:
                     "secondary_dns",
                     "container_logs",
                     "subnet",
+                    "mtu",
                 ]
             )
             if renumbering:
@@ -314,9 +321,8 @@ class InstanceSettings:
                 subnet = profile.subnet
                 if renumbering:
                     subnet = str(renumbering.interface(IPv4Interface(subnet)))
-                return profile.updated(
-                    settings.port, settings.params, settings.dns, subnet
-                ).to_json()
+                updated = profile.updated(settings.port, settings.params, settings.dns, subnet)
+                return replace(updated, mtu=str(instance.mtu)).to_json()
 
             return self.update_profiles(update)
 

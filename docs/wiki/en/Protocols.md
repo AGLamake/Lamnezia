@@ -350,12 +350,13 @@ systemctl status lamnezia-offload.timer
 
 ## Protocol settings
 
-Next to an AmneziaWG 2.0 protocol on the server page, **Settings** opens the form for the UDP port, the DNS of the
+Next to an AmneziaWG 2.0 protocol on the server page, **Settings** opens the form for the UDP port, the DNS and MTU of the
 client profiles and the AWG parameters (Jc, Jmin, Jmax, S1–S4, H1–H4, I1–I5 and so on). Only an
 administrator can open it. The values are checked before saving and the form will not take invalid
 ones, for example:
 
 - the port is not between 1 and 65535 or is taken by the reachability probe;
+- the MTU is not between 576 and 65535 (the range the Amnezia app takes);
 - Jmin is larger than Jmax, or a junk packet is over 1280 bytes;
 - the H1–H4 ranges overlap, or S1–S4 give two kinds of packets the same size;
 - `HeaderProtectionKey` is set while one of S1–S4 is below 12 (AmneziaWG would not start);
@@ -369,7 +370,7 @@ these parameters.
 
 A server in a [group](Server-groups.md) shows its settings read only: they
 change for the whole group on the group page. The settings operation refuses a group member too,
-even when started past its card. A joining server takes the DNS of the group.
+even when started past its card. A joining server takes the DNS and MTU of the group.
 
 A change of the port or the parameters breaks every client until it imports the key again, so the
 form asks for a confirmation. `KeepaliveTimeout` and `RekeyTimeout` are the exception: each side
@@ -394,7 +395,10 @@ tells no owner to import the key. The same goes for I1–I5: the server does not
   `awg0.conf` and `clientsTable` and recreates the container as for a new port; on failure the old
   container comes back with the old addresses. The subnet must be private, from `/16` to the
   current size (all clients must fit), and must not overlap another subnet of the server.
-- **DNS only.** The server is not touched: DNS goes only into the client profiles.
+- **DNS or MTU only.** The server is not touched: both go only into the client profiles, and the
+  owners of the keys are told to import them again. The MTU (1376 by default, as in the desktop
+  app) goes into the client settings of the `vpn://` key, where the Amnezia app keeps it. The
+  `.conf` file has no MTU line, as in the Amnezia app: the AmneziaWG app keeps its own MTU.
 - **I1–I5 only.** The panel writes them into `awg0.conf` (the Amnezia app reads them there) without
   restarting AmneziaWG or touching the container, and updates the profiles of the issued keys.
 

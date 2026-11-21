@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -40,13 +41,14 @@ pytestmark = pytest.mark.django_db
 
 def settings_of(instance: ProtocolInstance, **changes: Any) -> AwgSettings:
     params = {**instance.params, **changes.pop("params", {})}
-    return AwgSettings.build(
+    built = AwgSettings.build(
         changes.get("port", instance.port),
         params,
         changes.get("dns", instance.dns),
         logs=changes.get("logs", instance.container_logs),
         subnet=changes.get("subnet", instance.subnet),
     )
+    return replace(built, mtu=changes.get("mtu", instance.mtu))
 
 
 def test_new_parameters_restart_awg_and_keep_the_clients(
@@ -237,6 +239,26 @@ def test_dns_alone_changes_only_the_profiles(
     assert instance.dns == ("9.9.9.9", "149.112.112.112")
 
 
+def test_mtu_alone_changes_only_the_profiles_and_the_owners_are_told(
+    instance: ProtocolInstance, admin: User, start: Start, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("apps.protocols.operations.connect", None)
+    key = issued_key(instance, UserFactory(email="anna@example.com"))
+
+    operation = start(
+        lambda: start_settings_change(
+            instance, settings_of(instance, mtu=1280), admin, reissue=False
+        )
+    )
+
+    assert operation.status == OperationStatus.SUCCEEDED, operation.error_message
+    key.refresh_from_db()
+    assert ServerProfile.from_json(key.profile).mtu == "1280"
+    instance.refresh_from_db()
+    assert instance.mtu == 1280
+    assert Notification.objects.filter(event=Event.KEYS_CHANGED).exists()
+
+
 def test_new_i1_reaches_the_profiles_without_restarting_awg(
     connected: FakeAwgServer, instance: ProtocolInstance, admin: User, start: Start
 ) -> None:
@@ -327,6 +349,7 @@ def form_data(instance: ProtocolInstance, **changes: str) -> dict[str, str]:
         "subnet": instance.subnet,
         "primary_dns": instance.primary_dns,
         "secondary_dns": instance.secondary_dns,
+        "mtu": str(instance.mtu),
         **instance.params,
         **changes,
     }
@@ -477,6 +500,24 @@ def test_dns_change_needs_no_confirmation(admin_client: Client, instance: Protoc
     )
 
     assert Operation.objects.get().params["dns"] == ["9.9.9.9", "1.0.0.1"]
+
+
+def test_mtu_change_needs_no_confirmation(admin_client: Client, instance: ProtocolInstance) -> None:
+    admin_client.post(f"/protocols/{instance.pk}/settings/", form_data(instance, mtu="1280"))
+
+    assert Operation.objects.get().params["mtu"] == 1280
+
+
+@pytest.mark.parametrize("mtu", ["575", "65536", "abc"])
+def test_mtu_out_of_the_range_of_the_app_is_refused(
+    admin_client: Client, instance: ProtocolInstance, mtu: str
+) -> None:
+    response = admin_client.post(
+        f"/protocols/{instance.pk}/settings/", form_data(instance, mtu=mtu)
+    )
+
+    assert "mtu" in response.context["form"].errors
+    assert not Operation.objects.exists()
 
 
 def test_masking_template_needs_no_confirmation(

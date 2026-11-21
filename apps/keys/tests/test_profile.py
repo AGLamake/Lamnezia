@@ -1,7 +1,9 @@
 import json
+from dataclasses import replace
 
+from amnezia_core.awg_export import DEFAULT_MTU
 from amnezia_core.keys import KeyPair
-from amnezia_core.vpn_link import DEFAULT_DNS
+from amnezia_core.vpn_link import DEFAULT_DNS, decode_vpn_link
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.profile import KeyExport, ServerProfile
 from apps.keys.tests.conftest import HOST, PSK
@@ -40,3 +42,19 @@ def test_a_profile_saved_without_dns_gets_the_default() -> None:
 
     assert ServerProfile.from_json(json.dumps(data)).dns == DEFAULT_DNS
     assert ServerProfile.from_json(PROFILE.to_json()) == PROFILE
+
+
+def test_export_puts_the_mtu_of_the_profile_into_last_config() -> None:
+    key = key_with(replace(PROFILE, mtu="1280").to_json())
+
+    link = decode_vpn_link(KeyExport.of(key).vpn_link)
+
+    last_config = json.loads(link["containers"][0]["awg"]["last_config"])
+    assert last_config["mtu"] == "1280"
+
+
+def test_a_profile_saved_without_mtu_gets_the_default() -> None:
+    data = json.loads(PROFILE.to_json())
+    del data["mtu"]
+
+    assert ServerProfile.from_json(json.dumps(data)).mtu == DEFAULT_MTU

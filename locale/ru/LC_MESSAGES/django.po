@@ -1017,8 +1017,8 @@ msgstr "Создал"
 msgid "Current password"
 msgstr "Текущий пароль"
 
-msgid "DNS goes only into client profiles: changing it alone does not touch the server, but clients get it after importing the key again."
-msgstr "DNS попадает только в профили клиентов: его смена сама по себе не трогает сервер, но клиенты получат его после повторного импорта ключа."
+msgid "DNS and MTU go only into client profiles: changing them alone does not touch the server, but clients get them after importing the key again."
+msgstr "DNS и MTU попадают только в профили клиентов: их смена сама по себе не трогает сервер, но клиенты получат их после повторного импорта ключа."
 
 msgid "Danger"
 msgstr "Опасная"
@@ -2486,8 +2486,8 @@ msgstr "Ведущим может стать только вступивший �
 msgid "Only an up-to-date member of the group can take its clients. Wait until the server catches up with the group."
 msgstr "Принять клиентов группы может только участник со всеми её изменениями. Дождитесь, пока сервер догонит группу."
 
-msgid "Only the DNS changes: the servers are not touched."
-msgstr "Меняется только DNS: серверы не затрагиваются."
+msgid "Only the DNS or the MTU changes: the servers are not touched."
+msgstr "Меняется только DNS или MTU: серверы не затрагиваются."
 
 msgid "Only the staff see it."
 msgstr "Его видит только персонал."
