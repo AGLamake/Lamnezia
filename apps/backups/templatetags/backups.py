@@ -9,6 +9,7 @@ from amnezia_core.ipsec import IPSEC_CONTAINER
 from apps.backups.models import ProtocolSnapshot
 from apps.backups.services import snapshot
 from apps.backups.services.archived_services import archived_services
+from apps.backups.services.snapshot_restore import SnapshotFiles
 from apps.protocols.models import ProtocolInstance, ServiceInstance
 from apps.protocols.services.ipsec_reissue import IpsecIdentity
 from apps.servers.models import Server
@@ -63,5 +64,11 @@ def in_group(instance: ProtocolInstance) -> bool:
 
 @register.filter
 def snapshot_config(snapshot: ProtocolSnapshot) -> AwgServerConfig:
-    """The server config of a snapshot: its port and peers for the list."""
+    """The server config of a snapshot: its port for the list."""
     return AwgServerConfig.parse(snapshot.config)
+
+
+@register.filter
+def snapshot_clients(snapshot: ProtocolSnapshot) -> int:
+    """Clients of a snapshot: its peers without those a restore leaves out, such as service ones."""
+    return SnapshotFiles(snapshot).clients

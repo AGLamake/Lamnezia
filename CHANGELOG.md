@@ -499,6 +499,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Snapshot restore and foreign peers**: peers that are not clients of the server — keys living
+  on another server and the panel's service peers, such as the relay probe — are taken out of
+  `awg0.conf` and `clientsTable` before a snapshot is written back, so their clients no longer
+  connect with the traffic not counted. The number of clients on the snapshot card no longer
+  counts service peers. Nothing to do on upgrade.
 - **Unknown traffic of server groups**: a server that does not answer over SSH now makes the
   traffic of its keys unknown, and a member of a group the traffic of every key of the group,
   even before its first reading; the warning on **Statistics** lists it. A new key on a member

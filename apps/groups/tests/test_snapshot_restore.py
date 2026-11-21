@@ -4,13 +4,14 @@ from django.urls import reverse
 from django.utils import timezone
 
 from amnezia_core.awg import AWG_CLIENTS_TABLE_PATH, AWG_CONFIG_PATH, AwgServerConfig, Peer
+from amnezia_core.awg_backup import AwgServerFiles
 from amnezia_core.awg_peers import AwgPeerRegistry
 from amnezia_core.clients_table import ClientRecord
 from apps.accounts.models import User
 from apps.backups.errors import RestoreError, RestoreErrorCode
 from apps.backups.models import ProtocolSnapshot, SnapshotReason
-from apps.backups.services.snapshot_restore import snapshot_files, start_snapshot_restore
-from apps.groups.models import GroupMember
+from apps.backups.services.snapshot_restore import start_snapshot_restore
+from apps.groups.models import GroupMember, ServerGroup
 from apps.groups.services.membership import start_leave
 from apps.groups.tests.conftest import JOINER_HOST, Fakes, Run, server_files, succeeded
 from apps.keys.models import AccessKey, KeyStatus
@@ -19,8 +20,19 @@ from apps.operations.models import Operation, OperationStatus
 from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import PSK, Start, issued_key
+from apps.protocols.tests.fake_awg import FakeAwgServer
+from apps.relays.models import ServicePeer
 
 pytestmark = pytest.mark.django_db
+
+
+def snapshot_files(snapshot: ProtocolSnapshot) -> AwgServerFiles:
+    return AwgServerFiles(snapshot.config, snapshot.clients_table, snapshot.preshared_key)
+
+
+def peers_on(awg: FakeAwgServer) -> set[str]:
+    config = AwgServerConfig.parse(server_files(awg).config)
+    return {peer.public_key for peer in config.peers}
 
 
 @pytest.fixture
@@ -205,6 +217,39 @@ def test_peer_whose_key_lives_on_another_server_is_not_taken_twice(
     old_key.refresh_from_db()
     assert old_key.status == KeyStatus.REVOKED
     assert AccessKey.objects.filter(public_key=old_key.public_key).count() == 2
+    # Its client would connect here with the traffic not counted: the peer leaves the files.
+    assert old_key.public_key not in peers_on(servers[JOINER_HOST])
+    assert old_key.public_key not in server_files(servers[JOINER_HOST]).clients_table
+
+
+@pytest.fixture
+def probe(group: ServerGroup, old_key: AccessKey, left: ProtocolSnapshot) -> ServicePeer:
+    """A service peer in the snapshot; the server has left the group, so only its key tells."""
+    return ServicePeer.objects.create(
+        group=group, private_key="probe", public_key=old_key.public_key, address="10.8.1.254"
+    )
+
+
+def test_a_service_peer_is_not_a_client_of_the_snapshot(
+    joiner: ProtocolInstance, left: ProtocolSnapshot, probe: ServicePeer, admin: User
+) -> None:
+    config = AwgServerConfig.parse(left.config)
+    client = Client()
+    client.force_login(admin)
+
+    page = client.get(reverse("servers:detail", args=[joiner.server_id])).content.decode()
+
+    assert f"port {config.listen_port}, {len(config.peers) - 1} client" in page
+
+
+def test_a_service_peer_is_not_restored(
+    servers: Fakes, old_key: AccessKey, probe: ServicePeer, restore: Run
+) -> None:
+    succeeded(restore())
+
+    assert probe.public_key not in peers_on(servers[JOINER_HOST])
+    old_key.refresh_from_db()
+    assert old_key.status == KeyStatus.REVOKED
 
 
 def test_key_over_the_owner_plan_is_turned_off(

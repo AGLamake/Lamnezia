@@ -4,6 +4,9 @@ Runs in a background operation under the server lock (DESIGN.md 5.4): read the f
 a snapshot of them, write the snapshot files with awg0.conf last and restart the interface;
 if it does not come up, the old files come back. The panel then reads the server key and
 the clients again: keys of the snapshot connect once more. A server in a group is refused.
+
+The files go back as they were, but for the peers that are not clients of this server
+(`SnapshotFiles`).
 """
 
 from contextlib import ExitStack
@@ -12,8 +15,9 @@ from ipaddress import IPv4Address
 from django.db import transaction
 from django.utils.translation import gettext as _
 
-from amnezia_core.awg import AwgServerConfig, Peer
+from amnezia_core.awg import AwgServerConfig
 from amnezia_core.awg_backup import AwgServerFiles
+from amnezia_core.awg_peers import AwgPeerRegistry
 from amnezia_core.clients_table import ClientsTable
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
@@ -36,8 +40,54 @@ SNAPSHOT_RESTORE_KIND = "backups.restore_snapshot"
 SNAPSHOT_DELETE_KIND = "backups.delete_snapshot"
 
 
-def snapshot_files(snapshot: ProtocolSnapshot) -> AwgServerFiles:
-    return AwgServerFiles(snapshot.config, snapshot.clients_table, snapshot.preshared_key)
+class SnapshotFiles:
+    """The files of a snapshot as a restore writes them.
+
+    Peers that are not clients of this server are taken out of awg0.conf and clientsTable:
+    service peers of the panel, such as the relay probe, and peers whose key lives on another
+    server — after a group the snapshot holds the keys of the leading server, and a client of
+    one of them would connect here with its traffic not counted. The rest stays as it was.
+    """
+
+    def __init__(self, snapshot: ProtocolSnapshot) -> None:
+        self._snapshot = snapshot
+        self._config = AwgServerConfig.parse(snapshot.config)
+
+    @property
+    def clients(self) -> int:
+        """Peers a restore brings back as keys of this server."""
+        return len(self._config.peers) - len(self.foreign())
+
+    def foreign(self) -> set[str]:
+        """Public keys of the peers that are not clients of this server."""
+        public_keys = [peer.public_key for peer in self._config.peers]
+        source = self._snapshot.instance.source
+        elsewhere = (
+            AccessKey.objects.filter(public_key__in=public_keys)
+            .exclude(source=source)
+            .exclude(status__in=GONE_STATUSES)
+            .values_list("public_key", flat=True)
+        )
+        service = service_peers.of(source) | service_peers.among(public_keys)
+        return (service & set(public_keys)) | set(elsewhere)
+
+    def to_write(self, foreign: set[str]) -> AwgServerFiles:
+        """The files without the peers of `foreign`; as they are when there are none."""
+        snapshot = self._snapshot
+        if not foreign:
+            return AwgServerFiles(snapshot.config, snapshot.clients_table, snapshot.preshared_key)
+        clients = snapshot.clients_table
+        registry = AwgPeerRegistry(
+            AwgServerConfig.parse(snapshot.config),
+            ClientsTable.parse(clients) if clients else ClientsTable([]),
+        )
+        for public_key in sorted(foreign):
+            registry.revoke(public_key)
+        return AwgServerFiles(
+            registry.config.serialize(),
+            registry.clients.serialize() if clients else "",
+            snapshot.preshared_key,
+        )
 
 
 def check_standalone(instance: ProtocolInstance) -> None:
@@ -73,7 +123,6 @@ class SnapshotRestorer:
     def __init__(self, snapshot: ProtocolSnapshot, ctx: OperationContext) -> None:
         self._snapshot = snapshot
         self._instance = snapshot.instance
-        self._files = snapshot_files(snapshot)
         self._ctx = ctx
 
     def run(self) -> None:
@@ -83,6 +132,8 @@ class SnapshotRestorer:
             with self._ctx.step(_("Wait for other operations on the server")):
                 stack.enter_context(host.lock())
             check_standalone(self._instance)
+            with self._ctx.step(_("Prepare the files of the snapshot")):
+                self._files = self._prepare()
             with self._ctx.step(_("Read the server files")):
                 current = read_awg_files(host)
                 differs = current != self._files
@@ -92,6 +143,16 @@ class SnapshotRestorer:
                 self._replace(host, current)
             with self._ctx.step(_("Save the result in the panel")):
                 self._save(host)
+
+    def _prepare(self) -> AwgServerFiles:
+        files = SnapshotFiles(self._snapshot)
+        foreign = files.foreign()
+        if foreign:
+            self._ctx.log(
+                _("Peers left out of the files, not clients of this server: %(count)d.")
+                % {"count": len(foreign)}
+            )
+        return files.to_write(foreign)
 
     def _replace(self, host: RemoteHost, current: AwgServerFiles) -> None:
         config = AwgServerConfig.parse(current.config)
@@ -115,11 +176,6 @@ class SnapshotRestorer:
                 self._ctx.log(_("Keys revoked: %(count)d.") % {"count": len(revoked)})
             back = keys.restore()
         self._ctx.log(_("Keys of the snapshot active again: %(count)d.") % {"count": back})
-        if keys.elsewhere:
-            self._ctx.log(
-                _("Peers left out, their keys live on another server: %(count)d.")
-                % {"count": keys.elsewhere}
-            )
         disabled, told = ReturnedKeys(self._instance, keys.returned).settle()
         if disabled:
             self._ctx.log(_("Keys over the plan turned off: %(count)d.") % {"count": disabled})
@@ -129,11 +185,9 @@ class SnapshotRestorer:
 
 
 class SnapshotKeys:
-    """The keys of the peers in the snapshot files: revoked or disabled ones become active,
-    peers the panel never knew are taken as imported keys, as an import does.
-
-    A peer whose key lives on another server is left out: after a group the snapshot holds the
-    keys of the leading server, and a copy of them here would count twice.
+    """The keys of the peers in the files a restore wrote (`SnapshotFiles.to_write`): revoked or
+    disabled ones become active, peers the panel never knew are taken as imported keys, as an
+    import does.
     """
 
     def __init__(self, source: str, files: AwgServerFiles) -> None:
@@ -144,34 +198,17 @@ class SnapshotKeys:
         )
         # Keys of users that were gone or off and are active again.
         self.returned: list[AccessKey] = []
-        self.elsewhere = 0
 
     def restore(self) -> int:
-        """Bring the peers of the snapshot back as active keys; the number of them."""
-        service = service_peers.of(self._source)
-        peers = [peer for peer in self._config.peers if peer.public_key not in service]
-        elsewhere = self._live_elsewhere(peers)
-        back = 0
-        for number, peer in enumerate(peers, start=1):
-            if peer.public_key in elsewhere:
-                self.elsewhere += 1
-                continue
+        """Bring the peers of the files back as active keys; the number of them."""
+        for number, peer in enumerate(self._config.peers, start=1):
             fallback = _("Imported client %(number)d") % {"number": number}
             key, created = adopt_peer(self._source, peer, self._clients, fallback)
             if not created and key.status != KeyStatus.ACTIVE and key.user_id is not None:
                 self.returned.append(key)
             if not created:
                 self._activate(key, peer.addresses[0] if peer.addresses else None)
-            back += 1
-        return back
-
-    def _live_elsewhere(self, peers: list[Peer]) -> set[str]:
-        keys = (
-            AccessKey.objects.filter(public_key__in=[peer.public_key for peer in peers])
-            .exclude(source=self._source)
-            .exclude(status__in=GONE_STATUSES)
-        )
-        return set(keys.values_list("public_key", flat=True))
+        return len(self._config.peers)
 
     @staticmethod
     def _activate(key: AccessKey, address: IPv4Address | None) -> None:

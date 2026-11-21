@@ -103,11 +103,14 @@ msgid "Password again"
 msgstr "Пароль ещё раз"
 
 #, python-format
-msgid "Peers left out, their keys live on another server: %(count)d."
-msgstr "Пропущено пиров, их ключи живут на другом сервере: %(count)d."
+msgid "Peers left out of the files, not clients of this server: %(count)d."
+msgstr "Убрано из файлов пиров, не клиентов этого сервера: %(count)d."
 
 msgid "Prepare the files from the panel"
 msgstr "Подготовить файлы из панели"
+
+msgid "Prepare the files of the snapshot"
+msgstr "Подготовить файлы снимка"
 
 msgid "Put the saved files into the container"
 msgstr "Положить сохранённые файлы в контейнер"

@@ -38,7 +38,7 @@
           {% for snapshot in snapshots %}
             <div class="flex flex-wrap items-center justify-between gap-2">
               {% with config=snapshot|snapshot_config %}
-              <p class="help-text">{{ snapshot.taken_at|date:"SHORT_DATETIME_FORMAT" }} · {{ snapshot.get_reason_display }} · {% blocktranslate count clients=config.peers|length with port=config.listen_port|default:"—" %}port {{ port }}, {{ clients }} client{% plural %}port {{ port }}, {{ clients }} clients{% endblocktranslate %}</p>
+              <p class="help-text">{{ snapshot.taken_at|date:"SHORT_DATETIME_FORMAT" }} · {{ snapshot.get_reason_display }} · {% blocktranslate count clients=snapshot|snapshot_clients with port=config.listen_port|default:"—" %}port {{ port }}, {{ clients }} client{% plural %}port {{ port }}, {{ clients }} clients{% endblocktranslate %}</p>
               {% endwith %}
               {% if manage %}<div class="flex flex-wrap gap-2">
                 {% if not instance|in_group %}

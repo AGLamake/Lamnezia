@@ -4,11 +4,13 @@ The keys app does not know who owns them: reconciliation and import ask `service
 the address of a new key never takes one of theirs.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from ipaddress import IPv4Address
 
 # Public key → tunnel address of the service peers of a key source.
 type Lookup = Callable[[str], dict[str, str]]
+# Public keys among those given that are service peers of any source.
+type Finder = Callable[[Collection[str]], set[str]]
 
 
 class ServicePeers:
@@ -19,14 +21,29 @@ class ServicePeers:
 
         @service_peers.register
         def relay_peers(source: str) -> dict[str, str]: ...
+
+    and a finder of them by public key, for files a server no longer runs::
+
+        @service_peers.register_finder
+        def known_relay_peers(public_keys: Collection[str]) -> set[str]: ...
     """
 
     def __init__(self) -> None:
         self._lookups: list[Lookup] = []
+        self._finders: list[Finder] = []
 
     def register(self, lookup: Lookup) -> Lookup:
         self._lookups.append(lookup)
         return lookup
+
+    def register_finder(self, finder: Finder) -> Finder:
+        self._finders.append(finder)
+        return finder
+
+    def among(self, public_keys: Collection[str]) -> set[str]:
+        """Those of `public_keys` that are service peers, of whichever source: e.g. in a snapshot
+        of the files of a group the server has left since."""
+        return set().union(*(finder(public_keys) for finder in self._finders))
 
     def of(self, source: str) -> set[str]:
         """Public keys of the service peers of `source`."""

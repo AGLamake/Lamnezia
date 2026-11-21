@@ -307,9 +307,11 @@ the panel did not know appear as imported keys.
 
 A snapshot taken "before leaving a server group" or "before taking a joining server out of its
 group" holds the files of the group: after the restore
-the server runs with the group key again, and the panel warns about it before starting. A peer
-whose key lives on another server (usually a key of the group's leading server) is not added a
-second time; the operation log shows how many such peers were left out. A key that comes back to
+the server runs with the group key again, and the panel warns about it before starting. Peers
+that are not clients of this server are taken out of `awg0.conf` and `clientsTable` before the
+files are written: a peer whose key lives on another server (usually a key of the group's leading
+server) and the panel's service peers, such as the relay probe. The operation log shows how many
+peers were left out, and the number of clients on the snapshot card does not count them. A key that comes back to
 a user on a plan is turned off by hand when the plan does not allow this server or protocol or
 the user already has more keys than the plan allows (the newest of the returned keys go off).
 Owners of returned keys get a "keys updated" notification.

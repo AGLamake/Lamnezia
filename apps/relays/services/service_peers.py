@@ -6,7 +6,7 @@ failure on the leader fails the operation and nobody lags; another member that c
 peer lags and gets it with the leader files on its catch-up, and loses it the same way.
 """
 
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from contextlib import ExitStack
 from dataclasses import dataclass
 from ipaddress import IPv4Address
@@ -211,3 +211,10 @@ def relay_probes(source: str) -> dict[str, str]:
         return {}
     found = ServicePeer.objects.filter(group__members__instance_id=instance_id)
     return dict(found.values_list("public_key", "address"))
+
+
+@service_peers.register_finder
+def known_relay_peers(public_keys: Collection[str]) -> set[str]:
+    """The service peers of any group among `public_keys`."""
+    found = ServicePeer.objects.filter(public_key__in=public_keys)
+    return set(found.values_list("public_key", flat=True))
