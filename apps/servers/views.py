@@ -13,6 +13,7 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from apps.accounts.permissions import SectionRequiredMixin
 from apps.accounts.services.access import Section
+from apps.accounts.views_staff import StaffBlock
 from apps.operations.views import progress_context
 from apps.protocols.services.inventory import server_containers
 from apps.protocols.services.ipsec_reissue import IpsecIdentity
@@ -69,6 +70,7 @@ class ServerDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-a
         latest = latest_operation(server)
         return super().get_context_data(
             staff=ServerStaff(server, self.member),
+            staff_block=StaffBlock.of(self.member, server),
             warnings=[CheckWarning(code).label for code in server.warnings],
             containers=server_containers(server),
             history=daily_history(server, settings.MONITOR_HISTORY_DAYS),

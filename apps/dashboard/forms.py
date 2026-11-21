@@ -124,11 +124,16 @@ class UserBatchForm(forms.Form):
         label=_("Days"), min_value=1, max_value=_MAX_EXTENSION_DAYS, required=False
     )
     plan = forms.ModelChoiceField(label=_("Plan"), queryset=Plan.objects.all(), required=False)
+    member = forms.ModelChoiceField(
+        label=_("Staff member"), queryset=User.objects.none(), required=False
+    )
 
-    def __init__(self, *args: Any, zone: Zone, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, zone: Zone, staff: QuerySet[User], **kwargs: Any) -> None:
+        """`staff`: the members the users may be linked to (`StaffDesk.members`)."""
         super().__init__(*args, **kwargs)
         self.fields["users"].queryset = zone.users()  # type: ignore[attr-defined]
         self.fields["plan"].queryset = zone.offered_plans()  # type: ignore[attr-defined]
+        self.fields["member"].queryset = staff  # type: ignore[attr-defined]
 
     def clean(self) -> dict[str, Any]:
         data = super().clean() or {}
@@ -137,6 +142,8 @@ class UserBatchForm(forms.Form):
             self.add_error("days", _("How many days to add?"))
         if action == BatchAction.CHANGE_PLAN and not data.get("plan"):
             self.add_error("plan", _("Choose a plan."))
+        if action == BatchAction.LINK_STAFF and not data.get("member"):
+            self.add_error("member", _("Choose a staff member."))
         return data
 
 

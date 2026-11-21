@@ -1,6 +1,6 @@
 {% load i18n support billing ui attention access %}{# Admin sidebar grouped by task; `active` is the current section. Only the sections the member may open are shown; counters show what waits for them. #}
 {% attention as todo %}
-{% can "overview" as overview %}{% can "stats" as stats %}{% can "servers" as servers %}{% can "operations" as operations %}{% can "users" as users %}{% can "keys" as keys %}{% can "registration" as registration %}{% can "plans" as plans %}{% can "orders" as orders %}{% can "inbox" as inbox %}{% can "articles" as articles %}{% can "audit" as audit %}{% whole_zone as whole %}
+{% can "overview" as overview %}{% can "stats" as stats %}{% can "servers" as servers %}{% can "operations" as operations %}{% can "users" as users %}{% can "keys" as keys %}{% can "registration" as registration %}{% can "plans" as plans %}{% can "orders" as orders %}{% can "inbox" as inbox %}{% can "articles" as articles %}{% can "audit" as audit %}{% can "staff" as staff %}{% whole_zone as whole %}
 {% if overview %}<a href="{% url 'dashboard:index' %}" class="nav-link"{% if active == 'dashboard' %} aria-current="page"{% endif %}>{% icon "dashboard" %}<span class="nav-text">{% translate "Overview" %}</span></a>{% endif %}
 {% if stats %}<a href="{% url 'dashboard:stats' %}" class="nav-link"{% if active == 'stats' %} aria-current="page"{% endif %}>{% icon "chart" %}<span class="nav-text">{% translate "Statistics" %}</span></a>{% endif %}
 
@@ -23,7 +23,7 @@
 {% if articles %}<a href="{% url 'guides:staff' 'faq' %}" class="nav-link"{% if active == 'articles' %} aria-current="page"{% endif %}>{% icon "book" %}<span class="nav-text">{% translate "Articles" %}</span></a>{% endif %}
 
 {# The panel settings are not a section: they stay with the administrator. #}
-{% if user.is_admin or audit %}<p class="nav-group">{% translate "System" %}</p>{% endif %}
+{% if user.is_admin or audit or staff %}<p class="nav-group">{% translate "System" %}</p>{% endif %}
 {% if user.is_admin %}
   <a href="{% url 'notifications:channels' %}" class="nav-link"{% if active == 'notifications' %} aria-current="page"{% endif %}>{% icon "bell" %}<span class="nav-text">{% translate "Notifications" %}</span></a>
   <a href="{% url 'core:settings' %}" class="nav-link"{% if active == 'settings' %} aria-current="page"{% endif %}>{% icon "settings" %}<span class="nav-text">{% translate "Settings" %}</span></a>
@@ -32,4 +32,5 @@
   <a href="{% url 'relocation:move' %}" class="nav-link"{% if active == 'panel-move' %} aria-current="page"{% endif %}>{% icon "switch" %}<span class="nav-text">{% translate "Panel move" %}</span></a>
   <a href="{% url 'updates:update' %}" class="nav-link"{% if active == 'panel-update' %} aria-current="page"{% endif %}>{% icon "arrow-up" %}<span class="nav-text">{% translate "Panel update" %}</span>{% if todo.panel_release %}<span class="nav-count" title="{% translate 'A new release is out' %}">1</span>{% endif %}</a>
 {% endif %}
+{% if staff %}<a href="{% url 'accounts:staff' %}" class="nav-link"{% if active == 'staff' %} aria-current="page"{% endif %}>{% icon "shield" %}<span class="nav-text">{% translate "Staff" %}</span></a>{% endif %}
 {% if audit %}<a href="{% url 'audit:list' %}" class="nav-link"{% if active == 'audit' %} aria-current="page"{% endif %}>{% icon "history" %}<span class="nav-text">{% translate "Audit log" %}</span></a>{% endif %}

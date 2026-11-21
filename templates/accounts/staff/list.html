@@ -1,0 +1,40 @@
+{% extends "layouts/admin.html" %}
+{% load access i18n ui %}
+{% block title %}{% translate "Staff" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="staff" %}{% endblock %}
+
+{% block content %}
+{% can "staff" "manage" as manage %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% translate "Staff" %}</h1>
+    <p class="page-lead">{% translate "Server administrators and moderators: their rights, servers, plans and users." %}</p>
+  </div>
+  {% if manage %}<a href="{% url 'accounts:staff-add' %}" class="btn btn-primary">{% icon "user-plus" %}{% translate "Add a staff member" %}</a>{% endif %}
+</div>
+
+{% if members %}
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead>
+        <tr><th>{% translate "Staff member" %}</th><th>{% translate "Role" %}</th><th>{% translate "Users" %}</th><th>{% translate "Servers" %}</th></tr>
+      </thead>
+      <tbody>
+        {% for member in members %}
+          <tr>
+            <td class="cell-title"><a href="{% url 'accounts:staff-edit' member.pk %}" class="font-medium hover:underline">{{ member.username }}</a></td>
+            <td data-label="{% translate 'Role' %}">{{ member.get_role_display }}</td>
+            <td data-label="{% translate 'Users' %}" class="tabular-nums">{{ member.served }}{% if member.user_quota is not None %} / {{ member.user_quota }}{% endif %}</td>
+            <td data-label="{% translate 'Servers' %}" class="tabular-nums">{{ member.server_count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% translate "No staff members yet." as empty_title %}
+  {% translate "A moderator serves users on the servers given to them." as empty_text %}
+  {% if manage %}{% url 'accounts:staff-add' as add_url %}{% translate "Add a staff member" as add_text %}{% endif %}
+  {% include "components/empty_state.html" with icon="shield" title=empty_title text=empty_text action_url=add_url action_text=add_text %}
+{% endif %}
+{% endblock %}

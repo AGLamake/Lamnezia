@@ -24,6 +24,9 @@ msgstr "Добавление своей записи раздельной мар
 msgid "Add server address"
 msgstr "Добавление адреса сервера"
 
+msgid "Add staff member"
+msgstr "Добавление сотрудника"
+
 msgid "Allow showing key again"
 msgstr "Разрешение повторного показа ключа"
 
@@ -50,6 +53,9 @@ msgstr "Изменение канала уведомлений"
 
 msgid "Change plan of users"
 msgstr "Смена тарифа пользователям"
+
+msgid "Change role of staff member"
+msgstr "Смена роли сотрудника"
 
 msgid "Change server address of key"
 msgstr "Смена адреса сервера у ключа"
@@ -86,6 +92,9 @@ msgstr "Создание шаблона ответа"
 
 msgid "Create server group"
 msgstr "Создание группы серверов"
+
+msgid "Create staff member"
+msgstr "Создание сотрудника"
 
 msgid "Create useful material"
 msgstr "Создание полезного материала"
@@ -150,6 +159,9 @@ msgstr "Изменение тарифа"
 msgid "Edit reply template"
 msgstr "Изменение шаблона ответа"
 
+msgid "Edit staff member"
+msgstr "Изменение сотрудника"
+
 msgid "Edit useful material"
 msgstr "Изменение полезного материала"
 
@@ -195,6 +207,9 @@ msgstr "Выход из списка сервера"
 msgid "Link messenger"
 msgstr "Привязка мессенджера"
 
+msgid "Link users to a staff member"
+msgstr "Привязка пользователей к сотруднику"
+
 msgid "Move FAQ article"
 msgstr "Перемещение статьи FAQ"
 
@@ -230,6 +245,9 @@ msgstr "Отклонение регистрации"
 
 msgid "Remove server address"
 msgstr "Удаление адреса сервера"
+
+msgid "Remove staff member"
+msgstr "Удаление сотрудника"
 
 msgid "Restart bot"
 msgstr "Перезапуск бота"

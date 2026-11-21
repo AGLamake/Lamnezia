@@ -104,6 +104,16 @@ class User(AbstractUser):
         blank=True,
         help_text=_("For a moderator: how many keys their users may hold. Empty: no limit."),
     )
+    # Who made this staff member in the panel: a server administrator's moderators stay theirs.
+    created_by = models.ForeignKey(
+        "self",
+        verbose_name=_("created by"),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="+",
+    )
     # A staff member's level in each section of the panel; a section left out gets the default
     # of the role (`apps/accounts/services/access.py`).
     access = models.JSONField(_("access to sections"), default=dict, blank=True)

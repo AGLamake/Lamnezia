@@ -1,0 +1,48 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{{ target.username }} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="staff" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'accounts:staff' %}">{% translate "Staff" %}</a></li><li aria-current="page">{{ target.username }}</li>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="min-w-0">
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="page-title break-words">{{ target.username }}</h1>
+      <span class="badge badge-muted">{{ target.get_role_display }}</span>
+    </div>
+    <p class="page-lead">{{ target.email|default:_("no email") }}</p>
+  </div>
+</div>
+
+{% if role_form %}<form method="post" action="{% url 'accounts:staff-role' target.pk %}" class="card flex flex-wrap items-end gap-2">
+  {% csrf_token %}
+  <div class="min-w-0 flex-1 sm:w-64 sm:flex-none">{{ role_form.role.as_field_group }}</div>
+  <button type="submit" class="btn btn-secondary">{% translate "Change the role" %}</button>
+</form>{% endif %}
+
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  <section class="card space-y-4">
+    <h2 class="section-title">{% translate "Quotas" %}</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {{ form.user_quota.as_field_group }}
+      {{ form.key_quota.as_field_group }}
+    </div>
+  </section>
+  <section class="card space-y-4">
+    <h2 class="section-title">{% translate "Servers and plans" %}</h2>
+    {{ form.servers.as_field_group }}
+    {{ form.plans.as_field_group }}
+  </section>
+  {% with fields=form.access_fields %}{% if fields %}<section class="card space-y-4">
+    <h2 class="section-title">{% translate "Rights by section" %}</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% for field in fields %}{{ field.as_field_group }}{% endfor %}
+    </div>
+  </section>{% endif %}{% endwith %}
+  <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+</form>
+{% endblock %}

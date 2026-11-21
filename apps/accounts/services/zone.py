@@ -52,13 +52,17 @@ class Zone:
         return ServerGroup.objects.all() if self.is_whole else ServerGroup.objects.none()
 
     def moderators(self) -> QuerySet[User]:
-        """An owner's moderators: those given the owner's servers or staffing the owner's plans.
-        The administrator's are all staff members; a moderator has none."""
+        """An owner's moderators: those the owner created, given the owner's servers or staffing
+        the owner's plans. The administrator's are all staff members; a moderator has none."""
         if self.is_whole:
             return User.objects.filter(role__in=STAFF_ROLES)
         if self._member.role != Role.OWNER:
             return User.objects.none()
-        mine = Q(moderated_servers__in=self.servers()) | Q(staffed_plans__in=self.plans())
+        mine = (
+            Q(created_by=self._member)
+            | Q(moderated_servers__in=self.servers())
+            | Q(staffed_plans__in=self.plans())
+        )
         return User.objects.filter(mine, role=Role.MODERATOR).distinct()
 
     def team(self) -> QuerySet[User]:

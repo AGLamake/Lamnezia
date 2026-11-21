@@ -87,12 +87,18 @@ _LABELS: dict[str, Promise] = {
     "servers.forget_host_key": _("Forget server host key"),
     "servers.add_address": _("Add server address"),
     "servers.remove_address": _("Remove server address"),
+    "staff.create": _("Create staff member"),
+    "staff.update": _("Edit staff member"),
+    "staff.role": _("Change role of staff member"),
+    "staff.add": _("Add staff member"),
+    "staff.remove": _("Remove staff member"),
     "support.template_create": _("Create reply template"),
     "support.template_update": _("Edit reply template"),
     "support.template_delete": _("Delete reply template"),
     "users.extend": _("Extend access of users"),
     "users.disable": _("Disable keys of users"),
     "users.change_plan": _("Change plan of users"),
+    "users.link_staff": _("Link users to a staff member"),
 }
 
 

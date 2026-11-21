@@ -33,6 +33,8 @@
   <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
 </form>
 
+{% if staff_block %}{% include "accounts/staff/_block.html" with block=staff_block %}{% endif %}
+
 {% if plan %}
   <form method="post" action="{% url 'plans:delete' plan.pk %}" data-confirm="{% translate "Delete this plan?" %}">
     {% csrf_token %}<button class="btn btn-danger">{% translate "Delete the plan" %}</button>

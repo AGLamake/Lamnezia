@@ -130,6 +130,7 @@
         {% if manage %}<a href="{% url 'plans:user' card.user.pk %}" class="btn btn-primary">{% icon "tag" %}{% translate "Change" %}</a>{% endif %}
       {% endif %}
     </section>
+    {% if staff_block %}{% include "accounts/staff/_block.html" with block=staff_block %}{% endif %}
   </div>
 
   <div class="min-w-0 space-y-6">

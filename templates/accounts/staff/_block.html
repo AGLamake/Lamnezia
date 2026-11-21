@@ -1,0 +1,28 @@
+{% load i18n ui %}{# The «Staff» block of a server, a plan or a user: `block` is a StaffBlock. #}
+<section class="card space-y-3">
+  <h2 class="section-title flex items-center gap-2">{% icon "shield" "icon-sm text-muted" %}{% translate "Staff" %}</h2>
+  {% if block.rows %}
+    <ul class="divide-y divide-border">
+      {% for row in block.rows %}
+        <li class="flex flex-wrap items-center justify-between gap-2 py-2">
+          <span class="flex flex-wrap items-center gap-2">
+            <a href="{% url 'accounts:staff-edit' row.member.pk %}" class="font-medium hover:underline">{{ row.member.username }}</a>
+            <span class="badge badge-muted">{{ row.member.get_role_display }}</span>
+            {% if row.via_plan %}<span class="badge badge-muted" title="{% translate 'Comes with the plan and follows it' %}">{% translate "from the plan" %}</span>{% endif %}
+          </span>
+          {% if not row.via_plan %}<form method="post" action="{{ block.remove_url }}">
+            {% csrf_token %}<input type="hidden" name="member" value="{{ row.member.pk }}">
+            <button type="submit" class="btn btn-ghost-danger">{% icon "close" "icon-sm" %}{% translate "Remove" %}</button>
+          </form>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-muted">{% translate "No staff members yet." %}</p>
+  {% endif %}
+  {% if block.form %}<form method="post" action="{{ block.add_url }}" class="flex flex-wrap items-center gap-2">
+    {% csrf_token %}<label for="{{ block.form.member.id_for_label }}" class="sr-only">{{ block.form.member.label }}</label>
+    <div class="min-w-0 flex-1 sm:w-56 sm:flex-none">{{ block.form.member }}</div>
+    <button type="submit" class="btn btn-secondary">{% icon "plus" "icon-sm" %}{% translate "Add" %}</button>
+  </form>{% endif %}
+</section>

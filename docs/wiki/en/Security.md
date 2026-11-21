@@ -29,7 +29,7 @@ Sections: overview, statistics, servers (with groups, relays, protocols and inci
 operations, users, keys, registration, plans, orders, inbox (with article suggestions), articles
 (with reply templates), audit log and staff. The settings, integrations, API tokens, updates and
 the panel move stay with administrators whatever the levels. An administrator manages every
-section.
+section. Levels are set on the page of a staff member in the **Staff** section.
 
 A section with no chosen level gets the default of the role, and no level goes above the ceiling
 of the role. A staff member never gives anyone more than they have themselves. The moderator's
@@ -81,13 +81,20 @@ deleted by one of them: each of them can **Leave** its list instead, and it stay
 
 ### Moderator's zone
 
-A moderator serves their own users on their own servers, as a reseller does. An administrator sets
-it up in the Django admin site (`/admin/`, **Users**):
+A moderator serves their own users on their own servers, as a reseller does. It is set up in the
+**Staff** section of the panel:
 
-- on a user, **Staff members of the user** lists the moderators who serve them; a user may have
-  several, and is then in the zone of each;
-- on a moderator, **Servers of the moderator** lists their servers, **Users at most** and **Keys at
-  most** are their quotas (empty: no limit).
+- **Add a staff member** creates an account: an administrator makes server administrators and
+  moderators, a server administrator makes only moderators, who stay theirs;
+- the page of a member sets **Users at most** and **Keys at most** (empty: no limit), their servers
+  and plans, and the level of each section; an administrator also changes the role there. A server
+  administrator is offered only their own servers and plans and levels no higher than their own,
+  and manages only their own moderators;
+- the pages of a server, a plan and a user have a **Staff** block to add or remove a member; a user
+  may have several, and is then in the zone of each. A link "from the plan" came with the user's
+  plan and follows it, so it cannot be removed by hand;
+- **Link to a staff member** in the bulk actions of the user list links the ticked users while the
+  member's user quota has room; the report shows who was skipped.
 
 Everything outside the zone is as good as missing for the moderator:
 

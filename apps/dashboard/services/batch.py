@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.utils.formats import date_format
 from django.utils.translation import gettext as _
 
-from apps.accounts.models import User
+from apps.accounts.models import Management, User
 from apps.audit.services import journal as audit
 from apps.dashboard.models import BatchAction, Outcome, UserBatch, UserBatchItem
 from apps.keys.models import GONE_STATUSES, KeyStatus
@@ -63,6 +63,11 @@ class UserBatchActions:
         batch = UserBatch(action=BatchAction.CHANGE_PLAN, plan=plan)
         return self._run(batch, users, lambda user: self._change_plan(user, plan))
 
+    def link_staff(self, users: Iterable[User], member: User) -> UserBatch:
+        """Link the users to a staff member by hand while their user quota has room."""
+        batch = UserBatch(action=BatchAction.LINK_STAFF, member=member)
+        return self._run(batch, users, lambda user: self._link_staff(user, member))
+
     def reissue(self, users: Iterable[User]) -> UserBatch:
         """Give every key of the users a new one; the old keys stop working at once."""
         users = list(users)
@@ -98,6 +103,7 @@ class UserBatchActions:
                 "outcome": result.outcome,
                 "days": batch.days,
                 "plan_id": batch.plan_id,
+                "member_id": batch.member_id,
             },
             ip=self._ip,
         )
@@ -120,6 +126,17 @@ class UserBatchActions:
         if current == plan.pk:
             return _Result(Outcome.SKIPPED, _("Already on this plan."))
         return self._apply_limits(user, assign_plan(user, plan, self._clock()))
+
+    @staticmethod
+    def _link_staff(user: User, member: User) -> _Result:
+        if user.pk == member.pk:
+            return _Result(Outcome.SKIPPED, _("This is the staff member."))
+        if Management.objects.filter(user=user, member=member).exists():
+            return _Result(Outcome.SKIPPED, _("Already linked."))
+        if member.is_over_user_quota(user):
+            return _Result(Outcome.SKIPPED, _("The staff member has as many users as allowed."))
+        Management.objects.create(user=user, member=member)
+        return _Result(Outcome.DONE)
 
     def _apply_limits(self, user: User, limits: UserLimits) -> _Result:
         """Turn the keys on or off as the new limits say and tell when the access ends."""

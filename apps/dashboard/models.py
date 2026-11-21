@@ -8,17 +8,27 @@ class BatchAction(models.TextChoices):
     DISABLE = "disable", _("Disable keys")
     CHANGE_PLAN = "change_plan", _("Change plan")
     REISSUE = "reissue", _("Reissue keys")
+    LINK_STAFF = "link_staff", _("Link to a staff member")
 
 
 class UserBatch(models.Model):
     """A bulk action on users, kept for its report: the outcome for each user and the key
-    operations it started. `days` belongs to an extension, `plan` to a change of plan."""
+    operations it started. `days` belongs to an extension, `plan` to a change of plan and
+    `member` to a link to a staff member."""
 
     action = models.CharField(_("action"), max_length=16, choices=BatchAction.choices)
     days = models.PositiveSmallIntegerField(_("days"), null=True, blank=True)
     plan = models.ForeignKey(
         "plans.Plan",
         verbose_name=_("plan"),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    member = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("staff member"),
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

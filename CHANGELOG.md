@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Staff section**: staff members are created and set up in the panel instead of the Django admin
+  site — role, level of each section, servers, plans and quotas. A server administrator creates
+  only moderators and gives them only their own servers, plans and users and levels no higher than
+  their own. The pages of a server, a plan and a user get a **Staff** block; links "from the plan"
+  are marked and cannot be removed by hand. A new bulk action links the ticked users to a staff
+  member within their user quota. Upgrading needs only the migrations.
 - **Plan staff serve its users**: a user given a plan — by hand, by payment, by a bulk change or
   with the trial plan at registration — is linked to the plan's staff members, marked "from the
   plan". Another plan or no plan replaces or drops these links, a change of the plan's staff

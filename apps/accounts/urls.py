@@ -1,7 +1,14 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from apps.accounts import views, views_admin, views_links, views_profile, views_registration
+from apps.accounts import (
+    views,
+    views_admin,
+    views_links,
+    views_profile,
+    views_registration,
+    views_staff,
+)
 from apps.accounts.models import Messenger
 
 app_name = "accounts"
@@ -97,4 +104,18 @@ urlpatterns = [
     path("discord/callback/", views_links.DiscordCallbackView.as_view(), name="discord-callback"),
     path("invites/add/", views_admin.InviteCreateView.as_view(), name="invite-add"),
     path("invites/<int:pk>/delete/", views_admin.InviteDeleteView.as_view(), name="invite-delete"),
+    path("staff/", views_staff.StaffListView.as_view(), name="staff"),
+    path("staff/add/", views_staff.StaffCreateView.as_view(), name="staff-add"),
+    path("staff/<int:pk>/", views_staff.StaffEditView.as_view(), name="staff-edit"),
+    path("staff/<int:pk>/role/", views_staff.StaffRoleView.as_view(), name="staff-role"),
+    path(
+        "staff/<str:kind>/<int:pk>/add/",
+        views_staff.StaffBlockView.as_view(),
+        name="staff-block-add",
+    ),
+    path(
+        "staff/<str:kind>/<int:pk>/remove/",
+        views_staff.StaffBlockView.as_view(remove=True),
+        name="staff-block-remove",
+    ),
 ]

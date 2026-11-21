@@ -257,8 +257,14 @@ msgstr "Копия, оставшаяся от прошлого переноса,
 msgid "A link"
 msgstr "Ссылка"
 
+msgid "A link from the plan cannot be removed by hand."
+msgstr "Привязку от тарифа нельзя снять вручную."
+
 msgid "A member of a group runs on the relay server."
 msgstr "Участник группы работает на сервере ретранслятора."
+
+msgid "A moderator serves users on the servers given to them."
+msgstr "Модератор обслуживает пользователей на выданных ему серверах."
 
 msgid "A new domain moves the keys of the group to it at once, and without a relay the keys go back to the leading server; their owners are told to import them again. With another relay the keys move once it runs the group."
 msgstr "Новый домен сразу переносит на себя ключи группы, а без ретранслятора ключи возвращаются на ведущий сервер; владельцам приходит просьба импортировать их заново. С другим ретранслятором ключи переедут, когда он начнёт обслуживать группу."
@@ -374,6 +380,9 @@ msgstr "Добавить сервер"
 
 msgid "Add a server without AmneziaWG"
 msgstr "Добавить сервер без AmneziaWG"
+
+msgid "Add a staff member"
+msgstr "Добавить сотрудника"
 
 msgid "Add a template"
 msgstr "Добавить шаблон"
@@ -758,6 +767,9 @@ msgstr "Сменить почту"
 msgid "Change the protocol settings of a group"
 msgstr "Смена настроек протокола группы"
 
+msgid "Change the role"
+msgstr "Сменить роль"
+
 msgid "Change the routing of a group"
 msgstr "Смена маршрутизации группы"
 
@@ -909,6 +921,9 @@ msgstr "Код из приложения или резервный код"
 
 msgid "Colours and type"
 msgstr "Цвета и шрифт"
+
+msgid "Comes with the plan and follows it"
+msgstr "Пришла с тарифом и следует за ним"
 
 msgid "Comment:"
 msgstr "Комментарий:"
@@ -1513,6 +1528,12 @@ msgstr "Имя хоста, A-запись которого указывает н
 msgid "Hosting and payment"
 msgstr "Хостер и оплата"
 
+msgid "How many keys the member's users may hold. Empty: no limit."
+msgstr "Сколько ключей может быть у пользователей сотрудника. Пусто — без ограничений."
+
+msgid "How many users the member may serve. Empty: no limit."
+msgstr "Сколько пользователей может обслуживать сотрудник. Пусто — без ограничений."
+
 msgid "How much traffic your keys used and how long your limit lasts."
 msgstr "Сколько трафика израсходовали ваши ключи и на сколько хватит лимита."
 
@@ -2013,6 +2034,9 @@ msgstr "Бот покинет этот сервер. Продолжить?"
 msgid "Make the server the leading one"
 msgstr "Сделать сервер ведущим"
 
+msgid "Manage"
+msgstr "Управление"
+
 msgid "Markdown."
 msgstr "Markdown."
 
@@ -2164,6 +2188,9 @@ msgstr "Следующая страница"
 msgid "No VPN interface, clients have no connection:"
 msgstr "Нет VPN-интерфейса, у клиентов нет связи:"
 
+msgid "No access"
+msgstr "Нет доступа"
+
 msgid "No account of the panel is linked to this one. Sign in with a password."
 msgstr "К этому аккаунту не привязан ни один пользователь панели. Войдите по паролю."
 
@@ -2311,6 +2338,9 @@ msgstr "Серверов пока нет."
 
 msgid "No servers yet. Add a VPS you can log in to over SSH as root or a user with sudo."
 msgstr "Серверов пока нет. Добавьте VPS, на который можно войти по SSH как root или пользователь с sudo."
+
+msgid "No staff members yet."
+msgstr "Сотрудников пока нет."
 
 msgid "No standalone AmneziaWG 3.1 server on this port."
 msgstr "Нет одиночных серверов AmneziaWG 3.1 на этом порту."
@@ -2760,6 +2790,9 @@ msgstr "QR-код для приложения-аутентификатора"
 msgid "Quick search"
 msgstr "Быстрый поиск"
 
+msgid "Quotas"
+msgstr "Квоты"
+
 msgid "Re-issue"
 msgstr "Перевыпустить"
 
@@ -2979,6 +3012,12 @@ msgstr "Отозвать ключ?"
 msgid "Revoke this key? It stops working at once."
 msgstr "Отозвать ключ? Он сразу перестанет работать."
 
+msgid "Rights by section"
+msgstr "Права по разделам"
+
+msgid "Role"
+msgstr "Роль"
+
 msgid "Routing"
 msgstr "Маршруты"
 
@@ -3126,6 +3165,9 @@ msgstr "Адрес сервера"
 msgid "Server administrator"
 msgstr "Администратор серверов"
 
+msgid "Server administrators and moderators: their rights, servers, plans and users."
+msgstr "Администраторы серверов и модераторы: их права, серверы, тарифы и пользователи."
+
 msgid "Server check"
 msgstr "Проверка сервера"
 
@@ -3147,6 +3189,9 @@ msgstr "Сервер: %(title)s"
 
 msgid "Servers"
 msgstr "Серверы"
+
+msgid "Servers and plans"
+msgstr "Серверы и тарифы"
 
 #
 msgid "Servers are joining the group:"
@@ -3323,6 +3368,9 @@ msgstr "В раздельном режиме ретранслятор ещё р�
 
 msgid "Staff"
 msgstr "Сотрудники"
+
+msgid "Staff member"
+msgstr "Сотрудник"
 
 msgid "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced. Users who had keys on it get keys of the group."
 msgstr "Отдельные серверы AmneziaWG 3.1 на порту группы. Вступающий сервер получает файлы группы: его ключ, настройки и клиенты заменяются. Пользователи, у которых были ключи на нём, получают ключи группы."
@@ -4081,6 +4129,9 @@ msgstr "Обращение закрыто: можно добавить толь�
 msgid "The request is left for the host; the update starts in a few seconds. The panel restarts during the update and may not answer for a minute."
 msgstr "Запрос передан хосту; обновление начнётся через несколько секунд. Во время обновления панель перезапускается и может не отвечать около минуты."
 
+msgid "The role is changed."
+msgstr "Роль изменена."
+
 msgid "The same notifications in this browser or the installed app, even when the panel is closed. A click opens the page they are about."
 msgstr "Те же уведомления в этом браузере или установленном приложении, даже когда панель закрыта. Нажатие открывает страницу, о которой уведомление."
 
@@ -4215,6 +4266,12 @@ msgstr "Сервис перезапустится на сервере, его к
 
 msgid "The sign-in link is wrong, used or has expired."
 msgstr "Ссылка для входа неверна, уже использована или устарела."
+
+msgid "The staff member has as many users as allowed."
+msgstr "У сотрудника уже столько пользователей, сколько разрешено."
+
+msgid "The staff member is added: set their rights and links."
+msgstr "Сотрудник добавлен: задайте ему права и привязки."
 
 msgid "The subscription link is deleted."
 msgstr "Ссылка-подписка удалена."
@@ -4559,6 +4616,9 @@ msgstr "Пользователи и ключи"
 msgid "Users done"
 msgstr "Пользователей обработано"
 
+msgid "Users of these plans are linked to the member."
+msgstr "Пользователи этих тарифов привязываются к сотруднику."
+
 msgid "Users who register by your invites are yours to serve, while your user quota allows."
 msgstr "Пользователи, зарегистрированные по вашим инвайтам, переходят к вам, пока позволяет квота пользователей."
 
@@ -4581,6 +4641,9 @@ msgstr "Версия %(version)s от %(date)s."
 
 msgid "Versions"
 msgstr "Версии"
+
+msgid "View"
+msgstr "Просмотр"
 
 msgid "Wait for it to finish, see the operations page, then try again."
 msgstr "Дождитесь её окончания на странице операций и повторите."

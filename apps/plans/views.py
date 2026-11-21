@@ -13,6 +13,7 @@ from django.views.generic import CreateView, ListView, UpdateView
 
 from apps.accounts.permissions import SectionRequiredMixin
 from apps.accounts.services.access import Section
+from apps.accounts.views_staff import StaffBlock
 from apps.audit.services import journal as audit
 from apps.plans.forms import PlanForm, UserLimitsForm, UserLookupForm
 from apps.plans.models import Plan, UserLimits
@@ -63,6 +64,10 @@ class PlanUpdateView(_PlanFormMixin, UpdateView):  # type: ignore[type-arg]
 
     def get_queryset(self) -> QuerySet[Plan]:
         return self.zone.plans()
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        block = StaffBlock.of(self.member, self.object)
+        return super().get_context_data(staff_block=block, **kwargs)
 
     def form_valid(self, form: "ModelForm[Plan]") -> HttpResponse:
         response = super().form_valid(form)

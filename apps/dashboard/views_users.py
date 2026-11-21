@@ -19,7 +19,9 @@ from django.views.generic import DetailView, ListView, TemplateView
 from apps.accounts.models import User
 from apps.accounts.permissions import SectionRequiredMixin
 from apps.accounts.services.access import Section
+from apps.accounts.services.staff import StaffDesk
 from apps.accounts.services.zone import Zone
+from apps.accounts.views_staff import StaffBlock
 from apps.audit.services import journal as audit
 from apps.core.paging import PageSizeMixin
 from apps.dashboard.forms import UserBatchForm, UserFilterForm
@@ -29,6 +31,11 @@ from apps.dashboard.services.users import UserCard, UserRow, users_for_list
 from apps.keys.services.subscription import MySubscription
 from apps.keys.services.subscription_devices import SubscriptionDevices
 from apps.keys.services.zone import KeyZone
+
+
+def _staff(member: User) -> QuerySet[User]:
+    """Staff members the users may be linked to in bulk; none without the right to manage staff."""
+    return StaffDesk(member).members()
 
 
 class ZoneUsersMixin(SectionRequiredMixin):
@@ -47,12 +54,18 @@ class UserListView(PageSizeMixin, ZoneUsersMixin, ListView):  # type: ignore[typ
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        staff = list(_staff(self.member))
         return {
             **context,
             "filter_form": self.filter_form,
             "rows": UserRow.rows(context["object_list"]),
-            "actions": BatchAction.choices,
+            "actions": [
+                (value, title)
+                for value, title in BatchAction.choices
+                if value != BatchAction.LINK_STAFF or staff
+            ],
             "plans": Zone(self.member).offered_plans(),
+            "staff": staff,
             "filters": self.request.GET.urlencode(),
         }
 
@@ -66,6 +79,7 @@ class UserDetailView(ZoneUsersMixin, TemplateView):
         token = subscription.token() if subscription.available else None
         return super().get_context_data(
             card=UserCard.load(user, timezone.now(), KeyZone(self.member)),
+            staff_block=StaffBlock.of(self.member, user),
             offers_subscription=subscription.available,
             subscription_devices=SubscriptionDevices(user).all() if token else [],
             subscription_url=self.request.build_absolute_uri(
@@ -107,7 +121,7 @@ class UserBatchView(ZoneUsersMixin, View):
     """Starts a bulk action and opens its report; a mistake in the form goes back to the list."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        form = UserBatchForm(request.POST, zone=Zone(self.member))
+        form = UserBatchForm(request.POST, zone=Zone(self.member), staff=_staff(self.member))
         if not form.is_valid():
             for errors in form.errors.values():
                 messages.error(request, str(errors[0]))
@@ -125,6 +139,8 @@ class UserBatchView(ZoneUsersMixin, View):
             return actions.extend(users, data["days"])
         if data["action"] == BatchAction.CHANGE_PLAN:
             return actions.change_plan(users, data["plan"])
+        if data["action"] == BatchAction.LINK_STAFF:
+            return actions.link_staff(users, data["member"])
         if data["action"] == BatchAction.REISSUE:
             return actions.reissue(users)
         return actions.disable(users)

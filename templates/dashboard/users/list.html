@@ -30,6 +30,12 @@
         <label for="batch-days" class="label">{% translate "Days" %}</label>
         <input id="batch-days" name="days" type="number" min="1" value="30" class="input w-28">
       </div>
+      {% if staff %}<div x-show="action === 'link_staff'" x-cloak>
+        <label for="batch-member" class="label">{% translate "Staff member" %}</label>
+        <select id="batch-member" name="member" class="input">
+          {% for member in staff %}<option value="{{ member.pk }}">{{ member.username }} · {{ member.get_role_display }}</option>{% endfor %}
+        </select>
+      </div>{% endif %}
       <div x-show="action === 'change_plan'" x-cloak>
         <label for="batch-plan" class="label">{% translate "Plan" %}</label>
         <select id="batch-plan" name="plan" class="input">

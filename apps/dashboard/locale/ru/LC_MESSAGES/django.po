@@ -86,6 +86,9 @@ msgstr "Действие"
 msgid "All servers"
 msgstr "Все серверы"
 
+msgid "Already linked."
+msgstr "Уже привязан."
+
 msgid "Already on this plan."
 msgstr "Уже на этом тарифе."
 
@@ -97,6 +100,9 @@ msgstr "Сменить тариф"
 
 msgid "Choose a plan."
 msgstr "Выберите тариф."
+
+msgid "Choose a staff member."
+msgstr "Выберите сотрудника."
 
 msgid "Day"
 msgstr "День"
@@ -152,6 +158,9 @@ msgstr "Ключей к отключению: %(count)d."
 #, python-format
 msgid "Lamnezia %(version)s is released"
 msgstr "Вышла Lamnezia %(version)s"
+
+msgid "Link to a staff member"
+msgstr "Привязать к сотруднику"
 
 msgid "Linked."
 msgstr "Привязано."
@@ -226,6 +235,9 @@ msgstr "Серверы"
 msgid "Shown to other users."
 msgstr "Видно другим пользователям."
 
+msgid "Staff member"
+msgstr "Сотрудник"
+
 msgid "Status"
 msgstr "Статус"
 
@@ -238,11 +250,17 @@ msgstr "Устройство забыто."
 msgid "The report is on its way. The result is in the log."
 msgstr "Отчёт отправляется. Результат — в журнале."
 
+msgid "The staff member has as many users as allowed."
+msgstr "У сотрудника уже столько пользователей, сколько разрешено."
+
 msgid "The subscription link is deleted."
 msgstr "Ссылка-подписка удалена."
 
 msgid "The user may not have keys."
 msgstr "Пользователю нельзя иметь ключи."
+
+msgid "This is the staff member."
+msgstr "Это сам сотрудник."
 
 msgid "Tick at least one user."
 msgstr "Отметьте хотя бы одного пользователя."
@@ -309,6 +327,9 @@ msgstr "тариф"
 
 msgid "skipped"
 msgstr "пропущен"
+
+msgid "staff member"
+msgstr "сотрудник"
 
 msgid "started by"
 msgstr "запустил"

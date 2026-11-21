@@ -1,0 +1,23 @@
+{% extends "layouts/admin.html" %}
+{% load i18n %}
+{% block title %}{% translate "Add a staff member" %} · {{ site_name }}{% endblock %}
+{% block nav %}{% include "components/admin_nav.html" with active="staff" %}{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'accounts:staff' %}">{% translate "Staff" %}</a></li><li aria-current="page">{% translate "Add a staff member" %}</li>{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% translate "Add a staff member" %}</h1>
+
+<form method="post" class="card space-y-4">
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {{ form.username.as_field_group }}
+    {{ form.email.as_field_group }}
+    {{ form.password1.as_field_group }}
+    {{ form.password2.as_field_group }}
+  </div>
+  {{ form.role.as_field_group }}
+  <button type="submit" class="btn btn-primary">{% translate "Add" %}</button>
+</form>
+{% endblock %}
