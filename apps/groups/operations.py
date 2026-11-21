@@ -25,6 +25,7 @@ from apps.groups.services.settings import GroupSettingsChange
 from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
 from apps.protocols.services.awg_settings import AwgSettings
+from apps.relays.services.switch import LeaveSwitch
 from apps.servers.models import Server
 
 
@@ -57,6 +58,7 @@ def install_member(ctx: OperationContext) -> None:
 def leave_group(ctx: OperationContext) -> None:
     member = _member(ctx, MemberState.LEAVING)
     if member is not None:
+        LeaveSwitch(member, ctx).run()
         GroupLeave(member, ctx).run()
 
 

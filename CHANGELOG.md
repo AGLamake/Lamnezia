@@ -416,6 +416,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Leaving the active member of a relayed group**: a member the relay sends the clients to is
+  first switched away from by a planned switch to the next available member, so the clients
+  reconnect in 11–14 seconds instead of about 20 after a failure. With no other member to take
+  them or a refused switch, the leave goes on as before and its log warns about the outage.
 - **Staff in the bots and invites**: every staff command of the bots needs its section level —
   summaries the overview, incidents the inbox at view, **Take** and replies the inbox at manage,
   **Close** the servers at manage — and shows only the zone; a command not allowed is not offered,

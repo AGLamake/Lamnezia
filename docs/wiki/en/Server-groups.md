@@ -15,7 +15,11 @@ each of them. A server is either standalone or a member of one group.
   free: a port the panel knows to be taken hides the button, and the installation checks the port
   on the server before it builds anything. A server that runs a relay is not offered.
 - **Leave the group**: the server keeps a snapshot of its files and gets a clean AmneziaWG with a new
-  key and no clients. The snapshot taken when it joined can be put back after leaving
+  key and no clients. If the relay of the group sends the clients to this server, the leave
+  first runs a planned switch to the next available member (an outage of 11–14 seconds instead
+  of about 20 after a failure) and only then cleans the server. When there is nowhere to switch
+  or the relay refuses, the leave goes on as before and its log warns that the clients lose the
+  connection until the relay finds the server gone. The snapshot taken when it joined can be put back after leaving
   ([Backup](Backup.md#amneziawg-snapshots-around-a-group)).
   If the leave operation fails (the server does not answer, a write fails), the member is marked
   "leave failed" and gets two buttons: **Retry leaving** runs the leave again and brings the

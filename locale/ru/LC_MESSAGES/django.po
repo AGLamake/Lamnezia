@@ -1346,6 +1346,9 @@ msgstr "Фильтры"
 msgid "Filters and details that do not need a page of their own."
 msgstr "Фильтры и подробности, которым не нужна отдельная страница."
 
+msgid "Find a server for the clients of the relay"
+msgstr "Найти сервер для клиентов ретранслятора"
+
 msgid "Find the address of the server"
 msgstr "Найти адрес сервера"
 
@@ -1896,6 +1899,9 @@ msgstr "Отложить служебный пир группы %(group)s"
 msgid "Leave this panel read-only"
 msgstr "Оставить эту панель только для чтения"
 
+msgid "Leave without a planned switch"
+msgstr "Выйти без планового переключения"
+
 msgid "Let the copy on the new machine accept changes"
 msgstr "Разрешить изменения копии на новой машине"
 
@@ -2286,6 +2292,9 @@ msgstr "Заказов не найдено."
 
 msgid "No other operation runs; the panel accepts no changes."
 msgstr "Других операций нет; панель не принимает изменений."
+
+msgid "No other server of the group answers the relay."
+msgstr "Другие серверы группы не отвечают ретранслятору."
 
 msgid "No other server of the group answers: only its keys are compared."
 msgstr "Другие серверы группы не отвечают: сравниваются только ключи."
@@ -4095,6 +4104,9 @@ msgstr "Сейчас ретранслятор отправляет клиент�
 msgid "The relay sends the clients of the group to this server, if it reaches it. Every client of the group loses its connection for about 20 seconds. Continue?"
 msgstr "Ретранслятор отправит клиентов группы на этот сервер, если достучится до него. Все клиенты группы потеряют соединение примерно на 20 секунд. Продолжить?"
 
+msgid "The relay sends the clients to another server: no switch needed."
+msgstr "Ретранслятор отправляет клиентов на другой сервер: переключение не нужно."
+
 msgid "The relay sends the networks of these lists straight out and everything else abroad through the uplink. The panel downloads every list once a day and gives the relay the merged list; a list that did not download, did not read or shrank to less than half is not taken, and the relay keeps the one it has."
 msgstr "Сети из этих списков ретранслятор отправляет напрямую, всё остальное — за рубеж через канал. Панель скачивает каждый список раз в сутки и отдаёт ретранслятору объединённый список; список, который не скачался, не разобрался или уменьшился больше чем вдвое, не принимается, и ретранслятор остаётся с прежним."
 
@@ -4698,6 +4710,9 @@ msgstr "Ждём подтверждения в боте: нажмите «Ста
 
 msgid "Waiting for the payment service to confirm the payment. Refresh the page in a minute."
 msgstr "Ждём, пока платёжный сервис подтвердит оплату. Обновите страницу через минуту."
+
+msgid "Warning: the clients of the relay lose the connection until the relay finds this server gone."
+msgstr "Внимание: клиенты ретранслятора потеряют связь, пока ретранслятор не обнаружит, что этого сервера нет."
 
 #, python-format
 msgid "We sent a confirmation link to %(email)s. Open it to finish the registration. Check the spam folder too."

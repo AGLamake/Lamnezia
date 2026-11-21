@@ -10,9 +10,10 @@ from typing import Any
 import pytest
 from django.utils import timezone
 
-from amnezia_core.relay import SwitchOutcome
+from amnezia_core.relay import DEFAULT_FAILURES, SwitchOutcome
 from apps.accounts.models import User
 from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.services.membership import start_leave
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT, Fakes, succeeded
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
@@ -66,10 +67,19 @@ class FakeAgent:
         return self.now
 
 
-def write_state(fake: FakeRelayServer, active: str, *, switched: bool = False) -> None:
+def write_state(
+    fake: FakeRelayServer, active: str, *, switched: bool = False, down: tuple[str, ...] = ()
+) -> None:
+    """The agent state with the group on `active`; the members of `down` fail their probes."""
     now = int(timezone.now().timestamp())
     backends = [
-        {"host": host, "port": PORT, "alive": True, "failures": 0, "checked_at": now}
+        {
+            "host": host,
+            "port": PORT,
+            "alive": host not in down,
+            "failures": DEFAULT_FAILURES if host in down else 0,
+            "checked_at": now,
+        }
         for host in (LEADER_HOST, JOINER_HOST)
     ]
     group = {
@@ -238,3 +248,90 @@ def test_a_member_gone_before_the_run_leaves_nothing_to_do(
     monkeypatch.setattr("apps.relays.services.switch.launch", gone)
 
     succeeded(start(lambda: start_switch(joiner_member, user=admin)))
+
+
+Leave = Callable[[SwitchOutcome | None], tuple[Operation, FakeAgent]]
+
+
+@pytest.fixture
+def leave_joiner(
+    joiner_member: GroupMember,
+    relay_fake: FakeRelayServer,
+    admin: User,
+    start: Start,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Leave:
+    """Run the leave of the joined member with an agent that answers a switch `outcome`."""
+
+    def run(outcome: SwitchOutcome | None) -> tuple[Operation, FakeAgent]:
+        agent = FakeAgent(relay_fake, outcome)
+        patched = functools.partial(switch.LeaveSwitch, pause=agent.pause, clock=agent.clock)
+        monkeypatch.setattr("apps.groups.operations.LeaveSwitch", patched)
+        return start(lambda: start_leave(joiner_member, user=admin)), agent
+
+    return run
+
+
+def joiner_active(relay: Relay, relay_fake: FakeRelayServer, *, down: tuple[str, ...] = ()) -> None:
+    write_state(relay_fake, JOINER_HOST, down=down)
+    RelayMonitor(INTERVAL, connect=lambda server: _relay_host(relay_fake)).poll(relay)
+
+
+@contextmanager
+def _relay_host(relay_fake: FakeRelayServer) -> Iterator[RemoteHost]:
+    yield relay_fake.host()
+
+
+def step_logs(operation: Operation) -> str:
+    return "\n".join(f"{step.title}: {step.log}" for step in operation.steps.order_by("position"))
+
+
+def test_leaving_the_active_member_switches_the_relay_away_first(
+    relay: Relay, relay_fake: FakeRelayServer, leave_joiner: Leave
+) -> None:
+    joiner_active(relay, relay_fake)
+
+    operation, agent = leave_joiner(SwitchOutcome.SWITCHED)
+
+    succeeded(operation)
+    assert [request["backend"]["host"] for request in agent.requests] == [LEADER_HOST]
+    titles = list(operation.steps.order_by("position").values_list("title", flat=True))
+    assert titles.index("Ask the relay to switch") < titles.index("Write a clean AmneziaWG")
+    assert not GroupMember.objects.filter(leading=False).exists()
+
+
+def test_leaving_a_member_the_relay_does_not_use_needs_no_switch(
+    relay: Relay, leave_joiner: Leave
+) -> None:
+    operation, agent = leave_joiner(SwitchOutcome.SWITCHED)
+
+    succeeded(operation)
+    assert agent.requests == []
+    assert "no switch needed" in step_logs(operation)
+
+
+def test_without_another_member_to_take_the_clients_the_leave_warns(
+    relay: Relay, relay_fake: FakeRelayServer, leave_joiner: Leave
+) -> None:
+    joiner_active(relay, relay_fake, down=(LEADER_HOST,))
+
+    operation, agent = leave_joiner(SwitchOutcome.SWITCHED)
+
+    succeeded(operation)
+    assert agent.requests == []
+    assert "Warning:" in step_logs(operation)
+    assert not GroupMember.objects.filter(leading=False).exists()
+
+
+def test_a_refused_switch_leaves_with_a_warning(
+    relay: Relay, relay_fake: FakeRelayServer, leave_joiner: Leave
+) -> None:
+    joiner_active(relay, relay_fake)
+
+    operation, agent = leave_joiner(SwitchOutcome.UNREACHABLE)
+
+    succeeded(operation)
+    assert len(agent.requests) == 1
+    logs = step_logs(operation)
+    assert "Leave without a planned switch" in logs and "Warning:" in logs
+    assert not GroupMember.objects.filter(leading=False).exists()

@@ -4,7 +4,8 @@ The panel puts a switch request next to the agent config and waits for the answe
 state. The agent moves the group the way it does on a failure (one `nft -f`, then the
 conntrack entries of the port go), and only if the member answers a probe right then. The
 clients of the group reconnect: an outage of about 20 seconds. An agent of an older release
-does not answer; the request is then taken back.
+does not answer; the request is then taken back. A member that leaves its group while the
+relay sends the clients to it is switched away from first (`LeaveSwitch`).
 """
 
 import time
@@ -32,7 +33,7 @@ from apps.relays.services.config import member_backend
 from apps.relays.services.container import FOLDER, NAME
 from apps.relays.services.monitor import STATE_PATH, RelayMonitor
 from apps.servers.services.connection import connect
-from apps.ssh.errors import RemoteFileNotFoundError
+from apps.ssh.errors import RemoteFileNotFoundError, SshError
 from apps.ssh.services import DockerContainer
 
 SWITCH_KIND = "relays.switch"
@@ -137,6 +138,77 @@ class RelaySwitch:
                 return answer.outcome
         agent.run(f"rm -f -- {REQUEST_PATH}")
         raise RelayError(RelayErrorCode.SWITCH_NO_ANSWER, NAME)
+
+
+class LeaveSwitch:
+    """Before a member leaves its relayed group, the planned switch of its clients to the next
+    member, so they reconnect as after a switch and not after a failure; a member the relay
+    does not send the clients to needs none.
+
+    When no other member is left or the switch fails, the leave goes on and its log warns that
+    the clients reconnect only once the relay finds the server gone.
+    """
+
+    def __init__(
+        self,
+        member: GroupMember,
+        ctx: OperationContext,
+        *,
+        pause: Callable[[float], None] = time.sleep,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self._member = member
+        self._group = member.group
+        self._ctx = ctx
+        self._pause = pause
+        self._clock = clock
+
+    def run(self) -> None:
+        relay = self._relay()
+        if relay is None:
+            return
+        with self._ctx.step(_("Find a server for the clients of the relay")):
+            target = self._target(relay)
+            if target is None:
+                return
+            self._ctx.log(str(target.instance))
+        try:
+            RelaySwitch(relay, target, self._ctx, pause=self._pause, clock=self._clock).run()
+        except (RelayError, SshError) as error:
+            with self._ctx.step(_("Leave without a planned switch")):
+                self._ctx.log(error.message)
+                self._warn()
+
+    def _relay(self) -> Relay | None:
+        if self._group.relay_id is None:
+            return None
+        installed = Relay.objects.filter(installed_at__isnull=False).select_related("server")
+        return installed.filter(server_id=self._group.relay_id).first()
+
+    def _target(self, relay: Relay) -> GroupMember | None:
+        """The first other member the relay may send the clients to; None when the relay
+        sends them elsewhere already or no such member is left."""
+        health = relay.group_health(self._group.port)
+        active = health.active if health is not None else None
+        if active is not None and active.id != self._member.pk:
+            self._ctx.log(_("The relay sends the clients to another server: no switch needed."))
+            return None
+        for member in backends(self._group):
+            if member.pk != self._member.pk and (
+                health is None or health.reachable(member.pk) is not False
+            ):
+                return member
+        self._ctx.log(_("No other server of the group answers the relay."))
+        self._warn()
+        return None
+
+    def _warn(self) -> None:
+        self._ctx.log(
+            _(
+                "Warning: the clients of the relay lose the connection until the relay finds "
+                "this server gone."
+            )
+        )
 
 
 def _read_answer(agent: DockerContainer) -> SwitchResult | None:
