@@ -1,7 +1,8 @@
 {% load i18n ui %}
 {% comment %} Stacked bar chart (templatetag `bar_chart` in apps/core/templatetags/ui.py). The bars are an SVG
    stretched to the width; the axis text and the tooltips are HTML, so they keep their size. A tooltip opens
-   on hover or tap (the `barChart` Alpine component); a hidden table reads the numbers aloud.
+   on hover or tap (the `barChart` Alpine component); a hidden table reads the numbers aloud. A bucket without
+   data is a pale full-height gap, so it differs from a bucket of zero.
 {% endcomment %}
 {% if empty %}
 <p class="help-text py-6 text-center">{% translate "No traffic in this period." %}</p>
@@ -20,6 +21,7 @@
       {% for tick in ticks %}<span class="bar-chart-grid" style="bottom: {{ tick.bottom|stringformat:'.2f' }}%"></span>{% endfor %}
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
         {% for column, values in columns %}
+          {% if column.gap %}<rect class="bar-chart-gap" x="{{ column.left|stringformat:'.3f' }}" y="0" width="{{ column.width|stringformat:'.3f' }}" height="100"/>{% endif %}
           {% for segment in column.segments %}
             <rect class="bar-chart-{{ segment.series|add:1 }}" x="{{ column.left|stringformat:'.3f' }}" y="{{ segment.top|stringformat:'.3f' }}" width="{{ column.width|stringformat:'.3f' }}" height="{{ segment.height|stringformat:'.3f' }}"/>
           {% endfor %}
@@ -30,10 +32,12 @@
              @click="pick({{ forloop.counter0 }})" :data-active="state({{ forloop.counter0 }})">
           <div class="bar-chart-tip bar-chart-tip-{{ column.tip_side }}">
             <p class="font-semibold">{{ column.label }}</p>
+            {% if column.gap %}<p class="text-muted">{% translate "No data" %}</p>{% else %}
             {% for title, value in values %}
               <p class="flex items-center gap-2"><span class="bar-chart-swatch bar-chart-{{ forloop.counter }}"></span><span class="flex-1">{{ title }}</span><span class="tabular-nums">{{ value|chart_amount:rate }}</span></p>
             {% endfor %}
             {% if several %}<p class="flex gap-2 border-t border-border pt-1 text-muted"><span class="flex-1">{% translate "Total" %}</span><span class="tabular-nums">{{ column.total|chart_amount:rate }}</span></p>{% endif %}
+            {% endif %}
           </div>
         </div>
       {% endfor %}
@@ -51,7 +55,7 @@
     <thead><tr><th scope="col">{% translate "Period" %}</th>{% for title in titles %}<th scope="col">{{ title }}</th>{% endfor %}</tr></thead>
     <tbody>
       {% for column, values in columns %}
-        <tr><th scope="row">{{ column.label }}</th>{% for title, value in values %}<td>{{ value|chart_amount:rate }}</td>{% endfor %}</tr>
+        <tr><th scope="row">{{ column.label }}</th>{% for title, value in values %}<td>{% if column.gap %}{% translate "No data" %}{% else %}{{ value|chart_amount:rate }}{% endif %}</td>{% endfor %}</tr>
       {% endfor %}
     </tbody>
   </table></div>

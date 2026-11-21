@@ -1,4 +1,4 @@
-{% load i18n ui relays %}{# Channel load (templatetag relay_load): the peak and a sparkline of each direction for the day by hour and the week by six hours, then a chart of both directions with a day / week switch. #}
+{% load i18n ui relays %}{# Channel load (templatetag relay_load): the peak and a sparkline of each direction for the day by hour and the week by six hours, then a chart of both directions with a day / week switch in CSS, hours without readings as gaps. #}
 {% if not week.empty %}
 <div class="kpis">
   <div class="stat">
@@ -26,16 +26,16 @@
     {% translate "Load to the clients by six hours for the last week" as label %}{% sparkline week.to_clients label floor=0 %}
   </div>
 </div>
-<div class="space-y-3" x-data="{ period: 'day' }">
+<div class="period-switch space-y-3">
   <div class="segmented" role="radiogroup" aria-label="{% translate 'Load chart period' %}">
-    <label><input type="radio" class="sr-only" name="relay-{{ relay.pk }}-load" value="day" x-model="period" checked>{% translate "24 hours" %}</label>
-    <label><input type="radio" class="sr-only" name="relay-{{ relay.pk }}-load" value="week" x-model="period">{% translate "7 days" %}</label>
+    <label><input type="radio" class="sr-only" name="relay-{{ relay.pk }}-load" value="day" checked>{% translate "24 hours" %}</label>
+    <label><input type="radio" class="sr-only" name="relay-{{ relay.pk }}-load" value="week">{% translate "7 days" %}</label>
   </div>
-  <div x-show="period === 'day'">
+  <div data-period="day">
     {% translate "Load of the channel by hour for the last day" as label %}
     {% bar_chart day_chart.labels day_chart.series day_chart.names label rate=True %}
   </div>
-  <div x-show="period === 'week'" x-cloak>
+  <div data-period="week">
     {% translate "Load of the channel by six hours for the last week" as label %}
     {% bar_chart week_chart.labels week_chart.series week_chart.names label rate=True %}
   </div>

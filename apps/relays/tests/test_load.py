@@ -91,7 +91,11 @@ def test_the_relay_card_shows_the_load_chart(client: Client, admin: User, relay:
     assert "4.0\xa0KB/s" in page  # the peak to the clients
     assert page.count('class="sparkline"') == 4
     assert page.count('class="bar-chart"') == 2  # the day and the week behind the switch
-    assert 'value="week" x-model="period"' in page
+    # The switch works without JS: CSS shows the chart of the checked period.
+    assert 'class="period-switch' in page
+    assert 'data-period="week"' in page
+    assert "x-show" not in page.split('class="period-switch', 1)[1].split("</figure>", 1)[0]
+    assert "No data" in page  # the hours before the readings
     assert "<td>2.0\xa0KB/s</td>" in page  # from the clients in the chart table
 
 
@@ -102,4 +106,4 @@ def test_the_load_chart_has_a_bar_per_bucket_from_its_start(relay: Relay) -> Non
 
     assert len(chart["labels"]) == 24
     assert chart["labels"][-1] == date_format(timezone.localtime(NOW - timedelta(hours=1)), "H:i")
-    assert chart["series"] == [[0] * 23 + [100], [0] * 23 + [201]]
+    assert chart["series"] == [[None] * 23 + [100], [None] * 23 + [201]]  # no readings: a gap

@@ -196,7 +196,7 @@ def sparkline(
 @register.inclusion_tag("components/bar_chart.html")
 def bar_chart(
     labels: Iterable[str],
-    series: Iterable[Iterable[int]],
+    series: Iterable[Iterable[int | None]],
     names: Iterable[str],
     label: str,
     rate: bool = False,
@@ -204,10 +204,19 @@ def bar_chart(
     """Stacked bars of byte counts, one series per name and one bar per label.
 
     `label` describes the chart to screen readers, which also get the numbers as a table.
-    With `rate` the values are bytes per second and read as "1.2 MB/s".
+    With `rate` the values are bytes per second and read as "1.2 MB/s". A bar whose values are
+    all None has no data and is drawn as a gap, apart from a bar of zero.
     """
     titles = list(names)
-    chart = StackedBars(labels=list(labels), series=[list(values) for values in series])
+    rows = [list(values) for values in series]
+    gaps = frozenset(
+        index
+        for index, column in enumerate(zip(*rows, strict=True))
+        if all(v is None for v in column)
+    )
+    chart = StackedBars(
+        labels=list(labels), series=[[value or 0 for value in row] for row in rows], gaps=gaps
+    )
     return {
         "label": label,
         "rate": rate,

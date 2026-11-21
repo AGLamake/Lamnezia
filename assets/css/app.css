@@ -1072,6 +1072,16 @@ html[data-loading]::before {
   .bar-chart-2 {
     @apply bg-chart-2 fill-chart-2;
   }
+  /* A bucket without data: a pale bar over the whole height, unlike an empty bar of zero. */
+  .bar-chart-gap {
+    @apply fill-surface-3 opacity-60;
+  }
+
+  /* A period switch without JS: radios `day` and `week` show the panel `data-period` of theirs. */
+  .period-switch:has([value="week"]:checked) [data-period="day"],
+  .period-switch:not(:has([value="week"]:checked)) [data-period="week"] {
+    @apply hidden;
+  }
 
   .progress {
     @apply h-2 overflow-hidden rounded-full bg-surface-3;

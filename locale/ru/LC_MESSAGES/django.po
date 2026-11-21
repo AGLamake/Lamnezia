@@ -2230,6 +2230,9 @@ msgstr "Копии файлов пока нет: панель сохраняет
 msgid "No copy of the files yet: the restore uses the keys and settings in the panel."
 msgstr "Копии файлов ещё нет: восстановление возьмёт ключи и настройки из панели."
 
+msgid "No data"
+msgstr "Нет данных"
+
 msgid "No device has fetched the link with a device ID yet. Apps such as Happ send it; the plan may limit the number of devices."
 msgstr "Ни одно устройство ещё не запрашивало ссылку с ID устройства. Его передают приложения вроде Happ; тариф может ограничить число устройств."
 

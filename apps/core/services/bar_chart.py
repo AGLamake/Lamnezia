@@ -23,7 +23,10 @@ class Segment:
 
 @dataclass(frozen=True)
 class Column:
-    """A bucket: its label, values per series, the bar and its slot in percent of the plot."""
+    """A bucket: its label, values per series, the bar and its slot in percent of the plot.
+
+    `gap`: the bucket has no data, which is not the same as zero; it is drawn as a gap.
+    """
 
     label: str
     values: tuple[int, ...]
@@ -32,6 +35,7 @@ class Column:
     segments: tuple[Segment, ...]
     slot_left: float = 0.0
     slot_width: float = 0.0
+    gap: bool = False
 
     @property
     def total(self) -> int:
@@ -60,11 +64,14 @@ class Tick:
 class StackedBars:
     """Buckets labelled `labels`; `series[i][j]` is the value of series i in bucket j.
 
+    Buckets whose index is in `gaps` have no data: their values are ignored.
+
     Positions are percentages, so the SVG stretches to any width while its text stays in HTML.
     """
 
     labels: Sequence[str]
     series: Sequence[Sequence[int]]
+    gaps: frozenset[int] = frozenset()
 
     @property
     def top(self) -> int:
@@ -77,7 +84,8 @@ class StackedBars:
         top = self.top
         columns = []
         for index, label in enumerate(self.labels):
-            values = tuple(values[index] for values in self.series)
+            gap = index in self.gaps
+            values = tuple(0 if gap else values[index] for values in self.series)
             columns.append(
                 Column(
                     label=label,
@@ -87,6 +95,7 @@ class StackedBars:
                     segments=self._segments(values, top),
                     slot_left=slot * index,
                     slot_width=slot,
+                    gap=gap,
                 )
             )
         return columns
@@ -113,7 +122,8 @@ class StackedBars:
 
     @property
     def empty(self) -> bool:
-        return not any(any(values) for values in self.series)
+        """Nothing to draw: no value and no gap; a chart of gaps only still shows them."""
+        return not self.gaps and not any(any(values) for values in self.series)
 
     @staticmethod
     def _segments(values: tuple[int, ...], top: int) -> tuple[Segment, ...]:
@@ -128,7 +138,11 @@ class StackedBars:
         return tuple(segments)
 
     def _step(self) -> int:
-        highest = max((sum(column) for column in zip(*self.series, strict=True)), default=0)
+        columns = zip(*self.series, strict=True)
+        highest = max(
+            (sum(column) for index, column in enumerate(columns) if index not in self.gaps),
+            default=0,
+        )
         unit = 1
         while True:
             for multiplier in _MULTIPLIERS:

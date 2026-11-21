@@ -176,7 +176,8 @@ whether the panel itself reaches it over SSH, with the time of the last switch. 
 shows the channel load and where the traffic of each group goes, with charts of the load from the
 clients and to them below: the last day by hour and the last week by six hours, with the peak
 average rate. Under them a full-size chart stacks both directions in bytes per second; the
-**24 hours** / **7 days** switch picks the period, and a tap on a bar shows its numbers. The load readings are kept and thinned like the server readings
+**24 hours** / **7 days** switch picks the period, even with JavaScript off, and a tap on a bar
+shows its numbers. An hour without readings is a pale gap, "No data", not a bar of zero. The load readings are kept and thinned like the server readings
 (`LAMNEZIA_MONITOR_HISTORY_DAYS` and `LAMNEZIA_MONITOR_DETAIL_DAYS`). A switch, a member the relay
 cannot reach, a group with no member left, a relay whose state is not read for two intervals and
 a member lagging longer than `LAMNEZIA_GROUP_LAG_ALERT` come as notifications

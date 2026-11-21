@@ -69,3 +69,20 @@ def test_tooltips_of_the_edge_columns_open_inwards() -> None:
     assert sides[5] == "centre"
     assert sides[-1] == sides[-2] == "end"
     assert chart.columns()[3].slot_left == 30.0
+
+
+def test_a_gap_has_no_bar_and_does_not_raise_the_axis() -> None:
+    chart = StackedBars(labels=["a", "b"], series=[[100, 9000]], gaps=frozenset({1}))
+
+    gap = chart.columns()[1]
+
+    assert gap.gap
+    assert gap.segments == ()
+    assert chart.top == 200
+    assert not chart.columns()[0].gap
+
+
+def test_a_chart_of_gaps_only_is_not_empty() -> None:
+    chart = StackedBars(labels=["a"], series=[[0]], gaps=frozenset({0}))
+
+    assert not chart.empty

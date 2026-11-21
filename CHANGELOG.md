@@ -499,6 +499,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Relay load charts**: the **24 hours** / **7 days** switch works without JavaScript, and an
+  interval without readings is drawn as a pale "No data" gap instead of a bar of zero, so missing
+  data no longer looks like no traffic. Nothing to do on upgrade.
 - **Server groups on the portal**: **Servers** on the portal and the bot show a group as one line
   with its name, working while its relay or one of its servers answers; the names of its servers
   are not shown. Nothing to do on upgrade.

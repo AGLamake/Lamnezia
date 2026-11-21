@@ -53,7 +53,8 @@ def relay_load(relay: Relay) -> dict[str, Any]:
 
 
 def load_chart(series: LoadSeries, period: timedelta, label: str) -> dict[str, Any]:
-    """Arguments of the `bar_chart` tag: a bar per bucket, labelled by its local start."""
+    """Arguments of the `bar_chart` tag: a bar per bucket, labelled by its local start; a bucket
+    without readings is a gap, not zero."""
     width = period / len(series.from_clients)
     return {
         "labels": [
@@ -61,8 +62,8 @@ def load_chart(series: LoadSeries, period: timedelta, label: str) -> dict[str, A
             for index in range(len(series.from_clients))
         ],
         "series": [
-            [round(rate or 0) for rate in series.from_clients],
-            [round(rate or 0) for rate in series.to_clients],
+            [None if rate is None else round(rate) for rate in series.from_clients],
+            [None if rate is None else round(rate) for rate in series.to_clients],
         ],
         "names": [_("From clients"), _("To clients")],
     }
