@@ -1,14 +1,17 @@
 """Stopping the old copy of a moved panel once its domain points to the new machine.
 
 The panel has no access to Docker. It leaves a request file in the `archives` volume, and the
-timer `lamnezia-stop` of install.sh on the host stops the stack when it finds the file.
+timer `lamnezia-stop` of install.sh on the host stops the stack when it finds the file. A request
+nobody takes means the host has no timer.
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import get_language
 from django.utils.translation import gettext as _
 
 from apps.accounts.models import User
@@ -16,6 +19,7 @@ from apps.audit.services import journal as audit
 from apps.operations.models import Operation
 from apps.operations.services.context import OperationContext
 from apps.operations.services.launcher import launch
+from apps.protocols.services.ports import WIKI_URL
 from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.models import PanelMove
 from apps.relocation.services.moves import MOVE_PARAM
@@ -26,10 +30,33 @@ STOP_KIND = "relocation.stop"
 AUTO_STOP_ACTION = "relocation.auto_stop"
 # The name install.sh looks for in the volume (/app/archives inside the web container).
 STOP_REQUEST = "stop-after-move"
+# The timer looks once a minute: a request older than this was never taken.
+STOP_TIMER_GRACE = timedelta(minutes=5)
 
 
 def stop_request_path() -> Path:
     return Path(settings.PANEL_ARCHIVE_DIR) / STOP_REQUEST
+
+
+def stop_pending(move: PanelMove) -> bool:
+    """The stop is requested and the host has not taken the request yet."""
+    return move.stop_requested_at is not None and stop_request_path().exists()
+
+
+def stop_unanswered(move: PanelMove) -> bool:
+    """The request has waited longer than the timer ever takes."""
+    return (
+        stop_pending(move)
+        and move.stop_requested_at is not None
+        and timezone.now() - move.stop_requested_at > STOP_TIMER_GRACE
+    )
+
+
+def stop_help_url() -> str:
+    """The wiki section on the automatic stop, in the language of the page."""
+    if (get_language() or "").startswith("ru"):
+        return f"{WIKI_URL}/ru-Panel-move#автоостановка-старой-копии"
+    return f"{WIKI_URL}/Panel-move#automatic-stop-of-the-old-copy"
 
 
 def request_stop(move: PanelMove) -> Operation | None:

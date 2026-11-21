@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Panel move: warning when the host has no stop timer**: if the request to stop the old copy
+  waits longer than five minutes, the move progress screen says the host probably has no
+  `lamnezia-stop` timer and shows how to stop the copy by hand or rerun `install.sh`.
+
 - **Panel move: "Panel domain switched" notification** (`panel_domain_switched`): the old copy
   tells once per move, with a link to the move progress screen, when every resolver leads the
   panel domain to the new machine. The read-only old panel delivers notifications now. Subscribe

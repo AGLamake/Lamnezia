@@ -1,7 +1,17 @@
-{% load i18n %}{# The stop of the old copy once the domain points to the new machine. #}
+{% load i18n ui %}{# The stop of the old copy once the domain points to the new machine. #}
 {% if move.stop_requested_at %}
 {% blocktranslate asvar text with at=move.stop_requested_at|time:"TIME_FORMAT" %}This copy asked its host to stop at {{ at }}. The host stops it within a minute; if it keeps running, stop it with docker compose down.{% endblocktranslate %}
+{% if stop_unanswered %}
+<div class="alert alert-warning" role="status">
+  {% icon "warning" "icon mt-px" %}
+  <p class="min-w-0 flex-1 break-words">
+    {% blocktranslate trimmed %}The host has not taken the stop request: it probably has no lamnezia-stop timer, as installs made by an older install.sh. Run install.sh on this host once more, or stop this copy by hand: <code>cd /opt/lamnezia &amp;&amp; docker compose down</code>.{% endblocktranslate %}
+    <a href="{{ stop_help_url }}" class="link" target="_blank" rel="noopener">{% translate "More in the wiki" %}</a>
+  </p>
+</div>
+{% else %}
 {% include "components/alert.html" with level="success" text=text %}
+{% endif %}
 {% elif move.can_switch_auto_stop %}
 <div class="flex flex-wrap items-center gap-2">
   <p><strong>{% if move.auto_stop %}{% translate "The automatic stop of this copy is on." %}{% else %}{% translate "The automatic stop of this copy is off." %}{% endif %}</strong></p>

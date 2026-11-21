@@ -1,7 +1,9 @@
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
 from django.test import Client
+from django.utils import timezone
 
 from apps.accounts.models import Role
 from apps.accounts.tests.factories import UserFactory
@@ -13,7 +15,12 @@ from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.models import DomainStatus, MoveState, PanelMove
 from apps.relocation.services import domain
 from apps.relocation.services.domain import DomainCheck
-from apps.relocation.services.shutdown import STOP_KIND, STOP_REQUEST, OldCopyShutdown
+from apps.relocation.services.shutdown import (
+    STOP_KIND,
+    STOP_REQUEST,
+    STOP_TIMER_GRACE,
+    OldCopyShutdown,
+)
 from apps.relocation.tests.helpers import FakeMachine, fake_connect, make_move
 
 pytestmark = pytest.mark.django_db
@@ -193,3 +200,43 @@ def test_the_move_form_passes_the_option(admin: Client) -> None:
     assert response.status_code == 302
     assert PanelMove.latest() is not None
     assert not PanelMove.latest().auto_stop  # type: ignore[union-attr]
+
+
+# A host without the stop timer.
+
+
+def requested(minutes_ago: int, archives: Path) -> PanelMove:
+    move = moved()
+    at = timezone.now() - timedelta(minutes=minutes_ago)
+    PanelMove.objects.filter(pk=move.pk).update(stop_requested_at=at)
+    (archives / STOP_REQUEST).write_text(f"{move.pk}\n")
+    return move
+
+
+def progress(admin: Client, move: PanelMove) -> str:
+    return admin.get(f"/backups/move/{move.pk}/").content.decode()
+
+
+def test_a_fresh_request_is_not_a_problem(admin: Client, archives: Path) -> None:
+    move = requested(1, archives)
+
+    assert "has not taken the stop request" not in progress(admin, move)
+
+
+def test_an_old_request_means_the_host_has_no_timer(admin: Client, archives: Path) -> None:
+    minutes = int(STOP_TIMER_GRACE.total_seconds() // 60) + 1
+    move = requested(minutes, archives)
+
+    page = progress(admin, move)
+
+    assert "has not taken the stop request" in page
+    assert "docker compose down" in page
+    assert "/wiki/Panel-move#automatic-stop-of-the-old-copy" in page
+
+
+def test_the_warning_goes_once_the_host_takes_the_request(admin: Client, archives: Path) -> None:
+    move = requested(60, archives)
+
+    (archives / STOP_REQUEST).unlink()
+
+    assert "has not taken the stop request" not in progress(admin, move)

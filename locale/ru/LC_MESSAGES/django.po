@@ -2085,6 +2085,9 @@ msgstr "Модератор"
 msgid "Moderator's zone"
 msgstr "Зона модератора"
 
+msgid "More in the wiki"
+msgstr "Подробнее в вики"
+
 msgid "Most phones need arm64-v8a. Your Android version is in Settings → About phone."
 msgstr "Большинству телефонов подходит arm64-v8a. Версия Android — в Настройках → О телефоне."
 
@@ -3773,6 +3776,9 @@ msgstr "Хост не смог прочитать запрос."
 
 msgid "The host does not take update requests from the panel: run install.sh of the current version on the host once, or update by hand as the Upgrade page of the wiki says."
 msgstr "Хост не принимает запросы на обновление от панели: один раз запустите на хосте install.sh текущей версии или обновите панель вручную, как описано на странице вики «Обновление»."
+
+msgid "The host has not taken the stop request: it probably has no lamnezia-stop timer, as installs made by an older install.sh. Run install.sh on this host once more, or stop this copy by hand: <code>cd /opt/lamnezia &amp;&amp; docker compose down</code>."
+msgstr "Хост не забрал запрос на остановку: скорее всего, на нём нет таймера lamnezia-stop — его нет у установок старым install.sh. Запустите install.sh на этом хосте ещё раз или остановите эту копию вручную: <code>cd /opt/lamnezia &amp;&amp; docker compose down</code>."
 
 msgid "The host has not taken the update request for an hour: the lamnezia-update unit does not run. Check it on the host: systemctl status lamnezia-update.path"
 msgstr "Хост уже час не забирает запрос на обновление: юнит lamnezia-update не работает. Проверьте его на хосте: systemctl status lamnezia-update.path"

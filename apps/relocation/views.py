@@ -24,7 +24,12 @@ from apps.relocation.services.moves import (
     start_move,
 )
 from apps.relocation.services.panel_machine import PanelMachine
-from apps.relocation.services.shutdown import switch_auto_stop
+from apps.relocation.services.shutdown import (
+    stop_help_url,
+    stop_pending,
+    stop_unanswered,
+    switch_auto_stop,
+)
 
 
 class MoveView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
@@ -68,8 +73,10 @@ class MoveProgressView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg
         return super().get_context_data(
             operations=move_operations(move),
             domain=panel_domain(),
-            polling=move.busy or move.awaits_domain or move.should_stop,
+            polling=move.busy or move.awaits_domain or move.should_stop or stop_pending(move),
             poll_seconds=poll_seconds,
+            stop_unanswered=stop_unanswered(move),
+            stop_help_url=stop_help_url(),
             **kwargs,
         )
 

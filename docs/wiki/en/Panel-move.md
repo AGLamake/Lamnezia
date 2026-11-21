@@ -92,7 +92,9 @@ keeps running; retry the operation from the journal once the new copy is up.
 
 The panel has no access to Docker, so the timer is installed by `install.sh`. A panel installed by
 an older `install.sh` has no timer: run `install.sh` once more on its host, or stop the old copy by
-hand.
+hand. If the stop request waits longer than five minutes, the move progress screen warns about it
+and shows the command `cd /opt/lamnezia && docker compose down`; the warning goes once the host
+takes the request.
 
 ## Cancel and failures
 
