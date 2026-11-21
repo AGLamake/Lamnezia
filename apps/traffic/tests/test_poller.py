@@ -21,6 +21,7 @@ from apps.traffic.services.poller import (
     split_dumps,
 )
 from apps.traffic.services.targets import PeerOwners, PollTarget, PollTargets
+from apps.traffic.services.unknown import unknown_sources
 
 DUMP = (Path(__file__).parents[3] / "amnezia_core/tests/fixtures/dump.txt").read_text()
 NOW = datetime(2026, 11, 2, 10, 0, tzinfo=UTC)
@@ -171,6 +172,20 @@ def test_unreachable_server_does_not_stop_the_others() -> None:
     TrafficPoller(clock=lambda: NOW).poll_all(targets)
 
     assert set(TrafficCounter.objects.values_list("source", flat=True)) == {"awg:2"}
+
+
+@pytest.mark.django_db
+def test_an_unreachable_member_makes_the_traffic_of_the_group_keys_unknown() -> None:
+    def unreachable() -> nullcontext[RemoteHost]:
+        raise SshConnectionError(ErrorCode.HOST_UNREACHABLE)
+
+    member = PollTarget("down", unreachable, {"awg:2": "amnezia-awg2"}, {"awg:2": "awg:1"})
+    targets = PollTargets()
+    targets.register(lambda: [member])
+
+    TrafficPoller(clock=lambda: NOW).poll_all(targets)
+
+    assert unknown_sources() == {"awg:1": {"awg:2"}, "awg:2": {"awg:2"}}
 
 
 @pytest.mark.skipif(shutil.which("sh") is None, reason="needs a POSIX shell")

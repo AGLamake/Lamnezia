@@ -499,6 +499,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Unknown traffic of server groups**: a server that does not answer over SSH now makes the
+  traffic of its keys unknown, and a member of a group the traffic of every key of the group,
+  even before its first reading; the warning on **Statistics** lists it. A new key on a member
+  read before counts from its first byte. Limits apply to the counted traffic and catch up with
+  the gap once the server answers; the wiki describes it. Upgrading needs only the migrations.
 - **A key issued while a relay installs**: a key of a group saved at the moment the relay
   started counting as installed kept the address of the server until the next relay update;
   the move of the keys now waits for a key being saved and moves it too.

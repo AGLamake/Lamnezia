@@ -117,6 +117,35 @@ def test_clones_count_traffic_for_the_keys_of_the_leading_server() -> None:
     assert [(c.source, c.key_source) for c in counters] == [("awg:2", SOURCE), ("awg:3", SOURCE)]
 
 
+def test_a_new_key_on_a_member_read_before_counts_from_the_first_byte() -> None:
+    recorder = TrafficRecorder()
+    recorder.record("awg:2", [peer(1000, 0)], START, key_source=SOURCE)
+    recorder.record(
+        "awg:2", [peer(1500, 0), peer(300, 700, "bob")], START + STEP, key_source=SOURCE
+    )
+
+    assert total() == (500, 0)
+    assert total("bob") == (300, 700)
+    assert TrafficSource.objects.get(source="awg:2").key_source == SOURCE
+
+
+def test_the_first_reading_of_a_member_is_only_a_baseline() -> None:
+    TrafficRecorder().record("awg:2", [peer(1000, 2000)], START, key_source=SOURCE)
+
+    assert not TrafficHourly.objects.exists()
+
+
+def test_an_unavailable_member_keeps_the_source_of_its_keys() -> None:
+    recorder = TrafficRecorder()
+    recorder.unavailable("awg:2", START, SOURCE)
+    recorder.unavailable(SOURCE, START, SOURCE)
+
+    assert dict(TrafficSource.objects.values_list("source", "key_source")) == {
+        "awg:2": SOURCE,
+        SOURCE: "",
+    }
+
+
 def test_growth_without_handshake_marks_activity() -> None:
     # XRay has no handshake: growth of the counters is the only sign of use.
     recorder = TrafficRecorder()

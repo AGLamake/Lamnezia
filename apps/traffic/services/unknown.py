@@ -1,6 +1,7 @@
 """Whose traffic is unknown: keys on an instance or a group member the panel cannot read."""
 
 from collections.abc import Iterable
+from itertools import chain
 
 from django.db.models import F
 
@@ -12,18 +13,20 @@ def unknown_sources() -> dict[str, set[str]]:
     """The source of keys whose traffic is unknown -> the failed sources that hold them.
 
     A failed source holds its own keys. A member of a server group holds the keys of the leading
-    server (`key_source` of its counters): while it cannot be read, those keys are not counted
-    in full either.
+    server (`key_source` of the source, or of its counters from before it was stored): while it
+    cannot be read, those keys are not counted in full either.
     """
-    failed = set(TrafficSource.objects.filter(available=False).values_list("source", flat=True))
+    rows = TrafficSource.objects.filter(available=False).values_list("source", "key_source")
+    failed = dict(rows)
     held = {source: {source} for source in failed}
-    members = (
+    counted = (
         TrafficCounter.objects.filter(source__in=failed)
         .exclude(key_source=F("source"))
         .values_list("source", "key_source")
         .distinct()
     )
-    for source, key_source in members:
+    stored = ((source, key) for source, key in failed.items() if key)
+    for source, key_source in chain(stored, counted):
         held.setdefault(key_source, set()).add(source)
     return held
 

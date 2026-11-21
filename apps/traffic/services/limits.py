@@ -2,6 +2,12 @@
 user go off; in a new period or after an extension they go back on.
 
 Only users with a plan are checked. Keys turned off by hand are never turned on here.
+
+Limits apply to the counted traffic. Traffic that is unknown (`unknown.py`: a server or a group
+member gives no reading) neither turns keys off nor keeps them off: the panel does not guess.
+The counters on the server go on growing, so the first reading that works adds the whole gap,
+in the hour of that reading, and the limits see it then. Only traffic before a container
+restart in the gap is lost.
 """
 
 from collections.abc import Iterable

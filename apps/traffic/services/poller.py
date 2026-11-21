@@ -117,12 +117,19 @@ class TrafficPoller:
         self._clock = clock
 
     def poll_all(self, targets: Iterable[PollTarget]) -> None:
-        """Poll every server; one that is down is logged and does not stop the others."""
+        """Poll every server; one that is down is logged and does not stop the others.
+
+        Its sources are unavailable: their traffic, and that of the group keys a member holds,
+        is unknown until a reading works.
+        """
         for target in targets:
             try:
                 self.poll(target)
             except SshError as error:
                 logger.warning("traffic of %s not collected: %s", target.name, error.code)
+                at = self._clock()
+                for source in target.containers:
+                    self._recorder.unavailable(source, at, target.key_sources.get(source, ""))
 
     def poll(self, target: PollTarget) -> None:
         with target.connect() as host:
@@ -157,13 +164,13 @@ class TrafficPoller:
                 logger.warning(
                     "no counters from %s on %s: exit %s", channel.label, server, dump.code
                 )
-                self._recorder.unavailable(source, at)
+                self._recorder.unavailable(source, at, key_sources.get(source, ""))
                 continue
             try:
                 readings = _of_interface(reader_for(channel.container).parse(dump.text), channel)
             except DumpFormatError as error:
                 logger.warning("bad counters from %s on %s: %s", channel.label, server, error)
-                self._recorder.unavailable(source, at)
+                self._recorder.unavailable(source, at, key_sources.get(source, ""))
                 continue
             self._recorder.record(
                 source, readings, at, dump.started, key_sources.get(source, ""), owners=owners

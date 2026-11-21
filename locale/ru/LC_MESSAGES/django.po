@@ -3628,9 +3628,6 @@ msgstr[0] "Контейнер %(container)s будет удалён с серв�
 msgstr[1] "Контейнер %(container)s будет удалён с сервера вместе с конфигурацией и клиентами, как это делает приложение Amnezia. %(keys)s ключа не будут работать, пока протокол не восстановят из бэкапа. Если отметить «Удалить все бэкапы?», ключи будут отозваны и панель забудет протокол и его резервную копию; отменить это нельзя."
 msgstr[2] "Контейнер %(container)s будет удалён с сервера вместе с конфигурацией и клиентами, как это делает приложение Amnezia. %(keys)s ключей не будут работать, пока протокол не восстановят из бэкапа. Если отметить «Удалить все бэкапы?», ключи будут отозваны и панель забудет протокол и его резервную копию; отменить это нельзя."
 
-msgid "The container did not answer. Check on the server page that it is running and start it if it is not."
-msgstr "Контейнер не ответил. Проверьте на странице сервера, что он запущен, и запустите его, если нет."
-
 msgid "The container is replaced by a new one with the same certificate authority and client certificates; every OpenVPN client reconnects."
 msgstr "Контейнер заменяется новым с тем же центром сертификации и сертификатами клиентов; все клиенты OpenVPN переподключаются."
 
@@ -4255,6 +4252,9 @@ msgstr "Сервер слушает другой порт, чем группа."
 
 msgid "The server no longer lags behind the group: nothing to do."
 msgstr "Сервер больше не отстаёт от группы: делать нечего."
+
+msgid "The server or the container did not answer. Check on the server page that the server is reachable and the container is running, and start it if it is not."
+msgstr "Сервер или контейнер не ответил. Проверьте на странице сервера, что сервер доступен, а контейнер запущен, и запустите его, если нет."
 
 msgid "The server runs AmneziaWG with other keys than the panel has."
 msgstr "AmneziaWG на сервере работает с другими ключами, чем в панели."

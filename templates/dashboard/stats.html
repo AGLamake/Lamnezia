@@ -44,7 +44,7 @@
           <li>
             <span class="font-medium">{{ row.instance.server.name }} · {{ row.instance.title }}</span>
             <span class="text-sm">({% blocktranslate with when=row.checked_at|timesince %}checked {{ when }} ago{% endblocktranslate %})</span><br>
-            <span class="text-sm">{% if row.needs_stats_blocks %}{% translate "XRay gives no counters: its configuration lacks the statistics blocks. Open the protocol settings and save them: the panel adds the blocks, the container restarts and the clients reconnect." %}{% else %}{% translate "The container did not answer. Check on the server page that it is running and start it if it is not." %}{% endif %}</span>
+            <span class="text-sm">{% if row.needs_stats_blocks %}{% translate "XRay gives no counters: its configuration lacks the statistics blocks. Open the protocol settings and save them: the panel adds the blocks, the container restarts and the clients reconnect." %}{% else %}{% translate "The server or the container did not answer. Check on the server page that the server is reachable and the container is running, and start it if it is not." %}{% endif %}</span>
             {% if can_servers %}
               <a class="text-sm font-medium underline" href="{% if row.needs_stats_blocks %}{% url 'protocols:settings' row.instance.pk %}{% else %}{% url 'servers:detail' row.instance.server.pk %}{% endif %}">{% if row.needs_stats_blocks %}{% translate "Protocol settings" %}{% else %}{% translate "Open the server" %}{% endif %}</a>
             {% endif %}

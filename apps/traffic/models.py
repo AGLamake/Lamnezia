@@ -76,12 +76,15 @@ class TrafficSource(models.Model):
     `started` is the container's start time from the latest reading: when it changes, the
     container restarted and its counters started from zero.
     `upload_policed` says the speed limits drop the upload over them instead of delaying it.
+    `key_source` is the source of the keys a member of a server group holds, empty for a source
+    of its own keys: while the member gives no reading, the traffic of those keys is unknown.
     """
 
     source = models.CharField(_("source"), max_length=100, unique=True)
     available = models.BooleanField(_("statistics available"), default=True)
     started = models.CharField(_("container started"), max_length=40, blank=True, default="")
     checked_at = models.DateTimeField(_("checked at"))
+    key_source = models.CharField(_("source of the keys"), max_length=100, blank=True, default="")
     # The latest speed operation policed upload: the host has no ifb module.
     upload_policed = models.BooleanField(_("upload policed"), default=False)
 

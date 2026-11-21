@@ -55,6 +55,9 @@ class TrafficRecorder:
 
     A peer seen for the first time only sets the baseline: on an imported server its counters
     hold traffic from before the panel. Use `expect_peer` for a new key to count from zero.
+    On a member of a group read before, a new key of the leading server counts from zero too:
+    counters are never deleted, so the peer was added since the last reading and all its bytes
+    are new. The first reading of a member stays a baseline.
 
     A clone in a server group keeps its own counters, but the traffic they add belongs to the
     keys of the leading server (`key_source`): a key counts on every member of its group.
@@ -103,20 +106,28 @@ class TrafficRecorder:
             if any(c.collected_at >= at for c in counters.values()):
                 return False
             restarted = bool(state.started and started and state.started != started)
+            fresh = key_source != source and bool(counters or state.started)
             deltas = self._update_counters(
-                source, sources, peers, counters, at, restarted=restarted
+                source, sources, peers, counters, at, restarted=restarted, fresh=fresh
             )
             for owner, owned in sources.split(deltas).items():
                 self._add_hourly(owner, owned, at)
             state.available, state.checked_at = True, at
             state.started = started or state.started
-            state.save(update_fields=["available", "checked_at", "started"])
+            state.key_source = _held(source, key_source)
+            state.save(update_fields=["available", "checked_at", "started", "key_source"])
         return True
 
-    def unavailable(self, source: str, at: datetime) -> None:
-        """The instance gave no reading: its traffic is unknown until it does."""
+    def unavailable(self, source: str, at: datetime, key_source: str = "") -> None:
+        """The instance gave no reading: its traffic, and that of the keys it holds as a member
+        of a group (`key_source`), is unknown until it does."""
         TrafficSource.objects.update_or_create(
-            source=source, defaults={"available": False, "checked_at": at}
+            source=source,
+            defaults={
+                "available": False,
+                "checked_at": at,
+                "key_source": _held(source, key_source),
+            },
         )
 
     @staticmethod
@@ -128,7 +139,9 @@ class TrafficRecorder:
         at: datetime,
         *,
         restarted: bool,
+        fresh: bool,
     ) -> dict[str, Delta]:
+        """`fresh`: a new key of the leading server counts from zero."""
         deltas: dict[str, Delta] = {}
         seen, created = [], []
         for known in counters.values():
@@ -143,6 +156,9 @@ class TrafficRecorder:
                     public_key=peer.public_key,
                 )
                 created.append(counter)
+                added = Delta(peer.rx_bytes, peer.tx_bytes)
+                if fresh and added and sources.is_key(peer.public_key):
+                    deltas[peer.public_key] = added
             else:
                 seen.append(counter)
                 delta = counter_delta(counter, peer.rx_bytes, peer.tx_bytes, restarted=restarted)
@@ -194,6 +210,11 @@ class TrafficRecorder:
         TrafficHourly.objects.bulk_create([r for r in rows.values() if not r.pk])
 
 
+def _held(source: str, key_source: str) -> str:
+    """The source of the keys a source holds when they are not its own, else empty."""
+    return "" if key_source in ("", source) else key_source
+
+
 @dataclass(frozen=True)
 class _Owners:
     """Whose traffic each peer of a reading is: the keys of `key_source`, or another owner."""
@@ -203,6 +224,9 @@ class _Owners:
 
     def of(self, public_key: str) -> str:
         return self.owners.get(public_key, self.key_source)
+
+    def is_key(self, public_key: str) -> bool:
+        return public_key not in self.owners
 
     def shared(self, source: str, peers: Sequence[Reading]) -> list[str]:
         """The sources other than `source` the reading adds to, in a fixed order for the locks."""

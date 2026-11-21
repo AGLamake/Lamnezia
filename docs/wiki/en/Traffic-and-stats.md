@@ -12,7 +12,8 @@ panel notices it — by the counters going down and, if they grew past the old v
 restart, by the container's start time — and does not lose or double the traffic. On an imported
 server the first reading only sets the starting point: traffic from before the panel is not counted.
 A key issued or reissued in the panel counts from its first byte, even if it had traffic before
-its first reading.
+its first reading. So does a new key on a member of a server group the panel has read before; the
+first reading of a new member only sets its starting point.
 A key is online if its latest handshake is less than 3 minutes old. An XRay key has no handshake:
 it is online if its counters grew in a reading within the last `LAMNEZIA_TRAFFIC_INTERVAL` seconds
 plus 3 minutes. A key missing from the server (disabled) is not online.
@@ -46,8 +47,18 @@ down — the **Statistics** page warns **Traffic is not counted on some servers*
 protocol, when the panel last checked them, the cause and what to do (save the XRay protocol
 settings or start the container), with a link to the server. The traffic of those keys is unknown
 meanwhile, not zero: it is not counted against the limits and the keys are left out of **Inactive
-keys**. Counting resumes from zero once the cause is fixed. In a server group a member that does not
-answer makes the traffic of every key of the group unknown: the member is listed in the warning.
+keys**. Counting resumes from zero once the cause is fixed. A server that does not answer over SSH
+is listed too. In a server group a member that does not answer makes the traffic of every key of
+the group unknown: the member is listed in the warning.
+
+### Unknown traffic and limits
+
+Limits apply to the traffic counted. Unknown traffic neither turns keys off nor keeps them off: the
+panel does not guess how much a key used while its server was silent. The counters on the server
+keep growing meanwhile, so the first reading that works adds the whole gap to the hour of that
+reading, and the next limits check sees it — a key may go over its limit by what it used during
+the gap. Only traffic from before a container restart within the gap is lost. The forecast on the
+dashboard marks such users *incomplete data*.
 
 ## Statistics page
 

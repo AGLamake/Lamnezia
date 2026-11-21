@@ -8,6 +8,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
 from amnezia_core.awg import AWG_CONFIG_PATH, AwgServerConfig
+from amnezia_core.awg_dump import PeerStats
 from apps.accounts.models import Role, Status, User
 from apps.accounts.tests.factories import UserFactory
 from apps.audit.models import AuditEvent
@@ -21,8 +22,10 @@ from apps.operations.models import Operation, OperationStatus
 from apps.plans.models import UserLimits
 from apps.plans.services.limits import effective_limits
 from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
-from apps.traffic.models import TrafficHourly
+from apps.traffic.models import TrafficCounter, TrafficHourly
 from apps.traffic.services.limits import LimitEnforcer
+from apps.traffic.services.recorder import TrafficRecorder
+from apps.traffic.services.unknown import users_with_unknown_traffic
 from apps.traffic.signals import LimitReason, access_restored, limit_reached
 
 pytestmark = pytest.mark.django_db
@@ -350,3 +353,34 @@ def test_usage_of_many_users_counts_each_from_its_own_starts() -> None:
     )
 
     assert usage == {old.pk: (GB, 3 * GB), new.user.pk: (GB, GB)}
+
+
+def test_unknown_traffic_counts_for_the_limits_once_the_server_answers(
+    awg_server: FakeAwgServer,
+    admin: KeyActions,
+    django_capture_on_commit_callbacks: OnCommit,
+    enforce: Callable[[datetime], None],
+) -> None:
+    user = subscriber(traffic_limit=10 * GB)
+    key = issued(admin, user, django_capture_on_commit_callbacks)
+    # The key counts from zero since it was issued, before the readings below.
+    TrafficCounter.objects.update(collected_at=ASSIGNED)
+    recorder = TrafficRecorder()
+
+    def reading(gigabytes: int, at: datetime) -> None:
+        stats = PeerStats("awg0", key.public_key, None, (), None, gigabytes * GB, 0, None)
+        recorder.record(SOURCE, [stats], at)
+
+    reading(9, ASSIGNED + timedelta(hours=1))
+    recorder.unavailable(SOURCE, ASSIGNED + timedelta(hours=2))
+
+    enforce(ASSIGNED + timedelta(hours=3))
+
+    assert users_with_unknown_traffic([user.pk]) == {user.pk}
+    assert status_of(key) == KeyStatus.ACTIVE
+
+    reading(12, ASSIGNED + timedelta(hours=4))
+    enforce(ASSIGNED + timedelta(hours=5))
+
+    assert users_with_unknown_traffic([user.pk]) == set()
+    assert status_of(key) == KeyStatus.DISABLED_LIMIT
