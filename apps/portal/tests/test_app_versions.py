@@ -1,5 +1,7 @@
 import pytest
+from django.db import connection
 from django.test import Client
+from django.test.utils import CaptureQueriesContext
 
 from amnezia_core.awg_install import upgraded_awg_params
 from apps.accounts.models import User
@@ -38,6 +40,29 @@ def test_only_keys_of_awg_3_1_need_a_new_app(user: User) -> None:
     assert awg3_sources([awg3, awg2, xray, other]) == {awg3.source}
     assert needs_awg3_app(awg3)
     assert not needs_awg3_app(awg2)
+
+
+def portal_page(client: Client) -> tuple[str, int]:
+    """The page and how many of its queries look for instances of AmneziaWG servers."""
+    with CaptureQueriesContext(connection) as queries:
+        page = client.get("/portal/").content.decode()
+    return page, sum("'amnezia-awg2'" in query["sql"] for query in queries)
+
+
+def test_the_key_list_marks_only_keys_of_awg_3_1(client: Client, user: User) -> None:
+    client.force_login(user)
+    key_on(user, AWG3_PARAMS)
+    awg2 = key_on(user, AWG2_PARAMS)
+    page, queries = portal_page(client)
+    assert page.count("Needs app 3.1+") == 1
+    assert awg2.name in page
+
+    key_on(user, AWG3_PARAMS)
+    key_on(user, AWG3_PARAMS)
+    page, more_keys_queries = portal_page(client)
+
+    assert page.count("Needs app 3.1+") == 3
+    assert more_keys_queries == queries, "one query for the whole list"
 
 
 def test_the_key_page_lists_the_app_versions(client: Client, user: User) -> None:

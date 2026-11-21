@@ -35,13 +35,14 @@
     </h2>
     {% if keys %}
       <ul class="space-y-2">
-        {% for key, title in keys %}
+        {% for key, title, needs_app in keys %}
           <li>
             <a href="{% url 'portal:key' key.pk %}" class="card card-link flex items-center gap-3">
               <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-soft-fg">{% icon "key" %}</span>
               <span class="min-w-0 flex-1">
                 <span class="block truncate font-medium">{{ key.name }}</span>
                 <span class="help-text block truncate">{{ title }}</span>
+                {% if needs_app %}<span class="mt-1 flex items-center gap-1 text-sm text-warning">{% icon "info" "icon-sm" %}{% translate "Needs app 3.1+" %}</span>{% endif %}
               </span>
               <span class="badge {% if key.status == 'active' %}badge-success{% elif key.is_disabled %}badge-danger{% else %}badge-muted{% endif %}">{{ key.get_status_display }}</span>
               {% icon "chevron-right" "icon text-muted" %}

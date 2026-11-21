@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Portal: "Needs app 3.1+" in the key list**: on **My access** a key of an AmneziaWG 3.1 server
+  is marked, and its page lists the app versions that read such keys.
+
 - **Panel move: the domain through several resolvers**: the check of the panel domain asks the
   resolvers of `LAMNEZIA_DOMAIN_RESOLVERS` (by default the system one, `1.1.1.1` and `8.8.8.8`),
   and the move progress screen shows what each one answers. A resolver that does not answer is

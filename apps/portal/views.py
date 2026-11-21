@@ -26,7 +26,7 @@ from apps.keys.services.subscription import MySubscription
 from apps.keys.services.subscription_devices import SubscriptionDevices
 from apps.keys.services.xray_profiles import request_profiles
 from apps.portal.forms import GetKeyForm, RenameKeyForm
-from apps.portal.services.app_versions import AWG3_APPS, needs_awg3_app
+from apps.portal.services.app_versions import AWG3_APPS, awg3_sources, needs_awg3_app
 from apps.portal.services.keys import (
     InstanceNotAllowedError,
     KeyLimitReachedError,
@@ -100,9 +100,12 @@ class PortalHomeView(_PortalView, _ProbingView, TemplateView):
             return context
         titles = instances.titles()
         keyed = my_keys.keyed_instances()
+        keys = list(my_keys.all())
+        # One query for the whole list: keys of AmneziaWG 3.1 servers need a new app.
+        awg3 = awg3_sources(keys)
         return {
             **context,
-            "keys": [(key, titles.get(key.source, "")) for key in my_keys.all()],
+            "keys": [(key, titles.get(key.source, ""), key.source in awg3) for key in keys],
             "limits": my_keys.limits,
             "can_get_key": my_keys.can_get_key(),
             "usage": Usage.of(self.user, my_keys.limits, timezone.now()),

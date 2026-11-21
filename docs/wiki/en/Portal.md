@@ -30,7 +30,9 @@ portal and **My access** from the control panel. Users do not see it.
 The page lists the user's keys, how many keys the plan allows, the traffic used in the current
 period with the reset date, the total traffic and the access term with the days left. The traffic
 bar turns yellow and then red near the limit, and near the end of a limit or of the access term
-the page warns about it. Without keys the page offers to get the first one.
+the page warns about it. Without keys the page offers to get the first one. A key of an
+AmneziaWG 3.1 server is marked *Needs app 3.1+*; its page lists the app versions that read such
+keys ([Protocols](Protocols.md)).
 
 ## Usage
 

@@ -94,7 +94,7 @@ Amnezia VPN 5.0.0.5 (iOS: 5.0.1) and AmneziaWG for Android 3.0.1 know only part 
 (without `RandomTrailers` and `DisableCookies`), so they do not work either. Ask users to update the
 app before you hand out keys from a 3.1 server. Users see these versions themselves too: the key
 page in the portal and the key card in the bot show an "Update the app first" hint for a key of a
-3.1 server, and only for such keys. AmneziaWG 2.0 servers work with every version since the one
+3.1 server, and only for such keys; in the portal key list such a key is marked "Needs app 3.1+". AmneziaWG 2.0 servers work with every version since the one
 that added AWG 2 support.
 
 What the server does with the 3.1 parameters:
