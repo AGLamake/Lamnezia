@@ -6,6 +6,9 @@ from django.utils import timezone
 
 from apps.accounts.models import Role
 from apps.accounts.tests.factories import UserFactory
+from apps.notifications.events import Event
+from apps.notifications.models import Notification, Route
+from apps.notifications.tests.factories import ChannelFactory
 from apps.operations.models import OperationStatus, OperationStep, StepStatus
 from apps.relocation.models import DomainStatus, MoveState, PanelMove
 from apps.relocation.services import domain, resolvers
@@ -216,6 +219,61 @@ def test_a_panel_opened_by_an_ip_address_has_no_domain_to_check(
 
     assert panel_domain() == ""
     assert DomainCheck.current().run() is None
+
+
+# The notification that the domain switched.
+
+
+def told() -> list[Notification]:
+    return list(Notification.objects.filter(event=Event.PANEL_DOMAIN_SWITCHED))
+
+
+@override_settings(SITE_URL=f"https://{DOMAIN}/")
+def test_the_switch_is_told_once(records: dict[str, set[str]]) -> None:
+    ChannelFactory(events=[Event.PANEL_DOMAIN_SWITCHED])
+    move = handed_over()
+    move.auto_stop = False
+    move.save()
+    check()
+    assert told() == [], "the domain still points to the old machine"
+
+    records[DOMAIN] = {NEW_MACHINE}
+    check()
+    PanelMove.objects.filter(pk=move.pk).update(domain_status=DomainStatus.ELSEWHERE)
+    check()
+
+    [notification] = told()
+    assert notification.data == {
+        "domain": DOMAIN,
+        "host": NEW_MACHINE,
+        "url": f"https://{DOMAIN}/backups/move/{move.pk}/",
+    }
+
+
+def test_the_copy_on_the_new_machine_does_not_tell(records: dict[str, set[str]]) -> None:
+    ChannelFactory(events=[Event.PANEL_DOMAIN_SWITCHED])
+    handed_over(MoveState.ARRIVED)
+    records[DOMAIN] = {NEW_MACHINE}
+
+    assert check().domain_status == DomainStatus.POINTED
+    assert told() == []
+
+
+def test_a_channel_without_the_event_hears_nothing(records: dict[str, set[str]]) -> None:
+    ChannelFactory(events=[Event.PANEL_DOMAIN_SWITCHED])
+    Route.objects.filter(event=Event.PANEL_DOMAIN_SWITCHED).delete()
+    handed_over()
+    records[DOMAIN] = {NEW_MACHINE}
+
+    check()
+
+    assert told() == []
+
+
+def test_the_frozen_old_panel_delivers_notifications() -> None:
+    assert handed_over().frozen
+
+    assert TaskGate().allows("notifications.deliver", (1,))
 
 
 @override_settings(SITE_URL=f"https://{DOMAIN}")

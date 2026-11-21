@@ -66,6 +66,11 @@ A background job checks the domain once a minute (on the old panel it runs while
 read-only too); the page itself never looks up DNS. The checks stop once the domain has switched.
 A panel opened by an IP address (no domain in `SITE_URL`) has nothing to check.
 
+When the domain switches, the old copy sends the *Panel domain switched* notification
+(`panel_domain_switched`) once per move, with a link to the move progress screen, to the channels
+subscribed to it in [Notifications](Notifications.md). The read-only old panel still delivers
+notifications.
+
 ## Automatic stop of the old copy
 
 The option **Stop this copy once the domain points to the new machine** is on by default in the

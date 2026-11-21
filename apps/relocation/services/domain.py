@@ -1,7 +1,8 @@
 """The background check that the panel domain's A record points to the new machine of a move.
 
 The domain is looked up through every resolver of DOMAIN_RESOLVERS (services/resolvers.py); it
-points to the new machine only when each resolver that answers leads there.
+points to the new machine only when each resolver that answers leads there. The old copy tells
+the staff once when the domain switches.
 """
 
 import ipaddress
@@ -9,9 +10,12 @@ import socket
 from urllib.parse import urlsplit
 
 from django.conf import settings
+from django.urls import reverse
 from django.utils import timezone
 
-from apps.relocation.models import DomainStatus, PanelMove
+from apps.notifications.events import Event
+from apps.notifications.services.delivery import emit
+from apps.relocation.models import DomainStatus, MoveState, PanelMove
 from apps.relocation.services.resolvers import Answer, Resolvers
 from apps.relocation.services.shutdown import request_stop
 
@@ -55,6 +59,7 @@ class DomainCheck:
             return None
         answers = Resolvers.configured(a_records).ask(self._domain)
         found = set().union(*(answer.addresses for answer in answers))
+        was_pointed = move.domain_status == DomainStatus.POINTED
         move.domain_status = self._status(answers, self._target_addresses(move.target_host))
         move.domain_addresses = ", ".join(sorted(found))[:255]
         move.domain_answers = [answer.to_dict() for answer in answers]
@@ -67,8 +72,21 @@ class DomainCheck:
                 "domain_checked_at",
             ]
         )
+        if not was_pointed:
+            self._tell_switched(move)
         request_stop(move)
         return move
+
+    def _tell_switched(self, move: PanelMove) -> None:
+        """Once per move, only from the old copy: the copy on the new machine checks too."""
+        if move.state != MoveState.LEFT or move.domain_status != DomainStatus.POINTED:
+            return
+        url = settings.SITE_URL.rstrip("/") + reverse("relocation:progress", args=[move.pk])
+        emit(
+            Event.PANEL_DOMAIN_SWITCHED,
+            {"domain": self._domain, "host": move.target_host, "url": url},
+            key=f"{Event.PANEL_DOMAIN_SWITCHED}:{move.pk}",
+        )
 
     @staticmethod
     def _target_addresses(host: str) -> set[str]:

@@ -19,8 +19,11 @@ logger = logging.getLogger(__name__)
 MOVE_KIND_PREFIX = "relocation."
 RUN_OPERATION_TASK = "operations.run"
 # Jobs that only keep the journal truthful: a stuck move operation must end, and the old panel
-# reports where the domain points while it waits read-only for the switch.
-ALWAYS_ALLOWED_TASKS = frozenset({"operations.fail_stale", CHECK_DOMAIN_TASK})
+# reports where the domain points while it waits read-only for the switch and tells the staff
+# once it has switched.
+ALWAYS_ALLOWED_TASKS = frozenset(
+    {"operations.fail_stale", CHECK_DOMAIN_TASK, "notifications.deliver"}
+)
 MOVING_ERROR = "panel_moving"
 
 

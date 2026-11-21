@@ -78,6 +78,7 @@ class Event(StrEnum):
     STAFF_REPORT = "staff_report"
     ZONE_REPORT = "zone_report"
     PANEL_ARCHIVE_FAILED = "panel_archive_failed"
+    PANEL_DOMAIN_SWITCHED = "panel_domain_switched"
     TEST = "test"
 
 
@@ -552,6 +553,18 @@ EVENTS: dict[Event, EventType] = {
             "made stay in System → Panel archive."
         ),
         translated=("error",),
+    ),
+    # Once per move, from the old copy while it is read-only (apps/relocation/services/domain.py):
+    # every resolver leads the panel domain to the new machine `host`. `url` leads to the move
+    # progress screen.
+    Event.PANEL_DOMAIN_SWITCHED: EventType(
+        _("Panel domain switched"),
+        _("The domain {domain} points to the new machine"),
+        _(
+            "Every resolver the panel asks leads {domain} to the new machine {host}. Users reach "
+            "the panel there once their DNS caches expire; the move progress screen tells what "
+            "happens to the old copy."
+        ),
     ),
     Event.SPLIT_LIST_STALE: EventType(
         _("Network list not updated"),

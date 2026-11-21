@@ -102,6 +102,10 @@ msgstr "Укажите chat ID."
 msgid "Events"
 msgstr "События"
 
+#, python-brace-format
+msgid "Every resolver the panel asks leads {domain} to the new machine {host}. Users reach the panel there once their DNS caches expire; the move progress screen tells what happens to the old copy."
+msgstr "Все резолверы, которые опрашивает панель, ведут {domain} на новую машину {host}. Пользователи попадут в панель там, когда истечёт их кэш DNS; что будет со старой копией, показывает экран хода переноса."
+
 msgid "Failed"
 msgstr "Ошибка"
 
@@ -230,6 +234,9 @@ msgstr "Один или несколько через запятую."
 
 msgid "Panel archive failed"
 msgstr "Архив панели не создан"
+
+msgid "Panel domain switched"
+msgstr "Домен панели переключился"
 
 #, python-brace-format
 msgid "Panel report since {since}"
@@ -431,6 +438,10 @@ msgstr "Им подписывается тело запроса в заголо�
 
 msgid "The channel is deleted."
 msgstr "Канал удалён."
+
+#, python-brace-format
+msgid "The domain {domain} points to the new machine"
+msgstr "Домен {domain} указывает на новую машину"
 
 #, python-brace-format
 msgid "The incident on {server} is closed."

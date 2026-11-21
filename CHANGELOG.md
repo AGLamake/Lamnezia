@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Panel move: "Panel domain switched" notification** (`panel_domain_switched`): the old copy
+  tells once per move, with a link to the move progress screen, when every resolver leads the
+  panel domain to the new machine. The read-only old panel delivers notifications now. Subscribe
+  a channel to the event in **Notifications** if needed.
+
 - **Portal: "Needs app 3.1+" in the key list**: on **My access** a key of an AmneziaWG 3.1 server
   is marked, and its page lists the app versions that read such keys.
 

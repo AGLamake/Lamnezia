@@ -75,6 +75,7 @@ channels hear each event.
 | Relay has other settings | `relay_settings_differ` | `relay`, `host` |
 | Relay settings match again | `relay_settings_match` | `relay`, `host` |
 | Panel archive failed | `panel_archive_failed` | `error` |
+| Panel domain switched | `panel_domain_switched` | `domain`, `host`, `url` |
 | Network list not updated | `split_list_stale` | `group`, `source`, `days`, `error` |
 | Emergency forwarding | `split_emergency` | `group`, `relay`, `server` |
 | Split routing again | `split_restored` | `group`, `relay` |

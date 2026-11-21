@@ -70,6 +70,7 @@ zone), `data` depends on the event.
 | `relay_settings_differ` | A relay forwards or publishes other groups than the panel wrote (the relay card lists the differences). Once per mismatch; the panel writes its settings again at the next sync. | `relay`, `host` |
 | `relay_settings_match` | The relay forwards and publishes the groups the panel wrote again after `relay_settings_differ`. Once per mismatch, even when no channel heard of `relay_settings_differ`. | `relay`, `host` |
 | `panel_archive_failed` | The panel archive operation failed: the archive was not made, or its copy did not reach the external storage. Once a day. | `error` — what went wrong |
+| `panel_domain_switched` | During a [panel move](Panel-move.md) every resolver leads the panel domain to the new machine. Once per move, from the old copy while it is read-only. | `domain`; `host` — the new machine; `url` — the move progress screen |
 | `split_list_stale` | A network list source of a split group did not give a list the panel takes: it did not download, did not read or has less than half of the networks before. The relay keeps the list it has. Once a day while the source fails. | `group`, `source` — host of the source address, `days` — days since the last good list, `error` |
 | `split_emergency` | The relay agent moved a split group to forwarding by itself: the uplink fails on every member while a member answers the usual probe. | `group`, `relay`, `server` — the member it forwards to, or `null` |
 | `split_restored` | The uplink works again and the agent moved the group back to split routing. | `group`, `relay` |
@@ -172,6 +173,8 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/relay_settings_match"}}}},
     {"if": {"properties": {"event": {"const": "panel_archive_failed"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/panel_archive_failed"}}}},
+    {"if": {"properties": {"event": {"const": "panel_domain_switched"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/panel_domain_switched"}}}},
     {"if": {"properties": {"event": {"const": "split_list_stale"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/split_list_stale"}}}},
     {"if": {"properties": {"event": {"const": "split_emergency"}}},
@@ -454,6 +457,11 @@ may be added: ignore what you do not know.
       "type": "object",
       "required": ["error"],
       "properties": {"error": {"type": "string"}}
+    },
+    "panel_domain_switched": {
+      "type": "object",
+      "required": ["domain", "host", "url"],
+      "properties": {"domain": {"type": "string"}, "host": {"type": "string"}, "url": {"type": "string", "format": "uri"}}
     },
     "split_list_stale": {
       "type": "object",
