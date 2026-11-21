@@ -248,6 +248,12 @@ msgstr "Ретранслятор снова отвечает"
 msgid "Relay does not answer"
 msgstr "Ретранслятор не отвечает"
 
+msgid "Relay has other settings"
+msgstr "На ретрансляторе другие настройки"
+
+msgid "Relay settings match again"
+msgstr "Настройки ретранслятора снова совпали"
+
 msgid "Relay switched"
 msgstr "Ретранслятор переключился"
 
@@ -258,6 +264,14 @@ msgstr "Ретранслятор {relay} снова отвечает"
 #, python-brace-format
 msgid "Relay {relay} does not answer"
 msgstr "Ретранслятор {relay} не отвечает"
+
+#, python-brace-format
+msgid "Relay {relay} has other settings"
+msgstr "На ретрансляторе {relay} другие настройки"
+
+#, python-brace-format
+msgid "Relay {relay} settings match again"
+msgstr "Настройки ретранслятора {relay} снова совпали"
 
 #, python-brace-format
 msgid "Report on your zone since {since}"
@@ -448,6 +462,14 @@ msgstr "Панель снова читает состояние ретрансл
 #, python-brace-format
 msgid "The problem with {server} you reported is fixed. Thank you for telling us."
 msgstr "Проблема с {server}, о которой вы сообщили, устранена. Спасибо, что рассказали."
+
+#, python-brace-format
+msgid "The relay {relay} ({host}) forwards and publishes the groups the panel wrote again."
+msgstr "Ретранслятор {relay} ({host}) снова пересылает и публикует группы, которые записала панель."
+
+#, python-brace-format
+msgid "The relay {relay} ({host}) forwards or publishes other groups than the panel wrote: clients of the groups may not get through. The panel writes its settings to the relay at the next sync; the relay card lists the differences."
+msgstr "Ретранслятор {relay} ({host}) пересылает или публикует не те группы, что записала панель: клиенты групп могут не подключиться. Панель запишет свои настройки на ретранслятор при ближайшей синхронизации; расхождения перечислены в карточке ретранслятора."
 
 #, python-brace-format
 msgid "The relay {relay} cannot reach the server {from}, so the clients of the group {group} go through {to} now. Their connection drops for a few seconds."

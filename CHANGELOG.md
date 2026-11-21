@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Relay settings mismatch notifications**: *Relay has other settings*
+  (`relay_settings_differ`) comes once when a relay forwards or publishes other groups than the
+  panel wrote, and *Relay settings match again* (`relay_settings_match`) once when it matches
+  again. A mismatch the next write does not mend shows in **Needs attention** with a link to the
+  relay. Subscribe a channel to the events in **Notifications** if needed.
+
 - **Panel archives on schedule and in an external storage**: with
   `LAMNEZIA_PANEL_ARCHIVE_PASSWORD` in `.env` the panel makes an archive every
   `LAMNEZIA_PANEL_ARCHIVE_INTERVAL` hours (24 by default); the password does not go into the

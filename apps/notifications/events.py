@@ -70,6 +70,8 @@ class Event(StrEnum):
     GROUP_REACHABLE = "group_reachable"
     RELAY_UP = "relay_up"
     MEMBER_CAUGHT_UP = "member_caught_up"
+    RELAY_SETTINGS_DIFFER = "relay_settings_differ"
+    RELAY_SETTINGS_MATCH = "relay_settings_match"
     SPLIT_LIST_STALE = "split_list_stale"
     SPLIT_EMERGENCY = "split_emergency"
     SPLIT_RESTORED = "split_restored"
@@ -521,6 +523,22 @@ EVENTS: dict[Event, EventType] = {
             "The server {server} has the files of the group {group} again after lagging behind "
             "since {since}. The relay sends clients to it again."
         ),
+    ),
+    # Once per mismatch (apps/relays/services/mismatch.py): the relay forwards or publishes other
+    # groups than the panel wrote; the pair comes once it forwards what the panel wrote again.
+    Event.RELAY_SETTINGS_DIFFER: EventType(
+        _("Relay has other settings"),
+        _("Relay {relay} has other settings"),
+        _(
+            "The relay {relay} ({host}) forwards or publishes other groups than the panel wrote: "
+            "clients of the groups may not get through. The panel writes its settings to the "
+            "relay at the next sync; the relay card lists the differences."
+        ),
+    ),
+    Event.RELAY_SETTINGS_MATCH: EventType(
+        _("Relay settings match again"),
+        _("Relay {relay} settings match again"),
+        _("The relay {relay} ({host}) forwards and publishes the groups the panel wrote again."),
     ),
     # Once a day while a source of a split group's network list fails (docs/SPLIT.md 4.5): the
     # group keeps its list. `source` is the host of the address, `days` count from the last

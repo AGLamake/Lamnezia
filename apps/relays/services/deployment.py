@@ -22,6 +22,8 @@ from apps.accounts.models import User
 from apps.audit.services import journal as audit
 from apps.groups.models import GroupRouting
 from apps.groups.services.addressing import GroupKeyAddress
+from apps.notifications.events import Event
+from apps.notifications.services.trouble import forget_troubles
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.operations.services.launcher import launch
@@ -118,6 +120,8 @@ class RelayDeployment:
         for group in groups:
             ServicePeerPlacement(group, self._ctx).withdraw()
         self._relay.delete()
+        # A relay installed again starts with no mismatch to recover from.
+        forget_troubles(f"{Event.RELAY_SETTINGS_DIFFER}:{self._relay.server_id}:")
         title = _("Move the keys of the groups back to their leading servers")
         self._move_keys([GroupKeyAddress(group) for group in groups], title)
 

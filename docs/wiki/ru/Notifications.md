@@ -73,6 +73,8 @@
 | Сервер группы снова доступен | `group_reachable` | `group`, `relay` |
 | Ретранслятор снова отвечает | `relay_up` | `relay`, `host`, `last_seen` |
 | Сервер группы догнал группу | `member_caught_up` | `group`, `server`, `since` |
+| На ретрансляторе другие настройки | `relay_settings_differ` | `relay`, `host` |
+| Настройки ретранслятора снова совпали | `relay_settings_match` | `relay`, `host` |
 | Архив панели не создан | `panel_archive_failed` | `error` |
 | Список сетей не обновлён | `split_list_stale` | `group`, `source`, `days`, `error` |
 | Аварийный проброс | `split_emergency` | `group`, `relay`, `server` |

@@ -217,6 +217,10 @@ msgstr "Перевыпустить ключи"
 msgid "Relay %(name)s: its state cannot be read"
 msgstr "Ретранслятор %(name)s: его состояние не читается"
 
+#, python-format
+msgid "Relay %(name)s: other settings stay after the panel wrote it again"
+msgstr "Ретранслятор %(name)s: другие настройки остались после повторной записи"
+
 msgid "Relay load history"
 msgstr "История нагрузки ретрансляторов"
 

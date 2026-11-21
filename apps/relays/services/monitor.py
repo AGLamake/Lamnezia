@@ -13,7 +13,7 @@ Every reading with a known load is kept for the load chart (services/load.py).
 A reading is also compared with the groups the panel wrote and the ports the container
 publishes, read over the same SSH connection (services/mismatch.py): a new mismatch drops the
 synced digest, so the next sync writes the relay again and starts the container on the right
-ports.
+ports. A mismatch is told once when it shows and once when the relay matches again.
 """
 
 import logging
@@ -179,6 +179,10 @@ def _compare(relay: Relay, reading: Reading) -> list[str]:
     found = RelayMismatch.of(config, state)
     if reading.published is not None:
         found = found.with_published(plan.ports, reading.published)
+    if found:
+        _report_mismatch(relay)
+    else:
+        _report_match(relay)
     changed = ["mismatch"]
     if found and found != relay.settings_mismatch:
         logger.warning("relay %s differs from what the panel wrote", relay.server.name)
@@ -275,6 +279,30 @@ def _report_up(relay: Relay) -> None:
         {"relay": relay.server.name, "host": relay.server.host, "last_seen": last_seen},
         key=f"relay_up:{occurrence}",
     )
+
+
+def _report_mismatch(relay: Relay) -> None:
+    """Once per mismatch: another difference while one goes on is not told again."""
+    differ = f"{Event.RELAY_SETTINGS_DIFFER}:{relay.server_id}:"
+    if open_troubles(differ):
+        return
+    report_trouble(
+        Event.RELAY_SETTINGS_DIFFER,
+        {"relay": relay.server.name, "host": relay.server.host},
+        key=f"{differ}{_last_seen(relay)}",
+    )
+
+
+def _report_match(relay: Relay) -> None:
+    """The mismatch going on is over."""
+    differ = f"{Event.RELAY_SETTINGS_DIFFER}:"
+    for key in open_troubles(f"{differ}{relay.server_id}:"):
+        report_recovery(
+            key,
+            Event.RELAY_SETTINGS_MATCH,
+            {"relay": relay.server.name, "host": relay.server.host},
+            key=f"{Event.RELAY_SETTINGS_MATCH}:{key.removeprefix(differ)}",
+        )
 
 
 def _last_seen(relay: Relay) -> str:

@@ -137,6 +137,24 @@ def test_a_relay_whose_state_cannot_be_read_is_told_instead_of_its_old_reading()
     assert notices[0].text == "Relay relay: its state cannot be read"
 
 
+def test_a_relay_that_keeps_other_settings_after_a_write_is_told() -> None:
+    relayed_group(alive=["de1"], down=[])
+    written = timezone.now() - timedelta(minutes=5)
+    mismatch = {"foreign_ports": [5542], "missing_ports": [], "groups": []}
+    Relay.objects.update(mismatch=mismatch, synced="digest", synced_at=written, read_at=written)
+    admin = UserFactory(role=Role.ADMIN)
+    assert Attention(admin).notices() == [], "not read since the write"
+
+    Relay.objects.update(read_at=timezone.now())
+    relay = Relay.objects.get()
+    notices = Attention(admin).notices()
+
+    assert [notice.url for notice in notices] == [reverse("servers:detail", args=[relay.server_id])]
+    assert notices[0].text == "Relay relay: other settings stay after the panel wrote it again"
+    Relay.objects.update(synced="")
+    assert Attention(admin).notices() == [], "a write is due"
+
+
 def test_a_moderator_is_not_told_about_relays() -> None:
     relayed_group(alive=[], down=["de1"], read_error="stale")
 

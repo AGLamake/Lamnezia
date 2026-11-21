@@ -119,6 +119,10 @@ class Attention:
     def unread_relays(self) -> list[Relay]:
         return [relay for relay in self.relays if relay.read_error]
 
+    def mismatched_relays(self) -> list[Relay]:
+        """Relays that keep other settings after the panel wrote them again."""
+        return [relay for relay in self.relays if not relay.read_error and relay.mismatch_stays]
+
     def groups_down(self) -> list[ServerGroup]:
         """Groups whose relay saw no member answer; a failed reading is not trusted."""
         return [
@@ -201,6 +205,17 @@ class Attention:
                 f"relay-unread:{relay.pk}",
             )
             for relay in self.unread_relays()
+        ]
+        notices += [
+            Notice(
+                "warning",
+                "server",
+                _("Relay %(name)s: other settings stay after the panel wrote it again")
+                % {"name": relay.server.name},
+                reverse("servers:detail", args=[relay.server_id]),
+                f"relay-mismatch:{relay.pk}",
+            )
+            for relay in self.mismatched_relays()
         ]
         notices += [self._overload(server) for server in self.overloaded()]
         notices += [self._payment(server) for server in self.payment_due()]

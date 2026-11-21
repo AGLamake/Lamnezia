@@ -200,8 +200,10 @@ server has other settings** and lists the differences; foreign groups are left o
 list. The order of the ports does not matter. The next sync writes the panel's settings again by
 itself and, when the published ports differ from the ports of the groups, starts the container
 again with the right ports. If the same difference stays after
-that, the panel no longer updates the relay by itself and only shows the warning: press
-**Update** or **Reinstall**.
+that, the panel no longer updates the relay by itself and only shows the warning and an item in
+**Needs attention** on the overview: press **Update** or **Reinstall**. A mismatch comes as the
+*Relay has other settings* notification (`relay_settings_differ`), once while it lasts, and
+*Relay settings match again* (`relay_settings_match`) once the settings match again.
 
 ### Split routing
 

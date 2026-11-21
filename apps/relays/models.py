@@ -91,6 +91,13 @@ class Relay(models.Model):
         return RelayMismatch.load(self.mismatch)
 
     @property
+    def mismatch_stays(self) -> bool:
+        """The mismatch was judged again after the panel wrote the relay: the write did not
+        mend it."""
+        written, read = self.synced_at, self.read_at
+        return bool(self.mismatch and self.synced and written and read and read > written)
+
+    @property
     def groups_health(self) -> list[GroupHealth]:
         """The groups of the last reading by port, but for groups the panel did not give the
         relay; empty before a reading."""

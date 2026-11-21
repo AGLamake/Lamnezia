@@ -15,6 +15,9 @@ from amnezia_core.relay import Backend, RelayConfig, RelayGroup, RelayState, Ser
 from apps.accounts.models import User
 from apps.groups.models import ServerGroup
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT, succeeded
+from apps.notifications.events import Event
+from apps.notifications.models import Notification, Route
+from apps.notifications.tests.factories import ChannelFactory
 from apps.operations.models import Operation
 from apps.protocols.tests.awg_case import OnCommit, Start
 from apps.relays.models import Relay
@@ -287,6 +290,108 @@ def test_a_mismatch_is_not_judged_while_an_update_is_due(
     relay = agent.poll(installed)
 
     assert not relay.settings_mismatch
+
+
+# Notifications of a mismatch.
+
+SETTINGS_EVENTS = [Event.RELAY_SETTINGS_DIFFER, Event.RELAY_SETTINGS_MATCH]
+
+
+def told() -> list[str]:
+    return list(Notification.objects.order_by("pk").values_list("event", flat=True))
+
+
+@pytest.fixture
+def channel() -> None:
+    ChannelFactory(events=SETTINGS_EVENTS)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("channel")
+def test_a_mismatch_is_told_once_and_its_end_once(
+    installed: Relay, agent: Agent, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    agent.writes(FOREIGN)
+    relay = agent.poll(installed)
+    agent.writes(FOREIGN, (PORT, MEMBERS))
+    agent.poll(relay)
+    assert told() == [Event.RELAY_SETTINGS_DIFFER], "another difference is the same mismatch"
+    assert Notification.objects.get().data == {
+        "relay": relay.server.name,
+        "host": relay.server.host,
+    }
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+    for _ in range(2):
+        agent.writes((PORT, MEMBERS))
+        relay = agent.poll(relay)
+
+    assert told() == [Event.RELAY_SETTINGS_DIFFER, Event.RELAY_SETTINGS_MATCH]
+
+
+@pytest.mark.django_db
+def test_the_end_of_a_mismatch_is_told_with_nobody_told_of_it(
+    installed: Relay, agent: Agent
+) -> None:
+    ChannelFactory(events=[Event.RELAY_SETTINGS_MATCH])
+    synced = installed.synced
+    agent.writes(FOREIGN)
+    agent.poll(installed)
+    Relay.objects.filter(pk=installed.pk).update(synced=synced)
+
+    agent.writes((PORT, MEMBERS))
+    agent.poll(installed)
+
+    assert told() == [Event.RELAY_SETTINGS_MATCH]
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("channel")
+def test_a_channel_without_the_event_hears_nothing(installed: Relay, agent: Agent) -> None:
+    Route.objects.filter(event=Event.RELAY_SETTINGS_DIFFER).delete()
+    agent.writes(FOREIGN)
+
+    agent.poll(installed)
+
+    assert told() == []
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("channel")
+def test_a_relay_installed_again_has_no_mismatch_to_recover_from(
+    installed: Relay,
+    agent: Agent,
+    admin: User,
+    start: Start,
+    relay_server: Server,
+) -> None:
+    agent.writes(FOREIGN)
+    agent.poll(installed)
+    succeeded(start(lambda: deployment.start(deployment.REMOVE_KIND, relay_server, user=admin)))
+    succeeded(start(lambda: deployment.start(INSTALL_KIND, relay_server, user=admin)))
+
+    agent.writes((PORT, MEMBERS))
+    agent.poll(Relay.objects.get(server=relay_server))
+
+    assert told() == [Event.RELAY_SETTINGS_DIFFER]
+
+
+@pytest.mark.django_db
+def test_a_mismatch_stays_only_when_judged_after_the_write(
+    installed: Relay, agent: Agent, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    agent.writes(FOREIGN)
+    relay = agent.poll(installed)
+    assert not relay.mismatch_stays, "the panel has not written the relay again yet"
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+    agent.writes(FOREIGN)
+    assert agent.poll(relay).mismatch_stays, "the write did not mend it"
+
+    agent.writes((PORT, MEMBERS))
+    assert not agent.poll(relay).mismatch_stays
 
 
 @pytest.mark.django_db

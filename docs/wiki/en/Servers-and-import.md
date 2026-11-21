@@ -167,7 +167,8 @@ The servers are shown as cards on the **Overview** (moderators see the servers o
 server pages), the status is also in the server list. Above the cards the overview shows the key
 numbers (servers online, active keys, clients, online now), the traffic for 7 days and the
 **Needs attention** list: servers that do not answer, server groups where no member answers the
-relay at its last reading and relays whose state cannot be read (both with a link to the group or
+relay at its last reading, relays whose state cannot be read and relays that keep other settings
+after the panel wrote them again (with a link to the group or
 server page, administrators only), VPS payments due within 7 days or overdue (administrators only),
 operations failed in the last day, unread messages, applications and article
 suggestions waiting, hidden materials with a broken link. The same counters are next to the menu

@@ -67,6 +67,8 @@
 | `group_reachable` | У группы, где ни один участник не отвечал (`group_unreachable`), снова есть доступный участник: у её клиентов есть связь. Один раз за сбой. | `group`, `relay` |
 | `relay_up` | Панель снова читает состояние ретранслятора после сбоя (`relay_down`). Один раз за сбой, даже если `relay_down` не получил ни один канал. | `relay`, `host`, `last_seen` — время последнего чтения до сбоя или пустая строка |
 | `member_caught_up` | Отстававший участник (`member_lagging`) снова получил файлы группы. Один раз за отставание, даже если `member_lagging` не получил ни один канал. | `group`, `server`, `since` — с какого момента отставал |
+| `relay_settings_differ` | Ретранслятор пересылает или публикует не те группы, что записала панель (расхождения — в карточке ретранслятора). Один раз за расхождение; ближайшая синхронизация записывает настройки панели заново. | `relay`, `host` |
+| `relay_settings_match` | Ретранслятор снова пересылает и публикует группы, записанные панелью, после `relay_settings_differ`. Один раз за расхождение, даже если `relay_settings_differ` не получил ни один канал. | `relay`, `host` |
 | `panel_archive_failed` | Операция архива панели не удалась: архив не создан или его копия не дошла до внешнего хранилища. Раз в сутки. | `error` — что пошло не так |
 | `split_list_stale` | Источник списка сетей группы в раздельном режиме не дал список, который панель принимает: не скачался, не разобрался или в нём меньше половины прежних сетей. Ретранслятор работает с прежним списком. Раз в сутки, пока источник не обновляется. | `group`, `source` — хост адреса источника, `days` — дней с последнего удачного списка, `error` |
 | `split_emergency` | Агент ретранслятора сам перевёл группу из раздельного режима на проброс: канал не работает ни через одного участника, а участник отвечает на обычную проверку. | `group`, `relay`, `server` — участник, на который идёт проброс, или `null` |
@@ -164,6 +166,10 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/relay_up"}}}},
     {"if": {"properties": {"event": {"const": "member_caught_up"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/member_caught_up"}}}},
+    {"if": {"properties": {"event": {"const": "relay_settings_differ"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/relay_settings_differ"}}}},
+    {"if": {"properties": {"event": {"const": "relay_settings_match"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/relay_settings_match"}}}},
     {"if": {"properties": {"event": {"const": "panel_archive_failed"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/panel_archive_failed"}}}},
     {"if": {"properties": {"event": {"const": "split_list_stale"}}},
@@ -433,6 +439,16 @@
       "type": "object",
       "required": ["group", "server", "since"],
       "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
+    },
+    "relay_settings_differ": {
+      "type": "object",
+      "required": ["relay", "host"],
+      "properties": {"relay": {"type": "string"}, "host": {"type": "string"}}
+    },
+    "relay_settings_match": {
+      "type": "object",
+      "required": ["relay", "host"],
+      "properties": {"relay": {"type": "string"}, "host": {"type": "string"}}
     },
     "panel_archive_failed": {
       "type": "object",

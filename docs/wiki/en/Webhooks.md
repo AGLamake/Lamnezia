@@ -67,6 +67,8 @@ zone), `data` depends on the event.
 | `group_reachable` | The relay reaches again a member of a group that had none (`group_unreachable`): its clients have a connection. Once per outage. | `group`, `relay` |
 | `relay_up` | The panel reads the state of a relay again after an outage (`relay_down`). Once per outage, even when no channel heard of `relay_down`. | `relay`, `host`, `last_seen` — time of the last reading before the outage or an empty string |
 | `member_caught_up` | A lagging member (`member_lagging`) has the files of its group again. Once per lag, even when no channel heard of `member_lagging`. | `group`, `server`, `since` — when it started to lag |
+| `relay_settings_differ` | A relay forwards or publishes other groups than the panel wrote (the relay card lists the differences). Once per mismatch; the panel writes its settings again at the next sync. | `relay`, `host` |
+| `relay_settings_match` | The relay forwards and publishes the groups the panel wrote again after `relay_settings_differ`. Once per mismatch, even when no channel heard of `relay_settings_differ`. | `relay`, `host` |
 | `panel_archive_failed` | The panel archive operation failed: the archive was not made, or its copy did not reach the external storage. Once a day. | `error` — what went wrong |
 | `split_list_stale` | A network list source of a split group did not give a list the panel takes: it did not download, did not read or has less than half of the networks before. The relay keeps the list it has. Once a day while the source fails. | `group`, `source` — host of the source address, `days` — days since the last good list, `error` |
 | `split_emergency` | The relay agent moved a split group to forwarding by itself: the uplink fails on every member while a member answers the usual probe. | `group`, `relay`, `server` — the member it forwards to, or `null` |
@@ -164,6 +166,10 @@ may be added: ignore what you do not know.
      "then": {"properties": {"data": {"$ref": "#/$defs/relay_up"}}}},
     {"if": {"properties": {"event": {"const": "member_caught_up"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/member_caught_up"}}}},
+    {"if": {"properties": {"event": {"const": "relay_settings_differ"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/relay_settings_differ"}}}},
+    {"if": {"properties": {"event": {"const": "relay_settings_match"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/relay_settings_match"}}}},
     {"if": {"properties": {"event": {"const": "panel_archive_failed"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/panel_archive_failed"}}}},
     {"if": {"properties": {"event": {"const": "split_list_stale"}}},
@@ -433,6 +439,16 @@ may be added: ignore what you do not know.
       "type": "object",
       "required": ["group", "server", "since"],
       "properties": {"group": {"type": "string"}, "server": {"type": "string"}, "since": {"type": "string", "format": "date-time"}}
+    },
+    "relay_settings_differ": {
+      "type": "object",
+      "required": ["relay", "host"],
+      "properties": {"relay": {"type": "string"}, "host": {"type": "string"}}
+    },
+    "relay_settings_match": {
+      "type": "object",
+      "required": ["relay", "host"],
+      "properties": {"relay": {"type": "string"}, "host": {"type": "string"}}
     },
     "panel_archive_failed": {
       "type": "object",
