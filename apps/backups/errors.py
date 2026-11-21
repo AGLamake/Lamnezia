@@ -74,6 +74,8 @@ class PanelArchiveErrorCode(StrEnum):
     DUMP_FAILED = "dump_failed"
     NO_PASSWORD = "no_password"
     WRONG_PASSWORD = "wrong_password"
+    DAMAGED = "damaged"
+    UNREADABLE = "unreadable"
     SHORT_PASSWORD = "short_password"
     REMOTE_INVALID = "remote_invalid"
     REMOTE_UNREACHABLE = "remote_unreachable"
@@ -97,7 +99,21 @@ PANEL_ARCHIVE_ERRORS: dict[PanelArchiveErrorCode, ErrorDescription] = {
     ),
     PanelArchiveErrorCode.WRONG_PASSWORD: ErrorDescription(
         _("The archive cannot be read with this password."),
-        _("Check the password. A damaged or incomplete file does not open either."),
+        _("Check the password: the file itself is whole."),
+    ),
+    PanelArchiveErrorCode.DAMAGED: ErrorDescription(
+        _("The archive is damaged."),
+        _(
+            "The file was changed or not copied whole: the password is right. Take another copy "
+            "of the archive."
+        ),
+    ),
+    PanelArchiveErrorCode.UNREADABLE: ErrorDescription(
+        _("The archive cannot be read with this password, or the file is damaged."),
+        _(
+            "Archives made by earlier panels (format 1) do not tell these apart. Check the "
+            "password, then take another copy of the archive."
+        ),
     ),
     PanelArchiveErrorCode.SHORT_PASSWORD: ErrorDescription(
         _("The password of scheduled archives is too short."),

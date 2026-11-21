@@ -24,7 +24,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import BinaryIO
 
 from django.apps import apps
 from django.conf import settings
@@ -33,7 +32,13 @@ from django.db.migrations.recorder import MigrationRecorder
 from django.utils import timezone
 
 from apps.backups.errors import PanelArchiveError, PanelArchiveErrorCode
-from apps.backups.services.archive_cipher import ArchiveCipher, ArchiveDecryptionError
+from apps.backups.services.archive_cipher import (
+    ArchiveCipher,
+    ArchiveDecryptionError,
+    DamagedArchiveError,
+    DecryptingReader,
+    WrongPasswordError,
+)
 from apps.backups.services.database_dump import DatabaseDump
 
 FORMAT = 1
@@ -166,37 +171,55 @@ class PanelArchiveWriter:
 
 
 class PanelArchiveReader:
-    """Reads an archive through to its end and checks it: the password and the checksums."""
+    """Reads an archive through to its end and checks it: the password and the checksums.
+
+    A format 2 archive tells a wrong password from a damaged file; format 1 fails as unreadable.
+    """
+
+    _UNREADABLE = (
+        ArchiveDecryptionError,
+        tarfile.TarError,
+        zlib.error,
+        EOFError,
+        OSError,
+        KeyError,
+        ValueError,
+    )
 
     def __init__(self, password: str) -> None:
         self._cipher = ArchiveCipher(password)
 
     def check(self, path: Path) -> Manifest:
+        failure = PanelArchiveErrorCode.UNREADABLE
         try:
             with path.open("rb") as raw:
-                digests, kept = self._digests(raw)
+                stream = self._cipher.reader(raw)
+                if stream.authenticated:
+                    failure = PanelArchiveErrorCode.DAMAGED
+                digests, kept = self._digests(stream)
             sums = kept[SUMS].decode()
             manifest = Manifest.from_json(kept[MANIFEST])
-        except (
-            ArchiveDecryptionError,
-            tarfile.TarError,
-            zlib.error,
-            EOFError,
-            OSError,
-            KeyError,
-            ValueError,
-        ) as exc:
-            raise PanelArchiveError(PanelArchiveErrorCode.WRONG_PASSWORD, repr(exc)) from exc
+        except self._UNREADABLE as exc:
+            raise PanelArchiveError(self._code(exc, failure), repr(exc)) from exc
         expected = dict(line.split("  ", 1)[::-1] for line in sums.splitlines())
         if any(digests.get(name) != digest for name, digest in expected.items()):
-            raise PanelArchiveError(PanelArchiveErrorCode.WRONG_PASSWORD, "checksum mismatch")
+            raise PanelArchiveError(failure, "checksum mismatch")
         return manifest
 
-    def _digests(self, raw: BinaryIO) -> tuple[dict[str, str], dict[str, bytes]]:
+    @staticmethod
+    def _code(exc: Exception, failure: PanelArchiveErrorCode) -> PanelArchiveErrorCode:
+        if isinstance(exc, WrongPasswordError):
+            return PanelArchiveErrorCode.WRONG_PASSWORD
+        if isinstance(exc, DamagedArchiveError):
+            return PanelArchiveErrorCode.DAMAGED
+        return failure
+
+    @staticmethod
+    def _digests(stream: DecryptingReader) -> tuple[dict[str, str], dict[str, bytes]]:
         """SHA-256 of every file but the media, and the manifest and the sums themselves."""
         digests: dict[str, str] = {}
         kept: dict[str, bytes] = {}
-        with tarfile.open(fileobj=self._cipher.reader(raw), mode="r|gz") as tar:  # type: ignore[call-overload]
+        with tarfile.open(fileobj=stream, mode="r|gz") as tar:  # type: ignore[call-overload]
             for member in tar:
                 content = tar.extractfile(member)
                 if content is None or member.name.startswith(f"{MEDIA}/"):

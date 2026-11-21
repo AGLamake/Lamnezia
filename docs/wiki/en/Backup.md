@@ -25,8 +25,8 @@ The panel keeps three kinds of backups:
 The archive is one file `lamnezia-YYYYMMDD-HHMMSS.lamnezia` (UTC time) with everything a new panel
 needs: the database, `.env` with the secrets encryption key `LAMNEZIA_ENCRYPTION_KEY`, the `media`
 volume. It is encrypted with a password (AES-256, the key derived by PBKDF2-SHA256 with 600,000
-iterations); without the password it cannot be read. The panel does not keep the password: lose it
-and the archive cannot be restored.
+iterations) and signed with HMAC-SHA256; without the password it cannot be read. The panel does
+not keep the password: lose it and the archive cannot be restored.
 
 **From the panel.** **System → Panel archive**: type the password twice (at least 12 characters)
 and press **Make an archive**. A background operation makes it; the password reaches it encrypted,
@@ -100,8 +100,15 @@ What is inside (a `tar.gz` under the encryption):
 | `migrations.txt` | Applied migrations: a panel older than the archive refuses it. |
 | `manifest.json`, `SHA256SUMS` | Panel version, time, checksums. |
 
-After its first line the file is what `openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256`
-writes; `deploy/archive/unpack.sh` unpacks it.
+The file is format 2: the line `LAMNEZIA-PANEL-ARCHIVE 2`, a 32-byte password check, what
+`openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256` writes, and a 32-byte HMAC-SHA256 of
+everything before it. So a wrong password and a damaged file give different errors, in the panel,
+in `panel_archive verify` and in the installer, and a damaged file is caught before anything is
+unpacked. The installer needs no Python for it: `deploy/archive/unpack.sh` checks the archive with
+openssl and coreutils.
+
+Archives of format 1, made by earlier panels, are still checked and restored. They have no check
+and no signature: a wrong password and a damaged file give the same error there.
 
 ## Panel backups
 

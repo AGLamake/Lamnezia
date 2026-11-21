@@ -428,6 +428,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Panel archive format 2**: new archives carry a password check and an HMAC-SHA256 signature,
+  so the panel, `panel_archive verify` and `install.sh --restore` tell a wrong password from a
+  damaged or incomplete file (the new error "The archive is damaged"). The installer still needs
+  only openssl and coreutils. Archives of format 1 are still checked and restored.
 - **Leaving the active member of a relayed group**: a member the relay sends the clients to is
   first switched away from by a planned switch to the next available member, so the clients
   reconnect in 11–14 seconds instead of about 20 after a failure. With no other member to take

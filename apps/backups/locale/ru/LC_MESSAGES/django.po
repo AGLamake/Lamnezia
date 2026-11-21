@@ -29,6 +29,9 @@ msgstr "Пароль архива"
 msgid "Archive the panel"
 msgstr "Архив панели"
 
+msgid "Archives made by earlier panels (format 1) do not tell these apart. Check the password, then take another copy of the archive."
+msgstr "Архивы прежних версий панели (формат 1) этого не различают. Проверьте пароль, затем возьмите другую копию архива."
+
 #, python-format
 msgid "At least %(count)d characters. The panel does not keep it: without the password the archive cannot be restored."
 msgstr "Не короче %(count)d символов. Панель его не хранит: без пароля архив не восстановить."
@@ -45,8 +48,8 @@ msgstr "Проверьте его адрес и что панель до нег�
 msgid "Check that the postgres service runs: docker compose ps. Then make the archive again."
 msgstr "Проверьте, что сервис postgres работает: docker compose ps. Затем создайте архив снова."
 
-msgid "Check the password. A damaged or incomplete file does not open either."
-msgstr "Проверьте пароль. Повреждённый или недокачанный файл тоже не открывается."
+msgid "Check the password: the file itself is whole."
+msgstr "Проверьте пароль: сам файл цел."
 
 msgid "Check the user and the password or the keys of the storage in .env."
 msgstr "Проверьте пользователя и пароль или ключи хранилища в .env."
@@ -165,8 +168,14 @@ msgstr "Сначала выведите сервер из группы, зате
 msgid "The Amnezia app may have changed the server meanwhile. Run the restore again."
 msgstr "Возможно, приложение Amnezia тем временем изменило сервер. Запустите восстановление ещё раз."
 
+msgid "The archive cannot be read with this password, or the file is damaged."
+msgstr "С этим паролем архив не читается, или файл повреждён."
+
 msgid "The archive cannot be read with this password."
 msgstr "С этим паролем архив не читается."
+
+msgid "The archive is damaged."
+msgstr "Архив повреждён."
 
 msgid "The archive is deleted."
 msgstr "Архив удалён."
@@ -207,6 +216,9 @@ msgstr "Внешнее хранилище архивов настроено не
 
 msgid "The external storage refused the login."
 msgstr "Внешнее хранилище отказало во входе."
+
+msgid "The file was changed or not copied whole: the password is right. Take another copy of the archive."
+msgstr "Файл изменён или скопирован не целиком; пароль верный. Возьмите другую копию архива."
 
 #, python-format
 msgid "The key %(name)s has no address and is skipped."

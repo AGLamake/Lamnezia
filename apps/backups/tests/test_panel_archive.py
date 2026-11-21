@@ -10,7 +10,7 @@ from apps.backups.services.archive_cipher import ArchiveCipher
 from apps.backups.services.database_dump import PostgresDump
 from apps.backups.services.panel_archive import PanelArchiveReader, env_file
 from apps.backups.services.panel_archives import ArchiveNotFoundError
-from apps.backups.tests.panel_archive_helpers import DUMP, PASSWORD, FakeDump, folder
+from apps.backups.tests.panel_archive_helpers import DUMP, PASSWORD, FakeDump, downgrade, folder
 
 pytestmark = pytest.mark.django_db
 
@@ -56,8 +56,35 @@ def test_a_file_cut_short_does_not_pass(archive_settings: Path) -> None:
     archive, _ = folder().create(PASSWORD, FakeDump(os.urandom(200_000)))
     archive.path.write_bytes(archive.path.read_bytes()[:-5000])
 
-    with pytest.raises(PanelArchiveError):
+    with pytest.raises(PanelArchiveError) as error:
         PanelArchiveReader(PASSWORD).check(archive.path)
+    assert error.value.code == PanelArchiveErrorCode.DAMAGED
+
+
+def test_a_changed_byte_is_damage_whatever_the_password(archive_settings: Path) -> None:
+    archive, _ = folder().create(PASSWORD, FakeDump(os.urandom(200_000)))
+    raw = bytearray(archive.path.read_bytes())
+    raw[100_000] ^= 0x80
+    archive.path.write_bytes(bytes(raw))
+
+    with pytest.raises(PanelArchiveError) as error:
+        PanelArchiveReader(PASSWORD).check(archive.path)
+    assert error.value.code == PanelArchiveErrorCode.DAMAGED
+    with pytest.raises(PanelArchiveError) as error:
+        PanelArchiveReader("another password").check(archive.path)
+    assert error.value.code == PanelArchiveErrorCode.WRONG_PASSWORD
+
+
+def test_an_archive_of_format_1_is_still_checked(archive_settings: Path) -> None:
+    archive, _ = folder().create(PASSWORD, FakeDump())
+    downgrade(archive.path, PASSWORD)
+
+    assert PanelArchiveReader(PASSWORD).check(archive.path).panel_version
+
+    archive.path.write_bytes(archive.path.read_bytes()[:-100])
+    with pytest.raises(PanelArchiveError) as error:
+        PanelArchiveReader(PASSWORD).check(archive.path)
+    assert error.value.code == PanelArchiveErrorCode.UNREADABLE
 
 
 def test_env_keeps_the_panel_variables_quoted_for_compose() -> None:

@@ -21,7 +21,7 @@ from apps.backups.services.panel_archives import (
     PASSWORD_PARAM,
     start_panel_archive,
 )
-from apps.backups.tests.panel_archive_helpers import PASSWORD, FakeDump, folder
+from apps.backups.tests.panel_archive_helpers import PASSWORD, FakeDump, downgrade, folder
 from apps.operations.models import Operation
 from apps.operations.services.context import OperationContext
 from apps.ssh.encryption import SecretCipher
@@ -168,10 +168,40 @@ def test_unpack_script_refuses_a_wrong_password_and_a_newer_panel(archive_settin
 
     wrong = unpack(archive.path, archive_settings / "wrong", "another password")
     assert wrong.returncode != 0
-    assert "cannot be read with this password" in wrong.stderr
+    assert "wrong archive password" in wrong.stderr
 
     older_code = archive_settings / "old-code"
     older_code.mkdir()
     newer = unpack(archive.path, archive_settings / "newer", PASSWORD, older_code)
     assert newer.returncode != 0
     assert "newer panel" in newer.stderr
+
+
+@linux_script
+@needs_tools
+def test_unpack_script_tells_a_damaged_archive(archive_settings: Path) -> None:
+    archive, _ = folder().create(PASSWORD, FakeDump(os.urandom(100_000)))
+    raw = bytearray(archive.path.read_bytes())
+    raw[50_000] ^= 1
+    archive.path.write_bytes(bytes(raw))
+
+    for password in (PASSWORD, "another password"):
+        done = unpack(archive.path, archive_settings / "damaged", password)
+        assert done.returncode != 0
+        assert ("damaged" in done.stderr) is (password == PASSWORD), done.stderr
+    assert not (archive_settings / "damaged" / "database.dump").exists()
+
+
+@linux_script
+@needs_tools
+def test_unpack_script_restores_an_archive_of_format_1(archive_settings: Path) -> None:
+    archive, _ = folder().create(PASSWORD, FakeDump())
+    downgrade(archive.path, PASSWORD)
+    target = archive_settings / "restore"
+
+    wrong = unpack(archive.path, archive_settings / "wrong", "another password")
+    done = unpack(archive.path, target, PASSWORD, settings.BASE_DIR)
+
+    assert "cannot be read with this password, or the file is damaged" in wrong.stderr
+    assert done.returncode == 0, done.stderr
+    assert (target / "database.dump").read_bytes() == FakeDump().content
