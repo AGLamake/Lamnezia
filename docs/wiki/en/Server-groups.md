@@ -100,9 +100,11 @@ server can be the relay, including the panel's own machine.
 
 The service peer goes to the leading server first. If the leading server is busy with another
 operation or fails to take the peer, the install or update fails and nobody is marked lagging: the
-relay keeps the members it has and the next sync tries again. A leading server that does not answer
-is left for the next sync too, without lagging. Only another member that fails is marked lagging and
-gets the peer on its catch-up.
+relay keeps the members it has and the next sync tries again. A server busy with another panel
+operation, such as a settings change of the group, is tried again as soon as that operation is
+over, not at the next minute; one more try per finished operation. A leading server that does not
+answer is left for the next sync too, without lagging. Only another member that fails is marked
+lagging and gets the peer on its catch-up.
 
 The port of a group is checked before the installation: ports 80 and 443 belong to the panel's web
 server, and a port another program or container listens on is refused with a clear error. A port

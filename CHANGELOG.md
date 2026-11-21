@@ -495,6 +495,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Relay update after a busy server**: an update of a relay or of its service peers that found a
+  server busy with another operation, such as a settings change of the group, runs again as soon
+  as that operation is over instead of waiting for the sync by the minute. One finished operation
+  gives one more try at most, and the relay operation never retries itself.
 - **Deleting a relay server**: a server with the relay of server groups is no longer deleted from
   the panel, which left the keys of the groups on the address of the relay; the refusal asks to
   remove the relay first, which moves the keys back to the leading servers and takes the service

@@ -6,7 +6,8 @@ the uplink peer off the groups that are forwarded again; a removal takes the pee
 when the relay server itself no longer answers. A key
 or list change of a split group needs only its files: a lighter operation writes just them. The
 relay server is locked only for its own container: a member on the same server takes the same
-lock for its peers.
+lock for its peers. An operation that found a server busy is synced again as soon as an
+operation that ran meanwhile is over, not at the next minute.
 """
 
 from collections.abc import Iterable, Iterator, Mapping
@@ -33,7 +34,7 @@ from apps.relays.services.container import RESERVED_PORTS, RelayContainer
 from apps.relays.services.service_peers import ServicePeerPlacement
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
-from apps.ssh.errors import SshError
+from apps.ssh.errors import ErrorCode, SshError
 from apps.ssh.services import RemoteHost
 
 INSTALL_KIND = "relays.install"
@@ -286,6 +287,30 @@ def _skip(relay: Relay, reason: SyncSkip, detail: str) -> None:
         return
     relay.sync_skipped, relay.sync_skipped_detail = reason, detail
     relay.save(update_fields=["sync_skipped", "sync_skipped_detail"])
+
+
+def blocked_by(operation: Operation) -> set[int]:
+    """The relay servers whose last relay operation found a server busy while `operation` ran.
+
+    That operation may have held the lock; now that it is over, a sync of these relays need
+    not wait for the next minute. A relay operation never answers for itself: an update that
+    finds a server busy again waits for the next operation to finish, so it is not repeated
+    in a loop, and one finished operation gives each relay one more try at most.
+    """
+    if operation.kind in KINDS or operation.started_at is None:
+        return set()
+    relay_operations = Operation.objects.filter(kind__in=KINDS)
+    failed = relay_operations.filter(
+        status=OperationStatus.FAILED,
+        error_code=ErrorCode.SERVER_BUSY,
+        finished_at__gte=operation.started_at,
+    )
+    servers = set()
+    for server_id in {params["server_id"] for params in failed.values_list("params", flat=True)}:
+        last = relay_operations.filter(params__server_id=server_id).latest("created_at", "pk")
+        if last.status == OperationStatus.FAILED and last.error_code == ErrorCode.SERVER_BUSY:
+            servers.add(server_id)
+    return servers
 
 
 def _busy(relay: Relay) -> bool:

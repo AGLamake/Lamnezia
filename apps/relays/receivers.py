@@ -8,6 +8,9 @@ all the relays it named, once it commits, and the sync updates only them. The sy
 digests, so a change that is not on a relay costs nothing; the sync by the minute stays for
 what no signal sees, such as DNS.
 
+A relay operation that found a server busy, held by another operation, is synced again as soon
+as that operation is over, not at the next minute.
+
 A new key of a split group also gets its counter on the clone, so it counts from the first byte
 there as on its server.
 """
@@ -22,6 +25,7 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from apps.groups.models import GroupMember, GroupRouting, ServerGroup
 from apps.keys.models import AccessKey
 from apps.keys.signals import clients_adding, keys_written
+from apps.operations.models import Operation
 from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay, ServicePeer, SplitEntry, SplitSource
 from apps.relays.services.traffic import expect_new_keys
@@ -157,6 +161,19 @@ def on_clients_adding(
     expect_new_keys(source, public_keys)
 
 
+def on_operation_saved(
+    sender: type[Operation],
+    instance: Operation,
+    update_fields: Iterable[str] | None = None,
+    **kwargs: Any,
+) -> None:
+    """An operation is over: a relay operation that found a server busy meanwhile goes again."""
+    from apps.relays.services.deployment import blocked_by  # noqa: PLC0415  it imports this module
+
+    if update_fields is not None and "finished_at" in update_fields:
+        request_sync(blocked_by(instance))
+
+
 def connect() -> None:
     uid = "relays.sync.ServerGroup"
     pre_save.connect(on_group_saving, sender=ServerGroup, dispatch_uid=f"{uid}.saving")
@@ -174,3 +191,4 @@ def connect() -> None:
     clients_adding.connect(on_clients_adding, dispatch_uid="relays.traffic.clients_adding")
     post_save.connect(on_key_saved, sender=AccessKey, dispatch_uid="relays.sync.AccessKey")
     post_delete.connect(on_key_saved, sender=AccessKey, dispatch_uid="relays.sync.AccessKey.delete")
+    post_save.connect(on_operation_saved, sender=Operation, dispatch_uid="relays.sync.Operation")
