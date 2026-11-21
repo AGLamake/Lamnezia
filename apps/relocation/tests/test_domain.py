@@ -1,13 +1,17 @@
+from typing import Any
+
 import pytest
 from django.test import Client, override_settings
+from django.utils import timezone
 
 from apps.accounts.models import Role
 from apps.accounts.tests.factories import UserFactory
 from apps.operations.models import OperationStatus, OperationStep, StepStatus
 from apps.relocation.models import DomainStatus, MoveState, PanelMove
-from apps.relocation.services import domain
+from apps.relocation.services import domain, resolvers
 from apps.relocation.services.domain import DomainCheck, panel_domain
 from apps.relocation.services.freeze import TaskGate
+from apps.relocation.services.resolvers import UnreachableResolverError
 from apps.relocation.tasks import CHECK_DOMAIN_TASK, check_domain
 from apps.relocation.tests.helpers import make_move
 
@@ -23,6 +27,25 @@ def records(monkeypatch: pytest.MonkeyPatch) -> dict[str, set[str]]:
     """A records the check sees; tests change them as the admin would in the DNS."""
     table: dict[str, set[str]] = {DOMAIN: {OLD_MACHINE}}
     monkeypatch.setattr(domain, "a_records", lambda name: table.get(name, set()))
+    return table
+
+
+PUBLIC = ["system", "1.1.1.1", "8.8.8.8"]
+
+
+@pytest.fixture
+def public(monkeypatch: pytest.MonkeyPatch, settings: Any) -> dict[str, set[str] | None]:
+    """What each public resolver answers for DOMAIN; None: the resolver does not answer."""
+    settings.DOMAIN_RESOLVERS = PUBLIC
+    table: dict[str, set[str] | None] = {"1.1.1.1": {NEW_MACHINE}, "8.8.8.8": {NEW_MACHINE}}
+
+    def ask(server: str, name: str) -> set[str]:
+        found = table[server]
+        if found is None:
+            raise UnreachableResolverError(server)
+        return found if name == DOMAIN else set()
+
+    monkeypatch.setattr(resolvers, "ask_resolver", ask)
     return table
 
 
@@ -87,6 +110,80 @@ def test_a_host_name_of_the_new_machine_is_resolved(records: dict[str, set[str]]
     records.update({"new.example.net": {NEW_MACHINE}, DOMAIN: {NEW_MACHINE}})
 
     assert check().domain_status == DomainStatus.POINTED
+
+
+def test_each_resolver_answer_is_kept(
+    records: dict[str, set[str]], public: dict[str, set[str] | None]
+) -> None:
+    handed_over()
+    public["8.8.8.8"] = set()
+
+    move = check()
+
+    assert move.domain_answers == [
+        {"resolver": "system", "addresses": [OLD_MACHINE], "reachable": True},
+        {"resolver": "1.1.1.1", "addresses": [NEW_MACHINE], "reachable": True},
+        {"resolver": "8.8.8.8", "addresses": [], "reachable": True},
+    ]
+    assert move.domain_addresses == ", ".join(sorted([NEW_MACHINE, OLD_MACHINE]))
+
+
+@pytest.mark.parametrize(
+    "answers",
+    [
+        ({NEW_MACHINE}, {OLD_MACHINE}, DomainStatus.ELSEWHERE),
+        ({NEW_MACHINE}, set(), DomainStatus.ELSEWHERE),
+        (set(), set(), DomainStatus.UNRESOLVED),
+        ({NEW_MACHINE}, {NEW_MACHINE}, DomainStatus.POINTED),
+    ],
+)
+def test_the_domain_points_only_when_every_resolver_leads_to_the_new_machine(
+    answers: tuple[set[str], set[str], DomainStatus],
+    records: dict[str, set[str]],
+    public: dict[str, set[str] | None],
+) -> None:
+    cloudflare, google, status = answers
+    handed_over()
+    public.update({"1.1.1.1": cloudflare, "8.8.8.8": google})
+    records[DOMAIN] = cloudflare
+
+    assert check().domain_status == status
+
+
+def test_an_unreachable_resolver_is_marked_and_does_not_count(
+    records: dict[str, set[str]], public: dict[str, set[str] | None]
+) -> None:
+    handed_over()
+    records[DOMAIN] = {NEW_MACHINE}
+    public["8.8.8.8"] = None
+
+    move = check()
+
+    assert move.domain_status == DomainStatus.POINTED
+    assert move.domain_answers[2] == {"resolver": "8.8.8.8", "addresses": [], "reachable": False}
+
+
+def test_no_resolver_that_answers_is_no_a_record(
+    records: dict[str, set[str]], public: dict[str, set[str] | None], settings: Any
+) -> None:
+    settings.DOMAIN_RESOLVERS = ["1.1.1.1", "8.8.8.8"]
+    handed_over()
+    public.update({"1.1.1.1": None, "8.8.8.8": None})
+
+    assert check().domain_status == DomainStatus.UNRESOLVED
+
+
+def test_an_empty_resolver_list_falls_back_to_the_system_one(
+    records: dict[str, set[str]], settings: Any
+) -> None:
+    settings.DOMAIN_RESOLVERS = []
+    handed_over()
+    records[DOMAIN] = {NEW_MACHINE}
+
+    move = check()
+
+    assert move.domain_status == DomainStatus.POINTED
+    assert [answer["resolver"] for answer in move.domain_answers] == ["system"]
 
 
 @pytest.mark.parametrize("state", [MoveState.PREPARING, MoveState.READY, MoveState.CANCELLED])
@@ -178,6 +275,31 @@ def test_the_screen_shows_the_status_of_the_a_record(admin: Client) -> None:
     assert "points to the new machine" in done
     assert "docker compose down" in done
     assert "hx-trigger" not in done
+
+
+@override_settings(SITE_URL=f"https://{DOMAIN}")
+def test_the_screen_shows_what_each_resolver_answers(admin: Client) -> None:
+    move = handed_over()
+    PanelMove.objects.filter(pk=move.pk).update(
+        domain_status=DomainStatus.ELSEWHERE,
+        domain_addresses=f"{NEW_MACHINE}, {OLD_MACHINE}",
+        domain_checked_at=timezone.now(),
+        domain_answers=[
+            {"resolver": "system", "addresses": [OLD_MACHINE], "reachable": True},
+            {"resolver": "1.1.1.1", "addresses": [NEW_MACHINE], "reachable": True},
+            {"resolver": "8.8.8.8", "addresses": [], "reachable": False},
+            {"resolver": "9.9.9.9", "addresses": [], "reachable": True},
+        ],
+    )
+
+    page = admin.get(f"/backups/move/{move.pk}/progress/").content.decode()
+
+    assert "Checked at" in page
+    assert "System resolver" in page
+    assert f'<span class="font-mono">{OLD_MACHINE}</span>' in page
+    assert f'<span class="font-mono">{NEW_MACHINE}</span>' in page
+    assert "unreachable" in page
+    assert "no A record" in page
 
 
 def test_actions_lead_to_the_screen(admin: Client) -> None:

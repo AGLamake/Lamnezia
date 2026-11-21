@@ -80,6 +80,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_EMAIL_URL` | `consolemail://` | Mail server for letters (password reset, email confirmation, sign-in links), e.g. `smtp+tls://user:password@smtp.example.com:587`. The default only writes letters to the `web` log. |
 | `LAMNEZIA_DEFAULT_FROM_EMAIL` | `Lamnezia <noreply@localhost>` | Sender of the letters. |
 | `LAMNEZIA_PLUGINS` | empty | Comma-separated Django apps added to the panel, e.g. payment plugins ([Billing plugins](Billing-plugins.md)). |
+| `LAMNEZIA_DOMAIN_RESOLVERS` | `system,1.1.1.1,8.8.8.8` | Resolvers the [panel move](Panel-move.md#move-progress-screen) asks where the panel domain points: `system` and IP addresses of public resolvers, comma separated. Empty: the system one only. |
 | `LAMNEZIA_ORDER_EXPIRES_HOURS` | `24` | Hours an order waits for payment before it is marked expired ([Billing plugins](Billing-plugins.md)). |
 | `LAMNEZIA_HSTS_SECONDS` | `31536000` (`0` with `DEBUG`) | HSTS lifetime: browsers open the panel only over HTTPS. `0` turns HSTS off. |
 

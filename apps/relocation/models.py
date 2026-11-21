@@ -71,6 +71,8 @@ class PanelMove(models.Model):
         _("domain"), max_length=16, choices=DomainStatus, default=DomainStatus.UNCHECKED
     )
     domain_addresses = models.CharField(_("addresses of the domain"), max_length=255, blank=True)
+    # What each resolver answered: [{"resolver", "addresses", "reachable"}] (services/resolvers.py).
+    domain_answers = models.JSONField(_("answers of the resolvers"), default=list, blank=True)
     domain_checked_at = models.DateTimeField(_("domain checked at"), null=True, blank=True)
     # The old copy stops its stack once the domain points to the new machine (services/shutdown.py).
     auto_stop = models.BooleanField(_("stop the old copy automatically"), default=True)

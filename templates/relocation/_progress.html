@@ -43,6 +43,18 @@
       </p>
       {% if move.domain_checked_at %}
       <p class="help-text">{% blocktranslate with found=move.domain_addresses|default:"—" checked=move.domain_checked_at|time:"TIME_FORMAT" %}A records: {{ found }}. Checked at {{ checked }}; the panel checks once a minute.{% endblocktranslate %}</p>
+      {% if move.domain_answers %}
+      <ul class="space-y-1 text-sm">
+        {% for answer in move.domain_answers %}
+        <li>
+          {% if answer.resolver == "system" %}{% translate "System resolver" %}{% else %}<span class="font-mono">{{ answer.resolver }}</span>{% endif %}:
+          {% if not answer.reachable %}<span class="badge badge-muted">{% translate "unreachable" %}</span>
+          {% elif answer.addresses %}<span class="font-mono">{{ answer.addresses|join:", " }}</span>
+          {% else %}{% translate "no A record" %}{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
       {% endif %}
       {% if move.domain_status == "pointed" %}
       {% if move.state == "left" and move.auto_stop %}

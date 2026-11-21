@@ -3514,6 +3514,9 @@ msgstr "Переключить на этот сервер"
 msgid "System"
 msgstr "Система"
 
+msgid "System resolver"
+msgstr "Системный резолвер"
+
 msgid "Table"
 msgstr "Таблица"
 
@@ -4950,6 +4953,9 @@ msgstr "адреса домена"
 msgid "an FAQ article"
 msgstr "статья FAQ"
 
+msgid "answers of the resolvers"
+msgstr "ответы резолверов"
+
 msgid "as in the plan"
 msgstr "как в тарифе"
 
@@ -5292,6 +5298,9 @@ msgstr "новая машина"
 
 msgid "nginx is installed: the panel adds a site to it."
 msgstr "nginx установлен: панель добавит в него свой сайт."
+
+msgid "no A record"
+msgstr "нет A-записи"
 
 msgid "no answer: UDP to this port may be blocked"
 msgstr "нет ответа: UDP на этот порт, возможно, заблокирован"

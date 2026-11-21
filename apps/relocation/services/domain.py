@@ -1,4 +1,8 @@
-"""The background check that the panel domain's A record points to the new machine of a move."""
+"""The background check that the panel domain's A record points to the new machine of a move.
+
+The domain is looked up through every resolver of DOMAIN_RESOLVERS (services/resolvers.py); it
+points to the new machine only when each resolver that answers leads there.
+"""
 
 import ipaddress
 import socket
@@ -8,6 +12,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from apps.relocation.models import DomainStatus, PanelMove
+from apps.relocation.services.resolvers import Answer, Resolvers
 from apps.relocation.services.shutdown import request_stop
 
 
@@ -48,11 +53,20 @@ class DomainCheck:
         move = PanelMove.latest()
         if not self._domain or move is None or not (move.awaits_domain or move.should_stop):
             return None
-        found = a_records(self._domain)
-        move.domain_status = self._status(found, self._target_addresses(move.target_host))
+        answers = Resolvers.configured(a_records).ask(self._domain)
+        found = set().union(*(answer.addresses for answer in answers))
+        move.domain_status = self._status(answers, self._target_addresses(move.target_host))
         move.domain_addresses = ", ".join(sorted(found))[:255]
+        move.domain_answers = [answer.to_dict() for answer in answers]
         move.domain_checked_at = timezone.now()
-        move.save(update_fields=["domain_status", "domain_addresses", "domain_checked_at"])
+        move.save(
+            update_fields=[
+                "domain_status",
+                "domain_addresses",
+                "domain_answers",
+                "domain_checked_at",
+            ]
+        )
         request_stop(move)
         return move
 
@@ -64,11 +78,12 @@ class DomainCheck:
             return a_records(host)
 
     @staticmethod
-    def _status(found: set[str], target: set[str]) -> DomainStatus:
-        if not found:
+    def _status(answers: list[Answer], target: set[str]) -> DomainStatus:
+        heard = [answer.addresses for answer in answers if answer.reachable]
+        if not any(heard):
             return DomainStatus.UNRESOLVED
-        # Every A record must lead to the new machine: with one left on the old machine part of
-        # the users still reach the read-only copy.
-        if target and found <= target:
+        # Every resolver that answers, with every A record, must lead to the new machine: users
+        # behind a resolver that still gives the old machine reach the read-only copy.
+        if target and all(found and found <= target for found in heard):
             return DomainStatus.POINTED
         return DomainStatus.ELSEWHERE

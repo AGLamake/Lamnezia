@@ -318,6 +318,8 @@ RELOCATION_INSTALL_TIMEOUT = 45 * 60
 RELOCATION_MIN_FREE_MB = 3 * 1024
 # Requests that passed before the freeze finish before the archive is taken.
 RELOCATION_SETTLE_SECONDS = 5
+# Resolvers the move asks where the panel domain points: "system" and IP addresses of public ones.
+DOMAIN_RESOLVERS = env.list("DOMAIN_RESOLVERS", default=["system", "1.1.1.1", "8.8.8.8"])
 # Seconds between server health readings; a server is offline after two intervals without an answer.
 MONITOR_INTERVAL = env.int("MONITOR_INTERVAL", default=60)
 # Days of server readings and relay load readings; readings older than MONITOR_DETAIL_DAYS keep

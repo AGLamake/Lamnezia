@@ -47,13 +47,18 @@ link on the move page). It lists the steps of every operation of the move with t
 reloads itself while an operation runs.
 
 After the confirmation the screen shows a **Panel domain** block: the time since the hand-over and
-where the A record of the domain from `SITE_URL` points:
+where the A record of the domain from `SITE_URL` points. The domain is looked up through several
+resolvers, `LAMNEZIA_DOMAIN_RESOLVERS` (by default the system one, `1.1.1.1` and `8.8.8.8`), and
+the screen lists what each one answers and when it was checked: the A records, *no A record* or
+*unreachable*. A resolver that does not answer within two seconds is marked *unreachable* and does
+not count. The status:
 
 - *not checked yet* — the background check has not run yet;
-- *has no A record* — the domain does not resolve to an IPv4 address;
-- *points to another machine* — at least one A record leads elsewhere (for example, still to the
-  old machine);
-- *points to the new machine* — every A record leads to the new machine's address; the old panel
+- *has no A record* — no resolver that answers gives an IPv4 address for the domain;
+- *points to another machine* — at least one resolver gives an A record that leads elsewhere (for
+  example, still to the old machine, while its cache lasts) or gives no A record;
+- *points to the new machine* — every resolver that answers leads, with every A record, to the
+  new machine's address; the old panel
   stops itself, or, with the automatic stop off, the screen suggests stopping it once DNS caches
   have expired.
 
@@ -71,7 +76,7 @@ The old copy stops only when all of this holds:
 
 - the move is confirmed (the old panel is in the *moved away* state);
 - the option is on;
-- every A record of the panel domain leads to the new machine;
+- every resolver that answers leads, with every A record of the panel domain, to the new machine;
 - the copy on the new machine answers its health check and accepts changes.
 
 Then the *Move the panel: stop the old copy* operation appears in the operations journal. It checks

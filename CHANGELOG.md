@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Panel move: the domain through several resolvers**: the check of the panel domain asks the
+  resolvers of `LAMNEZIA_DOMAIN_RESOLVERS` (by default the system one, `1.1.1.1` and `8.8.8.8`),
+  and the move progress screen shows what each one answers. A resolver that does not answer is
+  marked unreachable and does not count; the domain points to the new machine only when every
+  resolver that answers leads there.
+
 - **Relay settings mismatch notifications**: *Relay has other settings*
   (`relay_settings_differ`) comes once when a relay forwards or publishes other groups than the
   panel wrote, and *Relay settings match again* (`relay_settings_match`) once when it matches
