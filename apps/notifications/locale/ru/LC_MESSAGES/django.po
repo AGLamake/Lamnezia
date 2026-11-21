@@ -147,6 +147,9 @@ msgstr "Ключи переведены на AmneziaWG 3.1"
 msgid "Keys must be imported again"
 msgstr "Ключи нужно импортировать заново"
 
+msgid "Keys reissued"
+msgstr "Ключи переизданы"
+
 msgid "Keys revoked"
 msgstr "Ключи отозваны"
 
@@ -548,6 +551,14 @@ msgstr "Ключи XRay нужно импортировать заново"
 #, python-brace-format
 msgid "Your VPN keys on {server} are moved to AmneziaWG 3.1. Open the personal account and import the new keys into the Amnezia app: the old ones stop working soon."
 msgstr "Ваши ключи VPN на {server} переведены на AmneziaWG 3.1. Откройте личный кабинет и импортируйте новые ключи в приложение Amnezia: старые скоро перестанут работать."
+
+#, python-brace-format
+msgid "Your VPN keys on {server} are reissued"
+msgstr "Ваши ключи VPN на {server} переизданы"
+
+#, python-brace-format
+msgid "Your VPN keys on {server} are reissued. Open your keys in the personal account and import them into the Amnezia app again: the old ones no longer connect."
+msgstr "Ваши ключи VPN на {server} переизданы. Откройте свои ключи в личном кабинете и заново импортируйте их в приложение Amnezia: старые больше не подключаются."
 
 #, python-brace-format
 msgid "Your VPN keys on {server} are updated"

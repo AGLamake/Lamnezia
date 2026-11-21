@@ -279,6 +279,8 @@ def report_caught_up() -> None:
     """Members found lagging that no longer lag since that moment, once per lag.
 
     The key of a lag names the member and the moment it started: `member_lagging:<id>:<moment>`.
+    A member that left the group meanwhile is forgotten without a word: it no longer serves the
+    group, so there is nothing for it to catch up with, and its leaving is seen by itself.
     """
     lagging, caught_up = f"{Event.MEMBER_LAGGING}:", f"{Event.MEMBER_CAUGHT_UP}:"
     for key in open_troubles(lagging):

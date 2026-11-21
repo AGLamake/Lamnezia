@@ -43,6 +43,7 @@ class Event(StrEnum):
     KEYS_MOVED = "keys_moved"
     SHORT_ID_CHANGED = "short_id_changed"
     KEYS_UPDATED = "keys_updated"
+    KEYS_REISSUED = "keys_reissued"
     REGISTRATION_PENDING = "registration_pending"
     SIGN_IN_NEW_PLACE = "sign_in_new_place"
     SIGN_IN_LOCKED = "sign_in_locked"
@@ -303,6 +304,16 @@ EVENTS: dict[Event, EventType] = {
             "{server} now works in a group of servers that keeps the VPN up when one of them is "
             "blocked. Open your keys in the personal account and import them into the Amnezia "
             "app again, once: the old ones may stop working."
+        ),
+        to_user=True,
+    ),
+    # Not to the one who reissued the keys: they know already.
+    Event.KEYS_REISSUED: EventType(
+        _("Keys reissued"),
+        _("Your VPN keys on {server} are reissued"),
+        _(
+            "Your VPN keys on {server} are reissued. Open your keys in the personal account and "
+            "import them into the Amnezia app again: the old ones no longer connect."
         ),
         to_user=True,
     ),

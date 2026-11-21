@@ -48,6 +48,7 @@
 | `keys_revoked` | Протокол удалён с сервера вместе с бэкапами; ключи пользователя на нём отозваны. Приходит и самому пользователю. | `user`, `server` — имя сервера |
 | `keys_moved` | Клиенты старого AmneziaWG на сервере получили новые ключи на AmneziaWG 3.1; пользователю нужно их импортировать. Приходит и самому пользователю. | `user`, `server` — имя сервера |
 | `keys_updated` | Сервер вошёл в группу за ретранслятором или у его группы установлен ретранслятор: ключи пользователя теперь ведут на адрес ретранслятора, их нужно один раз импортировать заново. Приходит и самому пользователю. | `user`, `server` — имя сервера |
+| `keys_reissued` | Ключи пользователя на сервере переиздал кто-то другой (персонал, пакетное переиздание, смена настроек группы или протокола): старые больше не подключаются, новые нужно импортировать заново. Один раз за переиздание. Приходит и самому пользователю. | `user`, `server` — сервер или группа и протокол |
 | `short_id_changed` | Сменился shortId Reality у XRay на сервере (например, протокол заново настроили в приложении Amnezia); добавленные в приложение ключи пользователя больше не подключаются, их нужно импортировать заново. Приходит и самому пользователю. | `user`, `server` — имя сервера |
 | `registration_pending` | Новый пользователь ждёт одобрения. | `user`, `email` |
 | `sign_in_locked` | Вход под одним именем с одного адреса заблокирован после слишком многих неверных паролей. Один раз за блокировку. Пароль не передаётся. | `user` — введённое имя (может не существовать), `address`, `failures` — лимит, `minutes` — на сколько минут блокировка |
@@ -124,6 +125,8 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/keys_moved"}}}},
     {"if": {"properties": {"event": {"const": "keys_updated"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/keys_updated"}}}},
+    {"if": {"properties": {"event": {"const": "keys_reissued"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/keys_reissued"}}}},
     {"if": {"properties": {"event": {"const": "short_id_changed"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/short_id_changed"}}}},
     {"if": {"properties": {"event": {"const": "registration_pending"}}},
@@ -306,6 +309,11 @@
       "properties": {"user": {"type": "string"}, "server": {"type": "string"}}
     },
     "keys_updated": {
+      "type": "object",
+      "required": ["user", "server"],
+      "properties": {"user": {"type": "string"}, "server": {"type": "string"}}
+    },
+    "keys_reissued": {
       "type": "object",
       "required": ["user", "server"],
       "properties": {"user": {"type": "string"}, "server": {"type": "string"}}

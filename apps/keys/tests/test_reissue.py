@@ -28,6 +28,8 @@ from apps.keys.tests.conftest import SOURCE, OnCommit, Run
 from apps.keys.tests.fake_server import FakeAwgServer
 from apps.keys.tests.fake_xray import FakeXrayServer
 from apps.keys.tests.steps import FIXTURES
+from apps.notifications.events import Event
+from apps.notifications.models import Notification
 from apps.operations.models import Operation, OperationStatus
 
 pytestmark = pytest.mark.django_db
@@ -213,3 +215,29 @@ def test_old_keys_are_revoking_until_the_operation_ends_and_are_not_reissued_twi
     assert old.status == KeyStatus.REVOKING
     assert first.operation_for(old).params["pairs"][0][2] == KeyStatus.ACTIVE
     assert (second.reissued, second.issued, second.operations) == ([], [], [])
+
+
+def test_owners_are_told_once_to_import_the_reissued_keys(
+    awg_server: FakeAwgServer, actions: KeyActions, run: Run, admin: User, start: Start
+) -> None:
+    olds = issued(actions, run, SOURCE, 2)
+    owner = olds[0].user
+    AccessKey.objects.filter(pk=olds[1].pk).update(user=owner)
+
+    start(lambda: KeyReissue(admin).start(AccessKey.objects.filter(pk__in=[k.pk for k in olds])))
+
+    (told,) = Notification.objects.filter(event=Event.KEYS_REISSUED)
+    assert told.user == owner
+
+
+def test_an_owner_reissuing_their_own_key_is_not_told(
+    awg_server: FakeAwgServer, actions: KeyActions, run: Run, start: Start
+) -> None:
+    (old,) = issued(actions, run, SOURCE, 1)
+    owner = old.user
+    assert owner is not None
+
+    start(lambda: KeyReissue(owner).start([old]))
+
+    assert replacement(old).status == KeyStatus.ACTIVE
+    assert not Notification.objects.filter(event=Event.KEYS_REISSUED).exists()

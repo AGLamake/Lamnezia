@@ -53,6 +53,7 @@ channels hear each event.
 | Keys revoked | `keys_revoked` | `user`, `server` |
 | Keys moved to AmneziaWG 3.1 | `keys_moved` | `user`, `server` |
 | Keys updated for a server group | `keys_updated` | `user`, `server` |
+| Keys reissued | `keys_reissued` | `user`, `server` |
 | XRay keys must be imported again | `short_id_changed` | `user`, `server` |
 | Registration request | `registration_pending` | `user`, `email` |
 | Sign-in locked after wrong passwords | `sign_in_locked` | `user`, `address`, `failures`, `minutes` |
@@ -79,7 +80,14 @@ channels hear each event.
 `server_up` and the last four come once when the matching trouble is over (`server_down`,
 `member_unreachable`, `group_unreachable`, `relay_down`, `member_lagging`). The panel remembers
 the trouble apart from notifications, so the pair comes even when no channel is subscribed to the
-trouble event. Deleting a server or a relay forgets its outage without a recovery notification.
+trouble event. Deleting a server or a relay forgets its outage without a recovery notification,
+and so does a server that leaves its group while it lags: it no longer has a group to catch up
+with.
+
+**Keys reissued** (`keys_reissued`) comes to the owner once per reissue of their keys on one
+server — by the staff, in a batch or after a change of group or protocol settings: the old keys no
+longer connect, and the new ones are imported again. A user who reissues their own key in the
+personal account or the bot is not told.
 
 `member_unreachable` comes once per outage of a member. The outage ends, and `member_reachable`
 comes, only after the member has answered every probe the panel saw for 5 minutes, so a member

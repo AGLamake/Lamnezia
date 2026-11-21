@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Keys reissued notification** (`keys_reissued`): the owner hears that their keys on a server
+  are reissued and must be imported into the Amnezia app again, unless they reissued the key
+  themselves. Subscribe a channel to it in **Notifications** if needed.
 - **Staff section**: staff members are created and set up in the panel instead of the Django admin
   site — role, level of each section, servers, plans and quotas. A server administrator creates
   only moderators and gives them only their own servers, plans and users and levels no higher than
