@@ -10,13 +10,16 @@ a lag are remembered apart from notifications (notifications/services/trouble.py
 comes even when nobody hears of the trouble itself. The agent moving a split group to the
 emergency forward and back is told as it happens (docs/SPLIT.md 4.3).
 Every reading with a known load is kept for the load chart (services/load.py).
-A reading is also compared with the groups the panel wrote (services/mismatch.py): a new
-mismatch drops the synced digest, so the next sync writes the relay again.
+A reading is also compared with the groups the panel wrote and the ports the container
+publishes, read over the same SSH connection (services/mismatch.py): a new mismatch drops the
+synced digest, so the next sync writes the relay again and starts the container on the right
+ports.
 """
 
 import logging
 from collections.abc import Callable
 from contextlib import AbstractContextManager
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from ipaddress import IPv4Address
 
@@ -36,7 +39,7 @@ from apps.notifications.services.trouble import (
 from apps.protocols.services.installer import ipv4_addresses
 from apps.relays.models import Relay, RelaySample
 from apps.relays.services.config import RelayPlan
-from apps.relays.services.container import FOLDER, NAME
+from apps.relays.services.container import FOLDER, NAME, PORT_BINDINGS, published_udp
 from apps.relays.services.health import (
     AllDown,
     Change,
@@ -88,17 +91,18 @@ class RelayMonitor:
 
     def poll(self, relay: Relay) -> None:
         try:
-            state = self._read(relay.server)
+            reading = self._read(relay.server)
         except SshError as error:
             self._failed(relay, str(error.code))
         except StateUnreadableError as error:
             self._failed(relay, error.code)
         else:
-            self._record(relay, state)
+            self._record(relay, reading)
 
-    def _read(self, server: Server) -> RelayState:
+    def _read(self, server: Server) -> "Reading":
         with self._connect(server) as host:
             text = host.container(NAME).read_file(STATE_PATH)
+            published = _published(host, server)
         try:
             state = RelayState.parse(text.decode("utf-8"))
         except (AmneziaFormatError, UnicodeDecodeError) as error:
@@ -106,9 +110,10 @@ class RelayMonitor:
         # The agent writes every few seconds: an old file means it stopped.
         if self._clock() - state.updated_at > 2 * self._interval:
             raise StateUnreadableError(STALE)
-        return state
+        return Reading(state, published)
 
-    def _record(self, relay: Relay, state: RelayState) -> None:
+    def _record(self, relay: Relay, reading: "Reading") -> None:
+        state = reading.state
         previous = RelayHealth.load(relay.health)
         _report_up(relay)
         health = RelayHealth.of(state, _members(relay.server), previous)
@@ -116,7 +121,7 @@ class RelayMonitor:
         relay.health = health.to_dict()
         relay.read_at, relay.read_error = self._clock(), ""
         relay.rate_from_clients, relay.rate_to_clients = rates or (None, None)
-        relay.save(update_fields=[*_READING_FIELDS, *_compare(relay, state)])
+        relay.save(update_fields=[*_READING_FIELDS, *_compare(relay, reading)])
         if rates is not None:
             RelaySample.objects.create(
                 relay=relay, at=relay.read_at, rate_from_clients=rates[0], rate_to_clients=rates[1]
@@ -136,11 +141,29 @@ class RelayMonitor:
             _report_down(relay)
 
 
-def _compare(relay: Relay, state: RelayState) -> list[str]:
+@dataclass(frozen=True)
+class Reading:
+    """The agent state and the UDP ports the container publishes; None when docker did not tell
+    them, and the state alone is still kept."""
+
+    state: RelayState
+    published: frozenset[int] | None
+
+
+def _published(host: RemoteHost, server: Server) -> frozenset[int] | None:
+    """The UDP ports the relay container publishes, over the connection already open."""
+    try:
+        return published_udp(host.docker("inspect", "--format", PORT_BINDINGS, NAME))
+    except SshError as error:
+        logger.warning("relay %s ports not read: %s", server.name, error.code)
+        return None
+
+
+def _compare(relay: Relay, reading: Reading) -> list[str]:
     """Set the mismatch of the reading on `relay` and return the fields it changed.
 
     A mismatch the relay did not have drops `synced`: the next sync updates the relay, and the
-    update starts the container again when a port of a group is not published. The same mismatch
+    update starts the container again when its published ports differ. The same mismatch
     after that update is left to the card, so a relay that keeps it is not updated every minute.
     The kept mismatch stays while the state may lag behind the panel: an update is due, or the
     agent wrote the state before the last update.
@@ -150,13 +173,15 @@ def _compare(relay: Relay, state: RelayState) -> list[str]:
         config = plan.config()
     except OSError:
         return []
-    written = relay.synced_at
+    state, written = reading.state, relay.synced_at
     if plan.digest(config) != relay.synced or (written and state.updated_at < written):
         return []
     found = RelayMismatch.of(config, state)
+    if reading.published is not None:
+        found = found.with_published(plan.ports, reading.published)
     changed = ["mismatch"]
     if found and found != relay.settings_mismatch:
-        logger.warning("relay %s forwards other groups than the panel wrote", relay.server.name)
+        logger.warning("relay %s differs from what the panel wrote", relay.server.name)
         relay.synced = ""
         changed.append("synced")
     relay.mismatch = found.to_dict()

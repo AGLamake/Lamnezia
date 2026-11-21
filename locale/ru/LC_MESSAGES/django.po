@@ -2750,6 +2750,12 @@ msgstr "Порты 80 и 443 занимает веб-сервер панели (
 msgid "Ports 80 and 443 of the new machine are taken, and there is no nginx on it."
 msgstr "Порты 80 и 443 на новой машине заняты, а nginx на ней нет."
 
+msgid "Ports of the groups the relay container does not publish:"
+msgstr "Порты групп, которые контейнер ретранслятора не публикует:"
+
+msgid "Ports the relay container publishes for no group:"
+msgstr "Порты, которые контейнер ретранслятора публикует без группы:"
+
 msgid "Prepare all imported keys"
 msgstr "Подготовить все импортированные ключи"
 

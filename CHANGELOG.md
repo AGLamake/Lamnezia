@@ -428,6 +428,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Published ports of the relay container are checked**: on every reading the relay monitor
+  also reads the UDP ports the container publishes, over the same SSH connection. A port of a
+  group the container does not publish, or a port it publishes for no group, shows on the relay
+  card as a difference, and the next sync starts the container again with the right ports.
 - **Panel archive format 2**: new archives carry a password check and an HMAC-SHA256 signature,
   so the panel, `panel_archive verify` and `install.sh --restore` tell a wrong password from a
   damaged or incomplete file (the new error "The archive is damaged"). The installer still needs

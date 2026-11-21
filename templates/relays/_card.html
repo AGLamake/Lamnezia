@@ -30,6 +30,8 @@
             {% for group in mismatch.groups %}
               <li>UDP {{ group.port }}:{% if group.foreign %} {% translate "other servers" %} <span class="font-mono">{{ group.foreign|join:", " }}</span>{% endif %}{% if group.missing %}{% if group.foreign %};{% endif %} {% translate "servers missing" %} <span class="font-mono">{{ group.missing|join:", " }}</span>{% endif %}</li>
             {% endfor %}
+            {% if mismatch.unpublished_ports %}<li>{% translate "Ports of the groups the relay container does not publish:" %} <span class="font-mono">UDP {{ mismatch.unpublished_ports|join:", " }}</span></li>{% endif %}
+            {% if mismatch.extra_published_ports %}<li>{% translate "Ports the relay container publishes for no group:" %} <span class="font-mono">UDP {{ mismatch.extra_published_ports|join:", " }}</span></li>{% endif %}
           </ul>
           <p>{% translate "The panel writes its settings to the relay at the next sync. If this warning stays, press Update or Reinstall." %}</p>
         </div>

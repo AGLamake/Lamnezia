@@ -33,6 +33,9 @@ RESERVED_PORTS = frozenset({80, 443})
 
 _HERE = Path(__file__).resolve().parent.parent
 _PUBLISHED_UDP = re.compile(r":(\d+)->\d+/udp")
+# `docker inspect --format` of the ports the container was started to publish.
+PORT_BINDINGS = "{{json .HostConfig.PortBindings}}"
+_BOUND_UDP = re.compile(r'"(\d+)/udp"')
 
 
 def dockerfile() -> str:
@@ -41,6 +44,11 @@ def dockerfile() -> str:
 
 def agent_source() -> bytes:
     return (_HERE / "agent" / "relay_agent.py").read_bytes()
+
+
+def published_udp(port_bindings: str) -> frozenset[int]:
+    """The UDP ports in `docker inspect` output for `PORT_BINDINGS`."""
+    return frozenset(int(port) for port in _BOUND_UDP.findall(port_bindings))
 
 
 class RelayContainer:
@@ -67,8 +75,7 @@ class RelayContainer:
         """UDP ports the container publishes now; empty when there is no container."""
         if not self.exists:
             return set()
-        ports = self._docker.inspect("{{json .HostConfig.PortBindings}}")
-        return {int(port) for port in re.findall(r'"(\d+)/udp"', ports)}
+        return set(published_udp(self._docker.inspect(PORT_BINDINGS)))
 
     def check_ports(self, ports: Iterable[int]) -> None:
         """Refuse a port of the panel's web server or one another program or container uses.

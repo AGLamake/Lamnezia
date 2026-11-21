@@ -93,6 +93,29 @@ def test_nothing_or_an_unknown_form_loads_as_no_mismatch() -> None:
     assert not RelayMismatch.load({"groups": [{"port": "x"}]})
 
 
+def test_the_same_published_ports_in_any_order_are_no_mismatch() -> None:
+    same = RelayMismatch.of(config((PORT, MEMBERS)), state((PORT, MEMBERS)))
+
+    assert not same.with_published([PORT, FOREIGN_PORT], frozenset({FOREIGN_PORT, PORT}))
+
+
+def test_missing_and_extra_published_ports_are_a_mismatch() -> None:
+    found = RelayMismatch.of(config((PORT, MEMBERS)), state((PORT, MEMBERS))).with_published(
+        [PORT], [FOREIGN_PORT]
+    )
+
+    assert found
+    assert found.unpublished_ports == (PORT,)
+    assert found.extra_published_ports == (FOREIGN_PORT,)
+    assert RelayMismatch.load(found.to_dict()) == found
+
+
+def test_a_mismatch_stored_before_the_ports_were_compared_still_loads() -> None:
+    stored = {"foreign_ports": [FOREIGN_PORT], "missing_ports": [], "groups": []}
+
+    assert RelayMismatch.load(stored) == RelayMismatch(foreign_ports=(FOREIGN_PORT,))
+
+
 # The monitor and the sync on an installed relay.
 
 
@@ -102,6 +125,7 @@ class Agent:
     def __init__(self, fake: FakeRelayServer) -> None:
         self._fake = fake
         self.now = timezone.now()
+        self.connections = 0
 
     def writes(self, *groups: tuple[int, tuple[Backend, ...]]) -> None:
         self.now = timezone.now() + timedelta(seconds=1)
@@ -120,6 +144,7 @@ class Agent:
     def _connect(self) -> Callable[[Server], AbstractContextManager[RemoteHost]]:
         @contextmanager
         def connect(_server: Server) -> Iterator[RemoteHost]:
+            self.connections += 1
             yield self._fake.host()
 
         return connect
@@ -165,7 +190,9 @@ def test_a_replaced_config_is_written_again_by_the_next_sync(
 
     relay = agent.poll(installed)
 
-    assert relay.settings_mismatch == RelayMismatch((FOREIGN_PORT,), (PORT,))
+    assert relay.settings_mismatch == RelayMismatch(
+        (FOREIGN_PORT,), (PORT,), unpublished_ports=(PORT,), extra_published_ports=(FOREIGN_PORT,)
+    )
     assert relay.synced == ""
     assert [health.port for health in relay.groups_health] == []
 
@@ -178,6 +205,59 @@ def test_a_replaced_config_is_written_again_by_the_next_sync(
     relay = agent.poll(relay)
     assert not relay.settings_mismatch
     assert [health.port for health in relay.groups_health] == [PORT]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ports",
+    [
+        (set(), RelayMismatch(unpublished_ports=(PORT,))),
+        ({PORT, FOREIGN_PORT}, RelayMismatch(extra_published_ports=(FOREIGN_PORT,))),
+    ],
+    ids=["missing", "foreign"],
+)
+def test_a_container_on_other_ports_is_started_again_by_the_next_sync(
+    installed: Relay,
+    agent: Agent,
+    relay_fake: FakeRelayServer,
+    django_capture_on_commit_callbacks: OnCommit,
+    ports: tuple[set[int], RelayMismatch],
+) -> None:
+    # The agent forwards the panel's group, but the container was started on other ports.
+    relay_fake.ports, expected = ports
+    agent.writes((PORT, MEMBERS))
+
+    relay = agent.poll(installed)
+
+    assert relay.settings_mismatch == expected
+    assert relay.synced == ""
+    assert agent.connections == 1, "the ports are read over the connection of the state"
+
+    relay_fake.docker_calls.clear()
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+    succeeded(Operation.objects.get(kind=UPDATE_KIND))
+    assert "run" in relay_fake.docker_calls, "the update started the container again"
+    assert relay_fake.ports == {PORT}
+
+    agent.writes((PORT, MEMBERS))
+    assert not agent.poll(relay).settings_mismatch
+
+
+@pytest.mark.django_db
+def test_ports_docker_does_not_tell_leave_the_state_judged(
+    installed: Relay, agent: Agent, relay_fake: FakeRelayServer
+) -> None:
+    synced = installed.synced
+    relay_fake.ports, relay_fake.inspect_fails = set(), True
+    agent.writes((PORT, MEMBERS))
+
+    relay = agent.poll(installed)
+
+    assert relay.read_error == ""
+    assert relay.read_at is not None
+    assert not relay.settings_mismatch, "unknown ports are no mismatch"
+    assert relay.synced == synced
 
 
 @pytest.mark.django_db

@@ -192,11 +192,14 @@ server. Move the group to another server with **Switch to this server**. The mar
 relay is updated (**Update** on the card).
 
 On every reading the panel compares the groups and members the agent forwards with what the panel
-wrote. When the config on the server was replaced (a group the panel does not have, a group of the
-panel missing, or other members in a group), the relay card warns that **the relay on the server
-has other settings** and lists the differences; foreign groups are left out of the traffic list.
-The next sync writes the panel's settings again by itself and, when a port of a group is not
-published, starts the container again with the right ports. If the same difference stays after
+wrote and, over the same SSH connection, the UDP ports the relay container publishes. When the
+config on the server was replaced (a group the panel does not have, a group of the panel missing,
+or other members in a group) or the container runs with another set of ports (a port of a group
+not published, or a port published for no group), the relay card warns that **the relay on the
+server has other settings** and lists the differences; foreign groups are left out of the traffic
+list. The order of the ports does not matter. The next sync writes the panel's settings again by
+itself and, when the published ports differ from the ports of the groups, starts the container
+again with the right ports. If the same difference stays after
 that, the panel no longer updates the relay by itself and only shows the warning: press
 **Update** or **Reinstall**.
 

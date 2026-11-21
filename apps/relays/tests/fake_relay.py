@@ -20,6 +20,7 @@ class FakeRelayServer(FakeDebianServer):
 
     `files` of a container started with the relay volume are the files of `volume`: they stay
     when the container goes; `volume` is None while docker has no such volume.
+    `inspect_fails` makes `docker inspect` fail as a busy docker daemon would.
     """
 
     commands: set[str] = field(default_factory=lambda: {"docker", "fuser", "lsof"})
@@ -35,6 +36,7 @@ class FakeRelayServer(FakeDebianServer):
     has_image: bool = False
     docker_calls: list[str] = field(default_factory=list)
     ifb_loaded: bool = False
+    inspect_fails: bool = False
 
     def run(
         self, command: str, *, stdin: bytes = b"", timeout: float | None = None
@@ -74,6 +76,8 @@ class FakeRelayServer(FakeDebianServer):
         if verb == "restart":
             assert self.state
             return result()
+        if verb == "inspect" and self.inspect_fails:
+            return result(exit_code=1, stderr=b"Cannot connect to the Docker daemon")
         if verb == "inspect":
             bindings = {f"{port}/udp": [{"HostPort": str(port)}] for port in self.ports}
             return result(stdout=json.dumps(bindings).encode())
