@@ -1880,6 +1880,9 @@ msgstr "%(server)s догонит группу позже"
 msgid "Leave a server group"
 msgstr "Выход из группы серверов"
 
+msgid "Leave the container on the server that does not answer"
+msgstr "Оставить контейнер на сервере, который не отвечает"
+
 msgid "Leave the group"
 msgstr "Выйти из группы"
 

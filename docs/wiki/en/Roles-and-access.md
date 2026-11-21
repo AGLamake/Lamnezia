@@ -80,7 +80,8 @@ articles stay shared across the panel.
 
 **Deleting a server.** The server page has **Delete** for an administrator and for the only server
 administrator of the server. The panel forgets the server and touches nothing on it, so the server
-must have no protocols or services left. A server shared by several server administrators cannot be
+must have no protocols or services left, and no relay of server groups: an administrator removes
+the relay first ([Server groups](Server-groups.md)). A server shared by several server administrators cannot be
 deleted by one of them: each of them can **Leave** its list instead, and it stays with the others.
 
 ## Moderator's zone

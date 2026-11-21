@@ -16,6 +16,7 @@ from apps.notifications.services.channels import DeliveryError, HttpClient
 from apps.relays.tests.fake_relay import FakeRelayServer
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
+from apps.ssh.errors import ErrorCode, SshError
 from apps.ssh.services import RemoteHost
 
 RELAY_HOST = "203.0.113.30"
@@ -60,12 +61,14 @@ def relay_fake() -> FakeRelayServer:
 
 @pytest.fixture
 def relay_server(
-    relay_fake: FakeRelayServer, servers: Fakes, monkeypatch: pytest.MonkeyPatch
+    relay_fake: FakeRelayServer, servers: Fakes, down: set[str], monkeypatch: pytest.MonkeyPatch
 ) -> Server:
     """The relay machine, connected by the deployment; members connect as in the group tests."""
 
     @contextmanager
     def connect(server: Server) -> Iterator[RemoteHost]:
+        if server.host in down:
+            raise SshError(ErrorCode.HOST_UNREACHABLE, server.host)
         if server.host == RELAY_HOST:
             yield relay_fake.host()
         else:

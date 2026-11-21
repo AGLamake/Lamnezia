@@ -495,6 +495,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Deleting a relay server**: a server with the relay of server groups is no longer deleted from
+  the panel, which left the keys of the groups on the address of the relay; the refusal asks to
+  remove the relay first, which moves the keys back to the leading servers and takes the service
+  peers off the members. Removing the relay of a server that does not answer now works too: the
+  container stays on that server, and the keys and service peers are handled as usual.
+
 - **Relay stopped forwarding after the split routing update**: the agent named an nft chain
   `mark`, which is an nft keyword, so the whole rule set failed to load and no group was
   forwarded. The chain is now called `steer`; updating the agent brings the relay back.

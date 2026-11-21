@@ -154,7 +154,14 @@ interval or fewer failures switch sooner but react to short losses too. **Remove
 the members, the leading server first. A member that does not answer is marked lagging and loses
 the peer on its catch-up; when the leading server does not answer, the panel keeps the peer on every
 member, and when it fails to drop the peer, the removal fails. Keys of the groups go back to the
-address of their leading servers, and their owners are told to import them again.
+address of their leading servers, and their owners are told to import them again. A relay server
+that does not answer is removed all the same: its container stays on it (an install on that server
+later replaces it), and the step **Leave the container on the server that does not answer** says
+so.
+
+A relay server is not deleted from the panel while it has the relay: remove the relay first, so the
+keys of its groups go back to their leading servers and the service peers leave the members, then
+delete the server.
 
 Every `LAMNEZIA_RELAY_MONITOR_INTERVAL` seconds the panel reads the state the agent writes. The
 group page shows for each member whether the relay reaches it, which one is **active** now and

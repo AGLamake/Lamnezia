@@ -3,7 +3,9 @@
 A server shared by several owners (server administrators) is deleted only by the administrator
 or by its one remaining owner; any other owner can only leave its list. Deleting forgets the
 server in the panel and touches nothing on it, so a server still running protocols or services
-is refused: their keys and backups would be lost.
+is refused: their keys and backups would be lost. So is the relay of server groups: only the
+removal of the relay moves the keys of its groups back to their leading servers and takes its
+service peers off the members.
 """
 
 from functools import cached_property
@@ -53,6 +55,8 @@ class ServerStaff:
             raise ServerStaffError(_("The server has other owners: leave its list instead."))
         if self._in_use():
             raise ServerStaffError(_("Remove the protocols and services of the server first."))
+        if Server.objects.filter(pk=self._server.pk, relay_role__isnull=False).exists():
+            raise ServerStaffError(self._relay_refusal())
         server = self._server
         audit.log(DELETE, actor=self._member, target=server, data={"name": server.name}, ip=ip)
         KnownHostVerifier().forget(server.host, server.port)
@@ -75,6 +79,17 @@ class ServerStaff:
     def _owners(self) -> list[int]:
         owners = self._server.moderators.filter(role=Role.OWNER)
         return sorted(owners.values_list("pk", flat=True))
+
+    def _relay_refusal(self) -> str:
+        if self._zone.is_whole:
+            return _(
+                "The server is the relay of server groups: remove the relay on its card first, "
+                "so the keys of the groups go back to their leading servers."
+            )
+        return _(
+            "The server is the relay of server groups: ask an administrator to remove the relay "
+            "first, so the keys of the groups go back to their leading servers."
+        )
 
     def _in_use(self) -> bool:
         server = self._server

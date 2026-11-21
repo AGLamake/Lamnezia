@@ -2,7 +2,8 @@
 
 An update gives every group of the relay its service peers on the members first, then writes
 the clone peers of the split groups and the members in order to the agent, and only then takes
-the uplink peer off the groups that are forwarded again; a removal takes the peers off. A key
+the uplink peer off the groups that are forwarded again; a removal takes the peers off, even
+when the relay server itself no longer answers. A key
 or list change of a split group needs only its files: a lighter operation writes just them. The
 relay server is locked only for its own container: a member on the same server takes the same
 lock for its peers.
@@ -32,6 +33,7 @@ from apps.relays.services.container import RESERVED_PORTS, RelayContainer
 from apps.relays.services.service_peers import ServicePeerPlacement
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
+from apps.ssh.errors import SshError
 from apps.ssh.services import RemoteHost
 
 INSTALL_KIND = "relays.install"
@@ -110,16 +112,27 @@ class RelayDeployment:
     def remove(self) -> None:
         """Drop the container and the service peers of its groups from their members; the keys
         of the groups go back to their leading servers."""
-        with ExitStack() as stack:
-            host = self._connect(stack)
-            with self._lock(host):
-                RelayContainer(host, self._ctx).remove()
+        self._remove_container()
         groups = [group for group, _members in RelayPlan.of(self._relay.server).groups]
         for group in groups:
             ServicePeerPlacement(group, self._ctx).withdraw()
         self._relay.delete()
         title = _("Move the keys of the groups back to their leading servers")
         self._move_keys([GroupKeyAddress(group) for group in groups], title)
+
+    def _remove_container(self) -> None:
+        """A relay server that does not answer keeps its container: clients cannot reach the
+        groups through it anyway, so their keys still go back to the leading servers, and an
+        install on the server later replaces the container."""
+        with ExitStack() as stack:
+            try:
+                host = self._connect(stack)
+            except SshError as error:
+                with self._ctx.step(_("Leave the container on the server that does not answer")):
+                    self._ctx.log(error.message)
+                return
+            with self._lock(host):
+                RelayContainer(host, self._ctx).remove()
 
     def _connect(self, stack: ExitStack) -> RemoteHost:
         with self._ctx.step(_("Connect to the server")):

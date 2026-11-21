@@ -194,6 +194,12 @@ msgstr "У сервера есть другие владельцы: вместо
 msgid "The server is deleted from the panel."
 msgstr "Сервер удалён из панели."
 
+msgid "The server is the relay of server groups: ask an administrator to remove the relay first, so the keys of the groups go back to their leading servers."
+msgstr "Сервер — ретранслятор групп серверов: попросите администратора сначала удалить ретранслятор, чтобы ключи групп вернулись на их ведущие серверы."
+
+msgid "The server is the relay of server groups: remove the relay on its card first, so the keys of the groups go back to their leading servers."
+msgstr "Сервер — ретранслятор групп серверов: сначала удалите ретранслятор на его карточке, чтобы ключи групп вернулись на их ведущие серверы."
+
 msgid "This port is used by SSH or a protocol on the server."
 msgstr "Этот порт занят SSH или протоколом на сервере."
 
