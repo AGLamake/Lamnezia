@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Plan staff serve its users**: a user given a plan — by hand, by payment, by a bulk change or
+  with the trial plan at registration — is linked to the plan's staff members, marked "from the
+  plan". Another plan or no plan replaces or drops these links, a change of the plan's staff
+  relinks its users, and links made by hand stay. A moderator with the user quota used up is
+  skipped and the audit journal says so. Nothing to do on upgrade.
 - **Server administrator**: a new staff role that runs its own servers whole — adds them, installs
   protocols, changes settings, restores backups — and creates plans on them; it sees the orders,
   statistics, dashboard and audit log of its zone only, and gives section levels to its

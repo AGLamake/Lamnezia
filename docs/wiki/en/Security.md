@@ -114,6 +114,14 @@ quota applies wherever a new key is issued: the issue form, the portal and the b
 user with several moderators counts for each of them, so a new key stops once any of them has
 reached their key quota.
 
+**Staff of a plan.** A plan may have its own staff members (a server administrator who creates a
+plan is put on it). A user given the plan — by hand, by payment, by a bulk change of plan or with
+the trial plan at registration — is served by each of them; such links are marked "from the plan".
+Another plan replaces them with the staff of the new one, taking the plan away drops them, and a
+change of the plan's staff relinks all its users at once. Links made by hand are never touched: a
+member linked by hand stays so, without a second link. A moderator whose user quota is used up is
+skipped, and the audit journal records **Plan staff member skipped: user quota**.
+
 The first administrator is created with a command; it asks for the password:
 
 ```bash

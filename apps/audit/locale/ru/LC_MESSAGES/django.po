@@ -207,6 +207,9 @@ msgstr "Перемещение полезного материала"
 msgid "Object"
 msgstr "Объект"
 
+msgid "Plan staff member skipped: user quota"
+msgstr "Сотрудник тарифа пропущен: квота пользователей"
+
 msgid "Publish FAQ article"
 msgstr "Публикация статьи FAQ"
 

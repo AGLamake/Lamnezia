@@ -72,6 +72,7 @@ _LABELS: dict[str, Promise] = {
     "plans.update": _("Edit plan"),
     "plans.delete": _("Delete plan"),
     "plans.limits": _("Change user limits"),
+    "plans.binding_skipped": _("Plan staff member skipped: user quota"),
     "protocols.readdress": _("Move keys to the new server address"),
     "protocols.service_links_view": _("Show Telegram proxy links"),
     "protocols.service_password_view": _("Show service password"),

@@ -193,3 +193,16 @@ def test_a_provider_cannot_settle_an_order_of_another_one(provider: FakeProvider
         settle("other", notice(order.number), NOW)
     with pytest.raises(UnknownOrderError):
         settle("fake", notice("00000000-0000-0000-0000-000000000000"), NOW)
+
+
+def test_payment_links_the_staff_of_the_plan(provider: FakeProvider) -> None:
+    member = UserFactory(role=Role.MODERATOR)
+    plan = monthly()
+    plan.staff.add(member)
+    user = UserFactory()
+    order = checkout(user, plan, provider)
+
+    settle("fake", notice(order.number), NOW)
+
+    assert list(user.managers.all()) == [member]
+    assert user.managements.get().via_plan

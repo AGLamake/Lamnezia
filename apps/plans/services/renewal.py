@@ -6,6 +6,7 @@ from django.db import transaction
 
 from apps.accounts.models import User
 from apps.plans.models import Plan, UserLimits
+from apps.plans.services.binding import PlanBinding
 from apps.plans.services.limits import EffectiveLimits
 
 
@@ -38,4 +39,5 @@ def renew(user: User, plan: Plan, days: int | None, now: datetime) -> UserLimits
             limits.plan_assigned_at = now
         limits.access_until = None if days is None else now + timedelta(days=days)
         limits.save(update_fields=["plan", "plan_assigned_at", "access_until"])
+        PlanBinding.apply(user, plan)
     return limits

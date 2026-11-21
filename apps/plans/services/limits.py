@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.plans.models import Plan, UserLimits
+from apps.plans.services.binding import PlanBinding
 
 
 @dataclass(frozen=True)
@@ -121,12 +122,14 @@ def effective_limits(user: User) -> EffectiveLimits:
 
 
 def assign_plan(user: User, plan: Plan | None, now: datetime | None = None) -> UserLimits:
-    """Give the user a plan; the access term starts again. Personal overrides are kept."""
+    """Give the user a plan and its staff; the access term starts again. Personal overrides
+    are kept."""
     with transaction.atomic():
         limits, _created = UserLimits.objects.select_for_update().get_or_create(user=user)
         limits.plan = plan
         limits.plan_assigned_at = (now or timezone.now()) if plan else None
         limits.save(update_fields=["plan", "plan_assigned_at"])
+        PlanBinding.apply(user, plan)
     return limits
 
 
