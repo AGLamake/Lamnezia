@@ -27,7 +27,7 @@ from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
 from apps.protocols.tests.fake_awg import FakeAwgServer
 from apps.relays.errors import RelayError, RelayErrorCode
 from apps.relays.models import Relay, ServicePeer, SyncSkip
-from apps.relays.services import config, deployment
+from apps.relays.services import config, container, deployment
 from apps.relays.services.container import FOLDER
 from apps.relays.services.deployment import INSTALL_KIND, REMOVE_KIND, UPDATE_KIND, sync_relays
 from apps.relays.tests.conftest import RELAY_HOST
@@ -351,6 +351,35 @@ def test_sync_updates_a_relay_whose_group_changed(  # noqa: PLR0913, PLR0917
 
     succeeded(Operation.objects.get(kind=UPDATE_KIND))
     assert relay_fake.ports == {51820}
+
+
+@pytest.mark.usefixtures("relayed")
+def test_sync_updates_a_relay_once_after_a_new_agent(  # noqa: PLR0913, PLR0917
+    relay_server: Server,
+    relay_fake: FakeRelayServer,
+    admin: User,
+    start: Start,
+    monkeypatch: MonkeyPatch,
+    django_capture_on_commit_callbacks: OnCommit,
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    installed = Relay.objects.get(server=relay_server).synced
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+    assert not Operation.objects.filter(kind=UPDATE_KIND).exists(), "the digest is stable"
+
+    new_agent = b"# the agent of a new panel version\n"
+    monkeypatch.setattr(config, "agent_source", lambda: new_agent)
+    monkeypatch.setattr(container, "agent_source", lambda: new_agent)
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+    succeeded(Operation.objects.get(kind=UPDATE_KIND))
+    assert relay_fake.files[f"{FOLDER}/agent.py"] == new_agent
+    assert Relay.objects.get(server=relay_server).synced != installed
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+    assert Operation.objects.filter(kind=UPDATE_KIND).count() == 1, "one update per version"
 
 
 def test_sync_waits_for_a_running_operation(

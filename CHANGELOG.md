@@ -495,6 +495,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Relay agent of a new version**: a panel version with a changed relay agent now
+  delivers it to installed relays without a reinstall: the sync updates each relay once after the
+  upgrade, and nothing more while the agent and the settings stay the same.
 - **Relay update after a busy server**: an update of a relay or of its service peers that found a
   server busy with another operation, such as a settings change of the group, runs again as soon
   as that operation is over instead of waiting for the sync by the minute. One finished operation

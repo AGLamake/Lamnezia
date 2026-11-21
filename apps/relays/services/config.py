@@ -3,9 +3,10 @@
 The panel writes the result to the relay as config.json (docs/FALLBACK.md section 5); the
 digest of the written file and the published ports tells a sync whether the relay got the groups
 as they are now. The file holds resolved addresses, so a member name that moves to another IP
-changes the digest too. A split group also has its clone and uplink there, and the peers of
-its clone (services/clone.py), its network list and its own domains (services/split_lists.py)
-in files of their own, and so do the speed limits of its keys on the clone.
+changes the digest too, and so does the agent code of a new panel version: each relay gets one
+update after it. A split group also has its clone and uplink there, and the peers of its clone
+(services/clone.py), its network list and its own domains (services/split_lists.py) in files of
+their own, and so do the speed limits of its keys on the clone.
 """
 
 import hashlib
@@ -33,6 +34,7 @@ from apps.groups.services.replication import backends
 from apps.protocols.services.installer import ipv4_addresses
 from apps.relays.models import PeerRole, Relay, ServicePeer
 from apps.relays.services.clone import clone_peers
+from apps.relays.services.container import agent_source
 from apps.relays.services.split_lists import GroupList
 from apps.servers.models import Server
 from apps.traffic.services.speed import SpeedLimiter, clone_speed_script
@@ -61,9 +63,11 @@ class RelayPlan:
         return {group.port for group, _members in self.groups}
 
     def digest(self, config: RelayConfig) -> str:
-        """The digest of `config` of this plan and of the ports the relay publishes: it changes
-        with a port, a member, its order or address, the service peer or the agent settings."""
-        data = [sorted(self.ports), config.to_json()]
+        """The digest of `config` of this plan, of the ports the relay publishes and of the
+        agent code: it changes with a port, a member, its order or address, the service peer,
+        the agent settings or a panel version with another agent, which the update writes."""
+        agent = hashlib.sha256(agent_source()).hexdigest()
+        data = [sorted(self.ports), config.to_json(), agent]
         return hashlib.sha256(json.dumps(data).encode()).hexdigest()
 
     def config(self) -> RelayConfig:
