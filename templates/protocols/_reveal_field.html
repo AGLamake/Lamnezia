@@ -1,0 +1,3 @@
+{% load i18n %}
+{# Under a field of a form, so not a form itself: htmx asks for the value, the look goes to the journal. #}
+<button type="button" class="help-text cursor-pointer hover:underline" hx-post="{% url action pk %}" hx-swap="outerHTML">{% translate "Show the current value" %}</button>

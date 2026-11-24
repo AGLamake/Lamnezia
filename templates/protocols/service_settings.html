@@ -16,7 +16,9 @@
   {% csrf_token %}
   {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
   {{ form.port.as_field_group }}
-  {% for field in form.extra_fields %}{{ field.as_field_group }}{% endfor %}
+  {% for field, reveal in form.extra_fields %}
+    <div>{{ field.as_field_group }}{% if reveal %}{% include "protocols/_reveal_field.html" with action=reveal pk=service.pk %}{% endif %}</div>
+  {% endfor %}
   <div><button type="submit" class="btn btn-primary">{% translate "Apply" %}</button></div>
 </form>
 {% endblock %}

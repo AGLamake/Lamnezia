@@ -661,6 +661,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Proxy settings forms without secrets**: the settings page of SOCKS5 no longer puts the current
+  password in its field, nor the page of MTProxy and Telemt the additional secrets. An empty field
+  keeps them, **Remove the additional secrets** clears the extra secrets, and **Show the current
+  value** under the field asks for them, written to the audit log (*Show service password*, *Show
+  additional proxy secrets*), as on the server card.
 - **Additional MTProxy and Telemt secrets encrypted in operations**: installing a Telegram proxy
   and changing its settings keep the additional secrets encrypted in the operation parameters, as
   the SOCKS5 password, and no longer write them to the audit log. `rotate_encryption_key`

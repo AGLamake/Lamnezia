@@ -76,6 +76,7 @@ _LABELS: dict[str, Promise] = {
     "protocols.readdress": _("Move keys to the new server address"),
     "protocols.service_links_view": _("Show Telegram proxy links"),
     "protocols.service_password_view": _("Show service password"),
+    "protocols.service_extra_secrets_view": _("Show additional proxy secrets"),
     "protocols.speed_limit": _("Change speed limit of server"),
     "relays.split_source_add": _("Add network list source"),
     "relays.split_source_toggle": _("Turn network list source on or off"),

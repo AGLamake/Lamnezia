@@ -258,6 +258,9 @@ msgstr "Восстановление встроенной статьи или м
 msgid "Show Telegram proxy links"
 msgstr "Показ ссылок прокси Telegram"
 
+msgid "Show additional proxy secrets"
+msgstr "Показ дополнительных секретов прокси"
+
 msgid "Show key"
 msgstr "Показ ключа"
 

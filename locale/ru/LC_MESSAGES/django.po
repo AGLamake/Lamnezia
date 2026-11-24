@@ -3302,6 +3302,9 @@ msgstr "Показать всех"
 msgid "Show key"
 msgstr "Показать ключ"
 
+msgid "Show the current value"
+msgstr "Показать текущее значение"
+
 msgid "Show the key"
 msgstr "Показать ключ"
 

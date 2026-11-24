@@ -1,7 +1,9 @@
 """Settings forms of the proxies, with the fields and checks of their pages in the Amnezia app.
 
 SOCKS5 has its port and account, MTProxy and Telemt the settings of the install form and TProxy
-its domain. A port taken by another container of the server is refused, as at the install.
+its domain. A port taken by another container of the server is refused, as at the install. The
+SOCKS5 password and the additional secrets are not put in the page: an empty field keeps them, and
+a button shows them with a record in the journal, as on the server card.
 """
 
 import copy
@@ -19,6 +21,7 @@ from apps.accounts.models import User
 from apps.operations.models import Operation
 from apps.protocols.install_form import InstallForm, proxy_errors
 from apps.protocols.models import ServiceInstance
+from apps.protocols.services.extra_secrets import EXTRA_SECRETS_FIELD
 from apps.protocols.services.installation import used_ports
 from apps.protocols.services.installer import installers
 from apps.protocols.services.service_settings import (
@@ -31,6 +34,7 @@ _TEXT = forms.TextInput(attrs={"spellcheck": "false", "autocomplete": "off"})
 # 3proxy.cfg keeps the account as `users user:CL:password`; the app and the panel read it back
 # with `users (\w+):CL:(\w+)`, so any other character would cut the password.
 _ACCOUNT_PART = re.compile(r"\w+", re.ASCII)
+_CLEAR_SECRETS = "clear_additional_secrets"
 
 
 class ServiceSettingsForm(forms.Form):
@@ -49,10 +53,15 @@ class ServiceSettingsForm(forms.Form):
         """The current values of the fields besides the port."""
         return {}
 
+    def reveals(self) -> dict[str, str]:
+        """The secret fields with a current value, by the URL name of the view that shows it."""
+        return {}
+
     @property
-    def extra_fields(self) -> list[forms.BoundField]:
-        """The fields besides the port, shown under it."""
-        return [self[name] for name in self.fields if name != "port"]
+    def extra_fields(self) -> list[tuple[forms.BoundField, str | None]]:
+        """The fields besides the port, shown under it, with the URL that shows their secret."""
+        reveals = self.reveals()
+        return [(self[name], reveals.get(name)) for name in self.fields if name != "port"]
 
     def clean_port(self) -> int:
         port: int = self.cleaned_data["port"]
@@ -75,16 +84,29 @@ class Socks5SettingsForm(ServiceSettingsForm):
     """Port, user name and password of SOCKS5, as on the app's page."""
 
     user = forms.CharField(label=_("User name"), max_length=64, widget=_TEXT)
-    password = forms.CharField(label=_("Password"), max_length=64, widget=_TEXT)
+    password = forms.CharField(
+        label=_("Password"),
+        max_length=64,
+        required=False,
+        widget=_TEXT,
+        help_text=_("Empty: keep the current password."),
+    )
 
     def initial_of(self, service: ServiceInstance) -> dict[str, Any]:
-        return {"user": service.login, "password": service.secret}
+        return {"user": service.login}
+
+    def reveals(self) -> dict[str, str]:
+        return {"password": "protocols:service-password"} if self.service.secret else {}
 
     def clean_user(self) -> str:
         return self._account_part("user")
 
     def clean_password(self) -> str:
-        return self._account_part("password")
+        if self.cleaned_data["password"]:
+            return self._account_part("password")
+        if not self.service.secret:
+            raise forms.ValidationError(_("Enter a password."))
+        return ""
 
     def _account_part(self, name: str) -> str:
         value: str = self.cleaned_data[name]
@@ -95,13 +117,15 @@ class Socks5SettingsForm(ServiceSettingsForm):
     @property
     def settings(self) -> ServiceSettings:
         data = self.cleaned_data
-        return ServiceSettings(data["port"], {"user": data["user"]}, data["password"])
+        password = data["password"] or self.service.secret
+        return ServiceSettings(data["port"], {"user": data["user"]}, password)
 
 
 class MtProtoSettingsForm(ServiceSettingsForm):
     """MTProxy and Telemt: the settings of the install form, those the proxy has, as in the app.
 
     A setting the import of an older panel did not keep is not overwritten with an empty field.
+    An empty field of the additional secrets keeps them; a check box removes them.
     """
 
     def __init__(self, *args: Any, service: ServiceInstance, **kwargs: Any) -> None:
@@ -111,9 +135,32 @@ class MtProtoSettingsForm(ServiceSettingsForm):
             if name in ("mode", "tls_domain"):
                 field.required = True
             self.fields[name] = field
+            if name == EXTRA_SECRETS_FIELD and self._current_secrets:
+                field.help_text = _(
+                    "Secrets of 32 hex digits separated by commas. Empty: keep the current ones."
+                )
+                self.fields[_CLEAR_SECRETS] = forms.BooleanField(
+                    label=_("Remove the additional secrets"), required=False
+                )
 
     def initial_of(self, service: ServiceInstance) -> dict[str, Any]:
-        return dict(service.settings)
+        return {
+            name: value for name, value in service.settings.items() if name != EXTRA_SECRETS_FIELD
+        }
+
+    def reveals(self) -> dict[str, str]:
+        if not self._current_secrets:
+            return {}
+        return {EXTRA_SECRETS_FIELD: "protocols:service-extra-secrets"}
+
+    @property
+    def _current_secrets(self) -> str:
+        return str(self.service.settings.get(EXTRA_SECRETS_FIELD) or "")
+
+    @property
+    def _keeps_secrets(self) -> bool:
+        """The additional secrets field is empty and the box to remove them is not checked."""
+        return not self._text(EXTRA_SECRETS_FIELD) and not self.cleaned_data.get(_CLEAR_SECRETS)
 
     def clean(self) -> dict[str, Any]:
         data = super().clean() or {}
@@ -127,8 +174,12 @@ class MtProtoSettingsForm(ServiceSettingsForm):
         values = {
             name: value.lower() if "ip" not in name else value for name, value in values.items()
         }
-        secrets = parse_secret_list(values.pop("additional_secrets", ""))
-        return TelegramProxyOptions.from_params({**values, "additional_secrets": secrets})
+        secrets = values.pop(EXTRA_SECRETS_FIELD, "")
+        if self._keeps_secrets:
+            secrets = self._current_secrets
+        return TelegramProxyOptions.from_params(
+            {**values, EXTRA_SECRETS_FIELD: parse_secret_list(secrets)}
+        )
 
     def _text(self, name: str) -> str:
         return str(self.cleaned_data.get(name) or "").strip()
@@ -140,7 +191,8 @@ class MtProtoSettingsForm(ServiceSettingsForm):
         options = {
             name: params[name]
             for name in self.installer.install_fields
-            if name in known or self._text(name)
+            if (name in known or self._text(name))
+            and not (name == EXTRA_SECRETS_FIELD and self._keeps_secrets)
         }
         return ServiceSettings(self.cleaned_data["port"], options)
 

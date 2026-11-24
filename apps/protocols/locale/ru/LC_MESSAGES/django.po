@@ -327,6 +327,9 @@ msgstr "E-mail для сертификата"
 msgid "Each secret must be 32 hex digits."
 msgstr "Каждый секрет — 32 шестнадцатеричные цифры."
 
+msgid "Empty: keep the current password."
+msgstr "Пусто — не менять текущий пароль."
+
 msgid "Empty: the e-mail given at the install."
 msgstr "Пусто — e-mail, указанный при установке."
 
@@ -353,6 +356,9 @@ msgstr "Введите сеть вида 10.8.1.0/24."
 
 msgid "Enter a number or a range like 100-200."
 msgstr "Введите число или диапазон вида 100-200."
+
+msgid "Enter a password."
+msgstr "Введите пароль."
 
 msgid "Enter a whole number."
 msgstr "Введите целое число."
@@ -742,6 +748,9 @@ msgstr "Перевыпустить ключи, импортированные с
 msgid "Remove it with `docker volume rm` on the server, or try again."
 msgstr "Удалите его командой `docker volume rm` на сервере или повторите."
 
+msgid "Remove the additional secrets"
+msgstr "Удалить дополнительные секреты"
+
 msgid "Remove the container"
 msgstr "Удалить контейнер"
 
@@ -836,6 +845,9 @@ msgstr "Сохранение файлов настроек"
 
 msgid "Secondary DNS"
 msgstr "Запасной DNS"
+
+msgid "Secrets of 32 hex digits separated by commas. Empty: keep the current ones."
+msgstr "Секреты из 32 шестнадцатеричных цифр через запятую. Пусто — не менять текущие."
 
 msgid "Secrets of 32 hex digits separated by commas; the links use the main one."
 msgstr "Секреты из 32 шестнадцатеричных цифр через запятую; в ссылках — основной."

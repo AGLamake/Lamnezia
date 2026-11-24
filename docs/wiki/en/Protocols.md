@@ -468,10 +468,14 @@ reconnect or must import their key again.
   contain `$`, `` ` ``, `\` or a line `EOF`, because the app passes them through a shell script.
 - **SOCKS5**: port, user name and password. Only Latin letters, digits and `_` are allowed, because
   the app reads the 3proxy account with `\w+`. The password goes to the operation encrypted and is
-  not written to the audit log.
+  not written to the audit log. The page does not hold the current password: an empty field keeps
+  it, and **Show the current value** under the field asks for it, written to the audit log as
+  *Show service password*.
 - **MTProxy, Telemt**: the port and the settings of the install form (mode, Fake TLS domain, public
   host, tag, extra secrets, NAT). The secret stays in the data volume, so the links change only with
-  the port, the domain or the mode.
+  the port, the domain or the mode. The page does not hold the current extra secrets: an empty field
+  keeps them, **Remove the additional secrets** clears them, and **Show the current value** asks for
+  them, written to the audit log as *Show additional proxy secrets*.
 - **TProxy**: port, domain and the certificate e-mail (empty: the one given at the install).
 
 On the same port the proxy runs `configure_container.sh` with the new settings and restarts; the

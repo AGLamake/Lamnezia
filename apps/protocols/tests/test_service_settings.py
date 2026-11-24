@@ -217,15 +217,55 @@ def test_mtproxy_additional_secrets_stay_out_of_the_params_and_the_journal(
     assert "additional_secrets_token" not in audit.data
 
 
-def test_mtproxy_additional_secrets_are_cleared_with_an_empty_field(
+def test_mtproxy_additional_secrets_are_removed_with_the_check_box(
     host: FakeProxyHost, install: Callable[..., ServiceInstance], change: Callable[..., Operation]
 ) -> None:
     service = install(MTPROXY_CONTAINER, proxy=replace(FAKETLS, additional_secrets=(EXTRA,)))
+    data = {**service.settings, "port": 443, "additional_secrets": ""}
 
-    operation = change(service, **{**service.settings, "port": 443, "additional_secrets": ""})
+    operation = change(service, **data, clear_additional_secrets="on")
 
     assert operation.status == OperationStatus.SUCCEEDED, log_of(operation)
     assert "additional=\n" in mtproxy_meta(host)
+
+
+def test_mtproxy_additional_secrets_are_kept_with_an_empty_field(
+    host: FakeProxyHost, install: Callable[..., ServiceInstance], change: Callable[..., Operation]
+) -> None:
+    service = install(MTPROXY_CONTAINER, proxy=replace(FAKETLS, additional_secrets=(EXTRA,)))
+    data = {**service.settings, "port": 443, "additional_secrets": ""}
+
+    operation = change(service, **data)
+
+    assert operation.status == OperationStatus.SUCCEEDED, log_of(operation)
+    assert f"additional={EXTRA}\n" in mtproxy_meta(host)
+    assert "additional_secrets_token" not in operation.params
+
+
+def test_socks5_keeps_its_password_with_an_empty_field(
+    host: FakeProxyHost, install: Callable[..., ServiceInstance], change: Callable[..., Operation]
+) -> None:
+    service = install(SOCKS5_CONTAINER)
+    password = service.secret
+
+    operation = change(service, port=service.port, user="alice", password="")
+
+    assert operation.status == OperationStatus.SUCCEEDED, log_of(operation)
+    assert f"users alice:CL:{password}" in host.files[SOCKS5_CONTAINER][SOCKS5_CONFIG_PATH]
+    service.refresh_from_db()
+    assert (service.login, service.secret) == ("alice", password)
+
+
+def test_socks5_without_a_password_needs_one(install: Callable[..., ServiceInstance]) -> None:
+    service = install(SOCKS5_CONTAINER)
+    ServiceInstance.objects.filter(pk=service.pk).update(secret="")
+    service.refresh_from_db()
+
+    form = Socks5SettingsForm(
+        {"port": service.port, "user": "alice", "password": ""}, service=service
+    )
+
+    assert "password" in form.errors
 
 
 def test_mtproxy_settings_are_retried_after_the_encryption_key_is_rotated(
@@ -524,6 +564,81 @@ class TestProxySecrets:
         self, admin_client: Client, socks5: ServiceInstance
     ) -> None:
         assert admin_client.post(f"/protocols/services/{socks5.pk}/links/").status_code == 404
+        assert not AuditEvent.objects.exists()
+
+
+class TestSettingsPageSecrets:
+    """The settings forms leave the secrets out of the page and show them on request."""
+
+    @pytest.fixture
+    def socks5(self, server: Server) -> ServiceInstance:
+        return ServiceInstance.objects.create(
+            server=server,
+            container=SOCKS5_CONTAINER,
+            port=38080,
+            login="proxy-user",
+            secret="socks-password",
+            origin=InstanceOrigin.INSTALLED,
+        )
+
+    @pytest.fixture
+    def mtproxy(self, server: Server) -> ServiceInstance:
+        return ServiceInstance.objects.create(
+            server=server,
+            container=MTPROXY_CONTAINER,
+            port=443,
+            secret=SECRET,
+            settings={"mode": "faketls", "tls_domain": "example.com", "additional_secrets": EXTRA},
+            origin=InstanceOrigin.INSTALLED,
+        )
+
+    def test_the_forms_hold_no_secret(
+        self, admin_client: Client, socks5: ServiceInstance, mtproxy: ServiceInstance
+    ) -> None:
+        socks = admin_client.get(f"/protocols/services/{socks5.pk}/settings/").content.decode()
+        mt = admin_client.get(f"/protocols/services/{mtproxy.pk}/settings/").content.decode()
+
+        assert "socks-password" not in socks
+        assert f"/protocols/services/{socks5.pk}/password/" in socks
+        assert "proxy-user" in socks
+        assert EXTRA not in mt
+        assert f"/protocols/services/{mtproxy.pk}/extra-secrets/" in mt
+        assert 'name="clear_additional_secrets"' in mt
+        assert "example.com" in mt
+
+    def test_showing_the_additional_secrets_is_written_to_the_journal(
+        self, admin_client: Client, mtproxy: ServiceInstance
+    ) -> None:
+        response = admin_client.post(f"/protocols/services/{mtproxy.pk}/extra-secrets/")
+
+        assert EXTRA in response.content.decode()
+        assert "no-store" in response["Cache-Control"]
+        event = AuditEvent.objects.get()
+        assert (event.action, event.target_id) == (
+            "protocols.service_extra_secrets_view",
+            str(mtproxy.pk),
+        )
+        assert EXTRA not in str(event.data)
+
+    def test_only_admins_see_the_additional_secrets(
+        self, client: Client, mtproxy: ServiceInstance
+    ) -> None:
+        client.force_login(UserFactory(role=Role.MODERATOR))
+
+        assert client.post(f"/protocols/services/{mtproxy.pk}/extra-secrets/").status_code == 403
+        assert not AuditEvent.objects.exists()
+
+    def test_a_proxy_without_additional_secrets_has_none_to_show(
+        self, admin_client: Client, mtproxy: ServiceInstance, socks5: ServiceInstance
+    ) -> None:
+        ServiceInstance.objects.filter(pk=mtproxy.pk).update(settings={"mode": "faketls"})
+
+        for service in (mtproxy, socks5):
+            url = f"/protocols/services/{service.pk}/extra-secrets/"
+            assert admin_client.post(url).status_code == 404
+        html = admin_client.get(f"/protocols/services/{mtproxy.pk}/settings/").content.decode()
+        assert "extra-secrets" not in html
+        assert "clear_additional_secrets" not in html
         assert not AuditEvent.objects.exists()
 
 
