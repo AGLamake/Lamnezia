@@ -2,3 +2,4 @@
 # format of ssh-keygen. lamnezia-deploy release trusts the keys of the version it runs, so a new
 # key comes in a release signed with the old one. One line per key:
 #   lamnezia-release namespaces="lamnezia-release" ssh-ed25519 AAAA... comment
+lamnezia-release namespaces="lamnezia-release" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGL21/cXm999sJn2nzSqQDRJk5Or7ZbIgNSpMs2XxtZv lamnezia-release
