@@ -573,7 +573,12 @@
       body.append("p256dh", json.keys?.p256dh || "");
       body.append("auth", json.keys?.auth || "");
       const response = await fetch(url, { method: "POST", body, credentials: "same-origin" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        const failure = new Error(`HTTP ${response.status}`);
+        // Too soon for another test: the panel says when to try again.
+        if (response.status === 429) failure.text = (await response.json()).error;
+        throw failure;
+      }
       const answer = await response.json();
       box.querySelectorAll("[data-push-count]").forEach((element) => {
         element.textContent = answer.count;
@@ -627,7 +632,7 @@
       if (!button || button.getAttribute("aria-busy")) return;
       button.setAttribute("aria-busy", "true");
       actions[button.dataset.pushAction]()
-        .catch(() => showToast("error", data.pushErrorText))
+        .catch((error) => showToast(error.text ? "warning" : "error", error.text || data.pushErrorText))
         .finally(() => button.removeAttribute("aria-busy"));
     });
     refresh().catch(() => show("off"));

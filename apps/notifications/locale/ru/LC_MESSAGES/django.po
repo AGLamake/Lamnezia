@@ -16,6 +16,9 @@ msgstr "Число, например -1001234567890, или @имя_канала
 msgid "A test message is on its way. The result is in the log."
 msgstr "Тестовое сообщение отправляется. Результат — в журнале."
 
+msgid "A test notification was sent a moment ago. Try again in half a minute."
+msgstr "Тестовое уведомление только что отправлено. Попробуйте через полминуты."
+
 msgid "Access ends soon"
 msgstr "Доступ скоро закончится"
 

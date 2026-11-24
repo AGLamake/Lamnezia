@@ -6,8 +6,10 @@ sends the new subscription when the browser changes it).
 from typing import cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.http import HttpRequest, JsonResponse
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
@@ -18,6 +20,7 @@ from apps.notifications.services.delivery import send_browser_test
 
 _BAD_REQUEST = 400
 _FORBIDDEN = 403
+_TOO_MANY = 429
 
 
 class _PushView(LoginRequiredMixin, View):
@@ -97,9 +100,18 @@ class PushStateView(_PushView):
 
 
 class PushTestView(_PushView):
+    """A test push, at most once in `INTERVAL_SECONDS` for a user: the button could be pressed
+    without end, and each press sends to every browser of the user.
+    """
+
+    INTERVAL_SECONDS = 30
+
     def post(self, request: HttpRequest) -> JsonResponse:
         if not self.subscriptions.has(self.endpoint):
             return JsonResponse({"error": "this browser is not subscribed"}, status=_BAD_REQUEST)
+        if not cache.add(f"push-test:{request.user.pk}", True, timeout=self.INTERVAL_SECONDS):
+            message = _("A test notification was sent a moment ago. Try again in half a minute.")
+            return JsonResponse({"error": message}, status=_TOO_MANY)
         device = device_name(request.headers.get("User-Agent", "")) or "browser"
         send_browser_test(cast(User, request.user), device)
         return self.answer()

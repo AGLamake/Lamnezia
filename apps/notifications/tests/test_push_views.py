@@ -1,6 +1,8 @@
+from collections.abc import Iterator
 from typing import Any
 
 import pytest
+from django.core.cache import cache
 from django.test import Client
 
 from apps.accounts.models import User
@@ -13,6 +15,14 @@ from apps.notifications.tests.conftest import FakeHttp
 pytestmark = [pytest.mark.django_db, pytest.mark.usefixtures("public_dns")]
 
 FIREFOX = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
+
+
+@pytest.fixture(autouse=True)
+def _empty_cache() -> Iterator[None]:
+    """The limit on test pushes lives in the cache; no test may see another's."""
+    cache.clear()
+    yield
+    cache.clear()
 
 
 def signed_in(user: User) -> Client:
@@ -71,6 +81,32 @@ def test_a_test_push_reaches_the_browser(http: FakeHttp) -> None:
 
     assert answer.status_code == 200
     assert "Firefox" in browser.read(http.to(browser.endpoint)[0].body)["body"]
+
+
+@pytest.mark.usefixtures("commit")
+def test_another_test_push_too_soon_is_refused(http: FakeHttp) -> None:
+    user, browser = UserFactory(), Browser()
+    client = signed_in(user)
+    post(client, "subscribe", browser.form())
+    post(client, "test", {"endpoint": browser.endpoint})
+
+    again = post(client, "test", {"endpoint": browser.endpoint})
+
+    assert again.status_code == 429
+    assert "half a minute" in again.json()["error"]
+    assert len(http.to(browser.endpoint)) == 1
+
+
+@pytest.mark.usefixtures("commit")
+def test_the_test_push_limit_is_per_user(http: FakeHttp) -> None:
+    first, second = Browser("https://push.example.com/1"), Browser("https://push.example.com/2")
+    for browser in (first, second):
+        client = signed_in(UserFactory())
+        post(client, "subscribe", browser.form())
+
+        answer = post(client, "test", {"endpoint": browser.endpoint})
+
+        assert answer.status_code == 200
 
 
 def test_a_test_push_needs_this_browser_subscribed() -> None:

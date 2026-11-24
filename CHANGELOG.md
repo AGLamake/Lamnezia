@@ -472,6 +472,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Test notification in the browser is limited**: **Send a test** in the profile works once in
+  30 seconds per user; a press sooner shows when to try again.
 - **Moderator quotas within the server administrator's**: the quotas of a moderator a server
   administrator made (users and keys) can no longer be set above that administrator's own, or
   empty while theirs is set, on the staff page or in the admin site. If the server administrator's
