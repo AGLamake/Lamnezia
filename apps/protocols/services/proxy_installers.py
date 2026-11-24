@@ -38,6 +38,7 @@ from apps.operations.services.context import OperationContext
 from apps.protocols.catalog import CATALOG
 from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.protocols.services.container import Transport
+from apps.protocols.services.extra_secrets import open_extra_secrets
 from apps.protocols.services.installer import installers
 from apps.protocols.services.service_import import read_text
 from apps.protocols.services.service_installers import ServiceInstaller
@@ -136,7 +137,8 @@ class MtProtoInstaller(TelegramProxyInstaller):
     def from_params(
         cls, host: RemoteHost, ctx: OperationContext, params: Mapping[str, Any]
     ) -> Self:
-        options = TelegramProxyOptions.from_params(params.get("proxy") or {})
+        proxy = open_extra_secrets(params.get("proxy") or {}, params)
+        options = TelegramProxyOptions.from_params(proxy)
         return cls(host, ctx, port=int(params["port"]), logs=bool(params["logs"]), options=options)
 
     def run_arguments(self) -> list[str]:

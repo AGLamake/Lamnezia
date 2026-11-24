@@ -27,6 +27,11 @@ from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.protocols.models import InstanceOrigin, ServiceInstance
 from apps.protocols.services.container import ProtocolContainer, Transport
 from apps.protocols.services.container_swap import ContainerSwap
+from apps.protocols.services.extra_secrets import (
+    EXTRA_SECRETS_FIELD,
+    open_extra_secrets,
+    seal_extra_secrets,
+)
 from apps.protocols.services.installer import START_SCRIPT, installers, resolve_server_ip
 from apps.protocols.services.proxy_installers import (
     MtProtoInstaller,
@@ -50,7 +55,8 @@ class ServiceSettings:
 
     `options` are the MTProxy and Telemt settings of TelegramProxyOptions the page knew, the
     `hostname` and `email` of TProxy or the `user` of SOCKS5; what the page did not know stays as
-    the container has it. The SOCKS5 password travels in the operation encrypted.
+    the container has it. The SOCKS5 password and the additional secrets of the Telegram proxies
+    travel in the operation encrypted.
     """
 
     port: int
@@ -58,16 +64,19 @@ class ServiceSettings:
     password: str = ""
 
     def __repr__(self) -> str:
-        return f"ServiceSettings(port={self.port!r}, options={self.options!r})"
+        shown = {name: value for name, value in self.options.items() if name != EXTRA_SECRETS_FIELD}
+        return f"ServiceSettings(port={self.port!r}, options={shown!r})"
 
     @classmethod
     def from_params(cls, data: Mapping[str, Any]) -> "ServiceSettings":
         token = data.get("password_token") or ""
         password = SecretCipher.from_settings().decrypt(token) if token else ""
-        return cls(int(data["port"]), dict(data.get("options") or {}), password)
+        options = open_extra_secrets(data.get("options") or {}, data)
+        return cls(int(data["port"]), options, password)
 
     def to_params(self) -> dict[str, Any]:
-        params: dict[str, Any] = {"port": self.port, "options": self.options}
+        options, sealed = seal_extra_secrets(self.options)
+        params: dict[str, Any] = {"port": self.port, "options": options, **sealed}
         if self.password:
             params["password_token"] = SecretCipher.from_settings().encrypt(self.password)
         return params

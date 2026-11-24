@@ -16,6 +16,7 @@ from apps.operations.models import Operation
 from apps.operations.services.launcher import launch
 from apps.protocols.catalog import CATALOG, ContainerGroup
 from apps.protocols.models import ProtocolInstance, ServiceInstance
+from apps.protocols.services.extra_secrets import seal_extra_secrets
 from apps.protocols.services.installer import InstallerClass, installers
 from apps.servers.models import Server
 
@@ -147,7 +148,8 @@ def start_install(
         params["hostname"] = request.domain
         params["email"] = request.email
     if request.proxy:
-        params["proxy"] = request.proxy.to_params()
+        params["proxy"], sealed = seal_extra_secrets(request.proxy.to_params())
+        params.update(sealed)
     operation = launch(INSTALL_KIND, params, user=user, subject=server.name)
     data = {"container": container, "port": request.port, "operation": operation.pk}
     audit.log(INSTALL_KIND, actor=user, target=server, data=data, ip=ip)

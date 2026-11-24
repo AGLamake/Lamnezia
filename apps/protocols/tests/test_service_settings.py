@@ -4,6 +4,7 @@ import json
 import socket
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager
+from dataclasses import replace
 from io import StringIO
 from typing import Any
 
@@ -31,6 +32,7 @@ from apps.protocols.models import InstanceOrigin, ProtocolInstance, ServiceInsta
 from apps.protocols.service_settings_forms import MtProtoSettingsForm, Socks5SettingsForm
 from apps.protocols.services.installation import InstallRequest, start_install
 from apps.protocols.services.installer import START_SCRIPT, installers
+from apps.protocols.services.service_settings import ServiceSettings
 from apps.protocols.tests.fake_proxy_host import SECRET, FakeProxyHost
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
@@ -189,6 +191,97 @@ def test_mtproxy_keeps_its_secret_with_new_settings(
     assert service.links
     assert service.links.tg.endswith(f"secret=ee{SECRET}{b'example.com'.hex()}")
     assert changed_services == [service]
+
+
+EXTRA = "99887766554433221100ffeeddccbbaa"
+
+
+def mtproxy_meta(host: FakeProxyHost) -> str:
+    return host.volumes["amnezia-mtproxy-data"]["/data/mtproxy-meta"]
+
+
+def test_mtproxy_additional_secrets_stay_out_of_the_params_and_the_journal(
+    host: FakeProxyHost, install: Callable[..., ServiceInstance], change: Callable[..., Operation]
+) -> None:
+    service = install(MTPROXY_CONTAINER, proxy=FAKETLS)
+
+    operation = change(service, **{**service.settings, "port": 443, "additional_secrets": EXTRA})
+
+    assert operation.status == OperationStatus.SUCCEEDED, log_of(operation)
+    assert f"additional={EXTRA}\n" in mtproxy_meta(host)
+    audit = AuditEvent.objects.get(action="protocols.change_service_settings")
+    for text in (json.dumps(operation.params), json.dumps(audit.data), log_of(operation)):
+        assert EXTRA not in text
+    assert "additional_secrets" not in operation.params["options"]
+    assert "additional_secrets_token" in operation.params
+    assert "additional_secrets_token" not in audit.data
+
+
+def test_mtproxy_additional_secrets_are_cleared_with_an_empty_field(
+    host: FakeProxyHost, install: Callable[..., ServiceInstance], change: Callable[..., Operation]
+) -> None:
+    service = install(MTPROXY_CONTAINER, proxy=replace(FAKETLS, additional_secrets=(EXTRA,)))
+
+    operation = change(service, **{**service.settings, "port": 443, "additional_secrets": ""})
+
+    assert operation.status == OperationStatus.SUCCEEDED, log_of(operation)
+    assert "additional=\n" in mtproxy_meta(host)
+
+
+def test_mtproxy_settings_are_retried_after_the_encryption_key_is_rotated(
+    host: FakeProxyHost,
+    install: Callable[..., ServiceInstance],
+    change: Callable[..., Operation],
+    django_capture_on_commit_callbacks: OnCommit,
+    settings: Any,
+) -> None:
+    service = install(MTPROXY_CONTAINER, proxy=FAKETLS)
+    operation = change(service, **{**service.settings, "port": 443, "additional_secrets": EXTRA})
+    Operation.objects.filter(pk=operation.pk).update(status=OperationStatus.FAILED)
+    new = Fernet.generate_key().decode()
+    settings.ENCRYPTION_KEY = f"{new},{settings.ENCRYPTION_KEY}"
+    call_command("rotate_encryption_key", stdout=StringIO())
+    settings.ENCRYPTION_KEY = new  # the old key is gone
+    host.volumes["amnezia-mtproxy-data"]["/data/mtproxy-meta"] = ""
+
+    with django_capture_on_commit_callbacks(execute=True):
+        again = retry(Operation.objects.get(pk=operation.pk))
+
+    again.refresh_from_db()
+    assert again.status == OperationStatus.SUCCEEDED, log_of(again)
+    assert f"additional={EXTRA}\n" in mtproxy_meta(host)
+
+
+def test_an_operation_with_plain_additional_secrets_is_retried_as_it_was(
+    host: FakeProxyHost,
+    install: Callable[..., ServiceInstance],
+    django_capture_on_commit_callbacks: OnCommit,
+) -> None:
+    """Operations started before the encryption keep the secrets in the settings in plain."""
+    service = install(MTPROXY_CONTAINER, proxy=FAKETLS)
+    old = Operation.objects.create(
+        kind="protocols.change_service_settings",
+        status=OperationStatus.FAILED,
+        language="en",
+        params={
+            "service_id": service.pk,
+            "port": service.port,
+            "options": {"additional_secrets": [EXTRA]},
+        },
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        again = retry(old)
+
+    again.refresh_from_db()
+    assert again.status == OperationStatus.SUCCEEDED, log_of(again)
+    assert f"additional={EXTRA}\n" in mtproxy_meta(host)
+
+
+def test_the_settings_do_not_show_the_additional_secrets_in_their_repr() -> None:
+    settings = ServiceSettings(443, {"tag": TAG, "additional_secrets": [EXTRA]})
+
+    assert EXTRA not in repr(settings) and TAG in repr(settings)
 
 
 def test_failed_move_brings_back_the_old_proxy_and_its_settings(

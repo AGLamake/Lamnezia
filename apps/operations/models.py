@@ -27,7 +27,7 @@ class Operation(models.Model):
     Params go into the audit journal only through `without_secrets`.
     """
 
-    SECRET_PARAMS = ("password_token", "header_protection_key_token")
+    SECRET_PARAMS = ("password_token", "header_protection_key_token", "additional_secrets_token")
 
     kind = models.CharField(_("kind"), max_length=100)
     subject = models.CharField(_("subject"), max_length=200, blank=True)

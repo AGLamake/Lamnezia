@@ -1,5 +1,6 @@
 """SOCKS5, MTProxy, Telemt and TProxy are installed, read and removed as the Amnezia app does it."""
 
+import json
 import socket
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager
@@ -497,6 +498,18 @@ def test_mtproxy_keeps_its_settings_where_the_app_reads_them(
     assert links
     domain = b"example.org".hex()
     assert links.tg == f"tg://proxy?server=tg.example.net&port=443&secret=ee{SECRET}{domain}"
+
+
+def test_mtproxy_install_keeps_the_additional_secrets_out_of_the_params(
+    host: FakeProxyHost, install: Callable[..., Operation]
+) -> None:
+    operation = install(MTPROXY_CONTAINER, proxy=FAKETLS)
+
+    assert operation.status == OperationStatus.SUCCEEDED, log_of(operation)
+    assert EXTRA not in json.dumps(operation.params)
+    assert "additional_secrets" not in operation.params["proxy"]
+    audit = AuditEvent.objects.get(action="protocols.install")
+    assert EXTRA not in json.dumps(audit.data)
 
 
 def test_telemt_writes_the_settings_into_its_config(

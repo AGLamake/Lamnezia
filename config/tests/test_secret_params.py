@@ -14,7 +14,8 @@ import pytest
 from django.test import Client
 
 from amnezia_core.keys import KeyPair
-from amnezia_core.proxies import SOCKS5_CONTAINER
+from amnezia_core.proxies import MTPROXY_CONTAINER, SOCKS5_CONTAINER
+from amnezia_core.proxy_options import TelegramProxyOptions
 from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.backups.services.database_dump import PostgresDump
@@ -29,7 +30,7 @@ from apps.operations.models import Operation, OperationStatus
 from apps.operations.tests.secrets import secrets_written
 from apps.protocols.models import ServiceInstance
 from apps.protocols.services.awg_settings import SETTINGS_KIND, AwgSettings
-from apps.protocols.services.installation import InstallRequest, start_install
+from apps.protocols.services.installation import INSTALL_KIND, InstallRequest, start_install
 from apps.protocols.services.installer import installers
 from apps.protocols.services.service_settings import (
     SERVICE_SETTINGS_KIND,
@@ -129,6 +130,31 @@ def service_settings(world: World) -> Started:
     )
 
 
+EXTRA_SECRET = "99887766554433221100ffeeddccbbaa"
+
+
+def _install_mtproxy(world: World, secrets: tuple[str, ...]) -> Started:
+    world.connect(FakeProxyHost(), "apps.protocols.operations")
+    installer = installers.get(MTPROXY_CONTAINER)
+    proxy = TelegramProxyOptions(additional_secrets=secrets)
+    request = InstallRequest(installer, installer.default_port, proxy=proxy)
+    server = ServerFactory(host="203.0.113.7")
+    return world.run(lambda: start_install(server, request, world.admin), EXTRA_SECRET)
+
+
+def mtproxy_install(world: World) -> Started:
+    return _install_mtproxy(world, (EXTRA_SECRET,))
+
+
+def mtproxy_settings(world: World) -> Started:
+    _install_mtproxy(world, ())
+    service = ServiceInstance.objects.get(container=MTPROXY_CONTAINER)
+    settings = ServiceSettings(service.port or 0, {"additional_secrets": [EXTRA_SECRET]})
+    return world.run(
+        lambda: start_service_settings_change(service, settings, world.admin), EXTRA_SECRET
+    )
+
+
 def panel_archive(world: World) -> Started:
     world.settings.PANEL_ARCHIVE_DIR = world.tmp_path / "archives"
     world.settings.MEDIA_ROOT = world.tmp_path / "media"
@@ -150,6 +176,8 @@ CASES = (
     SecretCase(GROUP_SETTINGS_KIND, "header_protection_key_token", group_settings),
     SecretCase(SERVICE_SETTINGS_KIND, "password_token", service_settings),
     SecretCase(PANEL_ARCHIVE_KIND, "password_token", panel_archive),
+    SecretCase(INSTALL_KIND, "additional_secrets_token", mtproxy_install),
+    SecretCase(SERVICE_SETTINGS_KIND, "additional_secrets_token", mtproxy_settings),
 )
 
 
@@ -164,7 +192,7 @@ def world(
     return World(admin, monkeypatch, settings, tmp_path, django_capture_on_commit_callbacks)
 
 
-@pytest.mark.parametrize("case", CASES, ids=lambda case: case.kind)
+@pytest.mark.parametrize("case", CASES, ids=lambda case: f"{case.kind}:{case.param}")
 def test_the_secret_stays_out_of_the_audit_the_steps_and_the_page(
     case: SecretCase, world: World, client: Client
 ) -> None:

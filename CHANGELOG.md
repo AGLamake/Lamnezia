@@ -661,6 +661,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Additional MTProxy and Telemt secrets encrypted in operations**: installing a Telegram proxy
+  and changing its settings keep the additional secrets encrypted in the operation parameters, as
+  the SOCKS5 password, and no longer write them to the audit log. `rotate_encryption_key`
+  re-encrypts them, so a retry after the rotation works; operations started earlier are retried
+  as before.
 - **Proxy settings on the error page**: the Django error page (`LAMNEZIA_DEBUG`) and error mails
   hide `TELEGRAM_PROXY`, `GITHUB_PROXY` and other settings with PROXY in the name, as they may
   hold a proxy password.
