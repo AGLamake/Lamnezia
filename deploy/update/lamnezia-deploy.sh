@@ -6,8 +6,9 @@
 #                    token for the fetch comes on stdin and is never written to disk.
 #   release          run by lamnezia-update.service of install.sh when the panel leaves a request
 #                    in UPDATE_DIR/request: moves to that release tag vX.Y.Z of the branch the
-#                    installation follows, checked against the manifest of the GitHub release, and
-#                    goes back to the previous version when the panel does not come up healthy.
+#                    installation follows, checked against the signed manifest of the GitHub
+#                    release, and goes back to the previous version when the panel does not come
+#                    up healthy.
 #                    The status and the log are written to UPDATE_DIR/status on any exit.
 #
 # Install as /usr/local/sbin/lamnezia-deploy (install.sh does it). For the SSH key allow only this
@@ -22,6 +23,7 @@ HEALTH_URL=
 HEALTH_TRIES=60
 HEALTH_DELAY=5
 RELEASES_URL=
+RELEASE_SIGNERS=
 LOCK_FILE=${LOCK_FILE:-/run/lock/lamnezia-deploy.lock}
 DEPLOY_SETTINGS=${DEPLOY_SETTINGS:-/etc/default/lamnezia-deploy}
 if [ -r "$DEPLOY_SETTINGS" ]; then
@@ -29,8 +31,13 @@ if [ -r "$DEPLOY_SETTINGS" ]; then
 fi
 COMPOSE_PROJECT=${COMPOSE_PROJECT:-$(basename "$LAMNEZIA_DIR")}
 UPDATE_DIR=${UPDATE_DIR:-$LAMNEZIA_DIR/update}
-# Published with every release (.github/workflows/release.yml): the tagged commit and image digest.
+# Published with every release (.github/workflows/release.yml): the version, the tagged commit and
+# the image digest, with an SSH signature in the namespace below.
 MANIFEST=lamnezia-release.txt
+SIGNATURE=$MANIFEST.sig
+SIGNING_NAMESPACE=lamnezia-release
+# The keys a release must be signed with: those of the running version, never of the one it gets.
+RELEASE_SIGNERS=${RELEASE_SIGNERS:-$LAMNEZIA_DIR/deploy/update/release-signers}
 
 compose() {
     docker compose -p "$COMPOSE_PROJECT" "$@"
@@ -148,6 +155,9 @@ finish() {
     fi
     finished=$(date +%s)
     write_status
+    if [ -n "$work" ]; then
+        rm -rf "$work"
+    fi
     exit "$code"
 }
 
@@ -190,8 +200,23 @@ releases_url() {
     esac
 }
 
+# The manifest counts only with a valid signature by a key of RELEASE_SIGNERS. It is read from
+# files, so the signature covers exactly the bytes that are read.
+fetch_manifest() {
+    work=$(mktemp -d)
+    curl -fsSL --max-time 60 "$url/$version/$MANIFEST" >"$work/$MANIFEST" || fail unverified
+    curl -fsSL --max-time 60 "$url/$version/$SIGNATURE" >"$work/$SIGNATURE" || fail unsigned
+    if ! grep -q '^[^#[:space:]]' "$RELEASE_SIGNERS" 2>/dev/null; then
+        echo "No release signing key in $RELEASE_SIGNERS"
+        fail bad_signature
+    fi
+    ssh-keygen -Y verify -f "$RELEASE_SIGNERS" -I "$SIGNING_NAMESPACE" -n "$SIGNING_NAMESPACE" \
+        -s "$work/$SIGNATURE" <"$work/$MANIFEST" || fail bad_signature
+    manifest=$(cat "$work/$MANIFEST")
+}
+
 # The tag must be on the branch of the installation, newer than the running version, and named
-# by the manifest the release workflow published.
+# by the signed manifest the release workflow published.
 check_release() {
     git fetch -q --no-tags origin "refs/heads/$channel:refs/remotes/origin/$channel" \
         "refs/tags/$version:refs/tags/$version" || fail fetch_failed
@@ -202,9 +227,10 @@ check_release() {
     fi
     url=$(releases_url)
     [ -n "$url" ] || fail unverified
-    manifest=$(curl -fsSL --max-time 60 "$url/$version/$MANIFEST") || fail unverified
+    fetch_manifest
+    [ "$(manifest_value version)" = "$version" ] || fail unverified
     [ "$(manifest_value commit)" = "$commit" ] || fail unverified
-    echo "$version is commit $commit, as its release says"
+    echo "$version is commit $commit, as its signed release says"
 }
 
 # The image of the release, pulled and checked before anything is stopped.
@@ -268,7 +294,7 @@ release() {
     exec 9>"$LOCK_FILE"
     flock 9
     status_dir=$UPDATE_DIR/status
-    run= version= reason= previous_version= finished=
+    run= version= reason= previous_version= finished= work=
     state=running
     started=$(date +%s)
     read_request

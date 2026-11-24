@@ -1,0 +1,4 @@
+# Keys that sign the manifest of every release (lamnezia-release.txt.sig), in the allowed_signers
+# format of ssh-keygen. lamnezia-deploy release trusts the keys of the version it runs, so a new
+# key comes in a release signed with the old one. One line per key:
+#   lamnezia-release namespaces="lamnezia-release" ssh-ed25519 AAAA... comment

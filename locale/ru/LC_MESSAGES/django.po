@@ -4180,6 +4180,9 @@ msgstr "Не удалось получить релиз с GitHub."
 msgid "The release does not match the manifest published with it."
 msgstr "Релиз не совпадает с манифестом, опубликованным вместе с ним."
 
+msgid "The release has no signature: it was not published by the release workflow."
+msgstr "У релиза нет подписи: его опубликовал не workflow релизов."
+
 msgid "The release is not newer than the running version: nothing was changed."
 msgstr "Релиз не новее работающей версии: ничего не изменено."
 
@@ -4338,6 +4341,9 @@ msgstr "Сервис перезапустится на сервере, его к
 
 msgid "The sign-in link is wrong, used or has expired."
 msgstr "Ссылка для входа неверна, уже использована или устарела."
+
+msgid "The signature of the release is not valid for the keys of this version."
+msgstr "Подпись релиза не подходит к ключам этой версии."
 
 msgid "The staff member has as many users as allowed."
 msgstr "У сотрудника уже столько пользователей, сколько разрешено."

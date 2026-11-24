@@ -59,6 +59,15 @@ The tag publishes the image `ghcr.io/aglamake/lamnezia` (tags `X.Y.Z`, `X.Y`, `X
 a pre-release gets only its own tag) and a GitHub release with notes from the changelog section.
 The workflow stops if the tag does not match `pyproject.toml` or the changelog has no section for it.
 
+The release manifest is signed with an SSH key, and the update from the panel takes only a release
+signed by a key in `deploy/update/release-signers` of the running version. Set it up once:
+`ssh-keygen -t ed25519 -N "" -C lamnezia-release -f release-signing-key`, put the private key into
+the `RELEASE_SIGNING_KEY` secret of the repository, add the line
+`lamnezia-release namespaces="lamnezia-release" <contents of release-signing-key.pub>` to
+`deploy/update/release-signers` and keep the private key offline. The workflow stops without the
+secret or with a key that does not match the file. To change the key, release the new line in
+`release-signers` while the old key still signs, then switch the secret.
+
 ### License
 
 By contributing, you agree that your contributions are licensed under
@@ -119,6 +128,15 @@ Lamnezia — независимый проект и официально не с
 Тег публикует образ `ghcr.io/aglamake/lamnezia` (теги `X.Y.Z`, `X.Y`, `X` и `latest`; у предрелиза —
 только свой тег) и релиз на GitHub с заметками из раздела changelog. Workflow остановится, если тег
 не совпадает с `pyproject.toml` или в changelog нет раздела этой версии.
+
+Манифест релиза подписывается SSH-ключом, и обновление из панели принимает только релиз,
+подписанный ключом из `deploy/update/release-signers` работающей версии. Настраивается один раз:
+`ssh-keygen -t ed25519 -N "" -C lamnezia-release -f release-signing-key`, закрытый ключ — в секрет
+репозитория `RELEASE_SIGNING_KEY`, в `deploy/update/release-signers` — строка
+`lamnezia-release namespaces="lamnezia-release" <содержимое release-signing-key.pub>`, закрытый ключ
+хранить офлайн. Без секрета или с ключом, не совпадающим с файлом, workflow остановится. Чтобы
+сменить ключ, выпустите новую строку в `release-signers`, пока подписывает старый ключ, затем
+замените секрет.
 
 ### Лицензия
 

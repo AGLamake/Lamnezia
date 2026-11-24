@@ -1,4 +1,4 @@
-"""lamnezia-deploy.sh release against a local git origin, with fake docker and curl."""
+"""lamnezia-deploy.sh release against a local git origin, fake docker and curl, real signatures."""
 
 import os
 import shutil
@@ -13,6 +13,7 @@ SCRIPT = settings.BASE_DIR / "deploy" / "update" / "lamnezia-deploy.sh"
 RUN = "0123456789abcdef0123456789abcdef"
 DIGEST = "sha256:" + "a" * 64
 REPOSITORY = "ghcr.io/example/lamnezia"
+NAMESPACE = "lamnezia-release"
 
 FAKE_DOCKER = """#!/bin/sh
 echo "$*" >> "$FAKE_LOG"
@@ -31,8 +32,21 @@ esac
 FAKE_FLOCK = "#!/bin/sh\nexit 0\n"
 
 pytestmark = pytest.mark.skipif(
-    any(shutil.which(tool) is None for tool in ("sh", "git")), reason="no sh or git"
+    any(shutil.which(tool) is None for tool in ("sh", "git", "ssh-keygen")),
+    reason="no sh, git or ssh-keygen",
 )
+
+
+def ssh_keygen(*args: str) -> None:
+    subprocess.run(["ssh-keygen", "-q", *args], capture_output=True, check=True)
+
+
+def signing_key(folder: Path, name: str) -> Path:
+    """A new ed25519 key pair; the private key's path."""
+    folder.mkdir(exist_ok=True)
+    key = folder / name
+    ssh_keygen("-t", "ed25519", "-N", "", "-C", name, "-f", key.as_posix())
+    return key
 
 
 def git(cwd: Path, *args: str) -> str:
@@ -59,10 +73,27 @@ class Host:
     def update(self) -> Path:
         return self.root / "update"
 
-    def manifest(self, tag: str, commit: str, image: str = DIGEST) -> None:
+    @property
+    def key(self) -> Path:
+        return self.root / "keys" / "release"
+
+    def manifest(
+        self,
+        tag: str,
+        commit: str,
+        image: str = DIGEST,
+        key: Path | None = None,
+        named: str = "",
+    ) -> None:
+        """The manifest of release `tag` naming version `named` (the tag), signed by `key`."""
         folder = self.root / "releases" / tag
         folder.mkdir(parents=True, exist_ok=True)
-        (folder / "lamnezia-release.txt").write_text(f"commit {commit}\nimage {image}\n")
+        manifest = folder / "lamnezia-release.txt"
+        manifest.write_text(
+            f"version {named or tag}\ncommit {commit}\nimage {image}\n", newline="\n"
+        )
+        manifest.with_suffix(".txt.sig").unlink(missing_ok=True)
+        ssh_keygen("-Y", "sign", "-f", (key or self.key).as_posix(), "-n", NAMESPACE, str(manifest))
 
     def run(self, request: str, **env: str) -> subprocess.CompletedProcess[str]:
         (self.update / "request" / "update").write_text(request + "\n", newline="\n")
@@ -86,6 +117,15 @@ class Host:
 
     def version(self) -> str:
         return (self.panel / "version").read_text().strip()
+
+    def log(self) -> str:
+        return (self.update / "status" / "log").read_text()
+
+    def assert_refused(self, reason: str) -> None:
+        """The update stopped on `reason` before anything changed."""
+        assert (self.status()["state"], self.status()["reason"]) == ("failed", reason), self.log()
+        assert self.version() == "1.0.0"
+        assert not (self.root / "docker.log").exists()
 
 
 def commit(repo: Path, version: str) -> str:
@@ -119,8 +159,13 @@ def host(tmp_path: Path) -> Host:
         path.write_text(body, newline="\n")
         path.chmod(0o755)
     releases_url = "file://" + (tmp_path / "releases").as_posix()
+    key = signing_key(tmp_path / "keys", "release")
+    signers = tmp_path / "release-signers"
+    public = key.with_suffix(".pub").read_text().strip()
+    signers.write_text(f'{NAMESPACE} namespaces="{NAMESPACE}" {public}\n', newline="\n")
     (tmp_path / "settings").write_text(
-        f"HEALTH_URL=http://health\nHEALTH_TRIES=1\nHEALTH_DELAY=0\nRELEASES_URL={releases_url}\n",
+        f"HEALTH_URL=http://health\nHEALTH_TRIES=1\nHEALTH_DELAY=0\nRELEASES_URL={releases_url}\n"
+        f"RELEASE_SIGNERS={signers.as_posix()}\n",
         newline="\n",
     )
     result = Host(tmp_path, panel, commits)
@@ -165,9 +210,50 @@ def test_a_tag_that_does_not_match_its_release_is_refused(host: Host) -> None:
 
     host.run(f"v1.1.0 {RUN}")
 
-    assert host.status()["reason"] == "unverified"
-    assert host.version() == "1.0.0"
-    assert not (host.root / "docker.log").exists()
+    host.assert_refused("unverified")
+
+
+def test_a_signed_manifest_of_another_version_is_refused(host: Host) -> None:
+    host.manifest("v1.1.0", host.commits["1.1.0"], named="v1.0.1")
+
+    host.run(f"v1.1.0 {RUN}")
+
+    host.assert_refused("unverified")
+
+
+def test_a_release_without_a_signature_is_refused(host: Host) -> None:
+    (host.root / "releases" / "v1.1.0" / "lamnezia-release.txt.sig").unlink()
+
+    host.run(f"v1.1.0 {RUN}")
+
+    host.assert_refused("unsigned")
+
+
+def test_a_manifest_changed_after_signing_is_refused(host: Host) -> None:
+    manifest = host.root / "releases" / "v1.1.0" / "lamnezia-release.txt"
+    manifest.write_text(manifest.read_text().replace(DIGEST, "sha256:" + "b" * 64), newline="\n")
+
+    host.run(f"v1.1.0 {RUN}")
+
+    host.assert_refused("bad_signature")
+
+
+def test_a_manifest_signed_by_another_key_is_refused(host: Host) -> None:
+    other = signing_key(host.root / "keys", "other")
+    host.manifest("v1.1.0", host.commits["1.1.0"], key=other)
+
+    host.run(f"v1.1.0 {RUN}")
+
+    host.assert_refused("bad_signature")
+
+
+def test_without_a_trusted_key_nothing_is_updated(host: Host) -> None:
+    (host.root / "release-signers").write_text("# no key yet\n", newline="\n")
+
+    host.run(f"v1.1.0 {RUN}")
+
+    host.assert_refused("bad_signature")
+    assert "No release signing key" in host.log()
 
 
 def test_an_unhealthy_release_is_rolled_back(host: Host) -> None:
@@ -207,3 +293,13 @@ def test_an_image_with_another_digest_is_refused(host: Host) -> None:
     assert host.status()["reason"] == "unverified"
     assert host.version() == "1.0.0"
     assert (host.panel / ".env").read_text() == f"LAMNEZIA_IMAGE={REPOSITORY}:1.0.0\n"
+
+
+def test_the_release_workflow_signs_what_the_host_checks() -> None:
+    workflow = (settings.BASE_DIR / ".github" / "workflows" / "release.yml").read_text()
+    script = SCRIPT.read_text()
+
+    assert f"SIGNING_NAMESPACE={NAMESPACE}" in script
+    assert "deploy/update/release-signers" in script
+    assert f"-n {NAMESPACE}" in workflow and "-f deploy/update/release-signers" in workflow
+    assert '"$RUNNER_TEMP/lamnezia-release.txt.sig"' in workflow

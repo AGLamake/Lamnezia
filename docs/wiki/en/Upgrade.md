@@ -62,8 +62,10 @@ On that page an administrator starts the update with a password for the panel ar
    `/usr/local/sbin/lamnezia-deploy release`.
 3. The host script takes only a release tag `vX.Y.Z` of the branch the installation follows, newer
    than the running version, and checks it against the manifest published with the GitHub release
-   (the tagged commit and, with `LAMNEZIA_IMAGE`, the image digest). It moves the code to the tag,
-   rebuilds or pulls the image, restarts the panel and waits for `/healthz`.
+   (the version, the tagged commit and, with `LAMNEZIA_IMAGE`, the image digest). The manifest must
+   carry a valid signature by a key of `deploy/update/release-signers` of the running version;
+   without it the update stops before anything changes, with the reason on the page. It moves the
+   code to the tag, rebuilds or pulls the image, restarts the panel and waits for `/healthz`.
 4. If the panel does not come up healthy, the script goes back to the previous version.
 
 The status and the log of the host script are on the same page. One update runs at a time; a request
@@ -155,6 +157,14 @@ gh attestation verify lamnezia-release.txt --repo AGLamake/Lamnezia
 The SBOM of the image is checked with
 `--predicate-type https://spdx.dev/Document/v2.3` added to the first command. Releases before
 this one have no attestations.
+
+The manifest is also signed with the release SSH key (`lamnezia-release.txt.sig`). The update
+from the panel checks this signature itself; by hand, in the install folder (OpenSSH 8.1 or newer):
+
+```bash
+ssh-keygen -Y verify -f deploy/update/release-signers -I lamnezia-release -n lamnezia-release \
+  -s lamnezia-release.txt.sig < lamnezia-release.txt
+```
 
 ## Checks after updating
 

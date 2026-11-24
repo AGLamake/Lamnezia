@@ -668,6 +668,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Signed releases for the update from the panel**: the release workflow signs the release
+  manifest with an SSH key (`lamnezia-release.txt.sig`), and `lamnezia-deploy release` checks the
+  signature against `deploy/update/release-signers` of the running version before it changes
+  anything. An unsigned release or one with a wrong signature is refused with the reason on
+  **System → Panel update**. The manifest now also names the version.
+
 - **Proxy settings forms without secrets**: the settings page of SOCKS5 no longer puts the current
   password in its field, nor the page of MTProxy and Telemt the additional secrets. An empty field
   keeps them, **Remove the additional secrets** clears the extra secrets, and **Show the current

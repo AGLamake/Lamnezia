@@ -2,6 +2,8 @@ name: Release
 
 # A tag vX.Y.Z publishes the image (amd64 and arm64) to GHCR and a GitHub release with notes from CHANGELOG.md.
 # The image, its SBOM and the release files get signed attestations: `gh attestation verify` checks them.
+# The release manifest is also signed with the SSH key in the RELEASE_SIGNING_KEY secret; the host
+# checks it against deploy/update/release-signers before an update from the panel.
 on:
   push:
     tags: ["v*.*.*"]
@@ -30,6 +32,20 @@ jobs:
           PROJECT_VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
           if [ "$VERSION" != "$PROJECT_VERSION" ]; then
             echo "::error::Tag v$VERSION does not match version $PROJECT_VERSION in pyproject.toml"
+            exit 1
+          fi
+
+      # Checked before anything is published: a release the hosts cannot verify is not made.
+      - name: Check the signing key
+        env:
+          SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "::error::The RELEASE_SIGNING_KEY secret is not set"
+            exit 1
+          fi
+          if ! grep -q '^[^#[:space:]]' deploy/update/release-signers; then
+            echo "::error::deploy/update/release-signers has no key"
             exit 1
           fi
 
@@ -103,11 +119,26 @@ jobs:
           push-to-registry: true
 
       # The update from the panel (deploy/update/lamnezia-deploy.sh release) takes only a tag whose
-      # commit, and image digest for a ready-image install, match this file of the release.
+      # version, commit, and image digest for a ready-image install, match this file of the release.
       - name: Release manifest
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: printf 'commit %s\nimage %s\n' "$GITHUB_SHA" "$DIGEST" > "$RUNNER_TEMP/lamnezia-release.txt"
+        run: |
+          printf 'version v%s\ncommit %s\nimage %s\n' "$VERSION" "$GITHUB_SHA" "$DIGEST" \
+            > "$RUNNER_TEMP/lamnezia-release.txt"
+
+      # The signature is checked here the way the hosts check it, so a key that does not match
+      # release-signers stops the release.
+      - name: Sign the release manifest
+        env:
+          SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          key="$RUNNER_TEMP/release-signing-key"
+          (umask 077 && printf '%s\n' "$SIGNING_KEY" > "$key")
+          ssh-keygen -Y sign -q -f "$key" -n lamnezia-release "$RUNNER_TEMP/lamnezia-release.txt"
+          rm -f "$key"
+          ssh-keygen -Y verify -f deploy/update/release-signers -I lamnezia-release -n lamnezia-release \
+            -s "$RUNNER_TEMP/lamnezia-release.txt.sig" < "$RUNNER_TEMP/lamnezia-release.txt"
 
       - name: Source archive
         run: git archive --format=tar.gz --prefix="lamnezia-$VERSION/" -o "$RUNNER_TEMP/lamnezia-$VERSION.tar.gz" "$GITHUB_SHA"
@@ -125,4 +156,5 @@ jobs:
           PRERELEASE=""
           case "$VERSION" in *-*) PRERELEASE="--prerelease" ;; esac
           gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" $PRERELEASE \
-            "$RUNNER_TEMP/lamnezia-release.txt" "$RUNNER_TEMP/lamnezia-$VERSION.tar.gz"
+            "$RUNNER_TEMP/lamnezia-release.txt" "$RUNNER_TEMP/lamnezia-release.txt.sig" \
+            "$RUNNER_TEMP/lamnezia-$VERSION.tar.gz"

@@ -47,6 +47,8 @@ HOST_REASONS: dict[str, Promise] = {
     "not_in_channel": _("The release is not on the branch this installation follows."),
     "not_newer": _("The release is not newer than the running version: nothing was changed."),
     "unverified": _("The release does not match the manifest published with it."),
+    "unsigned": _("The release has no signature: it was not published by the release workflow."),
+    "bad_signature": _("The signature of the release is not valid for the keys of this version."),
     "pull_failed": _("The image of the release could not be downloaded."),
     "switch_failed": _("The code could not be moved to the release."),
     "build_failed": _("The image could not be built."),
