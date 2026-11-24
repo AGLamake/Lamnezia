@@ -11,6 +11,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from apps.core.services.site_settings import cached_settings
+from apps.notifications.services.browser import PanelKeys
 
 # The page colour of the light theme (--ln-canvas in assets/css/app.css): the splash screen and the
 # browser bar of the installed app.
@@ -72,6 +73,8 @@ class ServiceWorkerView(TemplateView):
             version=version,
             icon=static("brand/icon-192.png"),
             site_name=cached_settings.get().site_name,
+            push_key=PanelKeys.public(),
+            resubscribe=reverse("push:resubscribe"),
             **kwargs,
         )
 

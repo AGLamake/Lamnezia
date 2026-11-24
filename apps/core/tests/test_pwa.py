@@ -43,6 +43,8 @@ def test_worker_shows_pushes_and_opens_their_page(client: Client) -> None:
 
     assert 'addEventListener("push"' in text
     assert 'addEventListener("notificationclick"' in text
+    assert 'addEventListener("pushsubscriptionchange"' in text
+    assert 'const RESUBSCRIBE = "/push/resubscribe/"' in text
     assert "/static/brand/icon" in text
 
 

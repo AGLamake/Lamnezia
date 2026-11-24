@@ -6,7 +6,7 @@ from django.test import Client
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
 from apps.notifications.models import PushSubscription
-from apps.notifications.services.browser import PanelKeys
+from apps.notifications.services.browser import BrowserSubscriptions, PanelKeys
 from apps.notifications.tests.browsers import Browser
 from apps.notifications.tests.conftest import FakeHttp
 
@@ -107,3 +107,74 @@ def test_the_profile_offers_notifications_in_the_browser() -> None:
 
     assert "data-push" in page
     assert PanelKeys.public() in page
+
+
+OLD = "https://push.example.com/old"
+NEW = "https://push.example.com/new"
+
+
+def resubscribe(client: Client, old: str, new: Browser, site: str = "same-origin") -> Any:
+    form = {"old_endpoint": old, **new.form()}
+    return client.post("/push/resubscribe/", form, HTTP_SEC_FETCH_SITE=site)
+
+
+def test_the_worker_replaces_a_changed_subscription_without_a_csrf_token() -> None:
+    user, new = UserFactory(), Browser(NEW)
+    client = Client(enforce_csrf_checks=True, HTTP_USER_AGENT=FIREFOX)
+    client.force_login(user)
+    BrowserSubscriptions(user).add(OLD, new.p256dh, new.auth)
+
+    answer = resubscribe(client, OLD, new)
+
+    assert answer.json() == {"subscribed": True, "count": 1}
+    saved = PushSubscription.objects.get()
+    assert (saved.user, saved.endpoint, saved.p256dh) == (user, NEW, new.p256dh)
+
+
+def test_signing_out_unsubscribes_the_replaced_subscription() -> None:
+    client = signed_in(UserFactory())
+    post(client, "subscribe", Browser(OLD).form())
+    resubscribe(client, OLD, Browser(NEW))
+
+    client.post("/accounts/logout/")
+
+    assert not PushSubscription.objects.exists()
+
+
+def test_another_users_subscription_is_not_replaced() -> None:
+    owner = UserFactory()
+    post(signed_in(owner), "subscribe", Browser(OLD).form())
+
+    answer = resubscribe(signed_in(UserFactory()), OLD, Browser(NEW))
+
+    assert answer.status_code == 400
+    saved = PushSubscription.objects.get()
+    assert (saved.user, saved.endpoint) == (owner, OLD)
+
+
+@pytest.mark.parametrize("site", ["cross-site", "same-site", "none", ""])
+def test_a_resubscription_not_sent_by_the_panel_is_refused(site: str) -> None:
+    client = signed_in(UserFactory())
+    post(client, "subscribe", Browser(OLD).form())
+
+    answer = resubscribe(client, OLD, Browser(NEW), site)
+
+    assert answer.status_code == 403
+    assert PushSubscription.objects.get().endpoint == OLD
+
+
+def test_a_bad_new_subscription_keeps_the_old_one() -> None:
+    client = signed_in(UserFactory())
+    post(client, "subscribe", Browser(OLD).form())
+
+    answer = resubscribe(client, OLD, Browser("http://push.example.com/new"))
+
+    assert answer.status_code == 400
+    assert PushSubscription.objects.get().endpoint == OLD
+
+
+def test_a_guest_cannot_resubscribe() -> None:
+    answer = resubscribe(Client(), OLD, Browser(NEW))
+
+    assert answer.status_code == 302
+    assert not PushSubscription.objects.exists()

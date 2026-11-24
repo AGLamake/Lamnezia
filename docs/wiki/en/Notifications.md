@@ -211,7 +211,9 @@ notifications even when the panel is closed. This works in desktop browsers, on 
 iPhone and iPad from iOS 16.4 when the panel is added to the Home Screen and opened from there.
 Each browser is turned on separately, up to 10 per user; **Send a test** checks this one,
 **Turn off in this browser** stops it. Signing out of the panel turns notifications off in that
-browser, so the next person to use it does not get them.
+browser, so the next person to use it does not get them. When the browser renews its subscription
+by itself, the panel's service worker sends the new one in place of the old, and notifications go on
+without a visit to the profile; this needs the user to be signed in to the panel in that browser.
 
 A user gets in the browser the same events as by email or messenger: the end of access, the limit,
 a support answer and the rest that goes to them. A support answer that has already reached a

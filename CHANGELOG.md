@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Browser notifications survive a renewed subscription**: when the browser changes its push
+  subscription, the service worker sends the new one to the panel in place of the old one, so
+  notifications do not stop until the next visit to the profile. Only the user's own subscription
+  is replaced, and only by a request the browser marks as sent by the panel itself.
 - **Release notes on the update page**: **System → Panel update** shows the text of the new
   release from GitHub as Markdown, with raw HTML removed; a long text is folded.
 - **Install on a host without systemd**: `install.sh` no longer stops at `systemctl` in a

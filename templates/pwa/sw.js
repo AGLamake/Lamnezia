@@ -2,11 +2,14 @@
 // and the files it needs; the panel's own pages hold keys and personal data and always come from
 // the network. A page that cannot be loaded is replaced by the offline page. It also shows the
 // notifications the panel pushes (apps/notifications/services/browser.py); a click opens the page
-// the notification is about.
+// the notification is about. When the browser changes the subscription, the new one replaces the
+// old one in the panel (apps/notifications/views_push.py).
 const CACHE = "lamnezia-{{ version }}";
 const OFFLINE = "{{ offline|escapejs }}";
 const ICON = "{{ icon|escapejs }}";
 const NAME = "{{ site_name|escapejs }}";
+const PUSH_KEY = "{{ push_key|escapejs }}";
+const RESUBSCRIBE = "{{ resubscribe|escapejs }}";
 const ASSETS = [{% for asset in assets %}"{{ asset|escapejs }}", {% endfor %}OFFLINE];
 
 self.addEventListener("install", (event) => {
@@ -71,4 +74,33 @@ self.addEventListener("notificationclick", (event) => {
     }),
   );
 });
+
+// The push service changed or dropped the subscription: subscribe again with the panel's key and
+// send the new one in place of the old, so pushes go on without a visit to the profile. Without the
+// old subscription there is nothing to replace: the profile subscribes this browser again.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil(resubscribe(event.oldSubscription, event.newSubscription));
+});
+
+async function resubscribe(old, current) {
+  if (!old) return;
+  const subscription =
+    current ||
+    (await self.registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: fromB64url(PUSH_KEY),
+    }));
+  const json = subscription.toJSON();
+  const body = new URLSearchParams({
+    old_endpoint: old.endpoint,
+    endpoint: json.endpoint || "",
+    p256dh: json.keys?.p256dh || "",
+    auth: json.keys?.auth || "",
+  });
+  await fetch(RESUBSCRIBE, { method: "POST", body, credentials: "same-origin" });
+}
+
+function fromB64url(text) {
+  return Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+}
 {% endautoescape %}

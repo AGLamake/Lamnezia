@@ -105,6 +105,21 @@ class BrowserSubscriptions:
             stale = self._mine().values_list("pk", flat=True)[self.LIMIT :]
             PushSubscription.objects.filter(pk__in=list(stale)).delete()
 
+    def replace(
+        self, old_endpoint: str, endpoint: str, p256dh: str, auth: str, user_agent: str = ""
+    ) -> None:
+        """Put the browser's new subscription in place of its old one, which must be this user's.
+
+        Raises SubscriptionError when the old one is not, or for a new one the panel cannot send to;
+        then nothing changes.
+        """
+        with transaction.atomic():
+            old = self._mine().select_for_update().filter(endpoint=old_endpoint)
+            if not old.exists():
+                raise SubscriptionError("the old subscription is not this user's")
+            old.delete()
+            self.add(endpoint, p256dh, auth, user_agent)
+
     def remove(self, endpoint: str) -> None:
         self._mine().filter(endpoint=endpoint).delete()
 

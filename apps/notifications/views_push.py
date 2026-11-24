@@ -1,12 +1,15 @@
 """Notifications in the browser for the signed-in user: subscribe, unsubscribe, check and test
-from the profile (`static/js/ui.js` sends the forms, `templates/pwa/sw.js` shows the pushes).
+from the profile (`static/js/ui.js` sends the forms, `templates/pwa/sw.js` shows the pushes and
+sends the new subscription when the browser changes it).
 """
 
 from typing import cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, JsonResponse
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 
 from apps.accounts.models import User
 from apps.accounts.services.sessions import device_name
@@ -14,6 +17,7 @@ from apps.notifications.services.browser import BrowserSubscriptions, Subscripti
 from apps.notifications.services.delivery import send_browser_test
 
 _BAD_REQUEST = 400
+_FORBIDDEN = 403
 
 
 class _PushView(LoginRequiredMixin, View):
@@ -44,6 +48,35 @@ class PushSubscribeView(_PushView):
         except SubscriptionError as error:
             return JsonResponse({"error": str(error)}, status=_BAD_REQUEST)
         request.session[BrowserSubscriptions.SESSION_KEY] = self.endpoint
+        return self.answer()
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class PushResubscribeView(_PushView):
+    """The new subscription in place of the old one after the browser changed it
+    (`pushsubscriptionchange` in the service worker), without a visit to the profile.
+
+    A service worker has no CSRF token (the cookie is HttpOnly), so instead only a request the
+    browser itself marks as sent by the panel's own pages or worker is taken: a page of another
+    site cannot set `Sec-Fetch-Site`. The old subscription must be this user's.
+    """
+
+    def post(self, request: HttpRequest) -> JsonResponse:
+        if request.headers.get("Sec-Fetch-Site") != "same-origin":
+            return JsonResponse({"error": "not sent by the panel"}, status=_FORBIDDEN)
+        old_endpoint = request.POST.get("old_endpoint", "").strip()
+        try:
+            self.subscriptions.replace(
+                old_endpoint,
+                self.endpoint,
+                request.POST.get("p256dh", ""),
+                request.POST.get("auth", ""),
+                request.headers.get("User-Agent", ""),
+            )
+        except SubscriptionError as error:
+            return JsonResponse({"error": str(error)}, status=_BAD_REQUEST)
+        if request.session.get(BrowserSubscriptions.SESSION_KEY) == old_endpoint:
+            request.session[BrowserSubscriptions.SESSION_KEY] = self.endpoint
         return self.answer()
 
 
