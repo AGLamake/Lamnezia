@@ -615,6 +615,10 @@ msgstr "Попросить ретранслятор переключиться"
 msgid "Assignee"
 msgstr "Исполнитель"
 
+#, python-format
+msgid "At most %(ceiling)d: the quota of the server administrator %(owner)s."
+msgstr "Не больше %(ceiling)d — это квота администратора серверов %(owner)s."
+
 msgid "At the current pace nobody reaches the limit before the period ends."
 msgstr "При текущем темпе никто не исчерпает лимит до конца периода."
 

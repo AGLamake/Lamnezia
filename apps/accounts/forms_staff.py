@@ -98,6 +98,7 @@ class StaffForm(forms.Form):
             },
         )
         super().__init__(*args, **kwargs)
+        self._target = target
         self._set_queryset("servers", mine_servers.order_by("name"))
         self._set_queryset("plans", mine_plans.order_by("name"))
         for section in Section:
@@ -110,6 +111,19 @@ class StaffForm(forms.Form):
                     required=False,
                     empty_value=None,
                 )
+
+    def clean_user_quota(self) -> int | None:
+        return self._quota("user_quota")
+
+    def clean_key_quota(self) -> int | None:
+        return self._quota("key_quota")
+
+    def _quota(self, name: str) -> int | None:
+        """A moderator's quota, no higher than the one of the server administrator who made them."""
+        value: int | None = self.cleaned_data[name]
+        if error := self._target.quota_error(name, value):
+            raise forms.ValidationError(error)
+        return value
 
     def _set_queryset(self, name: str, queryset: QuerySet[Any]) -> None:
         self.fields[name].queryset = queryset  # type: ignore[attr-defined]

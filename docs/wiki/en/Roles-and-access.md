@@ -94,7 +94,10 @@ A moderator serves their own users on their own servers, as a reseller does. It 
 - the page of a member sets **Users at most** and **Keys at most** (empty: no limit), their servers
   and plans, and the level of each section; an administrator also changes the role there. A server
   administrator is offered only their own servers and plans and levels no higher than their own,
-  and manages only their own moderators;
+  and manages only their own moderators. The quotas of a moderator a server administrator made are
+  no higher than that administrator's own, and empty is refused while theirs is set; this holds for
+  an administrator too, also in the admin site. If the server administrator's quota is lowered
+  later, the lower of the two applies to the moderator;
 - the pages of a server, a plan and a user have a **Staff** block to add or remove a member; a user
   may have several, and is then in the zone of each. A link "from the plan" came with the user's
   plan and follows it, so it cannot be removed by hand;

@@ -7,6 +7,7 @@ from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 
@@ -133,15 +134,47 @@ class User(AbstractUser):
         verbose_name = _("user")
         verbose_name_plural = _("users")
 
+    @property
+    def quota_owner(self) -> "User | None":
+        """The server administrator whose quotas bound this moderator's: the one who made them."""
+        owner = self.created_by
+        if self.role == Role.MODERATOR and owner is not None and owner.role == Role.OWNER:
+            return owner
+        return None
+
+    def quota_ceiling(self, name: str) -> int | None:
+        """The owner's quota `name` this moderator's may not exceed; None: no ceiling."""
+        owner = self.quota_owner
+        return getattr(owner, name) if owner is not None else None
+
+    def quota_error(self, name: str, value: int | None) -> str | None:
+        """Why `value` cannot be this moderator's quota `name`, empty meaning no limit."""
+        ceiling = self.quota_ceiling(name)
+        if ceiling is None or (value is not None and value <= ceiling):
+            return None
+        return gettext("At most %(ceiling)d: the quota of the server administrator %(owner)s.") % {
+            "ceiling": ceiling,
+            "owner": self.quota_owner,
+        }
+
+    def effective_quota(self, name: str) -> int | None:
+        """The quota `name` in force: the member's own, cut to the owner's if that is lower."""
+        own: int | None = getattr(self, name)
+        ceiling = self.quota_ceiling(name)
+        if ceiling is None:
+            return own
+        return ceiling if own is None else min(own, ceiling)
+
     def is_over_user_quota(self, newcomer: "User | None" = None) -> bool:
         """Whether serving one more user, `newcomer` or a new account, would take the moderator
         past their quota."""
-        if self.user_quota is None:
+        quota = self.effective_quota("user_quota")
+        if quota is None:
             return False
         others = self.managed_users.all()
         if newcomer is not None and newcomer.pk is not None:
             others = others.exclude(pk=newcomer.pk)
-        return others.count() >= self.user_quota
+        return others.count() >= quota
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         # The Django admin site is for administrators only, so its flags follow the role.
