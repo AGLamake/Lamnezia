@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Release notes on the update page**: **System → Panel update** shows the text of the new
+  release from GitHub as Markdown, with raw HTML removed; a long text is folded.
 - **Install on a host without systemd**: `install.sh` no longer stops at `systemctl` in a
   container, WSL or a VPS image without systemd. It skips the certificate retry, the stop timer
   after a panel move and the update unit, and at the end lists what does not work and how to do it

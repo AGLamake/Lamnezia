@@ -48,9 +48,10 @@ New optional settings get their defaults; compare your `.env` with `.env.example
 
 ## Update from the panel
 
-Twice a day the panel asks GitHub for the latest release (only its tag; nothing about the panel is
-sent). When a newer one is out, administrators see it on the dashboard and on **System → Panel
-update**, with links to the release and its CHANGELOG. `LAMNEZIA_UPDATE_CHECK=False` turns the check
+Twice a day the panel asks GitHub for the latest release (its tag and text; nothing about the panel
+is sent). When a newer one is out, administrators see it on the dashboard and on **System → Panel
+update**, with links to the release and its CHANGELOG. The page also shows the text of the release
+as Markdown, with the HTML written in it removed; a long text is folded and opens on a click. `LAMNEZIA_UPDATE_CHECK=False` turns the check
 off ([Configuration](Configuration.md)).
 
 On that page an administrator starts the update with a password for the panel archive:

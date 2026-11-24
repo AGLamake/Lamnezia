@@ -1,6 +1,7 @@
 """Latest panel release on GitHub: refreshed by beat, read from the cache or the database.
 
 Only the release is asked for: GitHub learns nothing about the installation but the address.
+The text of the release is kept with its tag and shown as Markdown with raw HTML cleaned out.
 """
 
 from collections.abc import Callable
@@ -11,8 +12,10 @@ from celery import current_app
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
+from django.utils.safestring import SafeString
 
 from apps.guides.models import Release
+from apps.guides.services.markdown import render_markdown
 from apps.guides.services.releases import GitHubReleaseClient, ReleaseFetchError
 from apps.updates.services.versions import Version
 
@@ -20,6 +23,9 @@ CHECK_TASK = "updates.check_release"
 _GITHUB = "https://github.com/{repository}"
 # While nothing is saved, a page queues a check at most this often (seconds).
 _REQUEST_AGAIN_AFTER = 600
+# The release text kept at most (characters) and the length shown unfolded on the page.
+_NOTES_LIMIT = 20_000
+_SHORT_NOTES = 1_500
 
 
 @dataclass(frozen=True)
@@ -28,6 +34,17 @@ class PanelRelease:
 
     repository: str
     version: Version
+    notes: str = ""
+
+    @property
+    def notes_html(self) -> SafeString:
+        """The release text as HTML; the HTML written in it is cleaned out, not run."""
+        return render_markdown(self.notes)
+
+    @property
+    def notes_are_long(self) -> bool:
+        """Whether the page folds the text."""
+        return len(self.notes) > _SHORT_NOTES
 
     @property
     def url(self) -> str:
@@ -91,7 +108,9 @@ class PanelReleases:
             answer = self._client.fetch_latest(self._repository)
         except ReleaseFetchError:
             return None
-        payload = {"tag_name": answer.get("tag_name")}
+        body = answer.get("body")
+        notes = body[:_NOTES_LIMIT] if isinstance(body, str) else ""
+        payload = {"tag_name": answer.get("tag_name"), "body": notes}
         release = self._release(payload)
         if release is None:
             return None
@@ -118,7 +137,10 @@ class PanelReleases:
     def _release(self, payload: dict[str, Any]) -> PanelRelease | None:
         tag = payload.get("tag_name")
         version = Version.parse(tag) if isinstance(tag, str) and tag.startswith("v") else None
-        return PanelRelease(self._repository, version) if version else None
+        if version is None:
+            return None
+        notes = payload.get("body")
+        return PanelRelease(self._repository, version, notes if isinstance(notes, str) else "")
 
     def _request_once(self) -> None:
         if self._cache.add(f"{self._cache_key}:queued", True, _REQUEST_AGAIN_AFTER):

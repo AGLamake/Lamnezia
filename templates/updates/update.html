@@ -21,6 +21,12 @@
       <p class="help-text">{% translate "The check for new releases is turned off (LAMNEZIA_UPDATE_CHECK=False)." %}</p>
       {% elif offer.release %}
       <p>{% translate "New release" %}: <strong>{{ offer.release.version }}</strong> · <a href="{{ offer.release.changelog_url }}" class="underline" target="_blank" rel="noopener noreferrer">{% translate "What is new" %}</a> · <a href="{{ offer.release.url }}" class="underline" target="_blank" rel="noopener noreferrer">{% translate "Release on GitHub" %}</a></p>
+      {% if offer.release.notes %}
+      <details class="space-y-2"{% if not offer.release.notes_are_long %} open{% endif %}>
+        <summary class="cursor-pointer help-text">{% translate "Release notes" %}</summary>
+        <div class="markdown">{{ offer.release.notes_html }}</div>
+      </details>
+      {% endif %}
       {% else %}
       <p class="help-text">{% translate "No newer release is known. The panel checks GitHub twice a day." %}</p>
       {% endif %}

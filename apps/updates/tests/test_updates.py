@@ -137,6 +137,21 @@ def test_the_page_shows_versions_and_starts_the_update(
     assert client.get(reverse("updates:status")).status_code == 200
 
 
+def test_the_page_shows_the_release_text_without_its_html(
+    client: Client, released: Release
+) -> None:
+    released.payload = {"tag_name": "v1.1.0", "body": "- New **keys**<script>alert(1)</script>"}
+    released.save()
+    cache.clear()
+    admin_client(client)
+
+    page = client.get(reverse("updates:update")).content.decode()
+
+    assert "<strong>keys</strong>" in page
+    assert "<details" in page and " open>" in page
+    assert "alert(1)" not in page
+
+
 def test_without_the_host_unit_the_page_only_tells(
     client: Client, released: Release, settings: Any, tmp_path: Path
 ) -> None:
