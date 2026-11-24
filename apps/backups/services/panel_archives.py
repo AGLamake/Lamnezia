@@ -6,7 +6,9 @@ name only when it is complete, so the list never shows a file cut short.
 
 import os
 import re
+import secrets
 import shutil
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -31,7 +33,10 @@ PASSWORD_PARAM = "password_token"
 SCHEDULED_PARAM = "scheduled"
 _NAME = re.compile(r"lamnezia-\d{8}-\d{6}\.lamnezia")
 _STAGING_PREFIX = ".staging-"
-_LEFTOVER_PREFIXES = (_STAGING_PREFIX, DUMP_DIR_PREFIX)
+# An archive uploaded to restore waits under such a name until its operation takes it.
+UPLOAD_PREFIX = ".upload-"
+_UPLOAD = re.compile(rf"{re.escape(UPLOAD_PREFIX)}[0-9a-f]{{32}}")
+_LEFTOVER_PREFIXES = (_STAGING_PREFIX, DUMP_DIR_PREFIX, UPLOAD_PREFIX)
 
 
 @dataclass(frozen=True)
@@ -78,8 +83,38 @@ class PanelArchiveFolder:
     def delete(self, name: str) -> None:
         self.get(name).path.unlink(missing_ok=True)
 
-    def create(self, password: str, dump: DatabaseDump | None = None) -> tuple[ArchiveFile, int]:
-        """Make an archive of the panel now; returns it and how many old ones were removed."""
+    def upload(self, chunks: Iterable[bytes]) -> str:
+        """Keep an archive uploaded to restore it; returns the name its operation takes."""
+        self._root.mkdir(parents=True, exist_ok=True)
+        self._remove_leftovers()
+        name = f"{UPLOAD_PREFIX}{secrets.token_hex(16)}"
+        path = self._root / name
+        with path.open("xb") as file:
+            path.chmod(0o600)
+            for chunk in chunks:
+                file.write(chunk)
+        return name
+
+    def restorable(self, name: str) -> Path:
+        """The file of a complete archive or of an uploaded one, to restore it."""
+        if _UPLOAD.fullmatch(name) and (self._root / name).is_file():
+            return self._root / name
+        return self.get(name).path
+
+    def work_dir(self) -> Path:
+        """A new folder for an unpacked archive, removed as a leftover if the worker dies."""
+        self._root.mkdir(parents=True, exist_ok=True)
+        path = self._root / f"{DUMP_DIR_PREFIX}{secrets.token_hex(8)}"
+        path.mkdir(mode=0o700)
+        return path
+
+    def create(
+        self, password: str, dump: DatabaseDump | None = None, *, prune: bool = True
+    ) -> tuple[ArchiveFile, int]:
+        """Make an archive of the panel now; returns it and how many old ones were removed.
+
+        Without `prune` the old archives stay, e.g. the one a restore is bringing in.
+        """
         self._root.mkdir(parents=True, exist_ok=True)
         self._remove_leftovers()
         name = timezone.now().astimezone(UTC).strftime("lamnezia-%Y%m%d-%H%M%S.lamnezia")
@@ -93,7 +128,7 @@ class PanelArchiveFolder:
             staging.replace(self._root / name)
         finally:
             staging.unlink(missing_ok=True)
-        return self.get(name), self._prune()
+        return self.get(name), self._prune() if prune else 0
 
     def _remove_leftovers(self) -> None:
         """Files of an archive whose worker died; the unencrypted dump must not stay on disk."""

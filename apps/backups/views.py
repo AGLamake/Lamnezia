@@ -12,11 +12,12 @@ from django.views.generic import FormView
 from apps.accounts.permissions import AdminRequiredMixin, SectionRequiredMixin
 from apps.accounts.services.access import Section
 from apps.backups.errors import PanelArchiveError, RestoreError
-from apps.backups.forms import PanelArchiveForm
+from apps.backups.forms import PanelArchiveForm, PanelRestoreForm
 from apps.backups.models import ProtocolSnapshot
 from apps.backups.services.archive_remote import remote_from_settings
 from apps.backups.services.archive_schedule import ArchiveSchedule
 from apps.backups.services.panel_archives import (
+    ArchiveFile,
     ArchiveNotFoundError,
     PanelArchiveFolder,
     active_archive_operation,
@@ -25,6 +26,7 @@ from apps.backups.services.panel_archives import (
     log_download,
     start_panel_archive,
 )
+from apps.backups.services.panel_restore import active_restore_operation, start_panel_restore
 from apps.backups.services.restore import start_restore, start_service_restore
 from apps.backups.services.snapshot_restore import delete_snapshot, start_snapshot_restore
 from apps.protocols.models import ProtocolInstance, ServiceInstance
@@ -91,10 +93,13 @@ class PanelArchiveListView(AdminRequiredMixin, FormView):  # type: ignore[type-a
     form_class = PanelArchiveForm
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        folder = PanelArchiveFolder.from_settings()
+        archives = PanelArchiveFolder.from_settings().archives()
+        kwargs.setdefault("form", PanelArchiveForm())
+        kwargs.setdefault("restore_form", _restore_form(archives))
         return super().get_context_data(
-            archives=folder.archives(),
+            archives=archives,
             active=active_archive_operation(),
+            restoring=active_restore_operation(),
             keep=settings.PANEL_ARCHIVE_KEEP,
             failed=failed_archive_operation(),
             schedule=ArchiveSchedule.from_settings(),
@@ -105,6 +110,36 @@ class PanelArchiveListView(AdminRequiredMixin, FormView):  # type: ignore[type-a
     def form_valid(self, form: PanelArchiveForm) -> HttpResponse:
         operation = start_panel_archive(form.cleaned_data["password"], self.member, self.client_ip)
         return redirect("operations:detail", pk=operation.pk)
+
+
+class PanelRestoreView(PanelArchiveListView):
+    """Restore the panel from an uploaded archive or from one kept on it."""
+
+    form_class = PanelRestoreForm  # type: ignore[assignment]
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return redirect("backups:panel-archives")
+
+    def get_form(self, form_class: Any = None) -> PanelRestoreForm:
+        archives = PanelArchiveFolder.from_settings().archives()
+        return _restore_form(archives, data=self.request.POST, files=self.request.FILES)
+
+    def form_invalid(self, form: PanelRestoreForm) -> HttpResponse:
+        return self.render_to_response(self.get_context_data(restore_form=form))
+
+    def form_valid(self, form: PanelRestoreForm) -> HttpResponse:  # type: ignore[override]
+        upload = form.cleaned_data["upload"]
+        if upload:
+            name = PanelArchiveFolder.from_settings().upload(upload.chunks())
+        else:
+            name = form.cleaned_data["archive"]
+        password = form.cleaned_data["restore_password"]
+        operation = start_panel_restore(name, password, self.member, self.client_ip)
+        return redirect("operations:detail", pk=operation.pk)
+
+
+def _restore_form(archives: list[ArchiveFile], **kwargs: Any) -> PanelRestoreForm:
+    return PanelRestoreForm(archives=[archive.name for archive in archives], **kwargs)
 
 
 def _storage_label() -> str | None:

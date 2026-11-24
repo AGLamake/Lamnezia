@@ -10,6 +10,7 @@ from typing import Any
 
 from django.utils.translation import gettext as _
 
+from apps.backups.services.panel_restore import panel_restoring
 from apps.operations.models import Operation, OperationStatus
 from apps.relocation.models import PanelMove
 from apps.relocation.tasks import CHECK_DOMAIN_TASK
@@ -25,6 +26,7 @@ ALWAYS_ALLOWED_TASKS = frozenset(
     {"operations.fail_stale", CHECK_DOMAIN_TASK, "notifications.deliver"}
 )
 MOVING_ERROR = "panel_moving"
+RESTORING_ERROR = "panel_restoring"
 
 
 def frozen_move() -> PanelMove | None:
@@ -41,11 +43,28 @@ class TaskGate:
     """Decides whether a Celery job runs: while frozen only the move's own operations do."""
 
     def allows(self, task_name: str, args: Sequence[Any]) -> bool:
+        if panel_restoring():
+            return self._during_restore(task_name, args)
         if task_name in ALWAYS_ALLOWED_TASKS or not panel_frozen():
             return True
         if task_name == RUN_OPERATION_TASK and args:
             return self._allows_operation(args[0])
         logger.info("task %s skipped: the panel is moving", task_name)
+        return False
+
+    @staticmethod
+    def _during_restore(task_name: str, args: Sequence[Any]) -> bool:
+        """Nothing runs while a panel archive replaces the database; operations fail at once."""
+        logger.info("task %s skipped: the panel is being restored", task_name)
+        if task_name == RUN_OPERATION_TASK and args:
+            operation = Operation.objects.filter(pk=args[0]).first()
+            if operation is not None and operation.status == OperationStatus.PENDING:
+                operation.finish(
+                    OperationStatus.FAILED,
+                    code=RESTORING_ERROR,
+                    message=_("The panel is being restored from an archive."),
+                    hint=_("Run it again when the restore is over."),
+                )
         return False
 
     @staticmethod

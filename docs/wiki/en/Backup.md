@@ -171,11 +171,54 @@ the same servers, keys and SSH credentials.
 - If the `LAMNEZIA_HTTP_BIND` port of the archive is taken on the new server, a free one is used.
 - An archive of a newer panel than the code being installed is refused: install the same version or
   newer (`LAMNEZIA_REF=...` or `--image`).
-- An archive is not restored into a running panel: if `.env` exists or the database is not empty,
-  the installer stops and says how to start over.
+- The installer does not restore into a running panel: if `.env` exists or the database is not
+  empty, it stops and says how to start over. Use [Into a running panel](#into-a-running-panel).
 
 VPN servers keep working while the panel is down. If a VPN server was lost too, restore it after the
 panel: [Restoring a protocol](#restoring-a-protocol-on-a-new-vps).
+
+### Into a running panel
+
+**System → Panel archive → Restore from an archive** replaces the data of an installed panel with
+an archive: upload the file or pick one of the archives on the panel, enter its password and
+confirm. Only an administrator can do it. The restore runs in the worker as an operation; its page
+shows each step.
+
+1. The password, the checksums and the version are checked. A wrong password, a damaged file or an
+   archive of a newer panel stop the restore here, and nothing changes.
+2. If other operations run or wait, the restore stops and nothing changes.
+3. The current state is saved into a **safety archive** with the password of the restored one. It
+   stays in the list of archives; old archives are not removed at this step.
+4. The database is replaced in one transaction: if PostgreSQL refuses the dump, the old database
+   stays.
+5. The uploaded files are replaced, the migrations of this version are applied and the secrets are
+   re-encrypted with the key of this panel. If this fails, the safety archive is put back and the
+   operation says so.
+
+While the database is replaced, other jobs of the panel fail with "The panel is being restored",
+and changes from the web get 503; reading pages works.
+
+What to expect afterwards:
+
+- Everyone signs in again, with the accounts and passwords of the archive.
+- The `.env` of this panel stays: a running panel cannot change its own environment. The secrets
+  key of the archive is used only to re-encrypt the SSH credentials and other secrets. The step log
+  names the panel settings of the archive's `.env` that differ from this one (names only, no
+  values); copy the ones you need into `.env` and restart the panel. The domain, the port, the image
+  and the keys always stay those of this installation.
+- The operation history of the archive replaces the current one; the restore operation itself is
+  kept.
+
+An archive bigger than the upload limit of the reverse proxy (20 MB in the nginx config of the
+installer) does not pass through the page. Copy it to the server and restore it with the command:
+
+```bash
+docker compose cp lamnezia-20260101-030000.lamnezia web:/tmp/panel.lamnezia
+docker compose exec web python manage.py panel_archive restore /tmp/panel.lamnezia
+```
+
+The command asks for the password (or reads it with `--password-stdin`), checks the archive at
+once and queues the restore; follow it on the **Operations** page.
 
 ### From backups by hand
 

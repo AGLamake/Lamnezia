@@ -88,5 +88,25 @@
     <p class="help-text">{% translate "No archives yet." %}</p>
     {% endif %}
   </section>
+
+  <form method="post" action="{% url 'backups:restore-panel' %}" enctype="multipart/form-data" class="form-section" data-confirm="{% translate "Replace all data of this panel with the archive? A safety archive of the current state is made first." %}">
+    {% csrf_token %}
+    <h2 class="section-title flex items-center gap-2">{% icon "refresh" "icon-sm text-muted" %}{% translate "Restore from an archive" %}</h2>
+    <div class="form-section-body">
+      {% if restoring %}
+      <div class="alert alert-info" role="status">
+        {% icon "info" "icon mt-px" %}
+        <p class="min-w-0 flex-1 break-words">{% translate "The panel is being restored now." %} <a href="{% url 'operations:detail' restoring.pk %}" class="font-medium underline">{% translate "Progress" %}</a></p>
+      </div>
+      {% endif %}
+      <p>{% translate "The servers, keys, users and settings of the panel are replaced with the ones of the archive. The password, the file and the version of the archive are checked first: a wrong one changes nothing." %}</p>
+      {% for error in restore_form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+      {{ restore_form.upload.as_field_group }}
+      {% if archives %}{{ restore_form.archive.as_field_group }}{% endif %}
+      {{ restore_form.restore_password.as_field_group }}
+      <p class="help-text">{% translate "Before the restore the panel saves its current state into a safety archive with the same password and puts it back if the restore fails. The .env of this panel stays: the secrets are re-encrypted with its key, and the step log names the settings that differ. Afterwards everyone signs in again with the accounts of the archive. Other operations must be over." %}</p>
+      <div><button type="submit" class="btn btn-danger"{% if restoring %} disabled{% endif %}>{% icon "refresh" %}{% translate "Restore the panel" %}</button></div>
+    </div>
+  </form>
 </div>
 {% endblock %}

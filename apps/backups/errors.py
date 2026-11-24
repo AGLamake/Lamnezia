@@ -82,6 +82,12 @@ class PanelArchiveErrorCode(StrEnum):
     REMOTE_LOGIN = "remote_login"
     REMOTE_HOST_KEY = "remote_host_key"
     REMOTE_REFUSED = "remote_refused"
+    ARCHIVE_GONE = "archive_gone"
+    ARCHIVE_NEWER = "archive_newer"
+    UNKNOWN_FORMAT = "unknown_format"
+    PANEL_BUSY = "panel_busy"
+    LOAD_FAILED = "load_failed"
+    ROLLED_BACK = "rolled_back"
 
 
 PANEL_ARCHIVE_ERRORS: dict[PanelArchiveErrorCode, ErrorDescription] = {
@@ -95,7 +101,7 @@ PANEL_ARCHIVE_ERRORS: dict[PanelArchiveErrorCode, ErrorDescription] = {
     ),
     PanelArchiveErrorCode.NO_PASSWORD: ErrorDescription(
         _("The archive password is not kept after the first attempt."),
-        _("Make a new archive and enter the password again."),
+        _("Start it again on the Panel archive page and enter the password."),
     ),
     PanelArchiveErrorCode.WRONG_PASSWORD: ErrorDescription(
         _("The archive cannot be read with this password."),
@@ -152,6 +158,36 @@ PANEL_ARCHIVE_ERRORS: dict[PanelArchiveErrorCode, ErrorDescription] = {
         _(
             "The step log shows its answer. Check the rights to the folder or the bucket and "
             "the free space. The archive stays on the panel."
+        ),
+    ),
+    PanelArchiveErrorCode.ARCHIVE_GONE: ErrorDescription(
+        _("The archive to restore is not on the panel any more."),
+        _("Upload the archive again and start the restore."),
+    ),
+    PanelArchiveErrorCode.ARCHIVE_NEWER: ErrorDescription(
+        _("The archive comes from a newer version of the panel."),
+        _("Update the panel to that version or newer, then restore the archive. Nothing changed."),
+    ),
+    PanelArchiveErrorCode.UNKNOWN_FORMAT: ErrorDescription(
+        _("This version of the panel does not know the format of the archive."),
+        _("Update the panel, then restore the archive. Nothing changed."),
+    ),
+    PanelArchiveErrorCode.PANEL_BUSY: ErrorDescription(
+        _("Other operations are running or waiting on the panel."),
+        _("Wait until they end, then start the restore again. Nothing changed."),
+    ),
+    PanelArchiveErrorCode.LOAD_FAILED: ErrorDescription(
+        _("The database of the archive could not be loaded."),
+        _(
+            "The database stayed as it was. Check that the postgres service runs: docker "
+            "compose ps; the step log shows the answer of PostgreSQL."
+        ),
+    ),
+    PanelArchiveErrorCode.ROLLED_BACK: ErrorDescription(
+        _("The restored data could not be brought up to this version of the panel."),
+        _(
+            "The panel is back to the state from the safety archive made before the restore. "
+            "The step log shows what failed."
         ),
     ),
 }

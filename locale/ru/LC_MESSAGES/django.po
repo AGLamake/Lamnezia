@@ -682,6 +682,9 @@ msgstr "Резервные копии"
 msgid "Bad request"
 msgstr "Неверный запрос"
 
+msgid "Before the restore the panel saves its current state into a safety archive with the same password and puts it back if the restore fails. The .env of this panel stays: the secrets are re-encrypted with its key, and the step log names the settings that differ. Afterwards everyone signs in again with the accounts of the archive. Other operations must be over."
+msgstr "Перед восстановлением панель сохраняет текущее состояние в страховочный архив с тем же паролем и возвращает его, если восстановление не удалось. .env этой панели остаётся: секреты перешифровываются её ключом, а журнал шага называет отличающиеся настройки. После этого все входят заново с учётными записями из архива. Другие операции должны быть завершены."
+
 msgid "Before the update the panel makes an archive (System → Panel archive) with this password. The database is not taken back when the update fails: if the previous version does not work with it, restore the archive."
 msgstr "Перед обновлением панель создаёт архив (Система → Архив панели) с этим паролем. При неудачном обновлении база данных не откатывается: если предыдущая версия с ней не работает, восстановите архив."
 
@@ -2991,6 +2994,9 @@ msgstr "Удалить адрес? Ключи, которые ведут на н
 msgid "Rename"
 msgstr "Переименовать"
 
+msgid "Replace all data of this panel with the archive? A safety archive of the current state is made first."
+msgstr "Заменить все данные этой панели архивом? Сначала будет сделан страховочный архив текущего состояния."
+
 msgid "Reply templates"
 msgstr "Шаблоны ответов"
 
@@ -3035,8 +3041,14 @@ msgstr "Перезапуски %(container)s не вернули интерфе�
 msgid "Restore"
 msgstr "Восстановить"
 
+msgid "Restore from an archive"
+msgstr "Восстановление из архива"
+
 msgid "Restore on this server"
 msgstr "Восстановить на этом сервере"
+
+msgid "Restore the panel"
+msgstr "Восстановить панель"
 
 msgid "Restore the protocol on the server card first."
 msgstr "Сначала восстановите протокол в карточке сервера."
@@ -3105,6 +3117,9 @@ msgstr "Один раз запустите на хосте install.sh текущ
 
 msgid "Run it again when the move is over."
 msgstr "Запустите снова, когда перенос закончится."
+
+msgid "Run it again when the restore is over."
+msgstr "Запустите снова, когда восстановление закончится."
 
 msgid "Run the operation again. If it repeats, report a bug."
 msgstr "Запустите операцию снова. Если повторится — сообщите об ошибке."
@@ -4026,6 +4041,18 @@ msgstr "Из панели её ещё не обновляли."
 msgid "The panel installer supports Debian and Ubuntu only. Choose another machine."
 msgstr "Установщик панели поддерживает только Debian и Ubuntu. Выберите другую машину."
 
+msgid "The panel is being restored"
+msgstr "Панель восстанавливается"
+
+msgid "The panel is being restored from an archive and accepts no changes. Try again in a minute: after the restore everyone signs in again."
+msgstr "Панель восстанавливается из архива и не принимает изменений. Повторите через минуту: после восстановления все входят заново."
+
+msgid "The panel is being restored from an archive."
+msgstr "Панель восстанавливается из архива."
+
+msgid "The panel is being restored now."
+msgstr "Панель сейчас восстанавливается."
+
 msgid "The panel is moving"
 msgstr "Панель переезжает"
 
@@ -4378,6 +4405,9 @@ msgstr "На сервере по-прежнему его собственные 
 
 msgid "The servers of a group are clones: the settings apply on every one that answers. A server that does not answer lags and gets them when the panel catches it up. The port is the port of the group; the container log is set on each server."
 msgstr "Серверы группы — клоны: настройки применяются на каждом, который отвечает. Сервер, который не ответил, отстаёт и получает их, когда панель его догоняет. Порт — порт группы, журнал контейнера настраивается на каждом сервере."
+
+msgid "The servers, keys, users and settings of the panel are replaced with the ones of the archive. The password, the file and the version of the archive are checked first: a wrong one changes nothing."
+msgstr "Серверы, ключи, пользователи и настройки панели заменяются данными из архива. Сначала проверяются пароль, файл и версия архива: если что-то не так, ничего не меняется."
 
 msgid "The service restarts on the server and its clients reconnect. A new port, domain or transport mode changes the address users connect to: give them the new one."
 msgstr "Сервис перезапустится на сервере, его клиенты переподключатся. Новый порт, домен или режим транспорта меняют адрес подключения — передайте пользователям новый."

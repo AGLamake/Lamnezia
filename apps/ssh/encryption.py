@@ -1,5 +1,7 @@
 """Fernet encryption of secrets stored in the database (SSH credentials, private keys)."""
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 from cryptography.fernet import Fernet, InvalidToken, MultiFernet
@@ -75,3 +77,19 @@ def encrypted_models() -> list[tuple[type[models.Model], list[str]]]:
         if fields:
             found.append((model, fields))
     return found
+
+
+@contextmanager
+def decrypting_also(keys: str) -> Iterator[None]:
+    """Decrypt with `keys` too inside the block; the first key of the settings still encrypts.
+
+    For secrets that came from another panel, e.g. a restored panel archive: the block re-encrypts
+    them with `SecretRotation`. The worker runs one job per process, so no other job sees it.
+    """
+    SecretCipher(keys)  # wrong keys fail here, before the settings change
+    saved = settings.ENCRYPTION_KEY
+    settings.ENCRYPTION_KEY = f"{saved},{keys}"
+    try:
+        yield
+    finally:
+        settings.ENCRYPTION_KEY = saved

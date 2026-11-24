@@ -1,4 +1,4 @@
-"""Answers changes with 503 while the panel moves to another machine; reading still works."""
+"""Answers changes with 503 while the panel moves or is restored from an archive; reading works."""
 
 from collections.abc import Callable
 
@@ -6,6 +6,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import Resolver404, resolve
 
+from apps.backups.services.panel_restore import panel_restoring
 from apps.relocation.services.freeze import frozen_move
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
@@ -24,6 +25,7 @@ ALLOWED_VIEWS = frozenset(
 )
 # Payment providers and clients retry a 503; by then the domain points to the new machine.
 RETRY_AFTER_SECONDS = 300
+RESTORE_RETRY_AFTER_SECONDS = 60
 
 
 class PanelFreezeMiddleware:
@@ -33,6 +35,10 @@ class PanelFreezeMiddleware:
     def __call__(self, request: HttpRequest) -> HttpResponse:
         if request.method in SAFE_METHODS or _allowed(request.path_info):
             return self.get_response(request)
+        if panel_restoring():
+            response = render(request, "backups/restoring.html", status=503)
+            response["Retry-After"] = str(RESTORE_RETRY_AFTER_SECONDS)
+            return response
         move = frozen_move()
         if move is None:
             return self.get_response(request)

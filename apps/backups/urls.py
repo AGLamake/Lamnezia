@@ -4,6 +4,7 @@ from apps.backups.views import (
     PanelArchiveDeleteView,
     PanelArchiveDownloadView,
     PanelArchiveListView,
+    PanelRestoreView,
     ProtocolRestoreView,
     ServiceRestoreView,
     SnapshotDeleteView,
@@ -26,6 +27,7 @@ urlpatterns = [
     ),
     path("restore-service/<int:service_pk>/", ServiceRestoreView.as_view(), name="restore-service"),
     path("panel/", PanelArchiveListView.as_view(), name="panel-archives"),
+    path("panel/restore/", PanelRestoreView.as_view(), name="restore-panel"),
     path(
         "panel/<str:name>/download/",
         PanelArchiveDownloadView.as_view(),

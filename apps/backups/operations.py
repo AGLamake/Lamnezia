@@ -1,5 +1,6 @@
 """Operation kinds of the backups app; registered in `BackupsConfig.ready()`."""
 
+import os
 from contextlib import ExitStack
 
 from django.template.defaultfilters import filesizeformat
@@ -22,13 +23,17 @@ from apps.backups.services.archive_restore import ArchiveRestorer, ServiceRestor
 from apps.backups.services.archive_schedule import ArchiveSchedule
 from apps.backups.services.archived import archived_protocols
 from apps.backups.services.archived_services import archived_services
+from apps.backups.services.database_dump import PostgresLoad
 from apps.backups.services.panel_archives import (
     PANEL_ARCHIVE_KIND,
     PASSWORD_PARAM,
     SCHEDULED_PARAM,
+    UPLOAD_PREFIX,
     ArchiveFile,
+    ArchiveNotFoundError,
     PanelArchiveFolder,
 )
+from apps.backups.services.panel_restore import ARCHIVE_PARAM, PANEL_RESTORE_KIND, PanelRestore
 from apps.backups.services.restore import RESTORE_KIND, RESTORE_SERVICE_KIND, ProtocolRestorer
 from apps.backups.services.snapshot_restore import SNAPSHOT_RESTORE_KIND, SnapshotRestorer
 from apps.notifications.events import Event, english
@@ -102,6 +107,24 @@ def write_panel_archive(ctx: OperationContext) -> ArchiveFile:
         if removed:
             ctx.log(_("Old archives removed: %(count)d.") % {"count": removed})
     return archive
+
+
+@operations.register(PANEL_RESTORE_KIND, gettext_lazy("Restore the panel from an archive"))
+def restore_panel(ctx: OperationContext) -> None:
+    """Replace the data of the panel with an archive; an uploaded archive goes afterwards."""
+    password = _archive_password(ctx)
+    folder = PanelArchiveFolder.from_settings()
+    name = str(ctx.params.get(ARCHIVE_PARAM, ""))
+    try:
+        archive = folder.restorable(name)
+    except ArchiveNotFoundError as exc:
+        raise PanelArchiveError(PanelArchiveErrorCode.ARCHIVE_GONE, name) from exc
+    try:
+        restore = PanelRestore(ctx, password, folder, PostgresLoad.from_settings(), os.environ)
+        restore.run(archive)
+    finally:
+        if name.startswith(UPLOAD_PREFIX):
+            archive.unlink(missing_ok=True)
 
 
 def _archive_password(ctx: OperationContext) -> str:

@@ -23,6 +23,9 @@ msgstr "Ответ: %(detail)s"
 msgid "Archive %(name)s, %(size)s."
 msgstr "Архив %(name)s, %(size)s."
 
+msgid "Archive file"
+msgstr "Файл архива"
+
 msgid "Archive password"
 msgstr "Пароль архива"
 
@@ -36,6 +39,9 @@ msgstr "Архивы прежних версий панели (формат 1) �
 msgid "At least %(count)d characters. The panel does not keep it: without the password the archive cannot be restored."
 msgstr "Не короче %(count)d символов. Панель его не хранит: без пароля архив не восстановить."
 
+msgid "Bring the data up to this panel"
+msgstr "Приведение данных к этой панели"
+
 msgid "Change the port of the protocol back in its settings, then restore the snapshot."
 msgstr "Верните порт протокола в его настройках и восстановите снимок снова."
 
@@ -48,11 +54,17 @@ msgstr "Проверьте его адрес и что панель до нег�
 msgid "Check that the postgres service runs: docker compose ps. Then make the archive again."
 msgstr "Проверьте, что сервис postgres работает: docker compose ps. Затем создайте архив снова."
 
+msgid "Check the password, the file and the version of the archive"
+msgstr "Проверка пароля, файла и версии архива"
+
 msgid "Check the password: the file itself is whole."
 msgstr "Проверьте пароль: сам файл цел."
 
 msgid "Check the user and the password or the keys of the storage in .env."
 msgstr "Проверьте пользователя и пароль или ключи хранилища в .env."
+
+msgid "Choose either a file to upload or an archive on the panel."
+msgstr "Выберите либо файл для загрузки, либо архив на панели."
 
 #, python-format
 msgid "Clients to restore: %(count)d."
@@ -64,6 +76,9 @@ msgstr "Подключиться к серверу"
 #, python-format
 msgid "Copy of the server files from %(date)s."
 msgstr "Копия файлов сервера от %(date)s."
+
+msgid "Everyone signs in again, with the accounts of the archive."
+msgstr "Все входят заново, с учётными записями из архива."
 
 #, python-format
 msgid "Files put back: %(count)d."
@@ -98,11 +113,11 @@ msgstr "Отключено ключей сверх тарифа: %(count)d."
 msgid "Keys revoked: %(count)d."
 msgstr "Отозвано ключей: %(count)d."
 
+msgid "Load the database of the archive"
+msgstr "Загрузка базы из архива"
+
 msgid "Load the saved database"
 msgstr "Загрузить сохранённую базу данных"
-
-msgid "Make a new archive and enter the password again."
-msgstr "Создайте новый архив и введите пароль ещё раз."
 
 msgid "No copy could be saved: the keys of this protocol will not work again."
 msgstr "Копию сохранить не удалось: ключи этого протокола больше не заработают."
@@ -111,12 +126,25 @@ msgstr "Копию сохранить не удалось: ключи этого
 msgid "Old archives removed: %(count)d."
 msgstr "Удалено старых архивов: %(count)d."
 
+msgid "Or an archive on the panel"
+msgstr "Или архив на панели"
+
+msgid "Other operations are running or waiting on the panel."
+msgstr "На панели выполняются или ждут другие операции."
+
 #, python-format
 msgid "Owners notified: %(count)d."
 msgstr "Уведомлено владельцев: %(count)d."
 
+#, python-format
+msgid "Panel %(version)s, made %(time)s UTC."
+msgstr "Панель %(version)s, архив создан %(time)s UTC."
+
 msgid "Password again"
 msgstr "Пароль ещё раз"
+
+msgid "Password of the archive"
+msgstr "Пароль архива"
 
 #, python-format
 msgid "Peers left out of the files, not clients of this server: %(count)d."
@@ -128,6 +156,12 @@ msgstr "Подготовить файлы из панели"
 msgid "Prepare the files of the snapshot"
 msgstr "Подготовить файлы снимка"
 
+msgid "Put back the files from the safety archive"
+msgstr "Возврат файлов из страховочного архива"
+
+msgid "Put back the state from the safety archive"
+msgstr "Возврат состояния из страховочного архива"
+
 msgid "Put the saved files into the container"
 msgstr "Положить сохранённые файлы в контейнер"
 
@@ -137,17 +171,27 @@ msgstr "Прочитать файлы сервера"
 msgid "Restore a snapshot of the protocol"
 msgstr "Восстановление снимка протокола"
 
+msgid "Restore the panel from an archive"
+msgstr "Восстановление панели из архива"
+
 msgid "Restore the protocol"
 msgstr "Восстановление протокола"
 
 msgid "Restore the service"
 msgstr "Восстановление сервиса"
 
+#, python-format
+msgid "Safety archive %(name)s, with the password of the restored one."
+msgstr "Страховочный архив %(name)s, с паролем восстанавливаемого."
+
 msgid "Save a copy of the server files"
 msgstr "Сохранить копию файлов сервера"
 
 msgid "Save a snapshot of the server files"
 msgstr "Сохранить снимок файлов сервера"
+
+msgid "Save the current state into a safety archive"
+msgstr "Сохранение текущего состояния в страховочный архив"
 
 msgid "Save the database, settings and files into the archive"
 msgstr "Сохранение базы, настроек и файлов в архив"
@@ -156,11 +200,18 @@ msgid "Save the result in the panel"
 msgstr "Сохранить результат в панели"
 
 #, python-format
+msgid "Secrets re-encrypted with the key of this panel: %(count)d."
+msgstr "Секретов перешифровано ключом этой панели: %(count)d."
+
+#, python-format
 msgid "Send a copy to %(storage)s"
 msgstr "Отправить копию в %(storage)s"
 
 msgid "Set LAMNEZIA_PANEL_ARCHIVE_PASSWORD of at least 12 characters in .env and restart the panel."
 msgstr "Задайте в .env LAMNEZIA_PANEL_ARCHIVE_PASSWORD не короче 12 символов и перезапустите панель."
+
+msgid "Start it again on the Panel archive page and enter the password."
+msgstr "Запустите снова на странице «Архив панели» и введите пароль."
 
 msgid "Take the server out of the group first, then restore the snapshot."
 msgstr "Сначала выведите сервер из группы, затем восстановите снимок."
@@ -174,6 +225,9 @@ msgstr "С этим паролем архив не читается, или фа
 msgid "The archive cannot be read with this password."
 msgstr "С этим паролем архив не читается."
 
+msgid "The archive comes from a newer version of the panel."
+msgstr "Архив сделан более новой версией панели."
+
 msgid "The archive is damaged."
 msgstr "Архив повреждён."
 
@@ -182,6 +236,9 @@ msgstr "Архив удалён."
 
 msgid "The archive password is not kept after the first attempt."
 msgstr "Пароль архива не хранится после первой попытки."
+
+msgid "The archive to restore is not on the panel any more."
+msgstr "Архива для восстановления больше нет на панели."
 
 msgid "The container already has its files, they are kept."
 msgstr "В контейнере уже есть свои файлы, они сохранены."
@@ -204,6 +261,12 @@ msgstr "Копия %(name)s в хранилище."
 
 msgid "The database could not be saved."
 msgstr "Не удалось сохранить базу данных."
+
+msgid "The database of the archive could not be loaded."
+msgstr "Не удалось загрузить базу из архива."
+
+msgid "The database stayed as it was. Check that the postgres service runs: docker compose ps; the step log shows the answer of PostgreSQL."
+msgstr "База осталась прежней. Проверьте, что сервис postgres работает: docker compose ps; ответ PostgreSQL — в журнале шага."
 
 msgid "The external storage did not answer."
 msgstr "Внешнее хранилище не ответило."
@@ -239,11 +302,21 @@ msgstr "Панель его не перезаписывает. Удалите к
 msgid "The panel has no copy of the files of this protocol."
 msgstr "В панели нет копии файлов этого протокола."
 
+msgid "The panel is back to the state from the safety archive made before the restore. The step log shows what failed."
+msgstr "Панель возвращена к состоянию из страховочного архива, сделанного перед восстановлением. Что не получилось — в журнале шага."
+
 msgid "The password of scheduled archives is too short."
 msgstr "Пароль архивов по расписанию слишком короткий."
 
 msgid "The passwords differ."
 msgstr "Пароли не совпадают."
+
+#, python-format
+msgid "The restore failed: %(error)s"
+msgstr "Восстановление не удалось: %(error)s"
+
+msgid "The restored data could not be brought up to this version of the panel."
+msgstr "Восстановленные данные не удалось привести к этой версии панели."
 
 msgid "The saved copy belongs to other server keys than the panel has for the protocol."
 msgstr "Сохранённая копия относится к другим ключам сервера, чем те, что есть в панели для этого протокола."
@@ -275,11 +348,34 @@ msgstr "Журнал шага показывает ключ, который пр
 msgid "There is no copy of the server files: the panel settings are used."
 msgstr "Копии файлов сервера нет: используются настройки из панели."
 
+#, python-format
+msgid "These settings of the archive differ from the .env of this panel and stay as they are: %(names)s. Copy them into .env if needed and restart the panel."
+msgstr "Эти настройки архива отличаются от .env этой панели и остаются как есть: %(names)s. При необходимости перенесите их в .env и перезапустите панель."
+
+#, python-format
+msgid "This version lacks %(file)s."
+msgstr "В этой версии нет %(file)s."
+
+msgid "This version of the panel does not know the format of the archive."
+msgstr "Эта версия панели не знает формат архива."
+
 msgid "Unexpected error."
 msgstr "Непредвиденная ошибка."
 
+msgid "Update the panel to that version or newer, then restore the archive. Nothing changed."
+msgstr "Обновите панель до этой версии или новее, затем восстановите архив. Ничего не изменилось."
+
+msgid "Update the panel, then restore the archive. Nothing changed."
+msgstr "Обновите панель, затем восстановите архив. Ничего не изменилось."
+
+msgid "Upload the archive again and start the restore."
+msgstr "Загрузите архив снова и запустите восстановление."
+
 msgid "Wait for other operations on the server"
 msgstr "Дождаться других операций на сервере"
+
+msgid "Wait until they end, then start the restore again. Nothing changed."
+msgstr "Дождитесь их окончания и запустите восстановление снова. Ничего не изменилось."
 
 msgid "Without the copy the old keys cannot work again. Install the protocol anew and issue new keys."
 msgstr "Без копии старые ключи заново не заработают. Установите протокол заново и выдайте новые ключи."

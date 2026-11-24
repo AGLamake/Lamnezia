@@ -1,4 +1,4 @@
-"""The `panel_archive` command: make an encrypted archive of the panel or check one."""
+"""The `panel_archive` command: make an encrypted archive of the panel, check or restore one."""
 
 import sys
 from argparse import ArgumentParser
@@ -13,12 +13,15 @@ from apps.backups.errors import PanelArchiveError
 from apps.backups.services.archive_cipher import MIN_PASSWORD_LENGTH
 from apps.backups.services.panel_archive import PanelArchiveReader
 from apps.backups.services.panel_archives import PanelArchiveFolder
+from apps.backups.services.panel_restore import start_panel_restore
+
+_CHUNK = 1024 * 1024
 
 
 class Command(BaseCommand):
     help = (
         "Make an encrypted archive of the panel (database, .env, uploaded files) in the archive "
-        "folder, or check that an archive opens with its password."
+        "folder, check that an archive opens with its password, or restore the panel from one."
     )
     stealth_options = ("stdin",)
 
@@ -27,7 +30,11 @@ class Command(BaseCommand):
         create = actions.add_parser("create", help="Make an archive now.")
         verify = actions.add_parser("verify", help="Check an archive: password and checksums.")
         verify.add_argument("file", type=Path)
-        for action in (create, verify):
+        restore = actions.add_parser(
+            "restore", help="Replace the data of this panel with an archive, in the worker."
+        )
+        restore.add_argument("file", type=Path)
+        for action in (create, verify, restore):
             action.add_argument(
                 "--password-stdin",
                 action="store_true",
@@ -38,8 +45,10 @@ class Command(BaseCommand):
         try:
             if options["action"] == "create":
                 self._create(self._password(options, twice=True))
-            else:
+            elif options["action"] == "verify":
                 self._verify(options["file"], self._password(options, twice=False))
+            else:
+                self._restore(options["file"], self._password(options, twice=False))
         except PanelArchiveError as error:
             raise CommandError(f"{error.message} {error.hint}") from error
 
@@ -56,6 +65,18 @@ class Command(BaseCommand):
         self.stdout.write(
             f"The archive is whole: panel {manifest.panel_version}, "
             f"made {manifest.created_at:%Y-%m-%d %H:%M} UTC."
+        )
+
+    def _restore(self, file: Path, password: str) -> None:
+        """Checked here first, so a wrong password fails at once; the worker restores it."""
+        self._verify(file, password)
+        with file.open("rb") as source:
+            chunks = iter(lambda: source.read(_CHUNK), b"")
+            name = PanelArchiveFolder.from_settings().upload(chunks)
+        operation = start_panel_restore(name, password, None, None)
+        self.stdout.write(
+            f"The restore is operation {operation.pk}: follow it on the Operations page. "
+            "Afterwards everyone signs in again."
         )
 
     def _password(self, options: dict[str, Any], *, twice: bool) -> str:

@@ -1,4 +1,4 @@
-"""Forms of the backups app: the password of a new panel archive."""
+"""Forms of the backups app: the password of a new panel archive, the archive to restore."""
 
 from typing import Any
 
@@ -33,4 +33,30 @@ class PanelArchiveForm(forms.Form):
         data = super().clean() or {}
         if data.get("password") != data.get("confirmation"):
             self.add_error("confirmation", _("The passwords differ."))
+        return data
+
+
+class PanelRestoreForm(forms.Form):
+    """An archive to restore: uploaded now or one kept on the panel, and its password."""
+
+    upload = forms.FileField(label=_("Archive file"), required=False)
+    archive = forms.ChoiceField(label=_("Or an archive on the panel"), required=False)
+    restore_password = forms.CharField(
+        label=_("Password of the archive"),
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "off"}),
+    )
+
+    def __init__(self, *args: Any, archives: list[str], **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        archive = self.fields["archive"]
+        assert isinstance(archive, forms.ChoiceField)
+        archive.choices = [("", "—"), *((name, name) for name in archives)]
+
+    def clean(self) -> dict[str, Any]:
+        data = super().clean() or {}
+        if bool(data.get("upload")) == bool(data.get("archive")):
+            raise forms.ValidationError(
+                _("Choose either a file to upload or an archive on the panel.")
+            )
         return data

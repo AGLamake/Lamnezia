@@ -66,6 +66,11 @@ _PLAIN_VALUE = re.compile(r"[\w@%+=:,./-]*")
 DUMP_DIR_PREFIX = ".dump-"
 
 
+def archived_variable(name: str) -> bool:
+    """Whether a variable of the environment goes into the archived .env."""
+    return name.startswith(_ENV_PREFIXES) and name not in _NOT_ARCHIVED
+
+
 def env_file(environ: Mapping[str, str]) -> str:
     """The .env of the panel from its environment: docker compose passed the file in whole.
 
@@ -74,7 +79,7 @@ def env_file(environ: Mapping[str, str]) -> str:
     lines = [
         f"{name}={_env_value(value)}"
         for name, value in sorted(environ.items())
-        if name.startswith(_ENV_PREFIXES) and name not in _NOT_ARCHIVED
+        if archived_variable(name)
     ]
     return "\n".join(lines) + "\n"
 
@@ -89,6 +94,31 @@ def _env_value(value: str) -> str:
     return '"' + escaped.replace("$", "$$") + '"'
 
 
+def read_env(text: str) -> dict[str, str]:
+    """Variables of an archived .env, read back the way `env_file` quoted them."""
+    variables = {}
+    for line in text.splitlines():
+        name, sep, value = line.partition("=")
+        if not sep or not name or name.startswith("#"):
+            continue
+        variables[name] = _unquoted(value)
+    return variables
+
+
+def _unquoted(value: str) -> str:
+    quote = value[:1]
+    if quote not in ("'", '"') or len(value) < len("''") or value[-1] != quote:
+        return value
+    if quote == "'":
+        return value[1:-1]
+    return re.sub(r"\\(.)", _escaped, value[1:-1]).replace("$$", "$")
+
+
+def _escaped(match: re.Match[str]) -> str:
+    char = match.group(1)
+    return "\n" if char == "n" else char
+
+
 def migration_files() -> list[str]:
     """Applied migrations of the panel's own apps, as file paths from the code root."""
     paths = []
@@ -101,6 +131,15 @@ def migration_files() -> list[str]:
         if "site-packages" not in file.parts and file.is_relative_to(settings.BASE_DIR):
             paths.append(file.relative_to(settings.BASE_DIR).as_posix())
     return paths
+
+
+def newer_migrations(listed: str) -> list[str]:
+    """Migration files of an archive's list that this code lacks: the archive is newer."""
+    return [
+        path
+        for path in listed.splitlines()
+        if path.strip() and not (settings.BASE_DIR / path.strip()).is_file()
+    ]
 
 
 def panel_version() -> str:
@@ -204,6 +243,30 @@ class PanelArchiveReader:
         expected = dict(line.split("  ", 1)[::-1] for line in sums.splitlines())
         if any(digests.get(name) != digest for name, digest in expected.items()):
             raise PanelArchiveError(failure, "checksum mismatch")
+        return manifest
+
+    def unpack(self, path: Path, target: Path) -> Manifest:
+        """Check the archive, then unpack it into the empty folder `target`.
+
+        The unpacked files are checked against the sums once more: the archive could change
+        between the two readings.
+        """
+        manifest = self.check(path)
+        try:
+            with path.open("rb") as raw:
+                stream = self._cipher.reader(raw)
+                with tarfile.open(fileobj=stream, mode="r|gz") as tar:  # type: ignore[call-overload]
+                    tar.extractall(target, filter="data")
+            sums = (target / SUMS).read_text()
+        except self._UNREADABLE as exc:
+            raise PanelArchiveError(PanelArchiveErrorCode.DAMAGED, repr(exc)) from exc
+        for line in sums.splitlines():
+            digest, name = line.split("  ", 1)
+            file = target / name
+            if not file.is_file() or _file_digest(file) != digest:
+                raise PanelArchiveError(PanelArchiveErrorCode.DAMAGED, f"{name} differs")
+        if manifest.format != FORMAT:
+            raise PanelArchiveError(PanelArchiveErrorCode.UNKNOWN_FORMAT, str(manifest.format))
         return manifest
 
     @staticmethod

@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   panel, and the server card sums up the tests of the last 90 days by port: how many, how many got
   no answer and the average download and upload speed. Only the port and the speeds are kept, not
   who measured nor their address or network; results older than 90 days are removed daily.
+- **Restore a panel archive into a running panel**: **System → Panel archive → Restore from an
+  archive** (or `manage.py panel_archive restore FILE`) replaces the data of an installed panel
+  with an archive. The password, the file and the version are checked first, and a wrong one
+  changes nothing; then the current state goes into a safety archive, the database is replaced in
+  one transaction, and the safety archive is put back if the data cannot be brought up to this
+  version. The `.env` of the panel stays: the secrets are re-encrypted with its key, and the
+  settings that differ are named in the log. Everyone signs in again afterwards.
 - **Browsers with notifications in the profile**: the profile lists the browsers that get the
   user's notifications, with the browser and system, the date of the subscription and the last
   delivery, and turns them off one by one. The push address is not shown.
