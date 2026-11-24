@@ -5,9 +5,12 @@ sends the new subscription when the browser changes it).
 
 from typing import cast
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views import View
@@ -115,3 +118,15 @@ class PushTestView(_PushView):
         device = device_name(request.headers.get("User-Agent", "")) or "browser"
         send_browser_test(cast(User, request.user), device)
         return self.answer()
+
+
+class PushForgetView(_PushView):
+    """Turns notifications off in one browser of the profile list, this one or another."""
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponseRedirect:
+        endpoint = self.subscriptions.forget(pk)
+        if endpoint is not None:
+            if request.session.get(BrowserSubscriptions.SESSION_KEY) == endpoint:
+                request.session.pop(BrowserSubscriptions.SESSION_KEY)
+            messages.success(request, _("Notifications are off in that browser."))
+        return redirect(f"{reverse('accounts:profile')}#notifications")

@@ -124,6 +124,19 @@ class BrowserSubscriptions:
     def remove(self, endpoint: str) -> None:
         self._mine().filter(endpoint=endpoint).delete()
 
+    def forget(self, pk: int) -> str | None:
+        """Delete one of the user's subscriptions from the profile list; its address, or None when
+        the user has no such subscription.
+        """
+        subscription = self._mine().filter(pk=pk).first()
+        if subscription is None:
+            return None
+        subscription.delete()
+        return subscription.endpoint
+
+    def browsers(self) -> list[PushSubscription]:
+        return list(self._mine())
+
     def has(self, endpoint: str) -> bool:
         return self._mine().filter(endpoint=endpoint).exists()
 
@@ -242,6 +255,9 @@ class BrowserPush:
                 errors.append(error)
             else:
                 taken = True
+                PushSubscription.objects.filter(pk=subscription.pk).update(
+                    delivered_at=self._clock()
+                )
         if taken:
             return
         if not errors:

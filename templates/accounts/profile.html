@@ -147,6 +147,23 @@
       <button type="button" class="btn btn-secondary btn-sm" data-push-action="test" data-push-show="on" hidden>{% translate "Send a test" %}</button>
       <button type="button" class="btn btn-ghost btn-sm" data-push-action="off" data-push-show="on" hidden>{% translate "Turn off in this browser" %}</button>
     </div>
+    {% if push_browsers %}
+      <ul class="divide-y divide-border" data-push-browsers>
+        {% for browser in push_browsers %}
+          <li class="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+            <span class="min-w-0">
+              <span class="font-medium">{{ browser.device|default:_("Unknown browser") }}</span>
+              {% if push_endpoint and browser.endpoint == push_endpoint %}<span class="badge badge-success">{% translate "this one" %}</span>{% endif %}
+              <span class="help-text block">
+                {% blocktranslate with when=browser.created_at|date:"SHORT_DATETIME_FORMAT" %}subscribed {{ when }}{% endblocktranslate %} ·
+                {% if browser.delivered_at %}{% blocktranslate with when=browser.delivered_at|date:"SHORT_DATETIME_FORMAT" %}last delivered {{ when }}{% endblocktranslate %}{% else %}{% translate "nothing delivered yet" %}{% endif %}
+              </span>
+            </span>
+            <form method="post" action="{% url 'push:forget' browser.pk %}">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm">{% translate "Turn off" %}</button></form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
   </div>
 </section>
 

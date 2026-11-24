@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Browsers with notifications in the profile**: the profile lists the browsers that get the
+  user's notifications, with the browser and system, the date of the subscription and the last
+  delivery, and turns them off one by one. The push address is not shown.
 - **Speed test by port for users**: with **Users test port speed** on in the settings, a user
   measures in the browser the ports of a server they have a key on, from the list the
   administrator allows. A test runs ten minutes, one user starts at most three tests of a server an

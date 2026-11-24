@@ -5271,6 +5271,10 @@ msgid "language"
 msgstr "язык"
 
 #, python-format
+msgid "last delivered %(when)s"
+msgstr "последняя доставка %(when)s"
+
+#, python-format
 msgid "last fetch %(date)s"
 msgstr "последний запрос %(date)s"
 
@@ -5445,6 +5449,9 @@ msgstr "ещё не было"
 
 msgid "note"
 msgstr "заметка"
+
+msgid "nothing delivered yet"
+msgstr "доставок ещё не было"
 
 msgid "notification language"
 msgstr "язык уведомлений"
@@ -5770,6 +5777,10 @@ msgstr "останавливать старую копию автоматиче�
 
 msgid "straight from the relay"
 msgstr "напрямую с ретранслятора"
+
+#, python-format
+msgid "subscribed %(when)s"
+msgstr "подписан %(when)s"
 
 msgid "suggested by"
 msgstr "предложил"

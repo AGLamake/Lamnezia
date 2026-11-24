@@ -3,6 +3,7 @@
 from django.urls import path
 
 from apps.notifications.views_push import (
+    PushForgetView,
     PushResubscribeView,
     PushStateView,
     PushSubscribeView,
@@ -18,4 +19,5 @@ urlpatterns = [
     path("resubscribe/", PushResubscribeView.as_view(), name="resubscribe"),
     path("state/", PushStateView.as_view(), name="state"),
     path("test/", PushTestView.as_view(), name="test"),
+    path("<int:pk>/forget/", PushForgetView.as_view(), name="forget"),
 ]

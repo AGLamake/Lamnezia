@@ -228,6 +228,9 @@ msgstr "Новое обращение в поддержку"
 msgid "No group server reachable"
 msgstr "Ни один сервер группы не доступен"
 
+msgid "Notifications are off in that browser."
+msgstr "Уведомления в том браузере выключены."
+
 #, python-brace-format
 msgid "Notifications from Lamnezia reach the channel {channel}."
 msgstr "Уведомления Lamnezia доходят до канала {channel}."
@@ -667,6 +670,9 @@ msgstr "событие"
 
 msgid "kind"
 msgstr "вид"
+
+msgid "last delivered"
+msgstr "последняя доставка"
 
 msgid "name"
 msgstr "название"

@@ -75,6 +75,8 @@ class ProfileMixin(LoginRequiredMixin):
             "notify_form": NotifyViaForm(instance=user),
             "push_key": PanelKeys.public(),
             "push_count": BrowserSubscriptions(user).count(),
+            "push_browsers": BrowserSubscriptions(user).browsers(),
+            "push_endpoint": self.request.session.get(BrowserSubscriptions.SESSION_KEY),
         }
         return context | sections
 

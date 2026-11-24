@@ -81,6 +81,7 @@ def test_a_test_push_reaches_the_browser(http: FakeHttp) -> None:
 
     assert answer.status_code == 200
     assert "Firefox" in browser.read(http.to(browser.endpoint)[0].body)["body"]
+    assert PushSubscription.objects.get().delivered_at is not None
 
 
 @pytest.mark.usefixtures("commit")
@@ -214,3 +215,63 @@ def test_a_guest_cannot_resubscribe() -> None:
 
     assert answer.status_code == 302
     assert not PushSubscription.objects.exists()
+
+
+def test_the_profile_lists_the_browsers_without_their_addresses() -> None:
+    user, here, away = UserFactory(), Browser(OLD), Browser(NEW)
+    client = signed_in(user)
+    post(client, "subscribe", here.form())
+    post(signed_in(user), "subscribe", away.form())
+
+    page = client.get("/accounts/profile/").content.decode()
+
+    assert page.count("/forget/") == 2
+    assert "Firefox" in page
+    assert "this one" in page
+    assert "nothing delivered yet" in page
+    assert OLD not in page
+    assert NEW not in page
+
+
+def test_the_user_turns_off_another_browser_from_the_list() -> None:
+    user, here, away = UserFactory(), Browser(OLD), Browser(NEW)
+    client = signed_in(user)
+    post(client, "subscribe", here.form())
+    post(signed_in(user), "subscribe", away.form())
+    other = PushSubscription.objects.get(endpoint=NEW)
+
+    answer = client.post(f"/push/{other.pk}/forget/")
+
+    assert answer.status_code == 302
+    assert answer["Location"].endswith("/accounts/profile/#notifications")
+    assert list(PushSubscription.objects.values_list("endpoint", flat=True)) == [OLD]
+    assert client.session[BrowserSubscriptions.SESSION_KEY] == OLD
+
+
+def test_turning_off_this_browser_from_the_list_forgets_it_in_the_session() -> None:
+    client = signed_in(UserFactory())
+    post(client, "subscribe", Browser(OLD).form())
+
+    client.post(f"/push/{PushSubscription.objects.get().pk}/forget/")
+
+    assert not PushSubscription.objects.exists()
+    assert BrowserSubscriptions.SESSION_KEY not in client.session
+
+
+def test_another_users_browser_cannot_be_turned_off() -> None:
+    post(signed_in(UserFactory()), "subscribe", Browser(OLD).form())
+    theirs = PushSubscription.objects.get()
+
+    signed_in(UserFactory()).post(f"/push/{theirs.pk}/forget/")
+
+    assert PushSubscription.objects.filter(pk=theirs.pk).exists()
+
+
+def test_a_guest_cannot_turn_off_a_browser() -> None:
+    post(signed_in(UserFactory()), "subscribe", Browser(OLD).form())
+
+    answer = Client().post(f"/push/{PushSubscription.objects.get().pk}/forget/")
+
+    assert answer.status_code == 302
+    assert "/accounts/login/" in answer["Location"]
+    assert PushSubscription.objects.exists()

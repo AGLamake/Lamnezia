@@ -211,7 +211,10 @@ notifications even when the panel is closed. This works in desktop browsers, on 
 iPhone and iPad from iOS 16.4 when the panel is added to the Home Screen and opened from there.
 Each browser is turned on separately, up to 10 per user; **Send a test** checks this one
 (once in 30 seconds per user),
-**Turn off in this browser** stops it. Signing out of the panel turns notifications off in that
+**Turn off in this browser** stops it. Below the buttons the profile lists the user's browsers:
+the browser and system they subscribed from, when, and when the push service last took a
+notification for them; **Turn off** next to one stops notifications there, for instance in a
+lost phone. The push address of a browser is not shown. Signing out of the panel turns notifications off in that
 browser, so the next person to use it does not get them. When the browser renews its subscription
 by itself, the panel's service worker sends the new one in place of the old, and notifications go on
 without a visit to the profile; this needs the user to be signed in to the panel in that browser.

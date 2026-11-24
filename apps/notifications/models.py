@@ -195,6 +195,8 @@ class PushSubscription(models.Model):
     auth = EncryptedTextField()
     device = models.CharField(_("browser"), max_length=100, blank=True)
     created_at = models.DateTimeField(_("subscribed at"), auto_now_add=True)
+    # When the push service last took a push for it: whether the browser showed it, it does not say.
+    delivered_at = models.DateTimeField(_("last delivered"), null=True, blank=True)
 
     class Meta:
         verbose_name = _("browser subscription")
