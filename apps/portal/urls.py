@@ -10,6 +10,8 @@ from apps.portal.views import (
     KeyView,
     PortalHomeView,
     ServerStatusView,
+    SpeedTestStateView,
+    SpeedTestView,
     SubscriptionView,
     UsageView,
 )
@@ -20,6 +22,12 @@ urlpatterns = [
     path("", PortalHomeView.as_view(), name="index"),
     path("usage/", UsageView.as_view(), name="usage"),
     path("servers/", ServerStatusView.as_view(), name="servers"),
+    path("servers/<int:pk>/speed-test/", SpeedTestView.as_view(), name="speed-test"),
+    path(
+        "servers/<int:pk>/speed-test/state/",
+        SpeedTestStateView.as_view(),
+        name="speed-test-state",
+    ),
     path("subscription/", SubscriptionView.as_view(), name="subscription"),
     path("keys/new/", GetKeyView.as_view(), name="get-key"),
     path("keys/<int:pk>/", KeyView.as_view(), name="key"),

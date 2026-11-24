@@ -90,6 +90,20 @@ class SiteSettings(models.Model):
         default=True,
         help_text=_("Signed-in users send links and texts for the guides; the staff review them."),
     )
+    portal_speed_test = models.BooleanField(
+        _("users test port speed"),
+        default=False,
+        help_text=_(
+            "Users measure in the browser the ports of a server they have a key on, "
+            "for ten minutes, three times an hour at most."
+        ),
+    )
+    portal_speed_test_ports = models.CharField(
+        _("ports for the users' speed test"),
+        max_length=100,
+        blank=True,
+        help_text=_("Separated by commas. A port taken on the server is not offered."),
+    )
     traffic_warning_percent = models.PositiveSmallIntegerField(
         _("traffic warning, %"),
         default=80,
@@ -219,6 +233,12 @@ class SiteSettings(models.Model):
     def discord_oauth(self) -> bool:
         """Users can link a Discord account in the browser: the Discord application is set up."""
         return bool(self.discord_client_id and self.discord_client_secret)
+
+    @property
+    def speed_test_ports(self) -> tuple[int, ...]:
+        """The ports users may test, as the settings form saved them."""
+        parts = self.portal_speed_test_ports.split(",")
+        return tuple(int(part) for part in parts if part.strip().isdigit())
 
     @classmethod
     def load(cls) -> "SiteSettings":

@@ -77,6 +77,26 @@ iperf3 -c vpn.example.com -p 5542 -t 10 -R              # download over TCP
 Then repeat them with the high port. Only one client can test a port at a time; if `iperf3` says the
 server is busy, wait for the previous run to end.
 
+### Speed test by users
+
+Users can measure the ports of their own server in the portal too, to tell the support which port
+works with their provider. It is off by default: turn on **Settings → Users and keys → Users test
+port speed** and list the ports users may test in **Ports for the users' speed test** (up to
+eight, separated by commas).
+
+- A user sees **Speed test** in **Servers** only next to a server they have a key on, and only
+  when the key leads to the address of the server itself. A server behind a relay or in a group
+  and a server at an IPv6 address are not offered, so the page gives away no other address.
+- The page offers the ports from the list that nothing on the server takes over UDP; the user
+  picks up to four. The test runs in the browser only, for ten minutes, as the administrator's
+  browser test does.
+- One user starts at most three tests of one server an hour. A server runs one test at a time:
+  while any test of it runs or starts, the administrator's included, the user is asked to wait.
+  Only the user who started a test sees its ports and secret path.
+- The panel does not record the user's IP address or the results. The audit log keeps who
+  started which test, and the operation is in **Operations**. The administrator can stop the test
+  on the server's speed test page.
+
 ### Reading the results
 
 - In the browser compare the download and upload between the ports: if one port is much slower or

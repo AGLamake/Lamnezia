@@ -1,0 +1,48 @@
+{% extends "layouts/portal.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Speed test by port" %} · {{ server.name }} · Lamnezia{% endblock %}
+
+{% block breadcrumbs %}<li><a href="{% url 'portal:servers' %}">{% translate "Servers" %}</a></li><li aria-current="page">{{ server.name }}</li>{% endblock %}
+
+{% block content %}
+<div class="space-y-1">
+  <h1 class="page-title">{% translate "Speed test by port" %}</h1>
+  <p class="help-text">{% translate "Some providers block or throttle UDP on some ports. The panel opens a few ports of the server for a short time; measure them here from the network you use the VPN in, with the VPN off, and tell the support which port works best." %}</p>
+</div>
+
+{% if running %}
+  <section class="card space-y-3">
+    <p>
+      <span class="badge badge-success">{% translate "running" %}</span>
+      <span class="help-text">{% blocktranslate with date=running.until|time:"TIME_FORMAT" %}The test ends at {{ date }}.{% endblocktranslate %}</span>
+    </p>
+    {% include "protocols/_speed_test_browser.html" with portal=True %}
+  </section>
+{% elif starting %}
+  <section class="card flex items-center gap-2" hx-get="{% url 'portal:speed-test-state' server.pk %}" hx-trigger="every {{ poll_seconds }}s" hx-swap="none">
+    {% icon "refresh" "icon-sm animate-spin text-muted" %}<span>{% translate "The test is starting, this takes up to a minute…" %}</span>
+  </section>
+{% else %}
+  {% if failed %}
+    {% translate "The test did not start. Try other ports or later." as text %}
+    {% include "components/alert.html" with level="warning" text=text %}
+  {% endif %}
+  {% if busy %}
+    {% translate "Another test of this server is running. Try again in a few minutes." as text %}
+    {% include "components/alert.html" with level="info" text=text %}
+  {% elif next_start %}
+    {% blocktranslate with time=next_start|time:"TIME_FORMAT" asvar text %}You have run the test of this server several times in the last hour. Try again after {{ time }}.{% endblocktranslate %}
+    {% include "components/alert.html" with level="info" text=text %}
+  {% elif form.fields.ports.choices %}
+    <form method="post" class="card space-y-4">
+      {% csrf_token %}
+      {{ form.ports.as_field_group }}
+      <p class="help-text">{% blocktranslate count minutes=minutes %}The ports stay open for {{ minutes }} minute.{% plural %}The ports stay open for {{ minutes }} minutes.{% endblocktranslate %}</p>
+      <button type="submit" class="btn btn-primary">{% icon "zap" %}{% translate "Start" %}</button>
+    </form>
+  {% else %}
+    {% translate "No port can be tested on this server now." as text %}
+    {% include "components/alert.html" with level="info" text=text %}
+  {% endif %}
+{% endif %}
+{% endblock %}

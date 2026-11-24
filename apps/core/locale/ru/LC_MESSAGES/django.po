@@ -46,6 +46,9 @@ msgstr "Токен Discord-бота"
 msgid "Discord client secret"
 msgstr "Секрет клиента Discord"
 
+msgid "Enter port numbers from 1 to 65535."
+msgstr "Введите номера портов от 1 до 65535."
+
 msgid "Every day"
 msgstr "Каждый день"
 
@@ -72,6 +75,9 @@ msgstr "Здравствуйте! Можно оплатить сразу год?
 
 msgid "Helsinki is slow"
 msgstr "Хельсинки тормозит"
+
+msgid "Name the ports users may test."
+msgstr "Укажите порты, которые пользователи могут замерять."
 
 msgid "None"
 msgstr "Нет"
@@ -112,6 +118,9 @@ msgstr "пользователь SMTP"
 msgid "Saved. Leave empty to keep it."
 msgstr "Сохранён. Оставьте пустым, чтобы не менять."
 
+msgid "Separated by commas. A port taken on the server is not offered."
+msgstr "Через запятую. Порт, занятый на сервере, не предлагается."
+
 msgid "Settings saved."
 msgstr "Настройки сохранены."
 
@@ -145,8 +154,14 @@ msgstr "То же для занятого места на диске. 0 — вы
 msgid "The same for the memory used. 0 turns it off."
 msgstr "То же для занятой памяти. 0 — выключить."
 
+msgid "Up to eight ports."
+msgstr "Не больше восьми портов."
+
 msgid "Update the app, please."
 msgstr "Обновите, пожалуйста, приложение."
+
+msgid "Users measure in the browser the ports of a server they have a key on, for ten minutes, three times an hour at most."
+msgstr "Пользователи замеряют в браузере порты сервера, на котором у них есть ключ: на десять минут, не чаще трёх раз в час."
 
 msgid "Users with a linked Discord can sign in with it."
 msgstr "Пользователи с привязанным Discord смогут входить через него."
@@ -205,6 +220,9 @@ msgstr "название панели"
 msgid "panel settings"
 msgstr "настройки панели"
 
+msgid "ports for the users' speed test"
+msgstr "порты для замера пользователями"
+
 msgid "ran at"
 msgstr "время запуска"
 
@@ -246,3 +264,6 @@ msgstr "предупреждение о трафике, %"
 
 msgid "users suggest articles"
 msgstr "пользователи предлагают статьи"
+
+msgid "users test port speed"
+msgstr "пользователи замеряют скорость портов"

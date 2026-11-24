@@ -6,6 +6,7 @@
        data-text-failed="{% translate 'interrupted' %}"
        data-text-unit="{% translate 'Mbit/s' %}" class="space-y-3">
     <p class="help-text">{% translate "Open this page on a device in the network of the provider, without the VPN, and press Measure: for every port the page downloads and then uploads for 8 seconds over UDP. Nothing is sent to the panel." %}</p>
+    {# `portal`: a user of the portal, who cannot start an iperf3 test. #}
     <div class="table-wrap">
       <table class="table table-cards">
         <thead><tr><th>{% translate "Port" %}</th><th>{% translate "Download speed" %}</th><th>{% translate "Upload speed" %}</th></tr></thead>
@@ -21,7 +22,7 @@
       </table>
     </div>
     <div data-speed-unsupported hidden>
-      {% translate "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox, or start the test again with iperf3." as text %}
+      {% if portal %}{% translate "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox." as text %}{% else %}{% translate "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox, or start the test again with iperf3." as text %}{% endif %}
       {% include "components/alert.html" with level="warning" text=text %}
     </div>
     <button type="button" class="btn btn-primary" data-speed-run>{% translate "Measure" %}</button>

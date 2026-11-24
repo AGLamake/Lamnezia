@@ -8,6 +8,7 @@ from django.http import Http404, HttpRequest, HttpResponse, HttpResponseBase
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.cache import add_never_cache_headers
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import FormView, TemplateView
@@ -25,7 +26,7 @@ from apps.keys.services.instances import instances
 from apps.keys.services.subscription import MySubscription
 from apps.keys.services.subscription_devices import SubscriptionDevices
 from apps.keys.services.xray_profiles import request_profiles
-from apps.portal.forms import GetKeyForm, RenameKeyForm
+from apps.portal.forms import GetKeyForm, RenameKeyForm, SpeedTestForm
 from apps.portal.services.app_versions import AWG3_APPS, awg3_sources, needs_awg3_app
 from apps.portal.services.keys import (
     InstanceNotAllowedError,
@@ -34,8 +35,16 @@ from apps.portal.services.keys import (
 )
 from apps.portal.services.reachability import Probes
 from apps.portal.services.servers import my_servers
+from apps.portal.services.speed_test import (
+    MINUTES,
+    MySpeedTest,
+    ServerBusyError,
+    TooManyStartsError,
+    UnavailableError,
+)
 from apps.portal.services.traffic import MyTraffic
 from apps.portal.services.usage import Usage
+from apps.protocols.services.speed_test import RunningTest
 from config.security import policy_allowing
 
 
@@ -184,7 +193,8 @@ class ServerStatusView(_PortalView, TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         servers = my_servers(self.my_keys.limits) if self.user.can_have_keys else []
-        return super().get_context_data(servers=servers, **kwargs)
+        testable = {server.pk for server in MySpeedTest(self.user, self.my_keys).servers()}
+        return super().get_context_data(servers=servers, testable=testable, **kwargs)
 
 
 class GetKeyView(_PortalView, _ProbingView, FormView):  # type: ignore[type-arg]
@@ -325,3 +335,77 @@ class KeyDeleteView(_KeyView, View):
             return redirect("portal:index")
         messages.success(request, _("The key is deleted and stops working in a moment."))
         return redirect("portal:index")
+
+
+class _SpeedTestView(_PortalView):
+    """A page of the speed test of one of the user's servers; 404 while the setting is off."""
+
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        self.my_test = MySpeedTest(self.user, self.my_keys)
+        server = self.my_test.server(kwargs["pk"])
+        if server is None:
+            raise Http404
+        self.server = server
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SpeedTestView(_SpeedTestView, FormView):  # type: ignore[type-arg]
+    """The user's running test measured right here, or the ports to start one on.
+
+    The page lets its scripts reach exactly the ports of the user's own test (CSP
+    `connect-src`) and holds the session's secret path, so it is never cached.
+    """
+
+    template_name = "portal/speed_test.html"
+    form_class = SpeedTestForm
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        return {**super().get_form_kwargs(), "ports": self.my_test.ports(self.server)}
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        now = timezone.now()
+        running = self.my_test.running(self.server, now)
+        starting = self.my_test.starting(self.server)
+        idle = not (running or starting)
+        return super().get_context_data(
+            server=self.server,
+            running=running,
+            starting=starting,
+            failed=idle and self.my_test.failed(self.server, now),
+            busy=idle and self.my_test.busy(self.server, now),
+            next_start=self.my_test.next_start(self.server, now),
+            minutes=MINUTES,
+            poll_seconds=settings.PROGRESS_POLL_SECONDS,
+            **kwargs,
+        )
+
+    def render_to_response(self, context: dict[str, Any], **kwargs: Any) -> HttpResponse:
+        response = super().render_to_response(context, **kwargs)
+        running: RunningTest | None = context["running"]
+        if running and (targets := running.targets):
+            origins = [target.origin for target in targets]
+            response.headers["Content-Security-Policy"] = policy_allowing(origins)
+        add_never_cache_headers(response)
+        return response
+
+    def form_valid(self, form: SpeedTestForm) -> HttpResponse:
+        try:
+            self.my_test.start(self.server, form.cleaned_data["ports"], timezone.now())
+        except TooManyStartsError:
+            messages.error(self.request, _("Too many tests of this server: try again later."))
+        except ServerBusyError:
+            messages.error(self.request, _("The server is being tested now: try again later."))
+        except UnavailableError:
+            messages.error(self.request, _("These ports cannot be tested now."))
+        return redirect("portal:speed-test", pk=self.server.pk)
+
+
+class SpeedTestStateView(_SpeedTestView, View):
+    """Polled while the user's test starts; then the page reloads to get the new CSP."""
+
+    def get(self, request: HttpRequest, pk: int) -> HttpResponse:
+        if self.my_test.starting(self.server):
+            return HttpResponse(status=204)
+        return HttpResponse(headers={"HX-Refresh": "true"})

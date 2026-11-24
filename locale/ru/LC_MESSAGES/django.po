@@ -535,6 +535,9 @@ msgstr "На ретрансляторе уже идёт другая опера�
 msgid "Another program or container listens on it, see the step log. Free the port."
 msgstr "Его слушает другая программа или контейнер, см. журнал шага. Освободите порт."
 
+msgid "Another test of this server is running. Try again in a few minutes."
+msgstr "Сейчас идёт другой замер этого сервера. Попробуйте через несколько минут."
+
 msgid "Anyone with the link gets your keys. If it leaked, make a new one: the old link stops working."
 msgstr "Кто знает ссылку, тот получает ваши ключи. Если она утекла, сделайте новую: старая перестанет работать."
 
@@ -883,6 +886,9 @@ msgstr "Проверяем сервер…"
 
 msgid "Choose a plan."
 msgstr "Выберите тариф."
+
+msgid "Choose up to four ports."
+msgstr "Выберите не больше четырёх портов."
 
 msgid "Choose your device. Download links always point to the latest Amnezia release."
 msgstr "Выберите устройство. Ссылки на загрузку всегда ведут на последний релиз Amnezia."
@@ -2339,6 +2345,9 @@ msgstr "Тарифов в продаже пока нет."
 msgid "No plans yet."
 msgstr "Тарифов пока нет."
 
+msgid "No port can be tested on this server now."
+msgstr "Сейчас на этом сервере нет портов для замера."
+
 msgid "No readings yet: the panel reads the server load in the background."
 msgstr "Данных пока нет: панель снимает нагрузку сервера в фоне."
 
@@ -2750,6 +2759,9 @@ msgstr "Порт"
 
 msgid "Portal layout"
 msgstr "Макет портала"
+
+msgid "Ports"
+msgstr "Порты"
 
 msgid "Ports 80 and 443 belong to the panel's web server (HTTPS and HTTP/3) on its machine. Give the group another port."
 msgstr "Порты 80 и 443 занимает веб-сервер панели (HTTPS и HTTP/3) на её машине. Назначьте группе другой порт."
@@ -3383,6 +3395,9 @@ msgstr "Часть провайдеров блокирует или режет U
 msgid "Some providers block or throttle UDP on ports above 9999. The panel starts a temporary server on several ports; measure them from a device in the network of that provider, without the VPN, and compare the ports: right on this page or with the iperf3 client."
 msgstr "Некоторые провайдеры блокируют или режут UDP на портах выше 9999. Панель запускает временный сервер на нескольких портах; замерьте их с устройства в сети этого провайдера, без VPN, и сравните порты: прямо на этой странице или клиентом iperf3."
 
+msgid "Some providers block or throttle UDP on some ports. The panel opens a few ports of the server for a short time; measure them here from the network you use the VPN in, with the VPN off, and tell the support which port works best."
+msgstr "Некоторые провайдеры блокируют или режут UDP на части портов. Панель ненадолго открывает несколько портов сервера; замерьте их здесь из той сети, где пользуетесь VPN, с выключенным VPN, и сообщите в поддержку, какой порт быстрее."
+
 #, python-format
 msgid "Someone asked to reset the password of account %(username)s on %(domain)s."
 msgstr "Кто-то запросил сброс пароля учётной записи %(username)s на %(domain)s."
@@ -3406,6 +3421,9 @@ msgstr "Скорость"
 
 msgid "Speed limit of the server"
 msgstr "Предел скорости сервера"
+
+msgid "Speed test"
+msgstr "Замер скорости"
 
 msgid "Speed test by port"
 msgstr "Замер скорости по портам"
@@ -4076,6 +4094,13 @@ msgstr "Портал показывает опубликованные запи�
 msgid "The ports of the groups are published on the server as UDP; a port another program uses is refused before the installation. Ports 80 and 443 belong to the panel."
 msgstr "Порты групп публикуются на сервере как UDP; порт, занятый другой программой, отклоняется до установки. Порты 80 и 443 принадлежат панели."
 
+#, python-format
+msgid "The ports stay open for %(minutes)s minute."
+msgid_plural "The ports stay open for %(minutes)s minutes."
+msgstr[0] "Порты открыты %(minutes)s минуту."
+msgstr[1] "Порты открыты %(minutes)s минуты."
+msgstr[2] "Порты открыты %(minutes)s минут."
+
 msgid "The preview failed. Save the article to see it."
 msgstr "Предпросмотр не удался. Сохраните статью, чтобы увидеть её."
 
@@ -4275,6 +4300,9 @@ msgstr "Сервер уже в группе."
 msgid "The server is already joining a group."
 msgstr "Сервер уже вступает в группу."
 
+msgid "The server is being tested now: try again later."
+msgstr "Сервер сейчас замеряют: попробуйте позже."
+
 msgid "The server is in a server group: take it out of the group to restore a snapshot."
 msgstr "Сервер состоит в группе серверов: чтобы восстановить снимок, выведите его из группы."
 
@@ -4354,6 +4382,16 @@ msgstr "Сотрудник добавлен: задайте ему права и
 msgid "The subscription link is deleted."
 msgstr "Ссылка-подписка удалена."
 
+msgid "The test did not start. Try other ports or later."
+msgstr "Замер не запустился. Попробуйте другие порты или позже."
+
+#, python-format
+msgid "The test ends at %(date)s."
+msgstr "Замер закончится в %(date)s."
+
+msgid "The test is starting, this takes up to a minute…"
+msgstr "Замер запускается, это до минуты…"
+
 msgid "The time is already past."
 msgstr "Это время уже прошло."
 
@@ -4390,6 +4428,9 @@ msgstr "Ссылка vpn://"
 msgid "Theme"
 msgstr "Тема"
 
+msgid "These ports cannot be tested now."
+msgstr "Эти порты сейчас нельзя замерить."
+
 msgid "This account is already linked to another user of the panel."
 msgstr "Этот аккаунт уже привязан к другому пользователю панели."
 
@@ -4398,6 +4439,9 @@ msgstr "Этот браузер не умеет показывать уведо�
 
 msgid "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox, or start the test again with iperf3."
 msgstr "В этом браузере нет WebTransport. Откройте страницу в Chrome, Edge или Firefox либо запустите замер заново через iperf3."
+
+msgid "This browser has no WebTransport. Open the page in Chrome, Edge or Firefox."
+msgstr "В этом браузере нет WebTransport. Откройте страницу в Chrome, Edge или Firefox."
 
 #, python-format
 msgid "This copy asked its host to stop at %(at)s. The host stops it within a minute; if it keeps running, stop it with docker compose down."
@@ -4506,6 +4550,9 @@ msgstr "Слишком много регистраций с вашего адр�
 
 msgid "Too many suggestions. Try again tomorrow."
 msgstr "Слишком много предложений. Попробуйте завтра."
+
+msgid "Too many tests of this server: try again later."
+msgstr "Слишком много замеров этого сервера: попробуйте позже."
 
 msgid "Top consumers"
 msgstr "Больше всех потребляют"
@@ -4616,6 +4663,9 @@ msgstr "Отвязано."
 
 msgid "Up"
 msgstr "Выше"
+
+msgid "Up to four ports. Compare a port up to 9999 with a higher one."
+msgstr "До четырёх портов. Сравните порт до 9999 с портом выше."
 
 msgid "Update"
 msgstr "Обновить"
@@ -4905,6 +4955,10 @@ msgstr "Тарифа пока нет"
 
 msgid "You have no requests yet. If something does not work, tell us."
 msgstr "Обращений пока нет. Если что-то не работает — напишите нам."
+
+#, python-format
+msgid "You have run the test of this server several times in the last hour. Try again after %(time)s."
+msgstr "Вы уже несколько раз замеряли этот сервер за последний час. Попробуйте после %(time)s."
 
 #, python-format
 msgid "You signed in with a backup code. Backup codes left: %(left)d."

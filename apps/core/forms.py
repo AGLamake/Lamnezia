@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from amnezia_core.awg_params import MAX_PORT
 from apps.core.models import SiteSettings
 
 if TYPE_CHECKING:
@@ -28,6 +29,7 @@ SECRET_FIELDS: dict[str, tuple["StrOrPromise", "StrOrPromise"]] = {
 }
 
 TELEGRAM_USERNAME = re.compile(r"[A-Za-z0-9_]{5,32}")
+MAX_SPEED_TEST_PORTS = 8
 
 
 class SiteSettingsForm(forms.ModelForm):  # type: ignore[type-arg]
@@ -44,6 +46,8 @@ class SiteSettingsForm(forms.ModelForm):  # type: ignore[type-arg]
             "subscription_without_device_id",
             "bot_key_delivery",
             "guide_suggestions",
+            "portal_speed_test",
+            "portal_speed_test_ports",
             "traffic_warning_percent",
             "load_cpu_percent",
             "load_memory_percent",
@@ -90,6 +94,25 @@ class SiteSettingsForm(forms.ModelForm):  # type: ignore[type-arg]
         if name and not TELEGRAM_USERNAME.fullmatch(name):
             raise forms.ValidationError(_("A bot username: 5 to 32 Latin letters, digits and _."))
         return name
+
+    def clean_portal_speed_test_ports(self) -> str:
+        """Port numbers once each, saved as "443, 8443"."""
+        text = self.cleaned_data["portal_speed_test_ports"].replace(" ", "")
+        parts = [part for part in text.split(",") if part]
+        if not all(part.isdigit() and 1 <= int(part) <= MAX_PORT for part in parts):
+            raise forms.ValidationError(_("Enter port numbers from 1 to 65535."))
+        ports = list(dict.fromkeys(int(part) for part in parts))
+        if len(ports) > MAX_SPEED_TEST_PORTS:
+            raise forms.ValidationError(_("Up to eight ports."))
+        return ", ".join(map(str, ports))
+
+    def clean(self) -> dict[str, Any] | None:
+        cleaned = super().clean()
+        # A list with a mistake already has its error and is not in the cleaned data.
+        ports = self.cleaned_data.get("portal_speed_test_ports")
+        if self.cleaned_data.get("portal_speed_test") and ports == "":
+            self.add_error("portal_speed_test_ports", _("Name the ports users may test."))
+        return cleaned
 
     def save(self, commit: bool = True) -> SiteSettings:
         site: SiteSettings = super().save(commit=False)

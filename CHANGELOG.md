@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Speed test by port for users**: with **Users test port speed** on in the settings, a user
+  measures in the browser the ports of a server they have a key on, from the list the
+  administrator allows. A test runs ten minutes, one user starts at most three tests of a server an
+  hour, and a server runs one test at a time. Off by default; the user's IP address is not
+  recorded.
 - **Browser push for moderators and owners**: the **Browser push** channel now reaches every
   active staff member who turned browser notifications on, each within their zone. An
   administrator gets every routed event; a moderator or an owner gets only the events about their

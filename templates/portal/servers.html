@@ -14,6 +14,7 @@
         </span>
         <span class="flex shrink-0 items-center gap-2">
           <span class="badge {% if server.health == 'working' %}badge-success{% elif server.health == 'problems' %}badge-danger{% else %}badge-muted{% endif %}">{{ server.health.label }}</span>
+          {% if server.pk in testable %}<a href="{% url 'portal:speed-test' server.pk %}" class="btn btn-secondary btn-sm">{% icon "zap" %}{% translate "Speed test" %}</a>{% endif %}
           {% include "support/_server_down.html" with server_id=server.pk %}
         </span>
       </li>

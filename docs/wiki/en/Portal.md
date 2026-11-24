@@ -148,6 +148,10 @@ relay or at least one of its servers answers, and *problems* once users report o
 A server that does not work for the user is reported with **Does not work** on this page or on
 the key page, see [Support requests](Support-and-incidents.md).
 
+With **Users test port speed** on in the settings, a server the user has a key on gets a
+**Speed test** button: the user measures the ports the administrator allowed right in the browser
+and tells the support which one works best, see [Ports](Ports.md#speed-test-by-users).
+
 ## Reachability check
 
 On **My access**, **Get a key** and the key page the user's browser checks by itself whether their

@@ -274,12 +274,16 @@ class PortTarget:
 
 @dataclass(frozen=True)
 class RunningTest:
-    """A speed test the panel started that has not ended yet, as the page shows it."""
+    """A speed test the panel started that has not ended yet, as the page shows it.
+
+    `started_by` is the id of the user who started it: a portal user sees only their own test.
+    """
 
     plan: SpeedTestPlan
     until: datetime
     host: str
     certificate_hash: str = ""
+    started_by: int | None = None
 
     @classmethod
     def of(cls, server: Server, now: datetime) -> Self | None:
@@ -295,7 +299,8 @@ class RunningTest:
         until = (latest.finished_at or latest.created_at) + timedelta(minutes=plan.minutes)
         if until <= now:
             return None
-        return cls(plan, until, server.host, latest.params.get(CERTIFICATE_HASH, ""))
+        certificate_hash = latest.params.get(CERTIFICATE_HASH, "")
+        return cls(plan, until, server.host, certificate_hash, latest.created_by_id)
 
     @property
     def targets(self) -> list[PortTarget]:

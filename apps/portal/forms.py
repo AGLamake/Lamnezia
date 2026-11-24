@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.guides.services.devices import Device
 from apps.keys.services.instances import Instance
+from apps.portal.services.speed_test import MAX_PORTS
 
 
 class GetKeyForm(forms.Form):
@@ -43,3 +44,26 @@ class RenameKeyForm(forms.Form):
         if not name:
             raise forms.ValidationError(_("Enter a name."))
         return name
+
+
+class SpeedTestForm(forms.Form):
+    """Which of the allowed free ports of the server to measure."""
+
+    ports = forms.TypedMultipleChoiceField(
+        label=_("Ports"),
+        coerce=int,
+        widget=forms.CheckboxSelectMultiple,
+        help_text=_("Up to four ports. Compare a port up to 9999 with a higher one."),
+    )
+
+    def __init__(self, *args: Any, ports: tuple[int, ...], **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        field = cast(forms.TypedMultipleChoiceField, self.fields["ports"])
+        field.choices = [(port, str(port)) for port in ports]
+        field.initial = list(ports[:MAX_PORTS])
+
+    def clean_ports(self) -> tuple[int, ...]:
+        ports = tuple(self.cleaned_data["ports"])
+        if len(ports) > MAX_PORTS:
+            raise forms.ValidationError(_("Choose up to four ports."))
+        return ports
