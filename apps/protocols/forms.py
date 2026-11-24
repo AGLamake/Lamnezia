@@ -20,6 +20,7 @@ from apps.protocols.services.awg_settings import AwgSettings
 from apps.protocols.services.host_scripts import AMNEZIA_NETWORK_SUBNET
 from apps.protocols.services.installation import used_ports
 from apps.protocols.services.speed_test import (
+    BROWSER_BLOCKED_PORTS,
     DEFAULT_MINUTES,
     MAX_MINUTES,
     MAX_PORTS,
@@ -351,6 +352,13 @@ class SpeedTestForm(forms.Form):
             if busy:
                 message = _("Already used on the server: %(ports)s.")
                 self.add_error("ports", message % {"ports": ", ".join(map(str, busy))})
+            blocked = [port for port in ports if port in BROWSER_BLOCKED_PORTS]
+            if mode == SpeedTestMode.BROWSER and blocked:
+                message = _(
+                    "Browsers do not connect to ports %(ports)s: choose other ports or measure "
+                    "with iperf3."
+                )
+                self.add_error("ports", message % {"ports": ", ".join(map(str, blocked))})
         return cleaned
 
     @property

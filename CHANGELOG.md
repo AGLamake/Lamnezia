@@ -475,6 +475,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Browser speed test refuses ports browsers block**: a port browsers never connect to (22, 25,
+  53, 5060, 6667 and the other "bad ports" of the Fetch Standard) is refused in the browser mode
+  with a hint to use iperf3, and the default ports skip them.
 - **Test notification in the browser is limited**: **Send a test** in the profile works once in
   30 seconds per user; a press sooner shows when to try again.
 - **Moderator quotas within the server administrator's**: the quotas of a moderator a server

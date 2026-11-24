@@ -144,6 +144,10 @@ msgstr "Возврат старого контейнера"
 msgid "Bring back the settings files"
 msgstr "Возврат файлов настроек"
 
+#, python-format
+msgid "Browsers do not connect to ports %(ports)s: choose other ports or measure with iperf3."
+msgstr "Браузеры не подключаются к портам %(ports)s: выберите другие порты или замерьте через iperf3."
+
 msgid "Build the container image"
 msgstr "Сборка образа контейнера"
 

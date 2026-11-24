@@ -56,6 +56,9 @@ on the page; nothing is sent to the panel.
 - The browser needs WebTransport: Chrome or Edge 100+, Firefox 125+. In Safari and older browsers
   the page suggests iperf3.
 - A server at an IPv6 address cannot be measured in the browser; choose iperf3.
+- Browsers never connect to some ports, such as 22, 25, 53, 5060, 6000 and 6665–6669 (the "bad
+  ports" of the Fetch Standard). The form refuses them for the browser test: measure them with
+  iperf3. The ports the panel offers by default are never among them.
 - "No answer" means the browser could not connect over UDP to this port: most likely UDP is
   blocked there (or the hosting firewall keeps the port closed).
 - The test server is written in Python and gives about 100–200 Mbit/s on one core. That is enough

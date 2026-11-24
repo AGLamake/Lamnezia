@@ -45,6 +45,17 @@ DEFAULT_MINUTES = 30
 MAX_MINUTES = 180
 # The high port to compare with: the one of the Amnezia app, or the next free one.
 _HIGH_PORTS = range(55424, 65536)
+# Ports a browser never connects to, WebTransport included: the "bad ports" of the Fetch Standard
+# (https://fetch.spec.whatwg.org/#port-blocking), which Chrome, Edge and Firefox follow.
+# fmt: off
+BROWSER_BLOCKED_PORTS = frozenset({
+    1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69, 77, 79, 87, 95, 101, 102,
+    103, 104, 109, 110, 111, 113, 115, 117, 119, 123, 135, 137, 139, 143, 161, 179, 389, 427, 465,
+    512, 513, 514, 515, 526, 530, 531, 532, 540, 548, 554, 556, 563, 587, 601, 636, 989, 990, 993,
+    995, 1719, 1720, 1723, 2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566, 6665, 6666, 6667, 6668,
+    6669, 6679, 6697, 10080,
+})
+# fmt: on
 _BUILD_TIMEOUT = 600
 _PORT_IN_USE_MARKERS = ("address already in use", "port is already allocated")
 _HASH = re.compile(r"^[0-9a-f]{64}$")
@@ -322,11 +333,14 @@ def browser_reachable(host: str) -> bool:
 
 
 def default_ports(server: Server) -> tuple[int, ...]:
-    """A free port up to 9999 and a high one, free for both kinds of test, to compare."""
+    """A free port up to 9999 and a high one, free for both kinds of test, to compare; not one
+    a browser refuses.
+    """
     taken = used_ports(server)
     transports = Iperf3Server.transports
+    low = (port for port in LOW_PORTS if port not in BROWSER_BLOCKED_PORTS)
     return (
-        *free_ports(LOW_PORTS, taken, transports),
+        *free_ports(low, taken, transports),
         *free_ports(_HIGH_PORTS, taken, transports),
     )
 

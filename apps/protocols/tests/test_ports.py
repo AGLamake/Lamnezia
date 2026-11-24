@@ -29,6 +29,7 @@ from apps.protocols.services.installation import used_ports
 from apps.protocols.services.openvpn_installer import OpenVpnInstaller
 from apps.protocols.services.ports import LOW_PORTS, free_ports, is_high, ports_page_url
 from apps.protocols.services.speed_test import (
+    BROWSER_BLOCKED_PORTS,
     RunningTest,
     SpeedTestMode,
     SpeedTestPlan,
@@ -372,15 +373,42 @@ def test_iperf3_page_keeps_the_default_policy(admin_client: Client) -> None:
 @pytest.mark.django_db
 def test_browser_test_needs_a_port_free_only_for_udp(admin_client: Client) -> None:
     server = ServerFactory(
-        port=22, containers=[{"name": "amnezia-awg2", "port": 55424, "transport": "udp"}]
+        port=2222, containers=[{"name": "amnezia-awg2", "port": 55424, "transport": "udp"}]
     )
     url = f"/protocols/speed-test/{server.pk}/"
 
     taken = admin_client.post(url, {"mode": "browser", "ports": "55424", "minutes": "10"})
-    ssh_port = admin_client.post(url, {"mode": "browser", "ports": "22", "minutes": "10"})
+    ssh_port = admin_client.post(url, {"mode": "browser", "ports": "2222", "minutes": "10"})
 
     assert "Already used" in taken.content.decode()
     assert ssh_port.status_code == 302
+
+
+@pytest.mark.django_db
+def test_a_port_browsers_refuse_is_measured_with_iperf3(admin_client: Client) -> None:
+    url = f"/protocols/speed-test/{ServerFactory().pk}/"
+
+    browser = admin_client.post(url, {"mode": "browser", "ports": "5542, 6667", "minutes": "10"})
+
+    page = browser.content.decode()
+    assert "Browsers do not connect to ports 6667" in page
+    assert "iperf3" in page
+    assert not Operation.objects.exists()
+
+
+def test_the_blocked_ports_are_those_of_the_fetch_standard() -> None:
+    assert {22, 25, 53, 5060, 6000, 6667, 10080} <= BROWSER_BLOCKED_PORTS
+    assert len(BROWSER_BLOCKED_PORTS) == 82
+    assert not BROWSER_BLOCKED_PORTS & {443, 5542, 8443, 51820, 55424}
+
+
+@pytest.mark.django_db
+def test_default_ports_skip_the_ports_browsers_refuse() -> None:
+    taken = [{"name": f"c{port}", "port": port, "transport": "udp"} for port in range(5542, 6000)]
+
+    ports = speed_test.default_ports(ServerFactory(containers=taken))
+
+    assert ports[0] == 6001
 
 
 @pytest.mark.django_db
