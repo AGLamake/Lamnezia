@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **History of speed tests by port**: a browser speed test sends the outcome of every port to the
+  panel, and the server card sums up the tests of the last 90 days by port: how many, how many got
+  no answer and the average download and upload speed. Only the port and the speeds are kept, not
+  who measured nor their address or network; results older than 90 days are removed daily.
 - **Browsers with notifications in the profile**: the profile lists the browsers that get the
   user's notifications, with the browser and system, the date of the subscription and the last
   delivery, and turns them off one by one. The push address is not shown.

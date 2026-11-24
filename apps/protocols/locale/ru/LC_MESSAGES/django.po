@@ -1195,6 +1195,9 @@ msgstr "Потом контейнер удалится сам."
 msgid "They have no private key in the panel, so their profile cannot be updated."
 msgstr "У панели нет их приватного ключа, поэтому их профиль нельзя обновить."
 
+msgid "This is not a port of the running test."
+msgstr "Это не порт идущего замера."
+
 msgid "This port is already used on the server."
 msgstr "Этот порт на сервере уже занят."
 
@@ -1333,6 +1336,9 @@ msgstr "XRay с REALITY маскирует VPN-трафик под веб-тра
 msgid "added at"
 msgstr "добавлен"
 
+msgid "answered"
+msgstr "ответил"
+
 msgid "certutil could not issue or delete the IPsec server certificate."
 msgstr "certutil не смог выпустить или удалить сертификат сервера IPsec."
 
@@ -1372,6 +1378,9 @@ msgstr "контейнер удалён"
 msgid "download limit"
 msgstr "предел скачивания"
 
+msgid "download, Mbit/s"
+msgstr "скачивание, Мбит/с"
+
 msgid "easy-rsa could not make the OpenVPN certificate authority."
 msgstr "easy-rsa не смог создать центр сертификации OpenVPN."
 
@@ -1406,8 +1415,14 @@ msgstr "старый AmneziaWG"
 msgid "login"
 msgstr "логин"
 
+msgid "measured at"
+msgstr "время замера"
+
 msgid "metadata service closed"
 msgstr "метаданные закрыты"
+
+msgid "mode"
+msgstr "режим"
 
 msgid "move to AmneziaWG 3.1"
 msgstr "перевод на AmneziaWG 3.1"
@@ -1483,6 +1498,12 @@ msgstr "сервисы"
 msgid "settings"
 msgstr "настройки"
 
+msgid "speed test result"
+msgstr "результат замера скорости"
+
+msgid "speed test results"
+msgstr "результаты замеров скорости"
+
 msgid "started at"
 msgstr "начат"
 
@@ -1492,8 +1513,14 @@ msgstr "подсеть"
 msgid "supported"
 msgstr "поддерживается"
 
+msgid "transport"
+msgstr "транспорт"
+
 msgid "turned off by an administrator"
 msgstr "выключено администратором"
 
 msgid "upload limit"
 msgstr "предел отдачи"
+
+msgid "upload, Mbit/s"
+msgstr "отдача, Мбит/с"

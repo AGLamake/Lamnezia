@@ -305,3 +305,36 @@ class MetadataBlock(models.Model):
 
     def __str__(self) -> str:
         return f"{self.server} · 169.254.0.0/16"
+
+
+class SpeedTestResult(models.Model):
+    """The outcome of one port of a browser speed test, kept to pick a port by its history.
+
+    Neither who measured nor their address or network is kept. `test` is the id of the operation
+    that started the test: measuring the port again in the same test replaces the row.
+    """
+
+    server = models.ForeignKey(
+        "servers.Server", on_delete=models.CASCADE, related_name="speed_results"
+    )
+    test = models.PositiveBigIntegerField()
+    port = models.PositiveIntegerField(
+        _("port"), validators=[MinValueValidator(1), MaxValueValidator(65535)]
+    )
+    transport = models.CharField(_("transport"), max_length=16)
+    mode = models.CharField(_("mode"), max_length=16)
+    reachable = models.BooleanField(_("answered"), default=True)
+    download = models.FloatField(_("download, Mbit/s"), null=True, blank=True)
+    upload = models.FloatField(_("upload, Mbit/s"), null=True, blank=True)
+    measured_at = models.DateTimeField(_("measured at"), auto_now=True, db_index=True)
+
+    class Meta:
+        verbose_name = _("speed test result")
+        verbose_name_plural = _("speed test results")
+        ordering = ("-measured_at", "-pk")
+        constraints = (
+            models.UniqueConstraint(fields=("test", "port"), name="speed_result_per_test_port"),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.server_id}:{self.port}"

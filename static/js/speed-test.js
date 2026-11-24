@@ -2,7 +2,8 @@
 // An element [data-speed-test] with data-hash="sha-256 hex"> holds a row [data-speed-url] per port with
 // cells [data-download] and [data-upload], a button [data-speed-run] and a note
 // [data-speed-unsupported]; the texts come from its data-text-* attributes (translated).
-// WebTransport goes over HTTP/3, that is UDP to the very port. The result stays in the page.
+// WebTransport goes over HTTP/3, that is UDP to the very port. The outcome of every port goes to
+// data-result-url with the test's secret path, for the history on the server card.
 (() => {
   const SECONDS = 8;
   const CONNECT_MS = 6000;
@@ -96,9 +97,11 @@
     return mbits(counter.bytes, deadline - started);
   }
 
+  // What the port gave: no answer, or the speeds it got to (null for an interrupted one).
   async function test(row, hash, texts) {
     const download = row.querySelector("[data-download]");
     const upload = row.querySelector("[data-upload]");
+    const outcome = { reachable: false, download: null, upload: null };
     upload.textContent = "";
     download.textContent = texts.measuring;
     let transport;
@@ -106,12 +109,15 @@
       transport = await connect(row.dataset.speedUrl, hash);
     } catch {
       download.textContent = texts.blocked;
-      return;
+      return outcome;
     }
+    outcome.reachable = true;
     try {
-      download.textContent = `${await measure(transport, downloading)} ${texts.unit}`;
+      outcome.download = await measure(transport, downloading);
+      download.textContent = `${outcome.download} ${texts.unit}`;
       upload.textContent = texts.measuring;
-      upload.textContent = `${await measure(transport, uploading)} ${texts.unit}`;
+      outcome.upload = await measure(transport, uploading);
+      upload.textContent = `${outcome.upload} ${texts.unit}`;
     } catch {
       for (const cell of [download, upload]) {
         if (cell.textContent === texts.measuring) cell.textContent = texts.failed;
@@ -119,6 +125,22 @@
     } finally {
       transport.close();
     }
+    return outcome;
+  }
+
+  // A lost outcome only leaves the history shorter: the page shows it all the same.
+  async function save(section, row, outcome) {
+    const body = new FormData();
+    body.append("csrfmiddlewaretoken", section.querySelector("[name=csrfmiddlewaretoken]").value);
+    body.append("token", row.dataset.speedUrl.split("/").pop());
+    body.append("port", row.dataset.port);
+    if (outcome.reachable) body.append("reachable", "on");
+    for (const key of ["download", "upload"]) {
+      if (outcome[key] !== null) body.append(key, outcome[key]);
+    }
+    await fetch(section.dataset.resultUrl, { method: "POST", body, credentials: "same-origin" }).catch(
+      () => {},
+    );
   }
 
   function setUp(section) {
@@ -137,7 +159,7 @@
     button.addEventListener("click", async () => {
       button.disabled = true;
       for (const row of section.querySelectorAll("[data-speed-url]")) {
-        await test(row, section.dataset.hash, texts);
+        await save(section, row, await test(row, section.dataset.hash, texts));
       }
       button.disabled = false;
     });

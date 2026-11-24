@@ -4,7 +4,7 @@ from typing import Any
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponseBase
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -45,6 +45,7 @@ from apps.portal.services.speed_test import (
 from apps.portal.services.traffic import MyTraffic
 from apps.portal.services.usage import Usage
 from apps.protocols.services.speed_test import RunningTest
+from apps.protocols.views import save_speed_result
 from config.security import policy_allowing
 
 
@@ -400,6 +401,14 @@ class SpeedTestView(_SpeedTestView, FormView):  # type: ignore[type-arg]
         except UnavailableError:
             messages.error(self.request, _("These ports cannot be tested now."))
         return redirect("portal:speed-test", pk=self.server.pk)
+
+
+class SpeedTestResultView(_SpeedTestView, View):
+    """The outcome of one port of the user's own running test."""
+
+    def post(self, request: HttpRequest, pk: int) -> JsonResponse:
+        running = self.my_test.running(self.server, timezone.now())
+        return save_speed_result(request, self.server, running)
 
 
 class SpeedTestStateView(_SpeedTestView, View):

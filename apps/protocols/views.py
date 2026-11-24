@@ -2,7 +2,7 @@ from typing import Any, cast
 
 from django.contrib import messages
 from django.db.models import QuerySet
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponseBase
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseBase, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.cache import add_never_cache_headers
@@ -36,6 +36,7 @@ from apps.protocols.forms import (
     ReaddressForm,
     RemoveContainerForm,
     SpeedLimitForm,
+    SpeedResultForm,
     SpeedTestForm,
 )
 from apps.protocols.install_form import InstallForm
@@ -46,7 +47,7 @@ from apps.protocols.service_settings_forms import (
     Socks5SettingsForm,
     TProxySettingsForm,
 )
-from apps.protocols.services import metadata_block, offload, speed_test
+from apps.protocols.services import metadata_block, offload, speed_results, speed_test
 from apps.protocols.services.awg_migration import (
     MigrationState,
     can_migrate,
@@ -235,6 +236,31 @@ class SpeedTestStopView(SectionRequiredMixin, View):
         server = get_object_or_404(self.zone.servers(), pk=server_pk)
         operation = speed_test.stop(server, self.member, ip=self.client_ip)
         return redirect("operations:detail", pk=operation.pk)
+
+
+def save_speed_result(
+    request: HttpRequest, server: Server, running: RunningTest | None
+) -> JsonResponse:
+    """Keep the outcome of one port the page of `running` sent (`static/js/speed-test.js`) for the
+    history on the server card. Nothing about the sender is kept.
+    """
+    if running is None:
+        return JsonResponse({"saved": False}, status=404)
+    form = SpeedResultForm(request.POST, running=running)
+    if not form.is_valid():
+        return JsonResponse({"saved": False}, status=400)
+    speed_results.record(server, running, form.measured)
+    return JsonResponse({"saved": True})
+
+
+class SpeedTestResultView(SectionRequiredMixin, View):
+    """The outcome of one port of the running test of a server of the zone."""
+
+    section = Section.SERVERS
+
+    def post(self, request: HttpRequest, server_pk: int) -> JsonResponse:
+        server = get_object_or_404(self.zone.servers(), pk=server_pk)
+        return save_speed_result(request, server, RunningTest.of(server, timezone.now()))
 
 
 class InstanceMixin:

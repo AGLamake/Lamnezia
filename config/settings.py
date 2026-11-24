@@ -387,6 +387,10 @@ CELERY_BEAT_SCHEDULE = {
     "relays-update-split-lists": {"task": "relays.update_split_lists", "schedule": 60 * 60},
     "operations-prune": {"task": "operations.prune", "schedule": 24 * 60 * 60},
     "notifications-prune": {"task": "notifications.prune", "schedule": 24 * 60 * 60},
+    "protocols-prune-speed-results": {
+        "task": "protocols.prune_speed_results",
+        "schedule": 24 * 60 * 60,
+    },
     "traffic-roll-up": {"task": "traffic.roll_up", "schedule": 24 * 60 * 60},
     "guides-refresh-release": {"task": "guides.refresh_release", "schedule": 6 * 60 * 60},
     "guides-check-materials": {"task": "guides.check_materials", "schedule": 7 * 24 * 60 * 60},

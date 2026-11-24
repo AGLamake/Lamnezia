@@ -4,6 +4,7 @@ from typing import Any
 
 from django import forms
 from django.forms.boundfield import BoundField
+from django.utils.crypto import constant_time_compare
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
@@ -19,12 +20,14 @@ from apps.protocols.models import ProtocolInstance
 from apps.protocols.services.awg_settings import AwgSettings
 from apps.protocols.services.host_scripts import AMNEZIA_NETWORK_SUBNET
 from apps.protocols.services.installation import used_ports
+from apps.protocols.services.speed_results import MAX_MBITS, MeasuredPort
 from apps.protocols.services.speed_test import (
     BROWSER_BLOCKED_PORTS,
     DEFAULT_MINUTES,
     MAX_MINUTES,
     MAX_PORTS,
     SERVERS,
+    RunningTest,
     SpeedTestMode,
     SpeedTestPlan,
     browser_reachable,
@@ -396,3 +399,39 @@ class SpeedLimitForm(forms.Form):
             {"download_limit": instance.download_limit, "upload_limit": instance.upload_limit},
         )
         super().__init__(*args, **kwargs)
+
+
+class SpeedResultForm(forms.Form):
+    """One port the page of a running browser test measured, in Mbit/s.
+
+    The secret path of the test stands for the page: only it shows the path, to the staff of the
+    server or to the portal user who started the test.
+    """
+
+    token = forms.CharField(max_length=64)
+    port = forms.IntegerField(min_value=1, max_value=MAX_PORT)
+    reachable = forms.BooleanField(required=False)
+    download = forms.FloatField(required=False, min_value=0, max_value=MAX_MBITS)
+    upload = forms.FloatField(required=False, min_value=0, max_value=MAX_MBITS)
+
+    def __init__(self, *args: Any, running: RunningTest, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.running = running
+
+    def clean(self) -> dict[str, Any] | None:
+        cleaned = super().clean()
+        plan = self.running.plan
+        token, port = self.cleaned_data.get("token", ""), self.cleaned_data.get("port")
+        if not (
+            plan.in_browser
+            and self.running.operation_id
+            and constant_time_compare(token, plan.token)
+            and port in plan.ports
+        ):
+            raise forms.ValidationError(_("This is not a port of the running test."))
+        return cleaned
+
+    @property
+    def measured(self) -> MeasuredPort:
+        data = self.cleaned_data
+        return MeasuredPort(data["port"], data["reachable"], data["download"], data["upload"])

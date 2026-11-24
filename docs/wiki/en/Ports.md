@@ -50,8 +50,14 @@ holds a random key only the test page knows.
 
 Open the test page on a device in the network you want to check (a phone over mobile data, a
 laptop connected to the phone), **with the VPN off**, and press **Measure**. For every port the page
-downloads for 8 seconds, then uploads for 8 seconds and shows the speed in Mbit/s. The result stays
-on the page; nothing is sent to the panel.
+downloads for 8 seconds, then uploads for 8 seconds and shows the speed in Mbit/s.
+
+The page sends the outcome of every port to the panel: whether the port answered and the two
+speeds. On the server card, **Speed tests by port** sums up the tests of the last 90 days by port:
+how many, how many got no answer and the average speeds. Only the server, the port, the test mode
+and the speeds are kept: not who measured, nor their IP address or network. Results older than
+90 days are removed every day; the **Storage** section of **Statistics** shows how many there are. A test
+through the user portal goes to the same history.
 
 - The browser needs WebTransport: Chrome or Edge 100+, Firefox 125+. In Safari and older browsers
   the page suggests iperf3.

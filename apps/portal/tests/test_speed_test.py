@@ -25,6 +25,7 @@ from apps.portal.services.speed_test import (
     UnavailableError,
 )
 from apps.portal.tests.test_portal import subscriber
+from apps.protocols.models import SpeedTestResult
 from apps.protocols.services import speed_test
 from apps.protocols.services.speed_test import SpeedTestPlan
 from apps.servers.models import Server
@@ -258,6 +259,26 @@ def test_own_running_test_opens_its_ports_to_the_page(
     assert f"connect-src 'self' https://{HOST}:5542" in response.headers["Content-Security-Policy"]
     assert "no-store" in response.headers["Cache-Control"]
     assert "data-speed-test" in response.content.decode()
+    assert f'data-result-url="{url(server)}result/"' in response.content.decode()
+
+
+def test_the_page_of_the_own_test_keeps_its_results(
+    user_client: Client, server: Server, user: User
+) -> None:
+    token = running(server, user).params["token"]
+    result = f"{url(server)}result/"
+    sent = {"token": token, "port": "5542", "reachable": "on", "download": "50"}
+
+    assert user_client.post(result, sent).status_code == 200
+    assert SpeedTestResult.objects.get().download == 50
+
+
+def test_results_of_someone_elses_test_are_not_kept(user_client: Client, server: Server) -> None:
+    token = running(server, UserFactory(role=Role.ADMIN)).params["token"]
+    sent = {"token": token, "port": "5542", "reachable": "on"}
+
+    assert user_client.post(f"{url(server)}result/", sent).status_code == 404
+    assert not SpeedTestResult.objects.exists()
 
 
 def test_someone_elses_test_shows_only_that_the_server_is_busy(

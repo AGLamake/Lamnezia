@@ -239,6 +239,9 @@ msgstr "Серверы"
 msgid "Shown to other users."
 msgstr "Видно другим пользователям."
 
+msgid "Speed tests by port"
+msgstr "Замеры скорости по портам"
+
 msgid "Staff member"
 msgstr "Сотрудник"
 

@@ -710,6 +710,9 @@ msgstr "Навигационная цепочка"
 msgid "Broken link"
 msgstr "Битая ссылка"
 
+msgid "Browser tests of the last 90 days, averaged"
+msgstr "Замеры в браузере за последние 90 дней, в среднем"
+
 msgid "Browsers signed in to your account. Only the browser, the system and the sign-in time are kept."
 msgstr "Браузеры, в которых выполнен вход в ваш аккаунт. Хранятся только браузер, система и время входа."
 
@@ -1865,6 +1868,9 @@ msgstr "Последнее чтение %(when)s."
 msgid "Last switch %(when)s."
 msgstr "Последнее переключение %(when)s."
 
+msgid "Last test"
+msgstr "Последний замер"
+
 msgid "Last update"
 msgstr "Последнее обновление"
 
@@ -2233,6 +2239,9 @@ msgstr "К этому аккаунту не привязан ни один по�
 msgid "No account yet?"
 msgstr "Ещё нет аккаунта?"
 
+msgid "No answer"
+msgstr "Без ответа"
+
 msgid "No archives yet."
 msgstr "Архивов пока нет."
 
@@ -2598,8 +2607,8 @@ msgstr "Открыть повтор"
 msgid "Open the server"
 msgstr "Открыть сервер"
 
-msgid "Open this page on a device in the network of the provider, without the VPN, and press Measure: for every port the page downloads and then uploads for 8 seconds over UDP. Nothing is sent to the panel."
-msgstr "Откройте эту страницу на устройстве в сети провайдера, без VPN, и нажмите «Замерить»: для каждого порта страница 8 секунд скачивает, затем 8 секунд отдаёт данные по UDP. В панель ничего не отправляется."
+msgid "Open this page on a device in the network of the provider, without the VPN, and press Measure: for every port the page downloads and then uploads for 8 seconds over UDP. Only the speeds of every port go to the panel, for the history on the server card: not your address or network."
+msgstr "Откройте эту страницу на устройстве в сети провайдера, без VPN, и нажмите «Замерить»: для каждого порта страница 8 секунд скачивает, затем 8 секунд отдаёт данные по UDP. В панель уходят только скорости по каждому порту, для истории в карточке сервера: ни ваш адрес, ни сеть."
 
 msgid "Opened at"
 msgstr "Открыто"
@@ -3428,6 +3437,9 @@ msgstr "Замер скорости"
 msgid "Speed test by port"
 msgstr "Замер скорости по портам"
 
+msgid "Speed tests by port"
+msgstr "Замеры скорости по портам"
+
 #, python-format
 msgid "Split groups: %(count)d."
 msgstr "Групп с раздельной маршрутизацией: %(count)d."
@@ -3580,6 +3592,9 @@ msgstr "Уведомить владельцев ключей"
 
 msgid "Template"
 msgstr "Шаблон"
+
+msgid "Tests"
+msgstr "Замеров"
 
 msgid "Thank you! The staff will review your suggestion."
 msgstr "Спасибо! Персонал рассмотрит ваше предложение."

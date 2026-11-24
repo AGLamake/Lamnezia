@@ -7,6 +7,7 @@ from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
@@ -18,6 +19,7 @@ from apps.operations.views import progress_context
 from apps.protocols.services.inventory import server_containers
 from apps.protocols.services.ipsec_reissue import IpsecIdentity
 from apps.protocols.services.readdress import ServerReaddress
+from apps.protocols.services.speed_results import summary as speed_summary
 from apps.servers.forms import (
     CONNECTION_FIELDS,
     ProbeForm,
@@ -79,6 +81,7 @@ class ServerDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-a
             address_form=ServerAddressForm(server=server),
             host_key=trusted_host_key(server),
             ipsec=IpsecIdentity.of(server),
+            speed_history=speed_summary(server, timezone.now()),
             **(progress_context(latest) if latest else {}),
             **kwargs,
         )

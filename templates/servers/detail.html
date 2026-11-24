@@ -93,6 +93,32 @@
   </section>
 </div>
 
+{% if speed_history %}
+<section class="card card-flush" aria-labelledby="server-speed">
+  <div class="card-head">
+    <h2 id="server-speed" class="card-title">{% icon "zap" "icon-sm" %}{% translate "Speed tests by port" %}</h2>
+    <span class="help-text">{% translate "Browser tests of the last 90 days, averaged" %}</span>
+  </div>
+  <div class="table-wrap">
+    <table class="table table-cards">
+      <thead><tr><th>{% translate "Port" %}</th><th>{% translate "Tests" %}</th><th>{% translate "No answer" %}</th><th>{% translate "Download speed" %}</th><th>{% translate "Upload speed" %}</th><th>{% translate "Last test" %}</th></tr></thead>
+      <tbody>
+        {% for row in speed_history %}
+          <tr>
+            <td data-label="{% translate 'Port' %}">{{ row.port }}</td>
+            <td data-label="{% translate 'Tests' %}">{{ row.tests }}</td>
+            <td data-label="{% translate 'No answer' %}">{{ row.unreachable }}</td>
+            <td data-label="{% translate 'Download speed' %}">{% if row.download is None %}—{% else %}{% blocktranslate with speed=row.download|floatformat:1 %}{{ speed }} Mbit/s{% endblocktranslate %}{% endif %}</td>
+            <td data-label="{% translate 'Upload speed' %}">{% if row.upload is None %}—{% else %}{% blocktranslate with speed=row.upload|floatformat:1 %}{{ speed }} Mbit/s{% endblocktranslate %}{% endif %}</td>
+            <td data-label="{% translate 'Last test' %}">{{ row.last|date:"SHORT_DATETIME_FORMAT" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
 <section class="card card-flush" aria-labelledby="server-protocols">
   <div class="card-head flex-wrap">
     <h2 id="server-protocols" class="card-title">{% icon "layers" "icon-sm" %}{% translate "Protocols and services" %}</h2>
