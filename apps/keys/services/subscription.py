@@ -16,12 +16,12 @@ from enum import StrEnum
 from urllib.parse import quote
 
 from django.conf import settings
-from django.core.cache import cache
 
 from amnezia_core.xray import XRAY_CONTAINER, XrayClientProfile
 from amnezia_core.xray_formats import XrayProxyList
 from apps.accounts.models import User
 from apps.core.models import KeyRevealPolicy
+from apps.core.services.rate import RateWindow
 from apps.core.services.site_settings import cached_settings
 from apps.keys.models import AccessKey, KeyStatus, Subscription
 from apps.keys.services.profile import XrayKeyProfile, profile_container
@@ -73,20 +73,13 @@ class SubscriptionThrottle:
     WINDOW_SECONDS = 60
 
     def __init__(self, ip: str | None, limit: int | None = None) -> None:
-        self._key = f"keys:subscription-rate:{ip}" if ip else None
-        self._limit = settings.SUBSCRIPTION_RATE_LIMIT if limit is None else limit
+        limit = settings.SUBSCRIPTION_RATE_LIMIT if limit is None else limit
+        self._window = (
+            RateWindow(f"keys:subscription-rate:{ip}", limit, self.WINDOW_SECONDS) if ip else None
+        )
 
     def allow(self) -> bool:
-        if not self._limit or self._key is None:
-            return True
-        # add() starts the window only once; incr() is atomic, so parallel fetches count right.
-        cache.add(self._key, 0, timeout=self.WINDOW_SECONDS)
-        try:
-            count = cache.incr(self._key)
-        except ValueError:  # the window expired between add() and incr()
-            cache.set(self._key, 1, timeout=self.WINDOW_SECONDS)
-            count = 1
-        return count <= self._limit
+        return self._window is None or self._window.hit()
 
 
 class FeedFormat(StrEnum):

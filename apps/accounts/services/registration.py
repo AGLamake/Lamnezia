@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from django.conf import settings
-from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -13,6 +12,7 @@ from apps.accounts.models import Invite, Role, Status, User
 from apps.accounts.services.letters import Letters
 from apps.core.mail import mail_configured
 from apps.core.models import RegistrationMode, SiteSettings
+from apps.core.services.rate import RateWindow
 from apps.notifications.events import Event
 from apps.notifications.services.delivery import emit
 from apps.plans.models import Plan
@@ -57,17 +57,16 @@ class RegistrationThrottle:
     """Counts open registrations from one address over an hour (REGISTRATION_RATE_LIMIT)."""
 
     def __init__(self, ip: str | None) -> None:
-        self._key = f"accounts:registrations:{ip}" if ip else None
+        limit = settings.REGISTRATION_RATE_LIMIT
+        self._window = RateWindow(f"accounts:registrations:{ip}", limit, _HOUR) if ip else None
 
     def check(self) -> None:
-        limit = settings.REGISTRATION_RATE_LIMIT
-        if self._key and limit and cache.get(self._key, 0) >= limit:
+        if self._window is not None and self._window.exhausted():
             raise TooManyRegistrationsError
 
     def record(self) -> None:
-        if self._key:
-            cache.add(self._key, 0, timeout=_HOUR)
-            cache.incr(self._key)
+        if self._window is not None:
+            self._window.hit()
 
 
 class Registration:

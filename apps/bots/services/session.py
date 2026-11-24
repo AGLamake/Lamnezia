@@ -14,6 +14,7 @@ from django.urls import reverse
 
 from apps.accounts.models import Messenger
 from apps.bots.services.replies import Command, Incoming
+from apps.core.services.rate import RateWindow
 
 
 def sender_of(incoming: Incoming) -> str:
@@ -29,17 +30,7 @@ class Throttle:
         self._limit = settings.BOT_RATE_LIMIT if limit is None else limit
 
     def allow(self, sender: str) -> bool:
-        if not self._limit:
-            return True
-        key = f"bots:rate:{sender}"
-        # add() starts the window only once; incr() is atomic, so parallel messages count right.
-        cache.add(key, 0, timeout=self._WINDOW_SECONDS)
-        try:
-            count = cache.incr(key)
-        except ValueError:  # the window expired between add() and incr()
-            cache.set(key, 1, timeout=self._WINDOW_SECONDS)
-            count = 1
-        return count <= self._limit
+        return RateWindow(f"bots:rate:{sender}", self._limit, self._WINDOW_SECONDS).hit()
 
 
 class Dialogs:

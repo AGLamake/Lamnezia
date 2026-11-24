@@ -1,7 +1,6 @@
 """The way into the API: the token from the Authorization header and the call rate."""
 
 from django.conf import settings
-from django.core.cache import cache
 from django.utils import timezone
 
 from apps.api.errors import (
@@ -13,6 +12,7 @@ from apps.api.errors import (
 from apps.api.models import ApiToken
 from apps.api.services.tokens import ApiTokens
 from apps.audit.services import journal as audit
+from apps.core.services.rate import RateWindow
 
 _SCHEME = "bearer"
 _PATH_LIMIT = 200
@@ -24,25 +24,15 @@ class ApiThrottle:
     WINDOW_SECONDS = 60
 
     def __init__(self, subject: str, limit: int) -> None:
-        self._key = f"api:rate:{subject}"
-        self._limit = limit
+        self._window = RateWindow(f"api:rate:{subject}", limit, self.WINDOW_SECONDS)
 
     def hit(self) -> bool:
         """Count a call; False once the calls of this minute are over the limit."""
-        if not self._limit:
-            return True
-        # add() starts the window only once; incr() is atomic, so parallel calls count right.
-        cache.add(self._key, 0, timeout=self.WINDOW_SECONDS)
-        try:
-            count = cache.incr(self._key)
-        except ValueError:  # the window expired between add() and incr()
-            cache.set(self._key, 1, timeout=self.WINDOW_SECONDS)
-            count = 1
-        return count <= self._limit
+        return self._window.hit()
 
     def exhausted(self) -> bool:
         """Whether the limit is reached, without counting a call."""
-        return bool(self._limit) and cache.get(self._key, 0) >= self._limit
+        return self._window.exhausted()
 
 
 class ApiGate:
