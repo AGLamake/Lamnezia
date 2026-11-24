@@ -21,7 +21,7 @@ from amnezia_core.xray import (
 )
 from apps.accounts.models import User
 from apps.keys.errors import explained_format_errors
-from apps.keys.models import GONE_STATUSES, AccessKey, KeyStatus
+from apps.keys.models import AWAITS_PROFILE, AccessKey, KeyStatus
 from apps.keys.services.instances import Instance, instances
 from apps.keys.services.profile import XrayKeyProfile, profile_container
 from apps.keys.signals import xray_short_id_changed
@@ -58,16 +58,12 @@ class XrayProfiles:
 
     def fill(self) -> int:
         """Give a profile to every key of the instance that waits for one; how many got it."""
-        waiting = [
-            key
-            for key in AccessKey.objects.filter(source=self._instance.source)
-            if key.awaits_profile
-        ]
+        waiting = list(AccessKey.objects.filter(AWAITS_PROFILE, source=self._instance.source))
         if waiting:
             profile = self.current().to_json()
             for key in waiting:
-                key.profile = profile
-            AccessKey.objects.bulk_update(waiting, ["profile"])
+                key.profile, key.profile_ready = profile, True
+            AccessKey.objects.bulk_update(waiting, ["profile", "profile_ready"])
         return len(waiting)
 
 
@@ -102,9 +98,8 @@ def request_profiles(keys: Iterable[AccessKey]) -> bool:
 
 
 def waiting_profiles(source: str) -> int:
-    """How many keys of the instance wait for their profile."""
-    keys = AccessKey.objects.filter(source=source).exclude(status__in=GONE_STATUSES)
-    return sum(key.awaits_profile for key in keys)
+    """How many keys of the instance wait for their profile: one query, nothing decrypted."""
+    return AccessKey.objects.filter(AWAITS_PROFILE, source=source).count()
 
 
 def prepare_all(source: str, user: User) -> Operation:

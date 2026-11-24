@@ -442,6 +442,9 @@ msgstr "приватный ключ"
 msgid "profile"
 msgstr "профиль"
 
+msgid "profile ready"
+msgstr "профиль собран"
+
 msgid "public key"
 msgstr "публичный ключ"
 

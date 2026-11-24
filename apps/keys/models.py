@@ -1,5 +1,8 @@
+from typing import Any
+
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from apps.ssh.encryption import EncryptedTextField
@@ -17,6 +20,10 @@ class KeyStatus(models.TextChoices):
 DISABLED_STATUSES = frozenset({KeyStatus.DISABLED_LIMIT, KeyStatus.DISABLED_MANUAL})
 # Keys a revoke was started for: they take no place in the limits and are never revoked again.
 GONE_STATUSES = frozenset({KeyStatus.REVOKING, KeyStatus.REVOKED})
+# Keys that still give access: active, or disabled and waiting to be turned back on.
+IN_FORCE_STATUSES = frozenset({KeyStatus.ACTIVE, *DISABLED_STATUSES})
+# Keys with a client credential (not imported) but no profile yet: imported XRay keys.
+AWAITS_PROFILE = Q(imported=False, profile_ready=False, status__in=IN_FORCE_STATUSES)
 
 
 class AccessKey(models.Model):
@@ -44,6 +51,9 @@ class AccessKey(models.Model):
     imported = models.BooleanField(_("imported"), default=False)
     # Server half of the client profile at issue time (address, port, AWG parameters, keys).
     profile = EncryptedTextField(_("profile"), blank=True)
+    # Whether `profile` is filled: the profile is encrypted, so only this flag can be queried.
+    # `save` keeps it in line with the profile.
+    profile_ready = models.BooleanField(_("profile ready"), default=False, editable=False)
     # Another address of the server the profile sends clients to; empty: the address of the
     # instance. Taken only from the checked addresses of the server (`Instance.addresses`).
     address = models.CharField(_("server address"), max_length=255, blank=True)
@@ -70,6 +80,13 @@ class AccessKey(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.profile_ready = bool(self.profile)
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "profile" in update_fields:
+            kwargs["update_fields"] = {*update_fields, "profile_ready"}
+        super().save(*args, **kwargs)
+
     @property
     def can_export(self) -> bool:
         return bool(self.private_key and self.profile) and not self.is_gone
@@ -77,8 +94,8 @@ class AccessKey(models.Model):
     @property
     def awaits_profile(self) -> bool:
         """An imported XRay key: its UUID is known, the profile is built when it is first shown."""
-        in_force = self.status == KeyStatus.ACTIVE or self.is_disabled
-        return bool(self.private_key) and not self.profile and in_force
+        in_force = self.status in IN_FORCE_STATUSES
+        return not self.imported and not self.profile_ready and in_force
 
     @property
     def is_disabled(self) -> bool:

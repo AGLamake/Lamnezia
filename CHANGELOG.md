@@ -475,6 +475,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Imported XRay keys waiting for a profile are counted faster**: a key now stores whether its
+  profile is built, so the server card counts the waiting keys with one database query instead of
+  decrypting every profile. An update marks the existing keys.
 - **Browser speed test refuses ports browsers block**: a port browsers never connect to (22, 25,
   53, 5060, 6667 and the other "bad ports" of the Fetch Standard) is refused in the browser mode
   with a hint to use iperf3, and the default ports skip them.
