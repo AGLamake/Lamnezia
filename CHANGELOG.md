@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Browser push for moderators and owners**: the **Browser push** channel now reaches every
+  active staff member who turned browser notifications on, each within their zone. An
+  administrator gets every routed event; a moderator or an owner gets only the events about their
+  servers and users, and none from a section of the panel where they have **No access**.
 - **Browser notifications survive a renewed subscription**: when the browser changes its push
   subscription, the service worker sends the new one to the panel in place of the old one, so
   notifications do not stop until the next visit to the profile. Only the user's own subscription

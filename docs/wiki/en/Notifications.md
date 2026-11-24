@@ -1,7 +1,7 @@
 # Notifications
 
 **Admin → Notifications** (`/notifications/`, administrators only) sends panel events to email,
-Telegram, Discord, administrators' browsers and your own webhooks.
+Telegram, Discord, the staff's browsers and your own webhooks.
 
 ## Channels
 
@@ -14,7 +14,7 @@ A channel is one place messages go to. There can be several channels of each kin
 | Discord | Webhook URL of a Discord channel (**Channel settings → Integrations → Webhooks**). Messages come as an embed. |
 | Discord direct message | The Discord user ID (developer mode → right click → Copy User ID). Sent by the panel Discord bot; the user must share a server with it. |
 | Webhook | Your URL and a signing secret. The panel posts JSON (see below). |
-| Browser push | Nothing but a name: messages go to the browsers of administrators who turned notifications on in their profile (see [In the browser](#in-the-browser)). |
+| Browser push | Nothing but a name: messages go to the browsers of staff members who turned notifications on in their profile, each within their zone (see [In the browser](#in-the-browser)). |
 
 Tokens, webhook URLs and secrets are stored encrypted and are not shown again: leave the field
 empty to keep the saved value. A disabled channel receives nothing but the test message.
@@ -221,9 +221,17 @@ messenger (`chat_answer`, `request_answer`) is not pushed. A click opens the pag
 notification is about: usage for the limit, the support chat for an answer, the request in the
 inbox for a new request.
 
-For administrators there is the **Browser push** channel: events routed to it reach the browsers
-of every active administrator who turned notifications on in their profile — for example a new
-request, a pending registration or an incident.
+For the staff there is the **Browser push** channel: events routed to it reach the browsers of the
+active staff members who turned notifications on in their profile — for example a new request, a
+pending registration or an incident. An administrator gets every routed event. A moderator or an
+owner gets only the events about their zone ([roles and access](Roles-and-access.md)): about the
+servers they run or were given, and about the users they serve. Each event also belongs to a section
+of the panel, and a member with **No access** there does not get it: a moderator, for one, hears of
+servers only once given the **Servers** section. A server event is in **Servers** (an incident in
+**Inbox**); a key event in **Keys**; limits, traffic, access ending and sign-ins in **Users**; a
+registration in **Registration**; a request or a chat message in **Inbox**; a suggestion in
+**Articles**; a payment in **Orders**. Events about relays and server groups, the reports and a
+failed panel archive go to administrators only.
 
 The panel makes its own VAPID key pair on first use; the private key is stored encrypted, like the
 other secrets. Pushes go only from the background worker, through the browser's push service

@@ -13,7 +13,7 @@
   {% csrf_token %}
   {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
   {{ form.name.as_field_group }}
-  {% if form.kind == "browser" %}<p class="help-text">{% translate "Administrators get these in the browsers and installed apps where they turned notifications on in their profile." %}</p>{% endif %}
+  {% if form.kind == "browser" %}<p class="help-text">{% translate "Staff members get these in the browsers and installed apps where they turned notifications on in their profile. Administrators get every event; a moderator or an owner gets only those about their servers and users, in the sections of the panel they may open." %}</p>{% endif %}
   {% if form.target %}{{ form.target.as_field_group }}{% endif %}
   {% if form.secret %}{{ form.secret.as_field_group }}{% endif %}
   {{ form.enabled.as_field_group }}

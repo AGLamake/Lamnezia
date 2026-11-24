@@ -23,7 +23,8 @@ class Channel(models.Model):
 
     email — addresses / —; Telegram — chat_id / bot token (empty: the panel bot);
     Discord — — / webhook URL; Discord direct message — user ID / — (the panel bot);
-    webhook — URL / signing secret; browser push — — / — (the browsers of the administrators).
+    webhook — URL / signing secret; browser push — — / — (the browsers of the staff, each within
+    their zone).
     """
 
     name = models.CharField(_("name"), max_length=100)

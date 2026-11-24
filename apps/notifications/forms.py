@@ -163,7 +163,8 @@ class WebhookChannelForm(ChannelForm):
 
 
 class BrowserChannelForm(ChannelForm):
-    """Sent to the browsers where administrators turned notifications on in their profile."""
+    """Sent to the browsers where staff members turned notifications on in their profile, each
+    within their zone."""
 
     kind = ChannelKind.BROWSER
 

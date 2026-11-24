@@ -1,9 +1,9 @@
 """Notifications in the browser and the installed app (Web Push): the panel's key pair, the
 subscriptions of the users and sending to them.
 
-A user gets in their browsers the same events about them as by email and the bots; the
-administrators get the routed events through a `browser` channel. A push service that answers
-404 or 410 has dropped the subscription, so the panel deletes it.
+A user gets in their browsers the same events about them as by email and the bots; the staff get
+the routed events through a `browser` channel, each within their zone (`audience.py`). A push
+service that answers 404 or 410 has dropped the subscription, so the panel deletes it.
 """
 
 import json
@@ -19,11 +19,12 @@ from django.db.models import QuerySet
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.models import Role, User
+from apps.accounts.models import User
 from apps.accounts.services.sessions import device_name
 from apps.notifications.events import Event
 from apps.notifications.models import Channel, ChannelKind, PushSubscription, VapidKey
 from apps.notifications.services.addresses import AddressGuard, BlockedAddressError
+from apps.notifications.services.audience import StaffAudience
 from apps.notifications.services.channels import (
     DeliveryError,
     HttpClient,
@@ -268,7 +269,8 @@ class BrowserPush:
 
 @register
 class BrowserChannel(NotificationChannel):
-    """The browsers the active administrators subscribed in their profiles."""
+    """The browsers the active staff subscribed in their profiles: the administrators get every
+    event, a moderator or an owner those of their zone (`StaffAudience`)."""
 
     kind = ChannelKind.BROWSER
 
@@ -280,9 +282,8 @@ class BrowserChannel(NotificationChannel):
         return cls(BrowserPush.from_settings(http))
 
     def send(self, message: Message) -> None:
-        subscriptions = PushSubscription.objects.filter(
-            user__role=Role.ADMIN, user__is_active=True
-        ).order_by("pk")
+        members = StaffAudience(message).members()
+        subscriptions = PushSubscription.objects.filter(user__in=members).order_by("pk")
         self._push.send(subscriptions, message)
 
 

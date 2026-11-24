@@ -434,9 +434,6 @@ msgstr "Макет админки"
 msgid "Administrator"
 msgstr "Администратор"
 
-msgid "Administrators get these in the browsers and installed apps where they turned notifications on in their profile."
-msgstr "Администраторы получают их в браузерах и установленных приложениях, где включили уведомления в профиле."
-
 msgid "Administrators sign in with a code from a phone app. Set it up to continue."
 msgstr "Администраторы входят с кодом из приложения на телефоне. Настройте его, чтобы продолжить."
 
@@ -3425,6 +3422,9 @@ msgstr "Сотрудники"
 
 msgid "Staff member"
 msgstr "Сотрудник"
+
+msgid "Staff members get these in the browsers and installed apps where they turned notifications on in their profile. Administrators get every event; a moderator or an owner gets only those about their servers and users, in the sections of the panel they may open."
+msgstr "Сотрудники получают их в браузерах и установленных приложениях, где включили уведомления в профиле. Администраторы получают все события; модератор или владелец — только о своих серверах и пользователях, в разделах панели, которые ему открыты."
 
 msgid "Standalone AmneziaWG 3.1 servers on the port of the group. A joining server takes the files of the group: its own key, settings and clients are replaced. Users who had keys on it get keys of the group."
 msgstr "Отдельные серверы AmneziaWG 3.1 на порту группы. Вступающий сервер получает файлы группы: его ключ, настройки и клиенты заменяются. Пользователи, у которых были ключи на нём, получают ключи группы."

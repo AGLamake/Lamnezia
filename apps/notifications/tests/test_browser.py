@@ -26,6 +26,7 @@ from apps.notifications.services.webpush import VapidKeys
 from apps.notifications.tests.browsers import Browser
 from apps.notifications.tests.conftest import FakeHttp
 from apps.notifications.tests.factories import ChannelFactory
+from apps.servers.tests.factories import ServerFactory
 
 pytestmark = [pytest.mark.django_db, pytest.mark.usefixtures("commit")]
 
@@ -233,7 +234,7 @@ class TestDeadSubscriptions:
 
 
 class TestStaffChannel:
-    def test_the_administrators_browsers_get_the_routed_events(self, http: FakeHttp) -> None:
+    def test_the_administrators_browsers_get_every_routed_event(self, http: FakeHttp) -> None:
         admin, moderator, user = (
             UserFactory(role=Role.ADMIN),
             UserFactory(role=Role.MODERATOR),
@@ -258,6 +259,38 @@ class TestStaffChannel:
         assert pushed["url"] == "/support/inbox/7/"
         assert http.to(browsers["moderator"].endpoint) == []
         assert http.to(browsers["user"].endpoint) == []
+
+    def test_each_staff_member_gets_the_events_of_their_zone(self, http: FakeHttp) -> None:
+        north, south = UserFactory(role=Role.OWNER), UserFactory(role=Role.OWNER)
+        ServerFactory().moderators.add(north)
+        south_server = ServerFactory()
+        south_server.moderators.add(south)
+        anna = UserFactory(managers=[north])
+        browsers = {
+            "north": Browser("https://push.example.com/north"),
+            "south": Browser("https://push.example.com/south"),
+        }
+        subscribe(north, browsers["north"])
+        subscribe(south, browsers["south"])
+        ChannelFactory(
+            kind=ChannelKind.BROWSER,
+            target="",
+            secret="",
+            events=[Event.SERVER_DOWN, Event.TICKET_CREATED],
+        )
+
+        emit(Event.SERVER_DOWN, {"server": south_server.name, "host": "h", "last_seen": ""})
+        emit(
+            Event.TICKET_CREATED,
+            {"user": anna.username, "number": 7, "type": "Question", "subject": "Slow"},
+        )
+
+        titles = {
+            name: [browser.read(push.body)["title"] for push in http.to(browser.endpoint)]
+            for name, browser in browsers.items()
+        }
+        assert titles["north"] == [f"New request #7 from {anna.username}: Slow"]
+        assert titles["south"] == [f"Server {south_server.name} is down"]
 
     def test_without_subscribed_administrators_the_delivery_fails(self, http: FakeHttp) -> None:
         ChannelFactory(
