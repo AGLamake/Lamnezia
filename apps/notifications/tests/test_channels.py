@@ -3,16 +3,16 @@ import json
 import socket
 import urllib.error
 import urllib.request
+from collections.abc import Iterator
 from datetime import UTC, datetime
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from threading import Thread
+from http.server import BaseHTTPRequestHandler
 from typing import Any
 
 import pytest
 
 from apps.accounts.tests.registration import configure as configure_site
 from apps.core.services.outbound import DiscordApi, OutboundProxy, TelegramApi
-from apps.core.tests.proxies import web_server
+from apps.core.tests.proxies import serving, web_server
 from apps.notifications.models import ChannelKind
 from apps.notifications.services.addresses import AddressGuard
 from apps.notifications.services.channels import (
@@ -348,6 +348,7 @@ def test_the_client_from_settings_refuses_private_addresses() -> None:
 def test_a_guarded_client_does_not_follow_redirects() -> None:
     class Redirect(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
+            self.rfile.read(int(self.headers["Content-Length"]))
             self.send_response(302)
             self.send_header("Location", "http://169.254.169.254/")
             self.end_headers()
@@ -355,14 +356,9 @@ def test_a_guarded_client_does_not_follow_redirects() -> None:
         def log_message(self, *args: object) -> None:
             pass
 
-    server = HTTPServer(("127.0.0.1", 0), Redirect)
-    Thread(target=server.handle_request, daemon=True).start()
-    url = f"http://127.0.0.1:{server.server_port}/hook"
+    with serving(Redirect) as port, pytest.raises(DeliveryError) as error:
+        HttpClient(5, AddressGuard(allow_private=True)).post(f"http://127.0.0.1:{port}/hook", b"{}")
 
-    with pytest.raises(DeliveryError) as error:
-        HttpClient(5, AddressGuard(allow_private=True)).post(url, b"{}")
-
-    server.server_close()
     assert str(error.value).startswith("HTTP 302")
 
 
@@ -372,12 +368,13 @@ class TestDnsRebinding:
     PUBLIC = "8.8.8.8"
 
     @pytest.fixture
-    def receiver(self) -> Any:
-        """A private receiver that remembers the Host of every request it got."""
+    def receiver(self) -> Iterator[tuple[int, list[str]]]:
+        """A private receiver on its port that remembers the Host of every request it got."""
         hosts: list[str] = []
 
         class Receiver(BaseHTTPRequestHandler):
             def do_POST(self) -> None:
+                self.rfile.read(int(self.headers["Content-Length"]))
                 hosts.append(self.headers["Host"])
                 self.send_response(204)
                 self.end_headers()
@@ -385,13 +382,8 @@ class TestDnsRebinding:
             def log_message(self, *args: object) -> None:
                 pass
 
-        server = HTTPServer(("127.0.0.1", 0), Receiver)
-        server.timeout = 1
-        thread = Thread(target=server.handle_request, daemon=True)
-        thread.start()
-        yield server, hosts
-        thread.join()
-        server.server_close()
+        with serving(Receiver) as port:
+            yield port, hosts
 
     @pytest.fixture
     def rebinding(self, monkeypatch: pytest.MonkeyPatch) -> list[int]:
@@ -425,10 +417,12 @@ class TestDnsRebinding:
         return tried
 
     def test_a_name_that_moved_after_the_check_gets_no_request(
-        self, monkeypatch: pytest.MonkeyPatch, receiver: Any, rebinding: list[int]
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        receiver: tuple[int, list[str]],
+        rebinding: list[int],
     ) -> None:
-        server, hosts = receiver
-        port = server.server_port
+        port, hosts = receiver
         tried = self.connecting(monkeypatch, public_to=None)
 
         with pytest.raises(DeliveryError) as error:
@@ -442,13 +436,15 @@ class TestDnsRebinding:
         assert hosts == []
 
     def test_the_request_goes_to_the_checked_address_by_name(
-        self, monkeypatch: pytest.MonkeyPatch, receiver: Any, rebinding: list[int]
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        receiver: tuple[int, list[str]],
+        rebinding: list[int],
     ) -> None:
-        server, hosts = receiver
-        port = server.server_port
+        port, hosts = receiver
         tried = self.connecting(monkeypatch, public_to=("127.0.0.1", port))
 
-        HttpClient(1, AddressGuard(allow_private=False)).post(
+        HttpClient(5, AddressGuard(allow_private=False)).post(
             f"http://hooks.example.com:{port}/hook", b"{}"
         )
 

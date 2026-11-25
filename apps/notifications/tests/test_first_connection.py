@@ -36,6 +36,11 @@ def counter(key: AccessKey, source: str = SOURCE, **seen: datetime | None) -> Tr
     )
 
 
+def after(key: AccessKey) -> datetime:
+    """A moment after the issue: the clock of Windows may give the same time twice in a row."""
+    return key.created_at + timedelta(seconds=1)
+
+
 def tell() -> list[dict[str, Any]]:
     """Run the check; return the details of every `key_connected` so far."""
     FirstConnections().tell_all(timezone.now())
@@ -44,7 +49,7 @@ def tell() -> list[dict[str, Any]]:
 
 def test_the_first_handshake_after_the_issue_is_told_once() -> None:
     key = issued()
-    counter(key, latest_handshake=timezone.now())
+    counter(key, latest_handshake=after(key))
 
     tell()
     [data] = tell()
@@ -58,7 +63,7 @@ def test_the_first_handshake_after_the_issue_is_told_once() -> None:
 
 def test_counters_that_grew_count_without_a_handshake() -> None:
     key = issued()
-    counter(key, active_at=timezone.now())
+    counter(key, active_at=after(key))
 
     assert len(tell()) == 1
 
@@ -76,7 +81,7 @@ def test_a_key_not_yet_in_use_is_not_told() -> None:
 def test_a_key_of_a_group_connects_on_any_member() -> None:
     key = issued()
     counter(key)
-    counter(key, source="instance:2", latest_handshake=timezone.now())
+    counter(key, source="instance:2", latest_handshake=after(key))
 
     assert len(tell()) == 1
 
@@ -84,9 +89,9 @@ def test_a_key_of_a_group_connects_on_any_member() -> None:
 def test_a_reissued_key_of_the_same_device_is_not_told_again() -> None:
     old = issued(connected_at=timezone.now() - timedelta(days=3), status=KeyStatus.REVOKED)
     new = issued(user=old.user)
-    counter(new, latest_handshake=timezone.now())
+    counter(new, latest_handshake=after(new))
     other = issued(name="Laptop", user=old.user)
-    counter(other, latest_handshake=timezone.now())
+    counter(other, latest_handshake=after(other))
 
     [data] = tell()
 

@@ -48,6 +48,17 @@ class _Answering(BaseHTTPRequestHandler):
 
 
 @contextmanager
+def serving(handler: type[BaseHTTPRequestHandler]) -> Iterator[int]:
+    """Serve `handler` on 127.0.0.1 until the block ends; yields the port.
+
+    A handler must read the request body: Windows resets a socket closed with unread data.
+    """
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    with _running(server):
+        yield server.server_address[1]
+
+
+@contextmanager
 def web_server() -> Iterator[tuple[int, Seen]]:
     """A web server on 127.0.0.1; also serves as an HTTP proxy for plain http:// targets."""
     seen = Seen()
