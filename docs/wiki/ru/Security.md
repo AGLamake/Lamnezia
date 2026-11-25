@@ -16,6 +16,9 @@ docker compose exec web python manage.py createadmin --username admin --email ad
 ```
 
 В скриптах пароль передаётся через стандартный ввод: `echo "$PASSWORD" | ... createadmin --username admin --password-stdin`.
+С `--temporary` пароль годится только для первого входа: пока администратор не задаст новый, панель
+открывает только страницу смены пароля (и выход). Так `install.sh` без вопросов создаёт первого
+администратора — его пароль остаётся в `install-summary.txt`.
 
 ## Двухфакторный вход
 

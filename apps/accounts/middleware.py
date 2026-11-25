@@ -1,4 +1,6 @@
-"""Middleware of signing in: the second factor and the sign-in step for HTMX requests."""
+"""Middleware of signing in: the second factor, a required new password and the sign-in step
+for HTMX requests.
+"""
 
 from collections.abc import Callable
 from typing import Any
@@ -18,6 +20,7 @@ from apps.accounts.services.two_factor import TwoFactor
 
 VERIFY = "accounts:two-factor-verify"
 SETUP = "accounts:two-factor-setup"
+NEW_PASSWORD = "accounts:password-required"
 # Pages open before the second factor: leaving, switching the language and the files that
 # install the panel as an app (the browser fetches them without following a redirect).
 _ALWAYS_OPEN = frozenset(
@@ -38,7 +41,7 @@ class HtmxSignInMiddleware:
     the address of the fragment. Goes before every middleware that redirects to sign in.
     """
 
-    STEPS = (settings.LOGIN_URL, VERIFY, SETUP)
+    STEPS = (settings.LOGIN_URL, VERIFY, SETUP, NEW_PASSWORD)
 
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponseBase]) -> None:
         self.get_response = get_response
@@ -100,3 +103,29 @@ class TwoFactorMiddleware:
         if two_factor.enabled:
             return VERIFY
         return SETUP if two_factor.required else None
+
+
+class PasswordChangeRequiredMiddleware:
+    """Holds a user with a temporary password at the page to change it.
+
+    The installer leaves the first administrator's password in a file on the server, so it
+    stops being a secret once anyone reads that file. Goes after `TwoFactorMiddleware`: the
+    second factor comes first, the new password next.
+    """
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponseBase]) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponseBase:
+        return self.get_response(request)
+
+    def process_view(
+        self, request: HttpRequest, view: Callable[..., Any], args: Any, kwargs: Any
+    ) -> HttpResponse | None:
+        user = request.user
+        if not isinstance(user, User) or not user.must_change_password:
+            return None
+        view_name = request.resolver_match.view_name if request.resolver_match else ""
+        if view_name in {NEW_PASSWORD, *_ALWAYS_OPEN}:
+            return None
+        return redirect_to_login(request.get_full_path(), reverse(NEW_PASSWORD))

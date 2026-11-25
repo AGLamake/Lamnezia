@@ -19,7 +19,7 @@ from django_otp import login as otp_login
 from django_otp.models import Device
 from django_otp.plugins.otp_static.models import StaticDevice
 
-from apps.accounts.forms import SignInCodeForm, TokenForm
+from apps.accounts.forms import SetPasswordForm, SignInCodeForm, TokenForm
 from apps.accounts.middleware import session_verified
 from apps.accounts.models import User
 from apps.accounts.services.access import Access, Section
@@ -123,6 +123,7 @@ class PasswordResetView(auth_views.PasswordResetView):
 
 class PasswordResetConfirmView(SuccessMessageMixin, auth_views.PasswordResetConfirmView):  # type: ignore[type-arg]
     template_name = "accounts/password_reset_confirm.html"
+    form_class = SetPasswordForm
     success_url = reverse_lazy("accounts:login")
     success_message = gettext_lazy("New password saved. Sign in with it.")
 

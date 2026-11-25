@@ -1,6 +1,7 @@
 from typing import Any, ClassVar
 
 from django import forms
+from django.contrib.auth import forms as auth_forms
 from django.contrib.auth.forms import BaseUserCreationForm
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
@@ -28,6 +29,24 @@ class TokenForm(forms.Form):
         if not (token.isdigit() and len(token) == _TOKEN_LENGTH):
             raise forms.ValidationError(_("Enter the six digits shown in the app."))
         return token
+
+
+class _EndsTemporaryPassword:
+    """A password the user chose ends the temporary one from the installer."""
+
+    user: User
+
+    def save(self, commit: bool = True) -> User:
+        self.user.must_change_password = False
+        return super().save(commit)  # type: ignore[misc,no-any-return]
+
+
+class PasswordChangeForm(_EndsTemporaryPassword, auth_forms.PasswordChangeForm):
+    pass
+
+
+class SetPasswordForm(_EndsTemporaryPassword, auth_forms.SetPasswordForm):  # type: ignore[type-arg]
+    pass
 
 
 class SignInCodeForm(TokenForm):

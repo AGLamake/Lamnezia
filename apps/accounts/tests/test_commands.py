@@ -28,6 +28,13 @@ def test_createadmin_makes_an_administrator() -> None:
     user = User.objects.get(username="boss")
     assert (user.role, user.email, user.is_superuser) == (Role.ADMIN, "boss@example.com", True)
     assert user.check_password("a-long-passw0rd")
+    assert not user.must_change_password
+
+
+def test_createadmin_temporary_password_must_be_changed() -> None:
+    create_admin("a-long-passw0rd", "--temporary")
+
+    assert User.objects.get(username="boss").must_change_password
 
 
 def test_createadmin_refuses_a_weak_password() -> None:

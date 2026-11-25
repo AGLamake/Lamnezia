@@ -124,6 +124,13 @@ class User(AbstractUser):
         default=False,
         help_text=_("Tell me when my account is signed in from a new network or browser."),
     )
+    # The first administrator gets a generated password that the installer leaves in a file:
+    # until it is changed, the panel opens only the page to change it.
+    must_change_password = models.BooleanField(
+        _("must change the password"),
+        default=False,
+        help_text=_("Opens only the page to change the password until it is changed."),
+    )
     # The offer to link a messenger on «My access»: how many times it was put off and until when.
     link_offer_dismissals = models.PositiveSmallIntegerField(default=0, editable=False)
     link_offer_hidden_until = models.DateTimeField(null=True, blank=True, editable=False)

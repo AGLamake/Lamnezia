@@ -6,18 +6,19 @@ from typing import Any, cast
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import forms as auth_forms
 from django.contrib.auth import views as auth_views
-from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 from django.views import View
 from django.views.generic import TemplateView
 
-from apps.accounts.forms import EmailChangeForm, NotifyViaForm
+from apps.accounts.forms import EmailChangeForm, NotifyViaForm, PasswordChangeForm
 from apps.accounts.models import Messenger, User
 from apps.accounts.services.backup_codes import BackupCodes
 from apps.accounts.services.letters import Letters
@@ -142,6 +143,7 @@ class PasswordChangeView(ProfileMixin, auth_views.PasswordChangeView):
     """A new password ends the other sessions: whoever knew the old one is signed out."""
 
     success_url = reverse_lazy("accounts:profile")
+    form_class = PasswordChangeForm
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         return to_profile("password")
@@ -150,13 +152,43 @@ class PasswordChangeView(ProfileMixin, auth_views.PasswordChangeView):
         context = super().get_context_data(**kwargs)
         return context | self.profile_context(password_form=self._password_form(context["form"]))
 
-    def form_valid(self, form: PasswordChangeForm) -> HttpResponse:
+    def form_valid(self, form: auth_forms.PasswordChangeForm) -> HttpResponse:
         super().form_valid(form)
         sessions = UserSessions(self.member)
         sessions.end_others(self.request.session.session_key)
         sessions.record(self.request)
         messages.success(self.request, _("Password changed. Other sessions are signed out."))
         return to_profile("password")
+
+
+class RequiredPasswordChangeView(LoginRequiredMixin, auth_views.PasswordChangeView):
+    """The only page open to a user with a temporary password until they choose their own."""
+
+    template_name = "accounts/password_required.html"
+    form_class = PasswordChangeForm
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        return super().get_context_data(**kwargs) | {"next": self._next()}
+
+    def get_success_url(self) -> str:
+        return self._next()
+
+    def form_valid(self, form: auth_forms.PasswordChangeForm) -> HttpResponse:
+        response = super().form_valid(form)
+        sessions = UserSessions(cast(User, self.request.user))
+        sessions.end_others(self.request.session.session_key)
+        sessions.record(self.request)
+        messages.success(self.request, _("Password changed. Other sessions are signed out."))
+        return response
+
+    def _next(self) -> str:
+        """Where the user was going: an address on this site, else the start page."""
+        target = self.request.POST.get("next") or self.request.GET.get("next", "")
+        if url_has_allowed_host_and_scheme(
+            target, {self.request.get_host()}, require_https=self.request.is_secure()
+        ):
+            return target
+        return reverse("home")
 
 
 class NotificationsView(_SectionView):

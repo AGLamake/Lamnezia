@@ -17,6 +17,9 @@ docker compose exec web python manage.py createadmin --username admin --email ad
 ```
 
 For scripts, pass the password on standard input: `echo "$PASSWORD" | ... createadmin --username admin --password-stdin`.
+With `--temporary` the password is only for the first sign-in: until the administrator chooses a
+new one, the panel opens only the page to change it (and signing out). An unattended `install.sh`
+creates the first administrator this way, since its password stays in `install-summary.txt`.
 
 ## Two-factor login
 

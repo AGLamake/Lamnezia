@@ -6,7 +6,7 @@
 #
 # The result (panel address, administrator, generated password) is written to
 # /opt/lamnezia/install-summary.txt, readable by root only; the install log is in
-# /var/log/cloud-init-output.log. Sign in, change the password and delete the summary.
+# /var/log/cloud-init-output.log. The first sign-in asks for a new password; then delete the summary.
 
 runcmd:
   - - bash

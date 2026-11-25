@@ -92,6 +92,7 @@ MIDDLEWARE = [
     "django_otp.middleware.OTPMiddleware",
     "apps.accounts.middleware.HtmxSignInMiddleware",
     "apps.accounts.middleware.TwoFactorMiddleware",
+    "apps.accounts.middleware.PasswordChangeRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     # While the panel moves to another machine it answers changes with 503 (apps/relocation).
     "apps.relocation.middleware.PanelFreezeMiddleware",

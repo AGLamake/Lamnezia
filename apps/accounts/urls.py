@@ -27,6 +27,11 @@ urlpatterns = [
     path("profile/sessions/end/", views_profile.SessionEndView.as_view(), name="session-end"),
     path("security/", views_profile.SectionRedirect.as_view(section="two-factor"), name="security"),
     path("password/", views_profile.PasswordChangeView.as_view(), name="password-change"),
+    path(
+        "password/new/",
+        views_profile.RequiredPasswordChangeView.as_view(),
+        name="password-required",
+    ),
     path("password/reset/", views.PasswordResetView.as_view(), name="password-reset"),
     path(
         "password/reset/sent/",

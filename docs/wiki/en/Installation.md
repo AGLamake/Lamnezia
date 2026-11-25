@@ -139,8 +139,9 @@ Without a terminal — cloud-init, a provider's startup script, `ssh host 'bash 
 An option given on the command line wins over its variable. A new installation without questions
 also creates the first administrator with a generated password, so step 4 is not needed. The panel
 address, the administrator and the password are written to `/opt/lamnezia/install-summary.txt`,
-readable by root only; the password does not appear in the output. Sign in, change the password,
-set up two-factor login and delete the file. Running the script again does not touch the file or
+readable by root only; the password does not appear in the output. This password is temporary:
+at the first sign-in the panel opens only the page to choose a new one. Then set up two-factor
+login and delete the file, it still holds the old password. Running the script again does not touch the file or
 the accounts. With a terminal everything works as before, the file only tells the address and the
 next step.
 

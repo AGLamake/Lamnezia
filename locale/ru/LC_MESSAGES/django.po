@@ -2641,6 +2641,9 @@ msgstr "Откройте эту страницу на устройстве в с
 msgid "Opened at"
 msgstr "Открыто"
 
+msgid "Opens only the page to change the password until it is changed."
+msgstr "Пока пароль не сменён, открыта только страница его смены."
+
 msgid "Operating system"
 msgstr "Операционная система"
 
@@ -4177,6 +4180,9 @@ msgstr "Пароль — тот, что вводили при обновлени
 msgid "The password is wrong."
 msgstr "Неверный пароль."
 
+msgid "The password was set by the installer and is written in a file on the server. Choose your own to continue."
+msgstr "Этот пароль задал установщик, и он записан в файле на сервере. Чтобы продолжить, задайте свой."
+
 #, python-format
 msgid "The password was wrong %(limit)s time in a row, so signing in to this account from your address is paused."
 msgid_plural "The password was wrong %(limit)s times in a row, so signing in to this account from your address is paused."
@@ -4551,6 +4557,9 @@ msgstr "Ссылка vpn://"
 
 msgid "Theme"
 msgstr "Тема"
+
+msgid "Then delete install-summary.txt in the panel folder on the server: it still holds the old password."
+msgstr "Потом удалите install-summary.txt в папке панели на сервере: в нём остался старый пароль."
 
 msgid "These ports cannot be tested now."
 msgstr "Эти порты сейчас нельзя замерить."
@@ -5487,6 +5496,9 @@ msgstr "пропустил изменение ключей или настрое
 
 msgid "model"
 msgstr "модель"
+
+msgid "must change the password"
+msgstr "сменить пароль"
 
 msgid "name"
 msgstr "название"

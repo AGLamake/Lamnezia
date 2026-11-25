@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The installer's administrator password is for the first sign-in only**: the administrator
+  that an unattended `install.sh` creates is marked to change the password, and until they do the
+  panel opens only the page to choose a new one; the page and `install-summary.txt` remind to
+  delete the file afterwards. `createadmin --temporary` does the same for scripts. Nothing to do
+  on upgrade.
 - **Remove an unsent chat message**: a message marked "Not sent" in a support chat has a
   **Remove** button next to **Retry**. It takes the card away and puts its text back in the reply
   box if the box is empty, so the text is not lost. Nothing to do on upgrade.

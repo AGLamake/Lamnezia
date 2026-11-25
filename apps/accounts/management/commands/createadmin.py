@@ -22,12 +22,22 @@ class Command(BaseCommand):
             action="store_true",
             help="Read the password from standard input, for scripts.",
         )
+        parser.add_argument(
+            "--temporary",
+            action="store_true",
+            help="The password is temporary: the panel asks for a new one at the first sign-in.",
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
         username = options["username"]
         if User.objects.filter(username=username).exists():
             raise CommandError(f"User {username} already exists.")
-        user = User(username=username, email=options["email"], role=Role.ADMIN)
+        user = User(
+            username=username,
+            email=options["email"],
+            role=Role.ADMIN,
+            must_change_password=options["temporary"],
+        )
         if options["password_stdin"]:
             password = (options.get("stdin") or sys.stdin).readline().rstrip("\r\n")
         else:

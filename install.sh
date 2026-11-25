@@ -491,12 +491,13 @@ UNIT
 }
 
 # Unattended, a new panel gets its first administrator at once: nobody is there to run
-# createadmin. Prints the password; when the user cannot be created, prints nothing.
+# createadmin. The password is temporary: it stays in the summary file, so the panel asks for
+# a new one at the first sign-in. Prints it; when the user cannot be created, prints nothing.
 create_admin() {
     local password
     password="$(openssl rand -base64 18 | tr -d '/+=')"
     if printf '%s\n' "$password" | (cd "$DIR" && docker compose exec -T web \
-        python manage.py createadmin --username "$ADMIN" --password-stdin) >/dev/null; then
+        python manage.py createadmin --username "$ADMIN" --password-stdin --temporary) >/dev/null; then
         printf '%s' "$password"
     else
         log "Could not create the administrator $ADMIN: create one with createadmin" >&2
@@ -516,7 +517,7 @@ write_summary() {
             printf 'Panel: https://%s/\n' "$DOMAIN"
             if [ -n "$ADMIN_PASSWORD" ]; then
                 printf 'Administrator: %s\nPassword: %s\n' "$ADMIN" "$ADMIN_PASSWORD"
-                printf 'Sign in, change the password, set up two-factor login, delete this file.\n'
+                printf 'At the first sign-in the panel asks for a new password; then delete this file.\n'
             elif [ -n "$RESTORE" ]; then
                 printf 'Restored from %s: sign in with the accounts of the archived panel.\n' "$RESTORE"
             else
