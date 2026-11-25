@@ -1,5 +1,6 @@
 """Dump of the panel database for the panel archive and its load back: `pg_dump`, `pg_restore`."""
 
+import contextlib
 import os
 import shutil
 import subprocess
@@ -118,15 +119,20 @@ class PostgresLoad(_PostgresClient):
     @staticmethod
     def _feed(psql: subprocess.Popen[bytes], restore: subprocess.Popen[bytes]) -> str:
         """Send the emptying SQL and the dump into psql; return what both said on stderr."""
-        assert psql.stdin is not None and restore.stdout is not None and restore.stderr is not None
+        assert psql.stdin is not None and psql.stderr is not None
+        assert restore.stdout is not None and restore.stderr is not None
         try:
             psql.stdin.write(_EMPTY_SCHEMA)
             shutil.copyfileobj(restore.stdout, psql.stdin)
         except BrokenPipeError:
             restore.kill()  # psql stopped at an error: the rest of the dump is not needed
         finally:
-            psql.stdin.close()
+            # Closing flushes the buffer, which fails the same way when psql is already gone.
+            with contextlib.suppress(BrokenPipeError):
+                psql.stdin.close()
+        # Not communicate(): on POSIX it flushes stdin first, and stdin is closed by now.
         restore_errors = restore.stderr.read()
-        _, psql_errors = psql.communicate()
+        psql_errors = psql.stderr.read()
+        psql.wait()
         restore.wait()
         return (restore_errors + psql_errors).decode(errors="replace")
