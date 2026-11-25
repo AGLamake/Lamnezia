@@ -286,6 +286,7 @@ class MetadataBlock(models.Model):
     `enabled` is the latest reading: the rule of services/metadata_scripts.py is in place and its
     timer runs. `turned_off` is the choice of an administrator: install and import then leave the
     server open, for a client that needs the local services of the hoster on 169.254.0.0/16.
+    `script_version` is the VERSION of the script the panel last tried to put on the server.
     """
 
     server = models.OneToOneField(
@@ -298,6 +299,7 @@ class MetadataBlock(models.Model):
     turned_off = models.BooleanField(_("turned off by an administrator"), default=False)
     bridges = models.JSONField(_("closed bridges"), default=list, blank=True)
     checked_at = models.DateTimeField(_("checked at"), null=True, blank=True)
+    script_version = models.PositiveSmallIntegerField(_("script version"), default=0)
 
     class Meta:
         verbose_name = _("cloud metadata block")

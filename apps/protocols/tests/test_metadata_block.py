@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from typing import Any
 
 import pytest
+from django.conf import settings
 from django.test import Client
 
 from amnezia_core.containers import AWG2
@@ -103,8 +104,10 @@ def test_rule_without_the_jump_or_the_timer_is_not_closed() -> None:
 
 def test_script_drops_link_local_from_the_amnezia_bridges_only() -> None:
     """Only FORWARD traffic of the containers: the host itself keeps the metadata service."""
-    assert "iptables -I DOCKER-USER -j LAMNEZIA-METADATA" in scripts.SCRIPT
-    assert '-i "$dev" -d 169.254.0.0/16 -j DROP' in scripts.SCRIPT
+    assert '"$1" -I DOCKER-USER -j LAMNEZIA-METADATA' in scripts.SCRIPT
+    assert '-i "$dev" -d "$2" -j DROP' in scripts.SCRIPT
+    assert "lamnezia_metadata_iptables iptables 169.254.0.0/16" in scripts.SCRIPT
+    assert "hook forward" in scripts.SCRIPT
     assert "for net in bridge amnezia-dns-net" in scripts.SCRIPT
     assert "OUTPUT" not in scripts.SCRIPT
     assert "__" not in scripts.SCRIPT
@@ -251,6 +254,51 @@ def test_ensure_does_not_fail_without_systemd(server: Server) -> None:
     assert host.files == {}
     titles = list(operation.steps.values_list("title", flat=True))
     assert titles[-1] == "Leave the cloud metadata service open"
+
+
+# Servers added before the block, or closed by an older script
+
+
+def ensure_operations() -> list[Operation]:
+    return list(Operation.objects.filter(kind=metadata_block.ENSURE_KIND))
+
+
+def test_closing_keeps_the_version_of_the_script(server: Server, host: FakeMetadataHost) -> None:
+    blocker(server, host)[0].enable()
+
+    assert MetadataBlock.objects.get(server=server).script_version == scripts.VERSION
+
+
+def test_catch_up_closes_an_old_server_once(server: Server) -> None:
+    awg_instance(server)
+
+    started = metadata_block.catch_up()
+
+    assert [operation.params for operation in started] == [{"server_id": server.pk}]
+    assert ensure_operations() == started
+    assert MetadataBlock.objects.get(server=server).script_version == scripts.VERSION
+    assert metadata_block.catch_up() == []
+
+
+def test_catch_up_brings_the_new_script_to_a_closed_server(server: Server) -> None:
+    awg_instance(server)
+    MetadataBlock.objects.create(server=server, enabled=True, script_version=scripts.VERSION - 1)
+
+    assert len(metadata_block.catch_up()) == 1
+
+
+def test_catch_up_leaves_opened_and_empty_servers(server: Server) -> None:
+    awg_instance(server)
+    MetadataBlock.objects.create(server=server, turned_off=True)
+    ServerFactory(name="Empty")
+
+    assert metadata_block.catch_up() == []
+    assert not MetadataBlock.objects.filter(script_version=scripts.VERSION).exists()
+
+
+def test_catch_up_runs_every_hour() -> None:
+    schedule = settings.CELERY_BEAT_SCHEDULE["protocols-metadata-catch-up"]
+    assert schedule == {"task": "protocols.metadata_catch_up", "schedule": 60 * 60}
 
 
 class _Importer:

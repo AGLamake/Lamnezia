@@ -153,7 +153,8 @@ def enable_metadata_block(ctx: OperationContext) -> None:
 
 
 @operations.register(
-    metadata_block.ENSURE_KIND, gettext_lazy("Close the cloud metadata service after the import")
+    metadata_block.ENSURE_KIND,
+    gettext_lazy("Close the cloud metadata service after an import or a panel update"),
 )
 def ensure_metadata_block(ctx: OperationContext) -> None:
     with _metadata_blocker(ctx) as blocker:

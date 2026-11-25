@@ -255,8 +255,8 @@ msgstr "Подсеть клиентов: %(old)s → %(new)s."
 msgid "Clients in the configuration: %(peers)d, named in clientsTable: %(named)d."
 msgstr "Клиентов в конфигурации: %(peers)d, с именем в clientsTable: %(named)d."
 
-msgid "Close the cloud metadata service after the import"
-msgstr "Закрыть метаданные облака после импорта"
+msgid "Close the cloud metadata service after an import or a panel update"
+msgstr "Закрыть метаданные облака после импорта или обновления панели"
 
 msgid "Close the cloud metadata service to VPN clients"
 msgstr "Закрыть метаданные облака для клиентов VPN"
@@ -1473,6 +1473,9 @@ msgstr "параметры протокола"
 
 msgid "read at"
 msgstr "прочитан"
+
+msgid "script version"
+msgstr "версия скрипта"
 
 msgid "secondary DNS"
 msgstr "запасной DNS"

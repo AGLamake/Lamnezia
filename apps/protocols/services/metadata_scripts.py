@@ -2,13 +2,19 @@
 
 A VPN client goes out to the network through the host, so it can reach 169.254.169.254: the
 metadata service of a cloud server, which hands out the tokens of the server's service account
-on AWS, GCP, Azure and Yandex Cloud. A rule in the DOCKER-USER chain of the host drops traffic
-from the Docker bridges of the Amnezia containers (the default `bridge` and `amnezia-dns-net`)
-to the whole link-local range 169.254.0.0/16. The containers do not change, and the host itself
-still reaches the metadata: its own traffic does not pass the FORWARD chain.
+on AWS, GCP, Azure and Yandex Cloud (AWS also answers on fd00:ec2::254). The script drops
+traffic from the Docker bridges of the Amnezia containers (the default `bridge` and
+`amnezia-dns-net`) to the whole link-local range 169.254.0.0/16 and to the IPv6 address:
 
-Rules of iptables are lost on reboot and a firewall reload flushes them, so a systemd timer runs
-the script again; the script adds only what is missing.
+- Docker with iptables (the default): a chain of the block, which the DOCKER-USER chain leads
+  to, in iptables and, if Docker keeps ip6tables for IPv6 containers, in ip6tables too;
+- Docker with nftables (`firewall-backend: nftables`, Docker 28+) has no DOCKER-USER: a table of
+  the block with its own forward chain, as Docker advises; a drop there is final.
+
+The containers do not change, and the host itself still reaches the metadata: its own traffic
+does not pass the forward hook. Rules are lost on reboot and a firewall reload flushes them, so
+a systemd timer runs the script again; the script adds only what is missing. `VERSION` counts
+the changes of the script, so the panel brings it to the servers closed by an older one.
 """
 
 import re
@@ -17,9 +23,14 @@ from typing import Self
 
 from apps.protocols.services.host_scripts import AMNEZIA_NETWORK
 
+# Raise when SCRIPT changes: servers with an older script get the new one (metadata_block.py).
+VERSION = 2
+
 UNIT = "lamnezia-metadata"
 CHAIN = "LAMNEZIA-METADATA"
+TABLE = "lamnezia_metadata"
 LINK_LOCAL = "169.254.0.0/16"
+METADATA_IPV6 = "fd00:ec2::254"
 METADATA_DIR = "/opt/lamnezia/metadata"
 SCRIPT_PATH = f"{METADATA_DIR}/metadata.sh"
 SERVICE_PATH = f"/etc/systemd/system/{UNIT}.service"
@@ -52,19 +63,50 @@ lamnezia_metadata_bridges() {
   done
 }
 
-lamnezia_metadata_apply() {
-  # Docker makes DOCKER-USER when it starts; until then there is nothing to add to.
-  iptables -n -L DOCKER-USER >/dev/null 2>&1 || return 0
-  iptables -n -L __CHAIN__ >/dev/null 2>&1 || iptables -N __CHAIN__
-  for dev in $(lamnezia_metadata_bridges); do
-    iptables -C __CHAIN__ -i "$dev" -d __NET__ -j DROP 2>/dev/null && continue
-    iptables -A __CHAIN__ -i "$dev" -d __NET__ -j DROP && echo "$dev: __NET__ closed"
+# $1 is iptables or ip6tables, $2 the addresses closed. Fails without DOCKER-USER: Docker makes
+# it when it starts with the iptables backend.
+lamnezia_metadata_iptables() {
+  "$1" -n -L DOCKER-USER >/dev/null 2>&1 || return 1
+  "$1" -n -L __CHAIN__ >/dev/null 2>&1 || "$1" -N __CHAIN__
+  for dev in $bridges; do
+    "$1" -C __CHAIN__ -i "$dev" -d "$2" -j DROP 2>/dev/null && continue
+    "$1" -A __CHAIN__ -i "$dev" -d "$2" -j DROP && echo "$dev: $2 closed"
   done
-  iptables -C DOCKER-USER -j __CHAIN__ 2>/dev/null \
-    || { iptables -I DOCKER-USER -j __CHAIN__ && echo "DOCKER-USER: __CHAIN__ added"; }
+  "$1" -C DOCKER-USER -j __CHAIN__ 2>/dev/null \
+    || { "$1" -I DOCKER-USER -j __CHAIN__ && echo "$1 DOCKER-USER: __CHAIN__ added"; }
+}
+
+# Docker with the nftables backend keeps its rules in the docker-bridges tables.
+lamnezia_metadata_nft() {
+  command -v nft >/dev/null 2>&1 || return 0
+  nft list table ip docker-bridges >/dev/null 2>&1 || return 0
+  if ! nft list chain inet __TABLE__ forward >/dev/null 2>&1; then
+    nft add table inet __TABLE__
+    nft add chain inet __TABLE__ forward '{ type filter hook forward priority -1; policy accept; }'
+    echo "nftables: __TABLE__ added"
+  fi
+  rules=$(nft list chain inet __TABLE__ forward)
+  for dev in $bridges; do
+    for match in "ip daddr __NET__" "ip6 daddr __NET6__"; do
+      case $rules in *"iifname \"$dev\" $match drop"*) continue ;; esac
+      nft add rule inet __TABLE__ forward iifname "$dev" $match drop \
+        && echo "$dev: ${match##* } closed"
+    done
+  done
+}
+
+lamnezia_metadata_apply() {
+  bridges=$(lamnezia_metadata_bridges)
+  if lamnezia_metadata_iptables iptables __NET__; then
+    lamnezia_metadata_iptables ip6tables __NET6__ || true
+  else
+    lamnezia_metadata_nft
+  fi
 }
 """.replace("__NETWORKS__", " ".join(NETWORKS))
     .replace("__CHAIN__", CHAIN)
+    .replace("__TABLE__", TABLE)
+    .replace("__NET6__", METADATA_IPV6)
     .replace("__NET__", LINK_LOCAL)
 )
 
@@ -122,19 +164,28 @@ DISABLE = (
     f"rm -f {SERVICE_PATH} {TIMER_PATH}\n"
     "systemctl daemon-reload\n"
     f"systemctl reset-failed {UNIT}.service >/dev/null 2>&1 || true\n"
-    f"while iptables -D DOCKER-USER -j {CHAIN} 2>/dev/null; do :; done\n"
-    f"iptables -F {CHAIN} 2>/dev/null || true\n"
-    f"iptables -X {CHAIN} 2>/dev/null || true\n"
+    "for ipt in iptables ip6tables; do\n"
+    f'  while "$ipt" -D DOCKER-USER -j {CHAIN} 2>/dev/null; do :; done\n'
+    f'  "$ipt" -F {CHAIN} 2>/dev/null || true\n'
+    f'  "$ipt" -X {CHAIN} 2>/dev/null || true\n'
+    "done\n"
+    f"nft delete table inet {TABLE} 2>/dev/null || true\n"
     f"rm -rf -- {METADATA_DIR}\n"
 )
 
+# `jump` says that a forward hook leads to the rules: DOCKER-USER to the chain, or the forward
+# chain of the table; `closed` lines name the bridges closed to 169.254.0.0/16.
 STATUS = (
     f'echo "{_TIMER_LINE}$(systemctl is-active {UNIT}.timer 2>/dev/null || true)"\n'
-    f'if iptables -C DOCKER-USER -j {CHAIN} 2>/dev/null; then echo "{_JUMP_LINE}yes"; '
-    f'else echo "{_JUMP_LINE}no"; fi\n'
+    f"if iptables -C DOCKER-USER -j {CHAIN} 2>/dev/null"
+    f" || nft list chain inet {TABLE} forward >/dev/null 2>&1;"
+    f' then echo "{_JUMP_LINE}yes"; else echo "{_JUMP_LINE}no"; fi\n'
     f"iptables -S {CHAIN} 2>/dev/null"
     ' | awk \'$1 == "-A" { for (i = 1; i < NF; i++) if ($i == "-i") '
     f'print "{_CLOSED_LINE}" $(i + 1) }}\'\n'
+    f"nft list chain inet {TABLE} forward 2>/dev/null"
+    ' | awk \'$1 == "iifname" && $3 == "ip" { gsub(/"/, "", $2); '
+    f'print "{_CLOSED_LINE}" $2 }}\'\n'
 )
 
 _INTERFACE = re.compile(r"^[\w.@-]+$")

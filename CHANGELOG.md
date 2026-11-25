@@ -629,6 +629,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Cloud metadata block on nftables, for IPv6 and on old servers**: with Docker on its native
+  nftables backend, which has no `DOCKER-USER`, the rule goes to a table of its own
+  (`inet lamnezia_metadata`); the IPv6 metadata address `fd00:ec2::254` is closed too, in
+  `ip6tables` or the same table. Every hour the panel closes servers added before the block, or
+  closed by an older script, by the operation **Close the cloud metadata service after an import or
+  a panel update**, once per script version; servers opened on the card stay open. Nothing to do
+  on upgrade.
 - **Speed limits after a re-created container or a reboot**: every traffic poll checks that the
   speed script, the `tc` rules and the IFB device are still in an AmneziaWG or WireGuard container
   and applies the limits again when they are gone. A host without the `ifb` module is written to

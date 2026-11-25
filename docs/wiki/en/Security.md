@@ -159,30 +159,34 @@ while you keep those backups.
 A cloud server answers on `169.254.169.254` with its own data and the tokens of its service account
 (AWS, GCP, Azure, Yandex Cloud and others). A VPN client goes out to the network through the
 server, so it could ask that service too. The panel closes the whole link-local range
-`169.254.0.0/16` to the Amnezia containers:
+`169.254.0.0/16` and the IPv6 metadata address `fd00:ec2::254` (AWS) to the Amnezia containers:
 
-- the rule is in the `DOCKER-USER` chain of the server (its own chain `LAMNEZIA-METADATA`) and drops
-  traffic that comes from the Docker bridges of the containers: the default `bridge` (`docker0`)
-  and `amnezia-dns-net`. It covers every protocol and service, AmneziaWG and XRay included; the
-  containers and their configs do not change;
-- the server itself still reaches the metadata service: its own traffic does not pass that chain;
+- the rule drops traffic that comes from the Docker bridges of the containers: the default
+  `bridge` (`docker0`) and `amnezia-dns-net`. It covers every protocol and service, AmneziaWG and
+  XRay included; the containers and their configs do not change;
+- with Docker on iptables (the default) the rule is in the `DOCKER-USER` chain of the server (its
+  own chain `LAMNEZIA-METADATA`), and for IPv6 the same in `ip6tables` if Docker keeps it for
+  containers with IPv6;
+- with Docker on its native nftables backend (`firewall-backend: nftables`, Docker 28+) there is
+  no `DOCKER-USER`, and the rule is in a table of its own, `inet lamnezia_metadata`, with a chain
+  on the forward hook, as the Docker documentation advises;
+- the server itself still reaches the metadata service: its own traffic does not pass these
+  chains;
 - a systemd timer `lamnezia-metadata.timer` puts the rule back within a minute after a reboot, a
   Docker restart or a firewall reload. The script and the units are in `/opt/lamnezia/metadata/`
   and `/etc/systemd/system/`.
 
 An install closes the server on its own after the container is set up. An import changes nothing
-on the server itself and starts a separate operation, **Close the cloud metadata service after the
-import**. A server without systemd is left open, and the operation log says how to add the rule by
-hand.
+on the server itself and starts a separate operation, **Close the cloud metadata service after an
+import or a panel update**. The panel starts the same operation every hour for servers added
+before the block or closed by an older version of its script; each such server is tried once per
+version of the script. A server without systemd, or one that did not answer, is left open, and
+the operation log says why; the server card closes it.
 
 The server card has **Cloud metadata service for VPN clients**: the state, *Check*, *Close* and
 *Open*. Open it only if VPN clients need a local service of the hoster in `169.254.0.0/16` (for
 example a DNS resolver of the cloud on `169.254.169.253`). The choice is kept: later installs and
-imports leave such a server open until it is closed on the card again.
-
-Not covered: the IPv6 metadata address of some clouds (`fd00:ec2::254`) and a Docker set up with its
-native nftables backend, which has no `DOCKER-USER` chain (the rule is then not added and the card
-shows the service as open).
+imports and the hourly check leave such a server open until it is closed on the card again.
 
 ## Firewall of the panel host
 

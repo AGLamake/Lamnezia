@@ -403,6 +403,8 @@ CELERY_BEAT_SCHEDULE = {
     "operations-prune": {"task": "operations.prune", "schedule": 24 * 60 * 60},
     "notifications-prune": {"task": "notifications.prune", "schedule": 24 * 60 * 60},
     "audit-prune-api-calls": {"task": "audit.prune_api_calls", "schedule": 24 * 60 * 60},
+    # Servers added before the cloud metadata block, or closed by an older script of it.
+    "protocols-metadata-catch-up": {"task": "protocols.metadata_catch_up", "schedule": 60 * 60},
     "protocols-prune-speed-results": {
         "task": "protocols.prune_speed_results",
         "schedule": 24 * 60 * 60,

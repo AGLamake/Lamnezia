@@ -3,6 +3,8 @@
 The rule and its timer are in services/metadata_scripts.py. An install closes the server on its
 own (`MetadataBlocker.ensure`) and an import, which changes nothing on the server, starts an
 operation that does (`close_after_import`), unless an administrator opened it on the server card.
+Servers added before the block, or closed by an older script, get the same operation from an
+hourly task (`catch_up`).
 The panel keeps the latest reading in `MetadataBlock`, so the card shows it without connecting.
 """
 
@@ -28,7 +30,7 @@ CHECK_KIND = "protocols.metadata.check"
 ENABLE_KIND = "protocols.metadata.enable"
 DISABLE_KIND = "protocols.metadata.disable"
 KINDS = (CHECK_KIND, ENABLE_KIND, DISABLE_KIND)
-# Closes the server after an import, unless an administrator opened it meanwhile.
+# Closes the server after an import or for `catch_up`, unless an administrator opened it.
 ENSURE_KIND = "protocols.metadata.ensure"
 
 
@@ -92,6 +94,9 @@ class MetadataBlocker:
             with self._ctx.step(_("Close the cloud metadata service to the VPN clients")):
                 for path, content, mode in scripts.FILES:
                     self._host.write_file_atomic(path, content.encode(), mode)
+                MetadataBlock.objects.update_or_create(
+                    server=self._server, defaults={"script_version": scripts.VERSION}
+                )
                 for line in self._host.run(scripts.ENABLE).splitlines():
                     self._ctx.log(line)
                 self._ctx.log(
@@ -141,6 +146,24 @@ def close_after_import(server: Server, user: User | None) -> Operation | None:
     if not should_close(server):
         return None
     return launch(ENSURE_KIND, {"server_id": server.pk}, user=user, subject=server.name)
+
+
+def catch_up() -> list[Operation]:
+    """Start closing the servers added before the block, or closed by an older script.
+
+    Each server is tried once per script version: one that cannot be closed (no systemd, no
+    answer) stays as it is, and the server card closes it later.
+    """
+    behind = Server.objects.exclude(metadata_block__script_version__gte=scripts.VERSION)
+    started = []
+    for server in behind.order_by("pk"):
+        if not should_close(server):
+            continue
+        MetadataBlock.objects.update_or_create(
+            server=server, defaults={"script_version": scripts.VERSION}
+        )
+        started.append(launch(ENSURE_KIND, {"server_id": server.pk}, subject=server.name))
+    return started
 
 
 def start(kind: str, server: Server, user: User, *, ip: str | None = None) -> Operation:
