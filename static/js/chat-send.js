@@ -2,7 +2,8 @@
 // message shows at once in the thread's [data-chat-pending] (support/_pending.html), muted, and
 // the box is cleared for the next one. Messages go one at a time, in order. When the panel
 // answers, the thread's messages are replaced by the fresh ones, a screenshot among them; a
-// message that failed stays with "Not sent" and a retry button, its text kept. Each message
+// message that failed stays with "Not sent" and a retry button, its text kept, and a remove
+// button that puts the text back in the box if the box is empty. Each message
 // carries a token, so a retry after a lost answer is not saved twice
 // (apps/support/services/sending.py). Without scripts the form posts and the page reloads.
 (() => {
@@ -153,5 +154,20 @@
     if (!item || !card.hasAttribute("data-failed")) return;
     showSending(item);
     enqueue(card.parentElement, item);
+  });
+
+  // A failed message is dropped; its text goes back to the box, unless something is typed there.
+  document.addEventListener("click", (event) => {
+    const card = event.target.closest?.("[data-pending-remove]")?.closest(".chat-pending");
+    const item = card && items.get(card);
+    if (!item || !card.hasAttribute("data-failed")) return;
+    card.remove();
+    const field = document.getElementById(item.formId)?.elements.text;
+    if (!field) return;
+    if (!field.value.trim()) {
+      field.value = item.data.get("text") ?? "";
+      field.dispatchEvent(new Event("input", { bubbles: true })); // autogrow (ui.js)
+    }
+    field.focus();
   });
 })();

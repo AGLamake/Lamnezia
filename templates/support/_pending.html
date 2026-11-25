@@ -1,6 +1,6 @@
 {% load i18n %}{% comment %} Messages on their way, under the thread's messages (static/js/chat-send.js): shown at once, muted, until
-   the panel answers; then the thread's messages take their place. One that failed stays with "Not sent" and a retry
-   button, its text kept. A screenshot shows by its name until it is uploaded. `staff` marks the staff's thread.
+   the panel answers; then the thread's messages take their place. One that failed stays with "Not sent", a retry
+   button and a remove button, which puts its text back in an empty box. A screenshot shows by its name until it is uploaded. `staff` marks the staff's thread.
    Kept apart from the messages, which the live updates replace. {% endcomment %}
 <div class="mt-3 space-y-3 empty:hidden" data-chat-pending aria-live="polite"></div>
 <template data-chat-pending-message data-failed="{% translate 'Not sent' %}" data-file-label="{% translate 'Screenshot' %}"
@@ -12,6 +12,7 @@
     <div class="flex flex-wrap items-center gap-2" data-pending-failed hidden>
       <span class="error-text" data-pending-error></span>
       <button type="button" class="btn btn-secondary btn-sm" data-pending-retry>{% translate "Retry" %}</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-pending-remove>{% translate "Remove" context "unsent message" %}</button>
     </div>
   </article>
 </template>

@@ -106,5 +106,6 @@ def test_the_staff_thread_has_a_pending_card_of_the_staff(client: Client) -> Non
 
     assert "data-chat-send" in page_text
     assert "data-chat-messages" in page_text
+    assert "data-pending-retry" in page_text and "data-pending-remove" in page_text
     assert 'data-internal-class="border-warning bg-warning-soft"' in page_text
     assert member.username in page_text

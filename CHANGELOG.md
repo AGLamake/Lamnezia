@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Remove an unsent chat message**: a message marked "Not sent" in a support chat has a
+  **Remove** button next to **Retry**. It takes the card away and puts its text back in the reply
+  box if the box is empty, so the text is not lost. Nothing to do on upgrade.
 - **A panel move checks the new machine before the freeze and takes the ready image**: the move
   starts in the state *checking the new machine*, and the panel accepts changes until the system,
   free disk (3 GB on `/`), memory with swap (900 MB) and ports fit; a machine that does not fit

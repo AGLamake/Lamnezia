@@ -2990,6 +2990,10 @@ msgstr "Обновите страницу: его состояние уже из
 msgid "Remove"
 msgstr "Удалить"
 
+msgctxt "unsent message"
+msgid "Remove"
+msgstr "Убрать"
+
 msgid "Remove it on the new machine by hand: cd /opt/lamnezia && docker compose down -v, then delete /opt/lamnezia and the nginx site lamnezia, if there is one."
 msgstr "Удалите её на новой машине вручную: cd /opt/lamnezia && docker compose down -v, затем удалите /opt/lamnezia и сайт nginx lamnezia, если он есть."
 
