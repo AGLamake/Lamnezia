@@ -12,6 +12,12 @@ msgstr "Вызов API"
 msgid "API call with a disabled token"
 msgstr "Вызов API отключённым токеном"
 
+msgid "API events"
+msgstr "События API"
+
+msgid "API token"
+msgstr "Токен API"
+
 msgid "Action"
 msgstr "Действие"
 
@@ -222,6 +228,9 @@ msgstr "Перемещение полезного материала"
 msgid "Object"
 msgstr "Объект"
 
+msgid "Only API"
+msgstr "Только API"
+
 msgid "Plan staff member skipped: user quota"
 msgstr "Сотрудник тарифа пропущен: квота пользователей"
 
@@ -282,6 +291,9 @@ msgstr "Начало оплаты тарифа"
 msgid "Switch the automatic stop of the old panel"
 msgstr "Переключение автоостановки старой панели"
 
+msgid "The beginning of the token."
+msgstr "Начало токена."
+
 msgid "To"
 msgstr "По"
 
@@ -299,6 +311,9 @@ msgstr "Отвязка мессенджера"
 
 msgid "Who"
 msgstr "Кто"
+
+msgid "Without API"
+msgstr "Без API"
 
 msgid "action"
 msgstr "действие"

@@ -1,6 +1,7 @@
 from typing import Any, cast
 
 from django import forms
+from django.db import models
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
@@ -8,8 +9,25 @@ from apps.audit.models import AuditEvent
 from apps.audit.services.actions import action_label
 
 
+class ApiEvents(models.TextChoices):
+    """Calls through the API fill the journal: show them alone or hide them."""
+
+    ONLY = "only", _("Only API")
+    HIDDEN = "hidden", _("Without API")
+
+
 class AuditFilterForm(forms.Form):
+    API_PREFIX = "api."
+
     action = forms.ChoiceField(label=_("Action"), required=False)
+    api = forms.ChoiceField(
+        label=_("API events"),
+        required=False,
+        choices=[("", _("Any")), *ApiEvents.choices],
+    )
+    token = forms.CharField(
+        label=_("API token"), required=False, help_text=_("The beginning of the token.")
+    )
     actor = forms.CharField(label=_("Who"), required=False)
     target = forms.CharField(label=_("Object"), required=False)
     since = forms.DateField(
@@ -31,6 +49,12 @@ class AuditFilterForm(forms.Form):
         data = self.cleaned_data
         if data["action"]:
             events = events.filter(action=data["action"])
+        if data["api"] == ApiEvents.ONLY:
+            events = events.filter(action__startswith=self.API_PREFIX)
+        elif data["api"] == ApiEvents.HIDDEN:
+            events = events.exclude(action__startswith=self.API_PREFIX)
+        if data["token"]:
+            events = events.filter(data__token__startswith=data["token"].strip())
         if data["actor"]:
             events = events.filter(actor_name__icontains=data["actor"])
         if data["target"]:

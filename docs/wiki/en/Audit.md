@@ -1,7 +1,9 @@
 # Audit log
 
 **Audit log** in the admin interface (`/audit/`, administrators only) lists who did what and when:
-the action, the object, the time and the IP address. Filters: action, who, object, dates.
+the action, the object, the time and the IP address. Filters: action, who, object, dates;
+**API events** shows only the `api.*` events or hides them (calls through the API fill the list),
+and **API token** keeps the events of the token whose beginning you type.
 Actions read as names in the interface language ("Issue key"); the code (`keys.issue`) is shown
 when you point at the name.
 

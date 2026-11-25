@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Audit log filters for the API**: **API events** shows only the `api.*` events or hides them,
+  and **API token** keeps the events of a token by the beginning of its value. Nothing to do on
+  upgrade.
 - **A letter to a user links to their notification settings**: under the frame of the HTML letter
   and as the last line of the text, to the **Notifications** section of the profile. Letters to the
   staff channels go without it. Nothing to do on upgrade.
