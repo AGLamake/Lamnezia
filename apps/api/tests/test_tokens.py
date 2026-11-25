@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from apps.accounts.models import Role, Status
 from apps.accounts.tests.factories import UserFactory
-from apps.api.models import ApiToken, TokenScope
+from apps.api.models import ApiToken
 from apps.api.services.tokens import ApiTokens, TokenOwnerError, digest
 
 pytestmark = pytest.mark.django_db
@@ -25,7 +25,7 @@ def test_only_the_digest_of_the_value_is_stored() -> None:
     assert token.digest == digest(value)
     assert value not in {token.digest, token.prefix}
     assert value.startswith(token.prefix)
-    assert token.scope == TokenScope.READ
+    assert token.permissions.filter(action="read", server=None, user=None, key=None).count() == 5
 
 
 def test_the_issued_value_does_not_leak_into_its_repr() -> None:

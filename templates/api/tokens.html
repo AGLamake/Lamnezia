@@ -7,7 +7,7 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">{% translate "API tokens" %}</h1>
-    <p class="page-lead">{% blocktranslate trimmed %}Tokens let monitoring, billing and other systems read the panel at <code>/api/v1/</code>. Every call goes to the audit log. The description of the API: <a href="/api/v1/openapi.json" class="hover:underline">openapi.json</a>.{% endblocktranslate %}</p>
+    <p class="page-lead">{% blocktranslate trimmed %}Tokens let billing, bots and monitoring work with the panel at <code>/api/v1/</code> on your behalf. A token gets only the permissions you give it, never more than your zone, and loses what leaves your zone later. Changes only start operations. Every call goes to the audit log. The description of the API: <a href="/api/v1/openapi.json" class="hover:underline">openapi.json</a>.{% endblocktranslate %}</p>
   </div>
 </div>
 
@@ -28,7 +28,7 @@
     <table class="table table-cards">
       <thead>
         <tr>
-          <th>{% translate "Token" %}</th><th>{% translate "Acts as" %}</th><th>{% translate "Scope" %}</th>
+          <th>{% translate "Token" %}</th><th>{% translate "Acts as" %}</th><th>{% translate "Permissions" %}</th>
           <th>{% translate "Expires" %}</th><th>{% translate "Last used" %}</th><th><span class="sr-only">{% translate "Actions" %}</span></th>
         </tr>
       </thead>
@@ -43,7 +43,15 @@
               {% elif not token.works %}<span class="badge badge-danger">{% translate "owner blocked" %}</span>{% endif %}
             </td>
             <td data-label="{% translate 'Acts as' %}">{{ token.owner.username }} · {{ token.owner.get_role_display }}</td>
-            <td data-label="{% translate 'Scope' %}">{{ token.get_scope_display }}</td>
+            <td data-label="{% translate 'Permissions' %}">
+              <ul class="text-sm">
+                {% for permission in token.permissions.all %}
+                  <li>{{ permission.get_resource_display }} · {{ permission.get_action_display }} · {% if permission.server %}{{ permission.server.name }}{% elif permission.user %}{{ permission.user.username }}{% elif permission.key %}{% translate "key" %} {{ permission.key.name }} #{{ permission.key.pk }}{% else %}{% translate "whole zone" %}{% endif %}</li>
+                {% empty %}
+                  <li class="text-muted">{% translate "none" %}</li>
+                {% endfor %}
+              </ul>
+            </td>
             <td data-label="{% translate 'Expires' %}">{% if token.expires_at %}{{ token.expires_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% translate "no end" %}{% endif %}</td>
             <td data-label="{% translate 'Last used' %}">{% if token.last_used_at %}{{ token.last_used_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}—{% endif %}</td>
             <td class="text-right">
@@ -60,7 +68,7 @@
   </div>
 {% else %}
   {% translate "No tokens yet." as empty_title %}
-  {% translate "Create a token below for a system that should read the panel." as empty_text %}
+  {% translate "Create a token below for a system that should work with the panel." as empty_text %}
   {% include "components/empty_state.html" with icon="key" title=empty_title text=empty_text %}
 {% endif %}
 
@@ -70,10 +78,24 @@
   {% for error in form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
   <div class="grid gap-4 sm:grid-cols-2">
     {{ form.name.as_field_group }}
-    {{ form.owner.as_field_group }}
-    {{ form.scope.as_field_group }}
     {{ form.expires_at.as_field_group }}
   </div>
+  <fieldset class="space-y-3">
+    <legend class="font-medium">{% translate "Permissions" %}</legend>
+    <p class="text-sm text-muted">{% blocktranslate trimmed %}One row is one permission. Without an object it covers the resource in your whole zone; with one, only that server, user or key. Users and keys can also be managed: issuing and revoking keys, extending access and changing the plan. Empty rows are skipped.{% endblocktranslate %}</p>
+    {{ permissions.management_form }}
+    {% for error in permissions.non_form_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+    {% for row in permissions %}
+      <div class="grid gap-3 sm:grid-cols-5">
+        {% for error in row.non_field_errors %}<div class="sm:col-span-5">{% include "components/alert.html" with level="error" text=error %}</div>{% endfor %}
+        {{ row.resource.as_field_group }}
+        {{ row.action.as_field_group }}
+        {{ row.server.as_field_group }}
+        {{ row.user.as_field_group }}
+        {{ row.key.as_field_group }}
+      </div>
+    {% endfor %}
+  </fieldset>
   <button type="submit" class="btn btn-primary">{% icon "plus" %}{% translate "Create token" %}</button>
 </form>
 {% endblock %}

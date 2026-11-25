@@ -1,4 +1,4 @@
-"""Access keys through the API: owner, server, protocol, status and dates, within the token's zone.
+"""Access keys through the API: owner, server, protocol, status and dates, within the token's reach.
 
 A record holds no key material: not the private key or the profile, and not `public_key` either,
 which for XRay is the client UUID, the access itself.
@@ -9,19 +9,26 @@ from typing import Any
 from django.db.models import QuerySet
 
 from apps.api.errors import NotFoundError
+from apps.api.services.permissions import Reach
 from apps.keys.models import AccessKey
 from apps.keys.services.zone import KeyZone
 from apps.protocols.models import ProtocolInstance
 
 
 class KeyRecords:
-    def __init__(self, zone: KeyZone) -> None:
+    """The keys of the owner's zone that the token's permissions reach."""
+
+    def __init__(self, zone: KeyZone, reach: Reach) -> None:
         self._zone = zone
+        self._reach = reach
+
+    def all(self) -> QuerySet[AccessKey]:
+        return self._reach.keys_in(self._zone.keys())
 
     def rows(
         self, *, user: int | None = None, server: int | None = None, status: str | None = None
     ) -> QuerySet[AccessKey]:
-        keys = self._zone.keys().order_by("pk")
+        keys = self.all().order_by("pk")
         if user is not None:
             keys = keys.filter(user_id=user)
         if server is not None:
@@ -32,7 +39,7 @@ class KeyRecords:
         return keys
 
     def get(self, pk: int) -> AccessKey:
-        key = self._zone.keys().filter(pk=pk).first()
+        key = self.all().filter(pk=pk).first()
         if key is None:
             raise NotFoundError
         return key

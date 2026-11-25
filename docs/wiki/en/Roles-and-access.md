@@ -29,8 +29,9 @@ Each section of the admin interface has one of three levels for a staff member:
 
 Sections: overview, statistics, servers (with groups, relays, protocols and incidents), backups,
 operations, users, keys, registration, plans, orders, inbox (with article suggestions), articles
-(with reply templates), audit log and staff. The settings, integrations, API tokens, updates and
-the panel move stay with administrators whatever the levels. An administrator manages every
+(with reply templates), audit log and staff. The settings, integrations, updates and the panel
+move stay with administrators whatever the levels. Each staff member issues their own
+[API](API.md) tokens, within their zone and their levels. An administrator manages every
 section. Levels are set on the page of a staff member in the **Staff** section.
 
 A section with no chosen level gets the default of the role, and no level goes above the ceiling

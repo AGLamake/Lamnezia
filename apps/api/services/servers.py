@@ -1,4 +1,4 @@
-"""Servers through the API: their state, latest load and protocols, within the token's zone.
+"""Servers through the API: their state, latest load and protocols, within the token's reach.
 
 SSH access, server keys and protocol parameters are never part of a record.
 """
@@ -9,16 +9,20 @@ from django.db.models import QuerySet
 
 from apps.accounts.services.zone import Zone
 from apps.api.errors import NotFoundError
+from apps.api.services.permissions import Reach
 from apps.protocols.models import ProtocolInstance
 from apps.servers.models import Server, ServerSample
 
 
 class ServerRecords:
-    def __init__(self, zone: Zone) -> None:
+    """The servers of the owner's zone that the token's permissions reach."""
+
+    def __init__(self, zone: Zone, reach: Reach) -> None:
         self._zone = zone
+        self._reach = reach
 
     def rows(self) -> QuerySet[Server]:
-        servers = self._zone.narrow(Server.objects.all(), server="pk")
+        servers = self._reach.servers_in(self._zone.servers())
         return servers.select_related("latest_sample").prefetch_related("instances").order_by("pk")
 
     def get(self, pk: int) -> Server:

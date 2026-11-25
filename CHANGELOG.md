@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **API token permissions and changes through the API**: each staff member issues their own
+  tokens on **System → API tokens**, with permissions built from rows: a resource (servers, users,
+  keys, traffic, operation status), read or manage, and optionally one server, user or key of
+  their zone. Every call checks the permissions and the owner's zone at that moment: no permission
+  answers 403, an object outside them 404. A manage permission adds `POST keys`,
+  `POST keys/<id>/revoke`, `POST users/<id>/extend` and `POST users/<id>/plan`; they only start
+  operations and answer 202, and `operations/<id>` shows their status. Existing tokens read every
+  resource as before. The API description is now version 1.1.
 - **Retention of API calls in the audit log**: **API call** records are deleted once a day after
   `LAMNEZIA_API_CALL_RETENTION_DAYS` (30 by default), so monitoring that calls the API every minute
   does not fill the log. Other events, calls with a disabled token included, stay.

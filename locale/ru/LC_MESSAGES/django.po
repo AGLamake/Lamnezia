@@ -523,6 +523,9 @@ msgstr "Пустой параметр не записывается в awg0.conf
 msgid "An invite gives its plan right away, in any registration mode."
 msgstr "Приглашение сразу выдаёт свой тариф при любом режиме регистрации."
 
+msgid "An object is no longer in your zone. Check the permissions."
+msgstr "Объекта больше нет в вашей зоне. Проверьте права."
+
 msgid "An update is already asked for or running."
 msgstr "Обновление уже запрошено или идёт."
 
@@ -893,6 +896,9 @@ msgstr "Проверяем сервер…"
 msgid "Choose a plan."
 msgstr "Выберите тариф."
 
+msgid "Choose one object at most."
+msgstr "Выберите не больше одного объекта."
+
 msgid "Choose up to four ports."
 msgstr "Выберите не больше четырёх портов."
 
@@ -1017,8 +1023,8 @@ msgstr "Скопируйте токен сейчас: панель хранит 
 msgid "Create"
 msgstr "Создать"
 
-msgid "Create a token below for a system that should read the panel."
-msgstr "Создайте токен ниже для системы, которой нужно читать данные панели."
+msgid "Create a token below for a system that should work with the panel."
+msgstr "Создайте токен ниже для системы, которой нужно работать с панелью."
 
 msgid "Create an account"
 msgstr "Зарегистрироваться"
@@ -1492,6 +1498,9 @@ msgstr "Укажите ссылку на статью."
 
 msgid "Give the reason: the author gets it."
 msgstr "Укажите причину: её получит автор."
+
+msgid "Give the token at least one permission."
+msgstr "Дайте токену хотя бы одно право."
 
 msgid "Give to a user"
 msgstr "Передать пользователю"
@@ -2522,6 +2531,9 @@ msgstr "Одна ссылка для v2rayN, v2RayTun, Hiddify и других �
 msgid "One network per line."
 msgstr "По одной сети в строке."
 
+msgid "One row is one permission. Without an object it covers the resource in your whole zone; with one, only that server, user or key. Users and keys can also be managed: issuing and revoking keys, extending access and changing the plan. Empty rows are skipped."
+msgstr "Одна строка — одно право. Без объекта оно действует на ресурс во всей вашей зоне, с объектом — только на этот сервер, пользователя или ключ. Пользователями и ключами можно ещё и управлять: выдавать и отзывать ключи, продлевать доступ и менять тариф. Пустые строки пропускаются."
+
 msgid "Online now"
 msgstr "Сейчас онлайн"
 
@@ -2540,8 +2552,17 @@ msgstr "Принять клиентов группы может только у�
 msgid "Only the DNS or the MTU changes: the servers are not touched."
 msgstr "Меняется только DNS или MTU: серверы не затрагиваются."
 
+msgid "Only the key"
+msgstr "Только ключ"
+
+msgid "Only the server"
+msgstr "Только сервер"
+
 msgid "Only the staff see it."
 msgstr "Его видит только персонал."
+
+msgid "Only the user"
+msgstr "Только пользователь"
 
 msgid "Open"
 msgstr "Открыть"
@@ -2734,6 +2755,9 @@ msgstr "Период"
 
 msgid "Period, days"
 msgstr "Период, дней"
+
+msgid "Permissions"
+msgstr "Права"
 
 msgid "Personal"
 msgstr "Личные"
@@ -3037,6 +3061,9 @@ msgstr "Обращения и чаты пользователей; неотве�
 msgid "Reset"
 msgstr "Сбросить"
 
+msgid "Resource"
+msgstr "Ресурс"
+
 msgid "Restart"
 msgstr "Перезапустить"
 
@@ -3192,9 +3219,6 @@ msgstr "Отсканируйте все коды по очереди в прил
 
 msgid "Scan the QR code with the app or enter the key by hand."
 msgstr "Отсканируйте QR-код в приложении или введите ключ вручную."
-
-msgid "Scope"
-msgstr "Область"
 
 msgid "Screenshot"
 msgstr "Скриншот"
@@ -4464,9 +4488,6 @@ msgstr "Это время уже прошло."
 msgid "The token is disabled."
 msgstr "Токен отключён."
 
-msgid "The token sees what this staff member sees: a moderator's token, their zone."
-msgstr "Токен видит то же, что этот сотрудник: токен модератора — только его зону."
-
 msgid "The total speed of the protocol on this server. Whoever downloads now gets an equal share of it; the speed limits of plans work inside it. The connections are not broken."
 msgstr "Общая скорость протокола на этом сервере. Кто сейчас качает, получает равную долю; пределы скорости тарифов действуют внутри неё. Подключения не рвутся."
 
@@ -4548,6 +4569,12 @@ msgstr "Эта панель уже работает на %(host)s. Выбери�
 msgid "This period"
 msgstr "Этот период"
 
+msgid "This resource can only be read."
+msgstr "Этот ресурс можно только читать."
+
+msgid "This resource cannot be limited to such an object."
+msgstr "Этот ресурс нельзя ограничить таким объектом."
+
 msgid "This server is not available to you."
 msgstr "Этот сервер вам недоступен."
 
@@ -4609,8 +4636,8 @@ msgstr "Токен"
 msgid "Token «%(name)s» is created"
 msgstr "Токен «%(name)s» создан"
 
-msgid "Tokens let monitoring, billing and other systems read the panel at <code>/api/v1/</code>. Every call goes to the audit log. The description of the API: <a href=\"/api/v1/openapi.json\" class=\"hover:underline\">openapi.json</a>."
-msgstr "Токены дают мониторингу, биллингу и другим системам читать данные панели по адресу <code>/api/v1/</code>. Каждый вызов попадает в журнал аудита. Описание API: <a href=\"/api/v1/openapi.json\" class=\"hover:underline\">openapi.json</a>."
+msgid "Tokens let billing, bots and monitoring work with the panel at <code>/api/v1/</code> on your behalf. A token gets only the permissions you give it, never more than your zone, and loses what leaves your zone later. Changes only start operations. Every call goes to the audit log. The description of the API: <a href=\"/api/v1/openapi.json\" class=\"hover:underline\">openapi.json</a>."
+msgstr "Токены дают биллингу, ботам и мониторингу работать с панелью по адресу <code>/api/v1/</code> от вашего имени. Токен получает только те права, что вы ему дали, никогда больше вашей зоны, и теряет то, что потом уходит из зоны. Изменения только запускают операции. Каждый вызов попадает в журнал аудита. Описание API: <a href=\"/api/v1/openapi.json\" class=\"hover:underline\">openapi.json</a>."
 
 msgid "Too many attempts"
 msgstr "Слишком много попыток"
@@ -5075,11 +5102,20 @@ msgstr "полезный материал"
 msgid "abroad through the uplink"
 msgstr "за рубеж через канал"
 
+msgid "access key"
+msgstr "ключ доступа"
+
+msgid "access keys"
+msgstr "ключи доступа"
+
 msgid "access to sections"
 msgstr "доступ к разделам"
 
 msgid "account id"
 msgstr "ID аккаунта"
+
+msgid "action"
+msgstr "действие"
 
 msgid "active"
 msgstr "активен"
@@ -5325,6 +5361,9 @@ msgstr "вступил"
 msgid "joining"
 msgstr "вступает"
 
+msgid "key"
+msgstr "ключ"
+
 msgid "keys at most"
 msgstr "ключей не больше"
 
@@ -5479,6 +5518,9 @@ msgstr "без ограничения"
 msgid "no server reachable"
 msgstr "ни один сервер не доступен"
 
+msgid "none"
+msgstr "нет"
+
 msgid "not checked"
 msgstr "не проверен"
 
@@ -5562,6 +5604,9 @@ msgstr "открыты администратором"
 
 msgid "operation"
 msgstr "операция"
+
+msgid "operation status"
+msgstr "статус операций"
 
 msgid "optional"
 msgstr "необязательно"
@@ -5666,11 +5711,14 @@ msgstr "доступен"
 msgid "reached"
 msgstr "исчерпан"
 
+msgid "read"
+msgstr "чтение"
+
+msgid "read and manage"
+msgstr "чтение и управление"
+
 msgid "read at"
 msgstr "прочитано"
-
-msgid "read only"
-msgstr "только чтение"
 
 msgid "reading error"
 msgstr "ошибка чтения"
@@ -5717,6 +5765,9 @@ msgstr "репозиторий"
 msgid "resets on %(date)s"
 msgstr "обнулится %(date)s"
 
+msgid "resource"
+msgstr "ресурс"
+
 msgid "retry of an earlier attempt"
 msgstr "повтор прошлой попытки"
 
@@ -5741,9 +5792,6 @@ msgstr "маршрутизация"
 msgid "running"
 msgstr "идёт"
 
-msgid "scope"
-msgstr "область"
-
 msgid "seen"
 msgstr "прочитано"
 
@@ -5758,6 +5806,9 @@ msgstr "группа серверов"
 
 msgid "server groups"
 msgstr "группы серверов"
+
+msgid "servers"
+msgstr "серверы"
 
 msgid "servers missing"
 msgstr "нет серверов"
@@ -5913,8 +5964,17 @@ msgstr "заголовок (русский)"
 msgid "token digest"
 msgstr "хеш токена"
 
+msgid "token permission"
+msgstr "право токена"
+
+msgid "token permissions"
+msgstr "права токенов"
+
 msgid "topic"
 msgstr "тема"
+
+msgid "traffic"
+msgstr "трафик"
 
 #, python-format
 msgid "traffic goes to %(server)s"
@@ -5985,6 +6045,9 @@ msgstr "был недоступен во время изменения"
 
 msgid "what"
 msgstr "что"
+
+msgid "whole zone"
+msgstr "вся зона"
 
 msgid "why it lags"
 msgstr "почему отстаёт"

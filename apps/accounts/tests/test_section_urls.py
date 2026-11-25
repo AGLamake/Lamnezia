@@ -18,8 +18,13 @@ pytestmark = pytest.mark.django_db
 
 _DUMMY = {"int": 999999, "uuid": uuid.UUID(int=1)}
 # Views every staff member opens, whatever the sections: they show only what the member may see
-# (the showcase of the interface exists only with DEBUG).
-_FOR_EVERY_MEMBER = {"dashboard:search", "core:showcase"}
+# (the showcase of the interface exists only with DEBUG; API tokens are each member's own).
+_FOR_EVERY_MEMBER = {
+    "dashboard:search",
+    "core:showcase",
+    "api-tokens:list",
+    "api-tokens:deactivate",
+}
 
 
 @dataclass(frozen=True)

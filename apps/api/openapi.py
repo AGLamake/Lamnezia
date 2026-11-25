@@ -2,11 +2,13 @@
 
 from typing import Any
 
+from apps.api.models import Action, Resource
 from apps.api.services.query import DEFAULT_LIMIT, MAX_LIMIT
 from apps.dashboard.services.stats import Period
 from apps.keys.models import KeyStatus
+from apps.operations.models import OperationStatus
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 _STAMP = {"type": ["string", "null"], "format": "date-time"}
 _ID = {"type": "integer"}
@@ -36,10 +38,44 @@ _SCHEMAS: dict[str, Any] = {
     "Token": _object(
         name={"type": "string"},
         prefix={"type": "string"},
-        scope={"type": "string", "enum": ["read"]},
+        scope={"type": "string", "enum": list(Action.values)},
+        permissions={"type": "array", "items": _ref("Permission")},
         expires_at=_STAMP,
         owner=_object(id=_ID, username={"type": "string"}, role={"type": "string"}),
         zone={"type": "string", "enum": ["whole", "moderator"]},
+    ),
+    "Permission": _object(
+        resource={"type": "string", "enum": list(Resource.values)},
+        action={"type": "string", "enum": list(Action.values)},
+        server_id=_NULL_ID,
+        user_id=_NULL_ID,
+        key_id=_NULL_ID,
+    ),
+    "Started": {
+        "type": "object",
+        "description": "The change is accepted; follow its operations at /operations/{id}.",
+        "properties": {
+            "operation_ids": {"type": "array", "items": _ID},
+            "key_id": _ID,
+            "user_id": _ID,
+            "plan_id": _ID,
+            "access_until": _STAMP,
+        },
+        "required": ["operation_ids"],
+    },
+    "Operation": _object(
+        id=_ID,
+        kind={"type": "string"},
+        status={"type": "string", "enum": list(OperationStatus.values)},
+        created_at={"type": "string", "format": "date-time"},
+        started_at=_STAMP,
+        finished_at=_STAMP,
+        error={
+            "oneOf": [
+                _object(code={"type": "string"}, message={"type": "string"}),
+                {"type": "null"},
+            ]
+        },
     ),
     "Server": _object(
         id=_ID,
@@ -140,12 +176,14 @@ _SCHEMAS: dict[str, Any] = {
 }
 
 _ERRORS = {
-    "400": "A query parameter has a wrong value.",
+    "400": "A query parameter or the body has a wrong value.",
     "401": "No token, an unknown token, or one that is disabled or expired.",
-    "404": "No such object in the token's zone.",
-    "405": "Only GET is allowed.",
+    "403": "No permission of the token gives this resource and action.",
+    "404": "No such object in the token's permissions and its owner's zone.",
+    "405": "The method is not allowed here; see Allow.",
     "429": "Too many calls this minute; see Retry-After.",
 }
+_CONFLICT = {"409": "The object's state does not allow the change now."}
 
 _PAGING = [
     {
@@ -159,16 +197,31 @@ _PAGING = [
 _PK = {"name": "id", "in": "path", "required": True, "schema": _ID}
 
 
+def _json(description: str, schema: dict[str, Any]) -> dict[str, Any]:
+    return {"description": description, "content": {"application/json": {"schema": schema}}}
+
+
+def _responses(success: dict[str, Any], errors: dict[str, str]) -> dict[str, Any]:
+    return {**success, **{code: _json(text, _ref("Error")) for code, text in errors.items()}}
+
+
 def _get(summary: str, schema: dict[str, Any], parameters: list[Any] | None = None) -> Any:
-    responses: dict[str, Any] = {
-        "200": {"description": "OK", "content": {"application/json": {"schema": schema}}}
-    }
-    for status, description in _ERRORS.items():
-        responses[status] = {
-            "description": description,
-            "content": {"application/json": {"schema": _ref("Error")}},
-        }
+    responses = _responses({"200": _json("OK", schema)}, _ERRORS)
     return {"get": {"summary": summary, "parameters": parameters or [], "responses": responses}}
+
+
+def _post(summary: str, body: dict[str, Any] | None, parameters: list[Any]) -> dict[str, Any]:
+    """A change: it starts operations and answers 202 at once."""
+    accepted = {"202": _json("Accepted", _ref("Started"))}
+    operation: dict[str, Any] = {
+        "summary": summary,
+        "parameters": parameters,
+        "responses": _responses(accepted, {**_ERRORS, **_CONFLICT}),
+    }
+    if body is not None:
+        content = {"application/json": {"schema": body}}
+        operation["requestBody"] = {"required": True, "content": content}
+    return {"post": operation}
 
 
 def document(server_url: str) -> dict[str, Any]:
@@ -179,9 +232,10 @@ def document(server_url: str) -> dict[str, Any]:
             "title": "Lamnezia API",
             "version": VERSION,
             "description": (
-                "Read access to the panel for integrations. A token sees what its owner sees: "
-                "an administrator's token sees the whole panel, a moderator's token its zone. "
-                "No secrets are returned."
+                "Access to the panel for integrations. A token reaches what its owner's zone "
+                "holds at the moment of the call, narrowed by its permissions: a resource, "
+                "read or manage, and optionally one server, user or key. Changes answer 202 "
+                "with the operations that carry them out. No secrets are returned."
             ),
         },
         "servers": [{"url": server_url}],
@@ -192,21 +246,40 @@ def document(server_url: str) -> dict[str, Any]:
             "/servers/{id}": _get("A server", _ref("Server"), [_PK]),
             "/users": _get("Users, their limits and usage", _page("User"), _PAGING),
             "/users/{id}": _get("A user", _ref("User"), [_PK]),
-            "/keys": _get(
-                "Access keys, without key material",
-                _page("Key"),
-                [
-                    *_PAGING,
-                    _id_query("user", "Keys of this user."),
-                    _id_query("server", "Keys on this server."),
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "schema": {"type": "string", "enum": list(KeyStatus.values)},
-                    },
-                ],
+            "/users/{id}/extend": _post(
+                "Extend the user's access by a number of days",
+                _object(days={"type": "integer", "minimum": 1, "maximum": 3650}),
+                [_PK],
             ),
+            "/users/{id}/plan": _post(
+                "Move the user to a plan the token's owner may give", _object(plan_id=_ID), [_PK]
+            ),
+            "/keys": {
+                **_get(
+                    "Access keys, without key material",
+                    _page("Key"),
+                    [
+                        *_PAGING,
+                        _id_query("user", "Keys of this user."),
+                        _id_query("server", "Keys on this server."),
+                        {
+                            "name": "status",
+                            "in": "query",
+                            "schema": {"type": "string", "enum": list(KeyStatus.values)},
+                        },
+                    ],
+                ),
+                **_post(
+                    "Issue a key on an instance (its source) to a user",
+                    _object(source={"type": "string"}, user_id=_ID, name={"type": "string"}),
+                    [],
+                ),
+            },
             "/keys/{id}": _get("An access key", _ref("Key"), [_PK]),
+            "/keys/{id}/revoke": _post("Revoke the key", None, [_PK]),
+            "/operations/{id}": _get(
+                "The status of an operation the token started", _ref("Operation"), [_PK]
+            ),
             "/traffic": _get(
                 "Traffic by hour or day and per key",
                 _ref("Traffic"),

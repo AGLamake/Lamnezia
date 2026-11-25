@@ -4,12 +4,24 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.models import Status
+from apps.keys.models import AccessKey
+from apps.operations.models import Operation
+from apps.servers.models import Server
 
 
-class TokenScope(models.TextChoices):
-    """What a token may do. Managing keys and access comes next, through operations only."""
+class Resource(models.TextChoices):
+    SERVERS = "servers", _("servers")
+    USERS = "users", _("users")
+    KEYS = "keys", _("access keys")
+    TRAFFIC = "traffic", _("traffic")
+    OPERATIONS = "operations", _("operation status")
 
-    READ = "read", _("read only")
+
+class Action(models.TextChoices):
+    """`manage` includes `read`: a token that changes something also sees it."""
+
+    READ = "read", _("read")
+    MANAGE = "manage", _("read and manage")
 
 
 class ApiToken(models.Model):
@@ -26,7 +38,6 @@ class ApiToken(models.Model):
         on_delete=models.CASCADE,
         related_name="api_tokens",
     )
-    scope = models.CharField(_("scope"), max_length=16, choices=TokenScope, default=TokenScope.READ)
     digest = models.CharField(_("token digest"), max_length=64, unique=True)
     prefix = models.CharField(_("starts with"), max_length=16)
     expires_at = models.DateTimeField(_("expires at"), null=True, blank=True)
@@ -41,6 +52,7 @@ class ApiToken(models.Model):
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     last_used_at = models.DateTimeField(_("last used at"), null=True, blank=True)
+    operations = models.ManyToManyField(Operation, blank=True, related_name="+")
 
     class Meta:
         verbose_name = _("API token")
@@ -65,3 +77,37 @@ class ApiToken(models.Model):
             and owner.is_staff_member
             and owner.status == Status.ACTIVE
         )
+
+
+class TokenPermission(models.Model):
+    """One right of a token: an action on a resource, on one object or on all of the zone.
+
+    At most one of `server`, `user` and `key` is set, and only one a resource allows
+    (`apps.api.services.permissions.RULES`). The object going away takes the right with it.
+    """
+
+    token = models.ForeignKey(ApiToken, on_delete=models.CASCADE, related_name="permissions")
+    resource = models.CharField(_("resource"), max_length=16, choices=Resource)
+    action = models.CharField(_("action"), max_length=16, choices=Action, default=Action.READ)
+    server = models.ForeignKey(
+        Server, verbose_name=_("server"), on_delete=models.CASCADE, null=True, blank=True
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("user"),
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    key = models.ForeignKey(
+        AccessKey, verbose_name=_("access key"), on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    class Meta:
+        verbose_name = _("token permission")
+        verbose_name_plural = _("token permissions")
+        ordering = ("pk",)
+
+    def __str__(self) -> str:
+        return f"{self.resource}:{self.action}"

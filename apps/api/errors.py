@@ -53,6 +53,12 @@ class TooManyCallsError(ApiError):
         return {"Retry-After": str(self.retry_after)}
 
 
+class ForbiddenError(ApiError):
+    status = 403
+    code = "forbidden"
+    message = "The token has no permission for this call."
+
+
 class NotFoundError(ApiError):
     status = 404
     code = "not_found"
@@ -62,10 +68,25 @@ class NotFoundError(ApiError):
 class MethodNotAllowedError(ApiError):
     status = 405
     code = "method_not_allowed"
-    message = "The API is read only: use GET."
+
+    def __init__(self, allowed: tuple[str, ...] = ("GET",)) -> None:
+        super().__init__("Use " + " or ".join(allowed) + " here.")
+        self.allowed = allowed
 
     def headers(self) -> dict[str, str]:
-        return {"Allow": "GET"}
+        return {"Allow": ", ".join(self.allowed)}
+
+
+class ConflictError(ApiError):
+    """The object's state does not allow the change now."""
+
+    status = 409
+    code = "conflict"
+
+
+class BadBodyError(ApiError):
+    code = "bad_body"
+    message = "The body must be a JSON object."
 
 
 class BadParameterError(ApiError):

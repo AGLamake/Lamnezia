@@ -1,4 +1,4 @@
-"""Users through the API: status, plan, effective limits and usage, within the token's zone.
+"""Users through the API: status, plan, effective limits and usage, within the token's reach.
 
 A page of users costs a fixed number of queries: limits are loaded together and the traffic
 of all of them is summed by `LimitEnforcer.usages`. No passwords, 2FA or messenger links.
@@ -14,6 +14,7 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.accounts.services.zone import Zone
 from apps.api.errors import NotFoundError
+from apps.api.services.permissions import Reach
 from apps.plans.models import UserLimits
 from apps.plans.services.limits import NO_PLAN, PLAN_SERVERS, EffectiveLimits
 from apps.portal.services.usage import Usage
@@ -21,12 +22,16 @@ from apps.traffic.services.limits import LimitEnforcer
 
 
 class UserRecords:
-    def __init__(self, zone: Zone, now: datetime | None = None) -> None:
+    """The users of the owner's zone that the token's permissions reach."""
+
+    def __init__(self, zone: Zone, reach: Reach, now: datetime | None = None) -> None:
         self._zone = zone
+        self._reach = reach
         self._now = now or timezone.now()
 
     def rows(self) -> QuerySet[User]:
-        return self._zone.users().order_by("pk").prefetch_related("managements")
+        users = self._reach.users_in(self._zone.users())
+        return users.order_by("pk").prefetch_related("managements")
 
     def get(self, pk: int) -> User:
         user = self.rows().filter(pk=pk).first()
