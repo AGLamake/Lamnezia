@@ -33,7 +33,7 @@ def test_a_user_without_messengers_is_offered_to_link_one(event: Event) -> None:
     text = letter_text(event, alice())
 
     assert "Notifications can also come to Telegram. Link it in your profile:" in text
-    assert text.rstrip().endswith("/accounts/messengers/")
+    assert "Link it in your profile: http://localhost:8000/accounts/messengers/\n" in text
 
 
 def test_both_bots_are_named() -> None:

@@ -1,6 +1,6 @@
 {% extends "email/base.html" %}
 {% load i18n %}
-{% comment %} A notification letter (EmailChannel): the event's title and text, its link as a button, and the offer to link a messenger as a block of its own. {% endcomment %}
+{% comment %} A notification letter (EmailChannel): the event's title and text, its link as a button, and the offer to link a messenger as a block of its own; a letter to a user links to their notification settings below. {% endcomment %}
 {% block heading %}{{ title }}{% endblock %}
 {% block content %}
 <p style="margin:0;">{{ text|linebreaksbr }}</p>
@@ -14,3 +14,4 @@
 </table>
 {% endif %}
 {% endblock %}
+{% block note %}{% if settings_url %}<a href="{{ settings_url }}" style="color:#4f5b6e;text-decoration:underline;">{% translate "Notification settings" %}</a>{% endif %}{% endblock %}

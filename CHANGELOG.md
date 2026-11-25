@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A letter to a user links to their notification settings**: under the frame of the HTML letter
+  and as the last line of the text, to the **Notifications** section of the profile. Letters to the
+  staff channels go without it. Nothing to do on upgrade.
 - **The installer's administrator password is for the first sign-in only**: the administrator
   that an unattended `install.sh` creates is marked to change the password, and until they do the
   panel opens only the page to choose a new one; the page and `install-summary.txt` remind to

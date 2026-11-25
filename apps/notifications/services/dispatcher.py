@@ -5,6 +5,7 @@ from dataclasses import replace
 from datetime import datetime
 
 from django.conf import settings
+from django.urls import reverse
 from django.utils import timezone, translation
 
 from apps.accounts.models import Messenger
@@ -115,12 +116,13 @@ class Dispatcher:
 
     @staticmethod
     def _addressed(message: Message, destination: Destination, delivery: Delivery) -> Message:
-        """The message for this channel: a letter about the end of access also offers to link
-        a messenger.
+        """The message for this channel: a letter to the user links to their notification
+        settings, and one about the end of access also offers to link a messenger.
         """
         user = delivery.notification.user
         if destination.chat is not None or user is None:
             return message
+        message = replace(message, settings_url=_settings_url())
         if not EVENTS[Event(message.event)].link_offer:
             return message
         offer = letter_offer(user, cached_settings.get())
@@ -165,3 +167,8 @@ def message_of(notification: Notification) -> Message:
         text=text,
         data=notification.data,
     )
+
+
+def _settings_url() -> str:
+    """The notification settings in the user's profile, as an address for a letter."""
+    return f"{str(settings.SITE_URL).rstrip('/')}{reverse('accounts:profile')}#notifications"

@@ -92,7 +92,32 @@ def test_a_letter_to_a_staff_email_channel_has_the_html_part_too() -> None:
 
     [letter] = mail.outbox
     assert letter.to == ["ops@example.com", "sre@example.com"]
-    assert f'<a href="{PAGE}"' in html_version(letter)
+    html = html_version(letter)
+    assert f'<a href="{PAGE}"' in html
+    assert "Notification settings" not in html
+    assert "#notifications" not in letter.body
+
+
+def test_the_link_to_the_notification_settings_ends_the_text_and_the_frame() -> None:
+    url = "https://panel.example.com/accounts/profile/#notifications"
+
+    letter = sent(replace(MESSAGE, settings_url=url))
+
+    assert letter.body == f"{MESSAGE.text}\n\nNotification settings: {url}"
+    assert f'<a href="{url}"' in html_version(letter)
+
+
+@pytest.mark.usefixtures("commit")
+def test_a_letter_to_the_user_links_to_their_notification_settings() -> None:
+    user = UserFactory(email="anna@example.com", notify_via=NotifyVia.EMAIL)
+
+    emit(Event.ACCESS_EXPIRING, {"user": user.username, "until": "2026-12-01"}, user=user)
+
+    [letter] = mail.outbox
+    assert "/accounts/profile/#notifications" in letter.body
+    html = html_version(letter)
+    assert '/accounts/profile/#notifications" style=' in html
+    assert ">Notification settings</a>" in html
 
 
 @pytest.mark.usefixtures("commit")

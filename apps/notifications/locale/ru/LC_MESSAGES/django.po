@@ -228,6 +228,10 @@ msgstr "Новое обращение в поддержку"
 msgid "No group server reachable"
 msgstr "Ни один сервер группы не доступен"
 
+#, python-format
+msgid "Notification settings: %(url)s"
+msgstr "Настройки уведомлений: %(url)s"
+
 msgid "Notifications are off in that browser."
 msgstr "Уведомления в том браузере выключены."
 

@@ -2482,6 +2482,9 @@ msgstr "Менять нечего."
 msgid "Nothing was sent yet."
 msgstr "Пока ничего не отправлялось."
 
+msgid "Notification settings"
+msgstr "Настройки уведомлений"
+
 msgid "Notifications"
 msgstr "Уведомления"
 

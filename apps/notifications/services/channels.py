@@ -19,6 +19,7 @@ from urllib.parse import urlsplit
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.utils.translation import gettext as _
 
 from apps.accounts.services.link_offer import LetterOffer
 from apps.core.services.outbound import DiscordApi, MessengerApi, TelegramApi
@@ -64,6 +65,7 @@ class Message:
     """A notification as channels send it: text for people, `payload()` for programs.
 
     `offer`: a letter to the user also offers to link a messenger; other channels ignore it.
+    `settings_url`: a letter to the user ends with the link to their notification settings.
     """
 
     uid: str
@@ -73,6 +75,7 @@ class Message:
     text: str
     data: dict[str, Any]
     offer: LetterOffer | None = None
+    settings_url: str = ""
 
     @property
     def link(self) -> str:
@@ -258,8 +261,12 @@ class EmailChannel(NotificationChannel):
 
     @staticmethod
     def _text(message: Message) -> str:
-        offer = message.offer
-        return f"{message.text}\n\n{offer.line()}" if offer else message.text
+        parts = [message.text]
+        if message.offer:
+            parts.append(message.offer.line())
+        if message.settings_url:
+            parts.append(_("Notification settings: %(url)s") % {"url": message.settings_url})
+        return "\n\n".join(parts)
 
     def _html(self, message: Message) -> str:
         return render_to_string(
@@ -270,6 +277,7 @@ class EmailChannel(NotificationChannel):
                 "text": message.summary,
                 "link": message.link,
                 "offer": message.offer,
+                "settings_url": message.settings_url,
             },
         )
 

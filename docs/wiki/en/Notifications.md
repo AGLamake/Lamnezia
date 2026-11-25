@@ -126,7 +126,9 @@ panel's style: the event's title, its text and the link to its page as an **Open
 button. The letters about the end of access and the reached limit offer a user without a linked
 messenger to get notifications in Telegram or Discord (when the panel has their bot set up): as a
 line with the profile link in the text, and as a block of its own with a **Link** button in the
-HTML. A letter is written in the recipient's language.
+HTML. A letter to a user ends with the link to the notification settings in their profile: a
+**Notification settings** link under the frame and the same address as the last line of the text;
+letters to the staff channels go without it. A letter is written in the recipient's language.
 
 An answer of the support staff goes where the user last wrote from: from a bot, the answer itself
 goes to that messenger, even when they have no email (`chat_answer`, `request_answer`); from the
