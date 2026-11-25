@@ -1,33 +1,12 @@
-from typing import TYPE_CHECKING, Any
-
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
-# Links people follow from the panel: no javascript:, data: or ftp: addresses.
-http_url = URLValidator(schemes=["http", "https"])
+from apps.core.fields import LinkField, http_url
+
 _CREDIT_HELP = _("Who suggested it; shown under the text. Empty: nobody is named.")
-
-
-if TYPE_CHECKING:
-    _URLField = models.URLField[str, str]
-else:
-    _URLField = models.URLField
-
-
-class LinkField(_URLField):
-    """A link whose forms read an address typed without a scheme as https://."""
-
-    def formfield(self, **kwargs: Any) -> Any:
-        return super().formfield(**{"assume_scheme": "https", **kwargs})
-
-    def deconstruct(self) -> Any:
-        """Migrations see a plain URLField: the scheme matters to forms only."""
-        name, _path, args, kwargs = super().deconstruct()
-        return name, "django.db.models.URLField", args, kwargs
 
 
 class Release(models.Model):

@@ -7,7 +7,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from apps.guides.models import LinkField, http_url
+from apps.core.fields import LinkField, http_url
 from apps.ssh.encryption import EncryptedTextField
 from apps.ssh.services import SshCredentials
 
