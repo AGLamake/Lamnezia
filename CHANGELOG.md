@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Restore the archive after a rolled back update**: when the host rolls a panel update back,
+  the **Panel update** page offers to restore the archive made before that update. It asks for the
+  archive password and a confirmation, runs as the usual panel restore operation, is for
+  administrators only and goes to the audit log.
 - **History of speed tests by port**: a browser speed test sends the outcome of every port to the
   panel, and the server card sums up the tests of the last 90 days by port: how many, how many got
   no answer and the average download and upload speed. Only the port and the speeds are kept, not

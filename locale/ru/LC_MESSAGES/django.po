@@ -1757,6 +1757,9 @@ msgstr "Выпущен для %(ip)s"
 msgid "It is the panel now: it is not removed. Point the domain to it, or confirm the move again to make this copy read-only."
 msgstr "Теперь панель — она, её не удаляют. Направьте на неё домен или подтвердите перенос ещё раз, чтобы эта копия стала только для чтения."
 
+msgid "It may have been removed as an old one. Restore another archive on the Panel archive page."
+msgstr "Возможно, он удалён как старый. Восстановите другой архив на странице «Архив панели»."
+
 msgid "Its config does not turn the query logs off: they stay as the image has them."
 msgstr "Его конфиг не выключает журнал запросов: он остаётся таким, как в образе."
 
@@ -2698,6 +2701,9 @@ msgstr "Пароль"
 msgid "Password changed. Other sessions are signed out."
 msgstr "Пароль изменён. Остальные сеансы завершены."
 
+msgid "Password of the archive"
+msgstr "Пароль архива"
+
 msgid "Password reset"
 msgstr "Сброс пароля"
 
@@ -2994,6 +3000,9 @@ msgstr "Удалить адрес? Ключи, которые ведут на н
 msgid "Rename"
 msgstr "Переименовать"
 
+msgid "Replace all data of this panel with the archive made before the update? A safety archive of the current state is made first."
+msgstr "Заменить все данные этой панели архивом, сделанным перед обновлением? Сначала будет сделан страховочный архив текущего состояния."
+
 msgid "Replace all data of this panel with the archive? A safety archive of the current state is made first."
 msgstr "Заменить все данные этой панели архивом? Сначала будет сделан страховочный архив текущего состояния."
 
@@ -3046,6 +3055,12 @@ msgstr "Восстановление из архива"
 
 msgid "Restore on this server"
 msgstr "Восстановить на этом сервере"
+
+msgid "Restore the archive"
+msgstr "Восстановить архив"
+
+msgid "Restore the archive made before the update"
+msgstr "Восстановить архив перед обновлением"
 
 msgid "Restore the panel"
 msgstr "Восстановить панель"
@@ -3662,6 +3677,9 @@ msgstr "Агент обновлён."
 msgid "The agent may be of an older release or stopped: update the relay on the server card, then switch again. The clients stay where they are."
 msgstr "Возможно, агент старой версии или остановлен: обновите ретранслятор в карточке сервера и переключите ещё раз. Клиенты остаются там, где были."
 
+msgid "The archive made before the update is not on the panel."
+msgstr "Архива, сделанного перед обновлением, на панели нет."
+
 msgid "The author asks not to be named."
 msgstr "Автор просит не указывать его имя."
 
@@ -4099,6 +4117,9 @@ msgstr "Панель перезапускает %(container)s, чтобы вер
 msgid "The panel writes its settings to the relay at the next sync. If this warning stays, press Update or Reinstall."
 msgstr "Панель запишет свои настройки на ретранслятор при ближайшей синхронизации. Если предупреждение не уходит, нажмите «Обновить» или «Переустановить»."
 
+msgid "The password is the one typed for the update. The restore runs as on the Panel archive page: a safety archive of the current state first, then the data of the archive; afterwards everyone signs in again. Other operations must be over."
+msgstr "Пароль — тот, что вводили при обновлении. Восстановление идёт так же, как на странице «Архив панели»: сначала страховочный архив текущего состояния, затем данные архива; после этого все входят заново. Другие операции должны быть завершены."
+
 msgid "The password is wrong."
 msgstr "Неверный пароль."
 
@@ -4460,6 +4481,10 @@ msgstr "Обновление запущено."
 
 msgid "The update was interrupted."
 msgstr "Обновление прервано."
+
+#, python-format
+msgid "The update was rolled back, but the database keeps the changes of the new release. If the previous version does not work with it, restore the archive %(name)s made before the update."
+msgstr "Обновление откачено, но в базе остались изменения нового релиза. Если предыдущая версия с ней не работает, восстановите архив %(name)s, сделанный перед обновлением."
 
 msgid "The uplink abroad does not work, so the relay forwards the clients to the active member as in forwarding mode. It goes back to split routing by itself."
 msgstr "Канал за границу не работает, поэтому ретранслятор пробрасывает клиентов на активного участника, как в режиме проброса. В раздельный режим он вернётся сам."

@@ -73,7 +73,12 @@ the host has not taken for an hour is shown as stuck. The panel does not
 answer for a minute or two while it restarts.
 
 Database migrations are not taken back on a rollback. If the previous version does not work with the
-migrated database, restore the archive made before the update ([Backup](Backup.md#panel-archive)).
+migrated database, restore the archive made before the update. After a rollback the **Panel update**
+page shows **Restore the archive made before the update**: type the password given for the update and
+confirm. The restore runs as a background operation, as in [Backup](Backup.md#panel-archive): a
+safety archive of the current state first, then everyone signs in again. Only administrators see
+the button, and the start goes to the audit log. If the archive was already removed as an old one,
+the block is not shown: restore another archive on the **Panel archive** page.
 
 The installer sets up the unit. An installation made before it shows the new release without the
 **Update** button: run `install.sh` of the current version once, or update by hand as above. Only a

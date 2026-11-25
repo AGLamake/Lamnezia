@@ -60,5 +60,25 @@
   {% endif %}
 
   {% if host_available %}{% include "updates/_status.html" %}{% endif %}
+
+  {% if rollback_archive %}
+  <form method="post" action="{% url 'updates:restore' %}" class="form-section" data-confirm="{% translate "Replace all data of this panel with the archive made before the update? A safety archive of the current state is made first." %}">
+    {% csrf_token %}
+    <h2 class="section-title flex items-center gap-2">{% icon "refresh" "icon-sm text-muted" %}{% translate "Restore the archive made before the update" %}</h2>
+    <div class="form-section-body">
+      {% if restoring %}
+      <div class="alert alert-info" role="status">
+        {% icon "info" "icon mt-px" %}
+        <p class="min-w-0 flex-1 break-words">{% translate "The panel is being restored now." %} <a href="{% url 'operations:detail' restoring.pk %}" class="font-medium underline">{% translate "Progress" %}</a></p>
+      </div>
+      {% endif %}
+      <p>{% blocktranslate with name=rollback_archive.name %}The update was rolled back, but the database keeps the changes of the new release. If the previous version does not work with it, restore the archive {{ name }} made before the update.{% endblocktranslate %}</p>
+      {% for error in restore_form.non_field_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
+      {{ restore_form.restore_password.as_field_group }}
+      <p class="help-text">{% translate "The password is the one typed for the update. The restore runs as on the Panel archive page: a safety archive of the current state first, then the data of the archive; afterwards everyone signs in again. Other operations must be over." %}</p>
+      <div><button type="submit" class="btn btn-danger"{% if restoring %} disabled{% endif %}>{% icon "refresh" %}{% translate "Restore the archive" %}</button></div>
+    </div>
+  </form>
+  {% endif %}
 </div>
 {% endblock %}

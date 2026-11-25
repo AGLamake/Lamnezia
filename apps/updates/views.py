@@ -1,4 +1,7 @@
-"""Pages of the panel update: versions, the update button, the status and log from the host."""
+"""Pages of the panel update: versions, the update button, the status and log from the host.
+
+After a rolled back update the page offers to restore the archive made before it.
+"""
 
 from typing import Any
 
@@ -12,8 +15,9 @@ from django.views import View
 from django.views.generic import FormView, TemplateView
 
 from apps.accounts.permissions import AdminRequiredMixin
+from apps.backups.services.panel_restore import active_restore_operation
 from apps.updates.errors import UpdateError, host_reason
-from apps.updates.forms import PanelUpdateForm
+from apps.updates.forms import PanelUpdateForm, RollbackRestoreForm
 from apps.updates.services.updates import PanelUpdate
 
 
@@ -49,11 +53,14 @@ class PanelUpdateView(_UpdateContextMixin, FormView):  # type: ignore[type-arg]
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         host = self.update.host
+        kwargs.setdefault("restore_form", RollbackRestoreForm())
         return super().get_context_data(
             offer=self.update.offer(),
             check_enabled=self.update.releases.enabled,
             host_available=host.available,
             channel=host.channel(),
+            rollback_archive=self.update.rollback_archive(),
+            restoring=active_restore_operation(),
             **self.status_context(),
             **kwargs,
         )
@@ -67,6 +74,26 @@ class PanelUpdateView(_UpdateContextMixin, FormView):  # type: ignore[type-arg]
             return self.form_invalid(form)
         messages.success(self.request, _("The update is started."))
         return redirect("updates:update")
+
+
+class RollbackRestoreView(PanelUpdateView):
+    """Restore the archive made before the rolled back update."""
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return redirect("updates:update")
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        form = RollbackRestoreForm(request.POST)
+        if not form.is_valid():
+            return self.render_to_response(self.get_context_data(restore_form=form))
+        password = form.cleaned_data["restore_password"]
+        try:
+            operation = self.update.restore_rollback_archive(password, self.member, self.client_ip)
+        except UpdateError as exc:
+            # The block with the form is gone when the archive is: the message tells why.
+            messages.error(request, f"{exc.message} {exc.hint}")
+            return redirect("updates:update")
+        return redirect("operations:detail", pk=operation.pk)
 
 
 class PanelUpdateStatusView(_UpdateContextMixin, TemplateView):

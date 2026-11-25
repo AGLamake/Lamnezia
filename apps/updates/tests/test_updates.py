@@ -14,6 +14,7 @@ from apps.audit.models import AuditEvent
 from apps.backups.errors import PanelArchiveError
 from apps.backups.services.database_dump import PostgresDump
 from apps.backups.services.panel_archives import PASSWORD_PARAM
+from apps.backups.services.panel_restore import PANEL_RESTORE_KIND
 from apps.backups.tests.panel_archive_helpers import PASSWORD, FakeDump, folder
 from apps.dashboard.services.attention import Attention
 from apps.guides.models import Release
@@ -21,7 +22,7 @@ from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.updates.errors import UpdateError, UpdateErrorCode
 from apps.updates.operations import update_panel
-from apps.updates.services.updates import RUN_PARAM, UPDATE_KIND, PanelUpdate
+from apps.updates.services.updates import ARCHIVE_PARAM, RUN_PARAM, UPDATE_KIND, PanelUpdate
 
 pytestmark = pytest.mark.django_db
 
@@ -184,3 +185,91 @@ def test_a_turned_off_check_shows_nothing(released: Release, settings: Any) -> N
     settings.UPDATE_CHECK = False
 
     assert Attention(UserFactory(role=Role.ADMIN)).panel_release is None
+
+
+def roll_back(update_dir: Path, operation: Operation) -> None:
+    """The host went back to the previous version after the update of `operation`."""
+    run = operation.params[RUN_PARAM]
+    (update_dir / "status" / "status").write_text(
+        f"run={run}\nstate=rolled_back\nreason=unhealthy\nversion=v1.1.0\nprevious=v1.0.0\n"
+    )
+
+
+@pytest.fixture
+def rolled_back(released: Release, update_dir: Path, archives: Path) -> Operation:
+    operation = start()
+    update_panel(OperationContext(operation))
+    operation.refresh_from_db()
+    roll_back(update_dir, operation)
+    return operation
+
+
+def test_the_update_remembers_its_archive(rolled_back: Operation) -> None:
+    archive = PanelUpdate.from_settings().rollback_archive()
+
+    assert archive is not None
+    assert archive.name == rolled_back.params[ARCHIVE_PARAM]
+
+
+def test_only_a_rolled_back_update_offers_its_archive(
+    rolled_back: Operation, update_dir: Path
+) -> None:
+    status = update_dir / "status" / "status"
+    for state in ("done", "failed", "running"):
+        status.write_text(f"run={rolled_back.params[RUN_PARAM]}\nstate={state}\n")
+        assert PanelUpdate.from_settings().rollback_archive() is None
+
+    status.write_text(f"run={'0' * 32}\nstate=rolled_back\n")
+    assert PanelUpdate.from_settings().rollback_archive() is None
+
+
+def test_a_removed_archive_is_not_offered(rolled_back: Operation) -> None:
+    folder().delete(rolled_back.params[ARCHIVE_PARAM])
+
+    assert PanelUpdate.from_settings().rollback_archive() is None
+    with pytest.raises(UpdateError) as error:
+        PanelUpdate.from_settings().restore_rollback_archive(PASSWORD, UserFactory(), None)
+    assert error.value.code == UpdateErrorCode.NO_ARCHIVE
+
+
+def test_the_page_restores_the_archive_after_a_rollback(
+    client: Client, rolled_back: Operation
+) -> None:
+    admin_client(client)
+    name = rolled_back.params[ARCHIVE_PARAM]
+
+    page = client.get(reverse("updates:update")).content.decode()
+    assert name in page and reverse("updates:restore") in page
+
+    response = client.post(reverse("updates:restore"), {"restore_password": PASSWORD})
+
+    restore = Operation.objects.get(kind=PANEL_RESTORE_KIND)
+    assert response.status_code == 302
+    assert response["Location"] == reverse("operations:detail", args=[restore.pk])
+    assert restore.params[ARCHIVE_PARAM] == name
+    assert PASSWORD not in str(restore.params)
+    assert AuditEvent.objects.filter(action=PANEL_RESTORE_KIND).exists()
+
+
+def test_without_a_rollback_the_page_offers_no_restore(
+    client: Client, released: Release, update_dir: Path
+) -> None:
+    admin_client(client)
+
+    page = client.get(reverse("updates:update")).content.decode()
+    response = client.post(reverse("updates:restore"), {"restore_password": PASSWORD}, follow=True)
+
+    assert reverse("updates:restore") not in page
+    assert "not on the panel" in response.content.decode()
+    assert not Operation.objects.filter(kind=PANEL_RESTORE_KIND).exists()
+
+
+def test_the_restore_after_a_rollback_is_for_administrators_only(
+    client: Client, rolled_back: Operation
+) -> None:
+    client.force_login(UserFactory(role=Role.MODERATOR))
+
+    response = client.post(reverse("updates:restore"), {"restore_password": PASSWORD})
+
+    assert response.status_code == 403
+    assert not Operation.objects.filter(kind=PANEL_RESTORE_KIND).exists()

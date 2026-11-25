@@ -1,4 +1,4 @@
-"""Why a panel update cannot start, and what the reasons the host script writes mean."""
+"""Why a panel update or the restore after it cannot start; what the host script reasons mean."""
 
 from enum import StrEnum
 
@@ -12,6 +12,7 @@ class UpdateErrorCode(StrEnum):
     NO_HOST = "no_host"
     NOT_OFFERED = "not_offered"
     BUSY = "busy"
+    NO_ARCHIVE = "no_archive"
 
 
 UPDATE_ERRORS: dict[UpdateErrorCode, ErrorDescription] = {
@@ -29,6 +30,13 @@ UPDATE_ERRORS: dict[UpdateErrorCode, ErrorDescription] = {
     UpdateErrorCode.BUSY: ErrorDescription(
         _("An update is already asked for or running."),
         _("Wait until it ends; its log is on this page."),
+    ),
+    UpdateErrorCode.NO_ARCHIVE: ErrorDescription(
+        _("The archive made before the update is not on the panel."),
+        _(
+            "It may have been removed as an old one. Restore another archive on the Panel "
+            "archive page."
+        ),
     ),
 }
 

@@ -8,7 +8,7 @@ from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
 from apps.updates.errors import UpdateError, UpdateErrorCode
 from apps.updates.services.host import HostUpdater
-from apps.updates.services.updates import RUN_PARAM, UPDATE_KIND, VERSION_PARAM
+from apps.updates.services.updates import ARCHIVE_PARAM, RUN_PARAM, UPDATE_KIND, VERSION_PARAM
 from apps.updates.services.versions import Version
 
 
@@ -21,7 +21,8 @@ def update_panel(ctx: OperationContext) -> None:
     host = HostUpdater.from_settings()
     if not host.available:
         raise UpdateError(UpdateErrorCode.NO_HOST)
-    write_panel_archive(ctx)
+    archive = write_panel_archive(ctx)
+    ctx.remember(ARCHIVE_PARAM, archive.name)
     with ctx.step(_("Ask the host to update the panel")):
         host.request(version, ctx.params[RUN_PARAM])
         ctx.log(
