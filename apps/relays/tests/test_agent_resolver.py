@@ -77,7 +77,7 @@ def test_the_emergency_forward_stops_the_resolver(
 ) -> None:
     agent = started(network, folder, unbound)
 
-    until_forward(agent, network)
+    until_forward(agent, folder, network)
 
     assert "dport 53" not in network.rules
     assert not unbound.running

@@ -636,6 +636,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   closed by an older script, by the operation **Close the cloud metadata service after an import or
   a panel update**, once per script version; servers opened on the card stay open. Nothing to do
   on upgrade.
+
+- **The uplink of a split group no longer bounces between members on a lossy link**: the relay agent
+  moves the uplink to another member only after 30 seconds with no check passing through it, and
+  tries a member it left again only after `recovery` good checks in a row. A way abroad that drops
+  a third of the packets in bursts of a few seconds switched the uplink and sent a "relay switched"
+  notification every minute or two.
+
 - **Speed limits after a re-created container or a reboot**: every traffic poll checks that the
   speed script, the `tc` rules and the IFB device are still in an AmneziaWG or WireGuard container
   and applies the limits again when they are gone. A host without the `ifb` module is written to

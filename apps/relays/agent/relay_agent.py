@@ -58,6 +58,9 @@ PROBE_TIMEOUT = 1.0
 _PROBE_POLL = 0.1
 # Seconds a ping through the uplink waits for its answer.
 UPLINK_TIMEOUT = 1
+# Seconds the uplink must go unanswered before it leaves its member: the way abroad may drop
+# everything for a few seconds now and then on every member alike.
+UPLINK_SILENCE = 30
 # Unanswered clients needed to call the active member silent: one is likely a deleted key.
 SILENT_CLIENTS = 2
 DIRECTIONS = 2  # a conntrack entry lists the original and the reply direction
@@ -320,11 +323,13 @@ class Lane:
     """The way out of a split group: the uplink to a member, or the emergency forward.
 
     docs/SPLIT.md 4.3. The uplink points at the active member of the group. After `limit`
-    failed checks in a row it moves to the next member that answers probes and has not failed
-    the uplink yet. When none is left but a member still answers a probe, the group falls back
-    to forwarding its port to that member; when no member answers at all it stays split, so
-    Russian sites still work. In the forward fallback the uplink is checked on: after a failure
-    it tries the next live member, and `recovery` good checks in a row split the group again.
+    failed checks in a row, which span at least `UPLINK_SILENCE` seconds, it moves to the next
+    member that answers probes and has not failed the uplink yet. When none is left but a member
+    still answers a probe, the group falls back to forwarding its port to that member; when no
+    member answers at all it stays split, so Russian sites still work. In the forward fallback
+    the uplink is checked on: after a failure it tries the next live member, and `recovery` good
+    checks in a row split the group again. A failed member is forgotten only after `recovery`
+    good checks in a row too: a lossy way out on every member does not bounce between them.
     """
 
     POINT = "point"
@@ -336,7 +341,9 @@ class Lane:
         self.endpoint: Backend | None = None
         self.health = Health()
         self.successes = 0
-        # Members whose uplink failed since the last good check.
+        # When the failed checks in a row began; None after a good one.
+        self.failing_since: int | None = None
+        # Members whose uplink failed since the last `recovery` good checks in a row.
         self.failed: set[Backend] = set()
 
     @property
@@ -348,18 +355,21 @@ class Lane:
 
     def point(self, backend: Backend) -> None:
         self.endpoint = backend
-        self.health.failures = self.successes = 0
+        self._restart()
 
     def record(self, alive: bool, watch: Watch, now: int) -> str | None:
         """Count one check of the uplink: POINT when it must go to `endpoint`, REROUTE when the
         mode changed and with it the group's rules."""
         self.health.record(alive, now)
         if alive:
+            self.failing_since = None
             return self._succeed(watch, now)
         self.successes = 0
+        if self.failing_since is None:
+            self.failing_since = now
         if not self.split:
             return self._try_next(watch)
-        if self.health.failures < self.limit:
+        if self.health.failures < self.limit or now - self.failing_since < UPLINK_SILENCE:
             return None
         return self._leave(watch, now)
 
@@ -372,8 +382,9 @@ class Lane:
 
     def _succeed(self, watch: Watch, now: int) -> str | None:
         """A good check; in the forward fallback the last of `recovery` splits the group."""
-        self.failed.clear()
         self.successes += 1
+        if self.successes >= self.recovery:
+            self.failed.clear()
         if self.split or self.successes < self.recovery or self.endpoint is None:
             return None
         if watch.active != self.endpoint:
@@ -413,7 +424,12 @@ class Lane:
 
     def _change(self, mode: str, now: int) -> None:
         self.mode, self.changed_at = mode, now
+        self._restart()
+
+    def _restart(self) -> None:
+        """Count the checks anew: the uplink goes another way."""
         self.health.failures = self.successes = 0
+        self.failing_since = None
 
 
 @dataclass(frozen=True)

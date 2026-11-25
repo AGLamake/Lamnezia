@@ -23,6 +23,7 @@ from amnezia_core.relay import (
 )
 from apps.relays.agent.relay_agent import (
     MARK_BASE,
+    UPLINK_SILENCE,
     Agent,
     Backend,
     Resolver,
@@ -127,11 +128,35 @@ def split_state(folder: Path) -> GroupState:
     return found
 
 
-def until_forward(agent: Agent, network: FakeNetwork) -> None:
+def moment(folder: Path) -> float:
+    """When the agent wrote its last state."""
+    return RelayState.parse((folder / "state.json").read_text()).updated_at.timestamp()
+
+
+def until_silent(agent: Agent, folder: Path, network: FakeNetwork) -> None:
+    """The uplink fails until it has gone unanswered long enough to leave its member; every
+    tick before that last one keeps the member."""
+    endpoint = network.endpoint
+    agent.tick()
+    first = moment(folder)
+    while moment(folder) - first < UPLINK_SILENCE:
+        assert network.endpoint == endpoint, "the uplink left before it was silent long enough"
+        agent.tick()
+
+
+def nearly_silent(agent: Agent, folder: Path) -> None:
+    """The uplink fails for a while, short of the silence that makes it leave."""
+    agent.tick()
+    first = moment(folder)
+    agent.tick()
+    assert moment(folder) - first < UPLINK_SILENCE
+
+
+def until_forward(agent: Agent, folder: Path, network: FakeNetwork) -> None:
     """The uplink fails through every member while they all answer probes."""
     network.through = set()
     for _ in range(3):
-        agent.tick()
+        until_silent(agent, folder, network)
 
 
 def test_a_split_group_listens_on_its_clone_without_dnat(
@@ -179,7 +204,7 @@ def test_a_failed_uplink_goes_to_the_next_member(network: FakeNetwork, folder: P
     network.through = {B, C}
     mark = len(network.calls)
 
-    agent.tick()
+    until_silent(agent, folder, network)
 
     calls = network.since(mark)
     assert ("point", B) in calls and ("forget", PORT) not in calls
@@ -187,12 +212,46 @@ def test_a_failed_uplink_goes_to_the_next_member(network: FakeNetwork, folder: P
     assert state.active == core(B) and state.mode == Routing.SPLIT
 
 
+def test_a_lossy_uplink_stays_on_its_member(network: FakeNetwork, folder: Path) -> None:
+    agent = started(network, folder)
+    chosen = split_state(folder).switched_at
+    mark = len(network.calls)
+
+    for _ in range(5):
+        network.through = set()
+        nearly_silent(agent, folder)
+        network.through = {A, B, C}
+        agent.tick()
+
+    assert ("point", B) not in network.since(mark)
+    state = split_state(folder)
+    assert state.active == core(A) and state.switched_at == chosen
+
+
+def test_a_lossy_uplink_on_every_member_does_not_bounce_back(
+    network: FakeNetwork, folder: Path
+) -> None:
+    agent = started(network, folder)
+    network.through = set()
+    until_silent(agent, folder, network)
+    assert split_state(folder).active == core(B)
+    network.through = {A, B, C}
+    agent.tick()  # one good check through B: A is not forgiven yet
+    network.through = set()
+    mark = len(network.calls)
+
+    until_silent(agent, folder, network)
+
+    assert ("point", A) not in network.since(mark)
+    assert split_state(folder).active == core(C)
+
+
 def test_the_group_is_forwarded_when_only_the_uplink_fails(
     network: FakeNetwork, folder: Path
 ) -> None:
     agent = started(network, folder)
 
-    until_forward(agent, network)
+    until_forward(agent, folder, network)
 
     assert f"udp dport {PORT} dnat to {C}" in network.rules
     assert "meta mark" not in network.rules
@@ -217,7 +276,7 @@ def test_the_group_splits_again_after_good_checks_in_a_row(
     network: FakeNetwork, folder: Path
 ) -> None:
     agent = started(network, folder)
-    until_forward(agent, network)
+    until_forward(agent, folder, network)
     network.through = {A}
 
     agent.tick()  # the uplink fails through C and goes to A
@@ -235,7 +294,7 @@ def test_a_restarted_agent_stays_in_the_emergency_forward(
     network: FakeNetwork, folder: Path
 ) -> None:
     agent = started(network, folder)
-    until_forward(agent, network)
+    until_forward(agent, folder, network)
 
     restarted = FakeNetwork(alive={A, B, C})
     started(restarted, folder)

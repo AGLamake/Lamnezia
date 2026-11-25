@@ -213,7 +213,10 @@ then answers the clients itself with a copy of the group's interface (same key a
 group's port), sends traffic to the networks of the group's list and to private networks straight
 out of the relay, and sends everything else to the active member over an AmneziaWG uplink with the
 group's parameters. A switch to another member only changes the uplink's address: the clients'
-sessions stay. When the uplink fails on every member while a member still answers the usual probe,
+sessions stay. The uplink moves to another member only after 30 seconds in which no check passed
+through it: short drops on the way abroad do not move it. A member the uplink failed through is
+tried again only after 6 good checks in a row, so a loss alike on every member does not bounce the
+uplink between them. When the uplink fails on every member while a member still answers the usual probe,
 the group falls back to plain forwarding to that member; after a few good uplink checks in a row
 (6 by default) it goes back to split. When no member answers at all, the group stays split, so the
 sites of the list keep working. A network list that is empty or has a bad line is not applied; the
