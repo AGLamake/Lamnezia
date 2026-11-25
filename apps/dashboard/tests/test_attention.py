@@ -19,6 +19,7 @@ from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay
 from apps.servers.models import LoadAlert, LoadResource, Server, ServerSample
 from apps.servers.tests.factories import ServerFactory
+from apps.traffic.models import TrafficSource
 
 pytestmark = pytest.mark.django_db
 
@@ -234,3 +235,21 @@ def test_a_server_that_does_not_answer_is_not_told_as_overloaded() -> None:
     Server.objects.filter(pk=server.pk).update(last_seen_at=timezone.now() - timedelta(days=1))
 
     assert Attention(UserFactory(role=Role.ADMIN)).overloaded() == []
+
+
+def test_a_server_without_the_ifb_module_is_told() -> None:
+    policed = ProtocolInstance.objects.create(
+        server=ServerFactory(name="Germany"), container="amnezia-awg2", port=51820
+    )
+    shaped = ProtocolInstance.objects.create(
+        server=ServerFactory(name="Finland"), container="amnezia-awg2", port=51820
+    )
+    for instance, flag in ((policed, True), (shaped, False)):
+        TrafficSource.objects.create(
+            source=instance.source, checked_at=timezone.now(), upload_policed=flag
+        )
+
+    [notice] = [n for n in Attention(UserFactory(role=Role.ADMIN)).notices() if "ifb" in n.key]
+
+    assert notice.text == "Germany: no ifb module, upload over the speed limits is dropped"
+    assert notice.key == f"no-ifb:{policed.server_id}"

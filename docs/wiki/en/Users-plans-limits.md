@@ -105,8 +105,12 @@ On the server the panel keeps the rules in `lamnezia_speed.sh` next to the proto
 restart of the container or the server. If the container image has no full `tc` and `ip`, the
 operation installs `iproute2` from Alpine packages (the container needs internet access once).
 
-Reinstalling the protocol in the Amnezia app recreates the container without these files: the
-limits come back after the next change of limits or keys, or when the last operation is run again.
+Every traffic poll also checks that the script, the `tc` rules of the interface and the IFB device
+are still in the container. Reinstalling the protocol in the Amnezia app recreates the container
+without these files, and a reboot of a host that lost the `ifb` module leaves upload unshaped: in
+both cases the next poll applies the limits again. If the host has no `ifb` module, the operation
+writes **Server without the ifb module** to the audit journal once, and **Needs attention** on the
+overview names the server until the module is back.
 
 ### XRay speed limits
 

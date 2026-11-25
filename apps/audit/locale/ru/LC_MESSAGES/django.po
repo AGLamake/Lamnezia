@@ -255,6 +255,9 @@ msgstr "Перезапуск бота"
 msgid "Restore built-in article or material"
 msgstr "Восстановление встроенной статьи или материала"
 
+msgid "Server without the ifb module: upload limits drop packets"
+msgstr "Сервер без модуля ifb: ограничения отдачи отбрасывают пакеты"
+
 msgid "Show Telegram proxy links"
 msgstr "Показ ссылок прокси Telegram"
 

@@ -629,6 +629,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Speed limits after a re-created container or a reboot**: every traffic poll checks that the
+  speed script, the `tc` rules and the IFB device are still in an AmneziaWG or WireGuard container
+  and applies the limits again when they are gone. A host without the `ifb` module is written to
+  the audit journal and shown in **Needs attention**. Nothing to do on upgrade.
 - **Troubles of a deleted relay**: removing a relay, or the server it runs on, takes its outage and
   settings mismatch off the list of troubles by the relay's own key; deleting another server whose
   number equals the relay's no longer drops them.

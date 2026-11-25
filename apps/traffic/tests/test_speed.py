@@ -9,6 +9,7 @@ from django.utils import timezone
 from amnezia_core.start_script import START_SCRIPT_PATH
 from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
+from apps.audit.models import AuditEvent
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.actions import KeyActions
 from apps.keys.services.instances import Instance, instances
@@ -18,9 +19,9 @@ from apps.operations.models import Operation, OperationStatus
 from apps.plans.models import UserLimits
 from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
 from apps.ssh.services.commands import CommandResult
-from apps.traffic.models import TrafficSource
+from apps.traffic.models import Shaping, TrafficSource
 from apps.traffic.services.shaping import SpeedRule, TotalSpeed
-from apps.traffic.services.speed import SPEED_APPLY, SpeedLimiter
+from apps.traffic.services.speed import NO_IFB, SPEED_APPLY, SpeedLimiter
 
 pytestmark = pytest.mark.django_db
 
@@ -151,6 +152,35 @@ def test_a_container_started_anew_gets_its_limits_back(
     assert f"match ip dst {key.client_ip}/32" in server.files[SPEED_SCRIPT]
     assert HOOK in server.files[START_SCRIPT_PATH]
     assert sync() == []
+
+
+def found(shaping: Shaping) -> None:
+    """A poll after the latest operation found this of the limits in the container."""
+    TrafficSource.objects.update_or_create(
+        source=SOURCE, defaults={"shaping": shaping, "checked_at": timezone.now()}
+    )
+
+
+@pytest.mark.parametrize("shaping", [Shaping.MISSING, Shaping.LOST, Shaping.NO_IFB])
+def test_limits_gone_from_the_container_are_applied_again(
+    server: FakeAwgServer,
+    admin: KeyActions,
+    django_capture_on_commit_callbacks: OnCommit,
+    sync: Callable[[], list[Operation]],
+    shaping: Shaping,
+) -> None:
+    key = issued(admin, subscriber(speed=10), django_capture_on_commit_callbacks)
+    sync()
+    found(Shaping.OK)
+    assert sync() == []
+
+    del server.files[SPEED_SCRIPT]
+    found(shaping)
+    (operation,) = sync()
+
+    assert operation.params["started"] == ""
+    assert f"match ip dst {key.client_ip}/32" in server.files[SPEED_SCRIPT]
+    assert sync() == []  # what the poll found came before the new operation
 
 
 def test_a_new_start_without_limits_starts_nothing(
@@ -328,6 +358,13 @@ def test_without_ifb_upload_is_policed_and_the_card_is_told(
     assert "ifb type ifb" not in script
     assert f"match ip src {key.client_ip}/32 police rate 10mbit" in script
     assert TrafficSource.objects.get(source=SHARED).upload_policed
+    [event] = AuditEvent.objects.filter(action=NO_IFB)
+    assert event.data == {"source": SHARED}
+
+    UserLimits.objects.filter(user=key.user).update(speed_limit=20)
+    sync()
+
+    assert AuditEvent.objects.filter(action=NO_IFB).count() == 1  # told once, not every time
 
 
 def test_without_any_limit_tc_is_not_installed(

@@ -2101,6 +2101,7 @@ msgstr "Участники записаны %(when)s."
 msgid "Memory"
 msgstr "Память"
 
+#, python-format
 msgid "Memory with swap: %(size)s MB."
 msgstr "Память вместе со swap: %(size)s МБ."
 
@@ -4020,6 +4021,7 @@ msgstr "На новой машине мало памяти."
 msgid "The new machine is the machine this panel runs on."
 msgstr "Новая машина — та, на которой работает эта панель."
 
+#, python-format
 msgid "The new machine pulls the ready image %(tag)s."
 msgstr "Новая машина скачивает готовый образ %(tag)s."
 

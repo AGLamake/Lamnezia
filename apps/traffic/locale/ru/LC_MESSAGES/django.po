@@ -45,6 +45,12 @@ msgstr "час"
 msgid "hourly traffic"
 msgstr "трафик по часам"
 
+msgid "ifb device missing"
+msgstr "нет устройства ifb"
+
+msgid "in place"
+msgstr "на месте"
+
 msgid "latest activity"
 msgstr "последняя активность"
 
@@ -60,6 +66,9 @@ msgstr "публичный ключ"
 msgid "received, bytes"
 msgstr "получено, байт"
 
+msgid "script missing"
+msgstr "нет скрипта"
+
 msgid "sent, bytes"
 msgstr "отправлено, байт"
 
@@ -72,8 +81,14 @@ msgstr "источник ключа"
 msgid "source of the keys"
 msgstr "источник ключей"
 
+msgid "speed limits"
+msgstr "ограничения скорости"
+
 msgid "statistics available"
 msgstr "статистика доступна"
+
+msgid "tc rules missing"
+msgstr "нет правил tc"
 
 msgid "the access term is over"
 msgstr "срок доступа закончился"

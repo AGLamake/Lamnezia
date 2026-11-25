@@ -1,10 +1,18 @@
+import os
+import shutil
+import subprocess
+from dataclasses import replace
 from ipaddress import IPv4Address
+from pathlib import Path
+
+import pytest
 
 from amnezia_core.containers import AWG2
 from apps.traffic.services.shaping import (
     SpeedRule,
     TotalSpeed,
     needs_shaping,
+    shaping_probe,
     speed_script,
     speed_script_path,
     tries_ifb,
@@ -185,3 +193,47 @@ def test_rule_survives_json() -> None:
 
 def test_script_lives_next_to_the_protocol_config() -> None:
     assert speed_script_path(AWG2) == "/opt/amnezia/awg/lamnezia_speed.sh"
+
+
+# What `tc qdisc show` prints for the interface with and without the rules of the panel.
+_SHAPED = "qdisc htb 1: root refcnt 2 r2q 10 default 0\nqdisc ingress ffff: parent ffff:fff1\n"
+_BARE = "qdisc noqueue 0: root refcnt 2\n"
+
+
+@pytest.mark.skipif(shutil.which("sh") is None, reason="needs a POSIX shell")
+@pytest.mark.parametrize(
+    ("script", "qdiscs", "ifb_up", "expected"),
+    [
+        (None, _SHAPED, True, "missing"),
+        (speed_script("awg0", [PHONE], ifb=True), _SHAPED, True, "ok"),
+        (speed_script("awg0", [PHONE], ifb=True), _SHAPED, False, "no_ifb"),
+        (speed_script("awg0", [PHONE], ifb=True), _BARE, True, "lost"),
+        (speed_script("awg0", [PHONE]), _SHAPED, False, "ok"),
+        (speed_script("awg0", [PHONE], ifb=None), _SHAPED, False, "ok"),
+        (speed_script("awg0", []), _BARE, False, "ok"),
+    ],
+    ids=["no script", "in place", "ifb gone", "rules gone", "policed", "tries ifb", "no limits"],
+)
+def test_the_probe_tells_what_is_left_of_the_limits(
+    tmp_path: Path, script: str | None, qdiscs: str, ifb_up: bool, expected: str
+) -> None:
+    kind = replace(AWG2, directory=tmp_path.as_posix())
+    if script is not None:
+        Path(speed_script_path(kind)).write_text(script, newline="\n")
+    tools = tmp_path / "bin"
+    tools.mkdir()
+    (tools / "tc").write_text('#!/bin/sh\nprintf "%s" "$QDISCS"\n', newline="\n")
+    (tools / "ip").write_text(f"#!/bin/sh\nexit {0 if ifb_up else 1}\n", newline="\n")
+    for tool in ("tc", "ip"):
+        (tools / tool).chmod(0o755)
+    env = {**os.environ, "QDISCS": qdiscs, "PATH": f"{tools}{os.pathsep}{os.environ['PATH']}"}
+
+    completed = subprocess.run(
+        [str(shutil.which("sh")), "-c", shaping_probe(kind)],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert completed.stdout.strip() == expected

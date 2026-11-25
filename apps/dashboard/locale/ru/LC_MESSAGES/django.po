@@ -61,6 +61,10 @@ msgid "%(name)s: high load — %(resources)s"
 msgstr "%(name)s: высокая нагрузка — %(resources)s"
 
 #, python-format
+msgid "%(name)s: no ifb module, upload over the speed limits is dropped"
+msgstr "%(name)s: нет модуля ifb, отдача сверх ограничений скорости отбрасывается"
+
+#, python-format
 msgid "%(name)s: pay for the VPS within %(days)d day"
 msgid_plural "%(name)s: pay for the VPS within %(days)d days"
 msgstr[0] "%(name)s: оплатите VPS в течение %(days)d дня"

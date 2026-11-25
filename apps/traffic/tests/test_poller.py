@@ -12,7 +12,7 @@ from amnezia_core.xray import client_fingerprint
 from apps.ssh.errors import ErrorCode, SshConnectionError
 from apps.ssh.services import RemoteHost
 from apps.ssh.tests.fakes import TIMEOUTS, FakeRunner, result
-from apps.traffic.models import TrafficCounter, TrafficHourly, TrafficSource
+from apps.traffic.models import Shaping, TrafficCounter, TrafficHourly, TrafficSource
 from apps.traffic.services.poller import (
     Channel,
     Dump,
@@ -27,9 +27,9 @@ DUMP = (Path(__file__).parents[3] / "amnezia_core/tests/fixtures/dump.txt").read
 NOW = datetime(2026, 11, 2, 10, 0, tzinfo=UTC)
 
 
-def marker_output(*dumps: tuple[str, int, str], started: str = "") -> bytes:
+def marker_output(*dumps: tuple[str, int, str], started: str = "", shaping: str = "-") -> bytes:
     return "".join(
-        f"@@lamnezia-dump {name} {code} {started}\n{text}\n" for name, code, text in dumps
+        f"@@lamnezia-dump {name} {code} {shaping} {started}\n{text}\n" for name, code, text in dumps
     ).encode()
 
 
@@ -54,6 +54,12 @@ def test_split_dumps_reads_the_start_time() -> None:
     assert split_dumps(output.decode())["amnezia-xray"] == Dump(0, "{}", "2026-11-11T10:00:00.5Z")
 
 
+def test_split_dumps_reads_what_is_left_of_the_speed_limits() -> None:
+    output = marker_output(("amnezia-awg2", 0, DUMP), shaping="lost")
+
+    assert split_dumps(output.decode())["amnezia-awg2"].shaping == "lost"
+
+
 @pytest.mark.django_db
 def test_one_command_per_server_and_failed_container_is_skipped() -> None:
     output = marker_output(("amnezia-awg2", 0, DUMP), ("amnezia-awg", 1, "No such container"))
@@ -66,6 +72,16 @@ def test_one_command_per_server_and_failed_container_is_skipped() -> None:
     assert sum("awg show all dump" in command for command, _ in runner.calls) == 1
     assert set(TrafficCounter.objects.values_list("source", flat=True)) == {"awg:1"}
     assert TrafficCounter.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_the_reading_keeps_what_is_left_of_the_speed_limits() -> None:
+    output = marker_output(("amnezia-awg2", 0, DUMP), shaping="no_ifb")
+    runner = FakeRunner({"awg show all dump": result(stdout=output)})
+
+    TrafficPoller(clock=lambda: NOW).poll(target(runner, {"awg:1": "amnezia-awg2"}))
+
+    assert TrafficSource.objects.get(source="awg:1").shaping == Shaping.NO_IFB
 
 
 @pytest.mark.django_db
@@ -193,7 +209,7 @@ def test_dump_script_in_a_real_shell(tmp_path: Path) -> None:
     (tmp_path / "dump.txt").write_text(DUMP, newline="\n")
     docker = tmp_path / "docker"
     docker.write_text(
-        '#!/bin/sh\n[ "$2" = amnezia-awg2 ] && exec cat "$DUMP_FILE"\n'
+        '#!/bin/sh\ncase "$2 $5" in "amnezia-awg2 "*dump*) exec cat "$DUMP_FILE";; esac\n'
         'echo "Error: No such container: $2" >&2; exit 1\n',
         newline="\n",
     )
@@ -243,10 +259,11 @@ def test_containers_without_awg_are_read_with_wg(tmp_path: Path) -> None:
     )
 
     dumps = split_dumps(completed.stdout)
+    # No container here has the script of the speed limits.
     assert dumps == {
-        "amnezia-awg2": Dump(0, "awg show all dump"),
-        "amnezia-awg": Dump(0, "wg show all dump"),
-        "amnezia-wireguard": Dump(0, "wg show all dump"),
+        "amnezia-awg2": Dump(0, "awg show all dump", shaping="missing"),
+        "amnezia-awg": Dump(0, "wg show all dump", shaping="missing"),
+        "amnezia-wireguard": Dump(0, "wg show all dump", shaping="missing"),
         "amnezia-xray": Dump(0, "xray api statsquery --server=127.0.0.1:10085 -pattern user>>>"),
     }
 

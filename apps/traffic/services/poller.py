@@ -9,12 +9,14 @@ from datetime import datetime
 from django.utils import timezone
 
 from amnezia_core.awg_dump import PeerStats, parse_dump
+from amnezia_core.containers import WG_CONTAINERS
 from amnezia_core.errors import DumpFormatError
 from amnezia_core.xray import XRAY_CONTAINER
 from amnezia_core.xray_stats import STATS_COMMAND, parse_stats
 from apps.ssh.errors import SshError
 from apps.ssh.services import RemoteHost
 from apps.traffic.services.recorder import Reading, TrafficRecorder
+from apps.traffic.services.shaping import shaping_probe
 from apps.traffic.services.targets import PollTarget, peer_owners
 
 logger = logging.getLogger(__name__)
@@ -56,8 +58,9 @@ class Channel:
 
 
 def dump_script(channels: Iterable[str | Channel]) -> str:
-    """Print the counters of every container after a marker with the exit code of its command
-    and the container's start time, which tells a restart between two readings.
+    """Print the counters of every container after a marker with the exit code of its command,
+    what is left of the speed limits of a WireGuard-family container (`shaping_probe`, `-` for
+    others) and the container's start time, which tells a restart between two readings.
 
     The start time of an interface also has its index, which changes when the interface is
     created again: its peers then count from zero, though the container ran on.
@@ -74,36 +77,44 @@ def _channel_script(channel: str | Channel) -> str:
     if channel.interface:
         index = shlex.quote(f"/sys/class/net/{channel.interface}/ifindex")
         started += f"/$(docker exec {name} cat {index} 2>/dev/null)"
+    shaping = ""
+    if (kind := WG_CONTAINERS.get(channel.container)) and not channel.interface:
+        # Only the word it prints, so nothing else can break the marker line.
+        probe = shlex.quote(shaping_probe(kind))
+        shaping = f"$(docker exec {name} sh -c {probe} 2>/dev/null | tr -cd a-z_)"
     return (
         f"out=$(docker exec {name} sh -c {command} 2>&1); code=$?\n"
-        f'started="{started}"\n'
-        f'printf "{_MARKER} %s %s %s\\n%s\\n" {shlex.quote(channel.label)} "$code" "$started"'
-        ' "$out"\n'
+        f'started="{started}"; shaping="{shaping}"\n'
+        f'printf "{_MARKER} %s %s %s %s\\n%s\\n" {shlex.quote(channel.label)} "$code"'
+        ' "${shaping:--}" "$started" "$out"\n'
     )
 
 
 @dataclass(frozen=True)
 class Dump:
-    """What `dump_script` printed for one container; `started` is empty when unknown."""
+    """What `dump_script` printed for one container; `started` and `shaping` are empty when
+    unknown."""
 
     code: int
     text: str
     started: str = ""
+    shaping: str = ""
 
 
 def split_dumps(output: str) -> dict[str, Dump]:
     """Channel label -> its dump, from the output of `dump_script`."""
-    heads: dict[str, tuple[int, str, list[str]]] = {}
+    heads: dict[str, tuple[int, str, str, list[str]]] = {}
     lines: list[str] = []
     for line in output.splitlines():
         if line.startswith(f"{_MARKER} "):
-            _, name, code, *started = line.split()
+            _, name, code, shaping, *started = line.split()
             lines = []
-            heads[name] = (int(code), "".join(started), lines)
+            heads[name] = (int(code), "".join(started), shaping.strip("-"), lines)
         else:
             lines.append(line)
     return {
-        name: Dump(code, "\n".join(text), started) for name, (code, started, text) in heads.items()
+        name: Dump(code, "\n".join(text), started, shaping)
+        for name, (code, started, shaping, text) in heads.items()
     }
 
 
@@ -175,6 +186,8 @@ class TrafficPoller:
             self._recorder.record(
                 source, readings, at, dump.started, key_sources.get(source, ""), owners=owners
             )
+            if dump.shaping:
+                self._recorder.shaping(source, dump.shaping)
 
 
 def _of_interface(readings: Sequence[Reading], channel: Channel) -> Sequence[Reading]:

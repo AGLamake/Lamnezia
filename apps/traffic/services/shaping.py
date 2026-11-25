@@ -4,7 +4,7 @@ Download (server to client) is shaped with HTB on the egress of the interface. U
 the same way on an IFB device the ingress of the interface is redirected to; without the ifb
 module on the host it is policed on the ingress instead, which drops what goes over the limit.
 A script that cannot know the host tries the IFB device when it runs and polices without it.
-Rules match the address of the peer.
+Rules match the address of the peer. `shaping_probe` tells whether the rules are still there.
 
 A personal limit alone gives the peer its own class right under the root, and the traffic of
 other peers passes unshaped. A total limit of the server puts every peer the panel knows under
@@ -104,6 +104,27 @@ def needs_shaping(rules: Iterable[SpeedRule], total: TotalSpeed) -> bool:
 def tries_ifb(script: str) -> bool:
     """Whether the script shapes upload on an IFB device if the host has the ifb module."""
     return _TRY_IFB in script
+
+
+def shaping_probe(kind: WgContainer) -> str:
+    """A command for the container that prints what is left of its speed limits.
+
+    `missing`: no script (the app re-created the container); `no_ifb`: the script shapes upload
+    on an IFB device that is not there (the host lost the ifb module, and start.sh went on
+    without it); `lost`: the script adds tc rules the interface does not have; `ok` otherwise,
+    as for a script that only removes the old rules.
+    """
+    path, interface = speed_script_path(kind), kind.interface
+    ifb_line = 'ip link add "$ifb" type ifb'
+    return (
+        f"f={path}; dev={interface}; ifb={ifb_name(interface)}\n"
+        'if [ ! -f "$f" ]; then echo missing\n'
+        f'elif grep -qxF \'{ifb_line}\' "$f" && ! ip link show "$ifb" >/dev/null 2>&1;'
+        " then echo no_ifb\n"
+        "elif grep -q 'tc qdisc add' \"$f\" &&"
+        ' ! tc qdisc show dev "$dev" 2>/dev/null | grep -q -e htb -e ingress; then echo lost\n'
+        "else echo ok; fi\n"
+    )
 
 
 def speed_script(

@@ -68,6 +68,15 @@ class TrafficHourly(models.Model):
         return f"{self.source} {self.public_key} {self.hour:%Y-%m-%d %H:00}"
 
 
+class Shaping(models.TextChoices):
+    """What the latest reading found of the speed limits in a WireGuard-family container."""
+
+    OK = "ok", _("in place")
+    MISSING = "missing", _("script missing")
+    LOST = "lost", _("tc rules missing")
+    NO_IFB = "no_ifb", _("ifb device missing")
+
+
 class TrafficSource(models.Model):
     """Whether the last reading of a protocol instance worked.
 
@@ -76,6 +85,8 @@ class TrafficSource(models.Model):
     `started` is the container's start time from the latest reading: when it changes, the
     container restarted and its counters started from zero.
     `upload_policed` says the speed limits drop the upload over them instead of delaying it.
+    `shaping` is what the latest reading found of the speed limits in the container, empty when
+    it was not looked at (XRay, a container of a group clone).
     `key_source` is the source of the keys a member of a server group holds, empty for a source
     of its own keys: while the member gives no reading, the traffic of those keys is unknown.
     """
@@ -87,6 +98,9 @@ class TrafficSource(models.Model):
     key_source = models.CharField(_("source of the keys"), max_length=100, blank=True, default="")
     # The latest speed operation policed upload: the host has no ifb module.
     upload_policed = models.BooleanField(_("upload policed"), default=False)
+    shaping = models.CharField(
+        _("speed limits"), max_length=16, choices=Shaping, blank=True, default=""
+    )
 
     class Meta:
         verbose_name = _("traffic source")

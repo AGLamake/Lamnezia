@@ -24,9 +24,11 @@ from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.groups.services.membership import join_failed, leave_failed
 from apps.guides.models import Suggestion, UsefulMaterial
 from apps.operations.models import Operation, OperationStatus
+from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay
 from apps.servers.models import Server
 from apps.support.services.inbox import Inbox
+from apps.traffic.models import TrafficSource
 from apps.updates.services.releases import PanelRelease
 from apps.updates.services.updates import PanelUpdate
 
@@ -165,6 +167,19 @@ class Attention:
         """Answering servers with a resource above its load threshold for a while."""
         return [server for server in self.servers if server.online and server.overloads]
 
+    def without_ifb(self) -> list[Server]:
+        """Servers whose speed limits drop upload over them: the host has no ifb module."""
+        sources = TrafficSource.objects.filter(upload_policed=True).values_list("source", flat=True)
+        pks = [pk for source in sources if (pk := ProtocolInstance.pk_of(source)) is not None]
+        if not pks:
+            return []
+        ids = set(
+            ProtocolInstance.objects.filter(
+                pk__in=pks, container_removed_at__isnull=True
+            ).values_list("server_id", flat=True)
+        )
+        return [server for server in self.servers if server.pk in ids]
+
     def payment_due(self) -> list[Server]:
         if not self._access.allows(Section.SERVERS):
             return []
@@ -218,6 +233,17 @@ class Attention:
             for relay in self.mismatched_relays()
         ]
         notices += [self._overload(server) for server in self.overloaded()]
+        notices += [
+            Notice(
+                "warning",
+                "server",
+                _("%(name)s: no ifb module, upload over the speed limits is dropped")
+                % {"name": server.name},
+                self._server_url(server),
+                f"no-ifb:{server.pk}",
+            )
+            for server in self.without_ifb()
+        ]
         notices += [self._payment(server) for server in self.payment_due()]
         if self.failed_operations:
             notices.append(

@@ -11,7 +11,10 @@ again: the app re-created the container or rebuilt server.json and dropped the l
 A WireGuard-family instance is limited again when the poll finds its container started anew
 since the latest operation: a container re-created by the app or by a change of its settings
 has lost the tc rules and the script that brings them back. After a plain restart start.sh has
-already put them back, and the new operation only writes the same rules again.
+already put them back, and the new operation only writes the same rules again. It is limited
+again, too, when the poll finds the script, the tc rules or the IFB device gone
+(`TrafficSource.shaping`): after a reboot the host may have no ifb module, and start.sh goes on
+without the upload limits; the new operation loads the module or polices upload.
 
 The clone of a split group on its relay carries the clients of the leading instance; its
 script has the same rules (`clone_speed_script`), and the relay deployment writes it.
@@ -33,11 +36,13 @@ from apps.operations.services.launcher import launch
 from apps.plans.models import UserLimits
 from apps.plans.services.limits import PLAN_SERVERS, EffectiveLimits
 from apps.protocols.models import ProtocolInstance
-from apps.traffic.models import TrafficSource
+from apps.traffic.models import Shaping, TrafficSource
 from apps.traffic.services.shaping import SpeedRule, TotalSpeed, speed_script
 from apps.traffic.services.xray_shaping import XraySpeedRule
 
 SPEED_APPLY = "traffic.apply_speed"
+# The journal action of a host found without the ifb module: upload is policed from now on.
+NO_IFB = "traffic.no_ifb"
 
 _UNFINISHED = (OperationStatus.PENDING, OperationStatus.RUNNING)
 
@@ -120,7 +125,8 @@ class SpeedLimiter:
             return False
         if isinstance(instance.container, XrayContainer):
             return _statistics_lost(instance.source, after=latest)
-        return bool(latest.params.get("started") != params["started"])
+        restarted = latest.params.get("started") != params["started"]
+        return restarted or _shaping_lost(instance.source, after=latest)
 
 
 def clone_speed_script(
@@ -154,3 +160,12 @@ def _statistics_lost(source: str, *, after: Operation) -> bool:
     return TrafficSource.objects.filter(
         source=source, available=False, checked_at__gt=after.finished_at
     ).exists()
+
+
+def _shaping_lost(source: str, *, after: Operation) -> bool:
+    """Whether a reading since the operation finished found its limits gone from the container."""
+    return (
+        TrafficSource.objects.filter(source=source, checked_at__gt=after.finished_at)
+        .exclude(shaping__in=("", Shaping.OK))
+        .exists()
+    )

@@ -8,7 +8,7 @@ from typing import Protocol
 
 from django.db import transaction
 
-from apps.traffic.models import TrafficCounter, TrafficHourly, TrafficSource
+from apps.traffic.models import Shaping, TrafficCounter, TrafficHourly, TrafficSource
 
 
 class Reading(Protocol):
@@ -117,6 +117,11 @@ class TrafficRecorder:
             state.key_source = _held(source, key_source)
             state.save(update_fields=["available", "checked_at", "started", "key_source"])
         return True
+
+    def shaping(self, source: str, found: str) -> None:
+        """Keep what the reading found of the speed limits of the container (`Shaping`)."""
+        if found in Shaping.values:
+            TrafficSource.objects.filter(source=source).update(shaping=found)
 
     def unavailable(self, source: str, at: datetime, key_source: str = "") -> None:
         """The instance gave no reading: its traffic, and that of the keys it holds as a member

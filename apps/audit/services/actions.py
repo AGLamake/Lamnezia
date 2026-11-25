@@ -96,6 +96,7 @@ _LABELS: dict[str, Promise] = {
     "support.template_create": _("Create reply template"),
     "support.template_update": _("Edit reply template"),
     "support.template_delete": _("Delete reply template"),
+    "traffic.no_ifb": _("Server without the ifb module: upload limits drop packets"),
     "users.extend": _("Extend access of users"),
     "users.disable": _("Disable keys of users"),
     "users.change_plan": _("Change plan of users"),
