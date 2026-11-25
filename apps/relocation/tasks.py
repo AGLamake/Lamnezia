@@ -5,6 +5,7 @@ from typing import Any
 from celery import Task, shared_task
 
 CHECK_DOMAIN_TASK = "relocation.check_domain"
+FAIL_INTERRUPTED_TASK = "relocation.fail_interrupted"
 
 
 class PanelTask(Task):  # type: ignore[type-arg]
@@ -26,3 +27,12 @@ def check_domain() -> str | None:
 
     move = DomainCheck.current().run()
     return move.domain_status if move else None
+
+
+@shared_task(name=FAIL_INTERRUPTED_TASK)
+def fail_interrupted() -> int | None:
+    """Fail the move preparation whose worker died; the id of that move, if any."""
+    from apps.relocation.services.heartbeat import fail_interrupted_preparation  # noqa: PLC0415
+
+    move = fail_interrupted_preparation()
+    return move.pk if move else None

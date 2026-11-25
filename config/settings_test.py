@@ -28,5 +28,6 @@ LANGUAGE_CODE = "en"
 INSTALLED_APPS = [*INSTALLED_APPS, "examples.billing_dummy"]  # noqa: F405
 # The panel move does not wait for running jobs to settle in tests.
 RELOCATION_SETTLE_SECONDS = 0
+RELOCATION_INSTALL_POLL_SECONDS = 0
 # The domain check of a move never asks public resolvers over the network in tests.
 DOMAIN_RESOLVERS = ["system"]

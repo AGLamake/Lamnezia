@@ -70,7 +70,9 @@ On that page an administrator starts the update with a password for the panel ar
 
 The status and the log of the host script are on the same page. One update runs at a time; a request
 the host has not taken for an hour is shown as stuck. The panel does not
-answer for a minute or two while it restarts.
+answer for a minute or two while it restarts. While a [panel move](Panel-move.md) runs, the
+script changes nothing and ends the update with the reason "the panel was moving to another
+machine".
 
 Database migrations are not taken back on a rollback. If the previous version does not work with the
 migrated database, restore the archive made before the update. After a rollback the **Panel update**
@@ -97,7 +99,8 @@ With `LAMNEZIA_IMAGE` set (in `.env` or `/etc/default/lamnezia-deploy`) it build
 `docker compose pull` and `docker compose up -d --no-build` instead. After the update the script
 removes old panel images so they do not fill the disk: after a build, the untagged images of the
 project and build cache older than a week; after a pull, the previous version of the image.
-Without the `DEPLOY_HOST` secret the workflow does nothing.
+Without the `DEPLOY_HOST` secret the workflow does nothing. While a step of a
+[panel move](Panel-move.md) runs, the script updates nothing and exits with code 75: deploy later.
 
 Setup, once:
 

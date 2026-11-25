@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A panel move survives a deploy and a dropped SSH connection**: while the preparation, the
+  confirmation or the cancel of a move runs, the panel keeps the flag `request/moving` in the
+  folder of the update unit, and `lamnezia-deploy.sh` refuses to deploy (exit code 75) or to apply
+  an update from the panel. `install.sh` on the new machine runs apart from the SSH session
+  (`systemd-run`, or `setsid` without systemd), and the panel follows its log. A preparation that
+  stops reporting for 15 minutes (`RELOCATION_HEARTBEAT_TIMEOUT`) fails by itself, and the panel
+  accepts changes again instead of staying frozen for the hour of the stale operation check.
+
 - **API token permissions and changes through the API**: each staff member issues their own
   tokens on **System → API tokens**, with permissions built from rows: a resource (servers, users,
   keys, traffic, operation status), read or manage, and optionally one server, user or key of

@@ -4032,6 +4032,9 @@ msgstr "Владельцы получат уведомление, что клю�
 msgid "The page was open too long or cookies are blocked. Reload the page and send the form again."
 msgstr "Страница была открыта слишком долго или заблокированы cookie. Обновите страницу и отправьте форму ещё раз."
 
+msgid "The panel accepts changes again. Start the move once more: the copy left on the new machine is removed first."
+msgstr "Панель снова принимает изменения. Начните перенос заново: копия, оставшаяся на новой машине, сначала удаляется."
+
 msgid "The panel accepts no changes until the move is confirmed or cancelled"
 msgstr "Панель не принимает изменений, пока перенос не подтверждён или не отменён"
 
@@ -4138,6 +4141,9 @@ msgstr "Панель готовит сервер и устанавливает �
 msgid "The panel restarts %(container)s to bring its interface back; restarts so far: %(attempts)s."
 msgstr "Панель перезапускает %(container)s, чтобы вернуть интерфейс; перезапусков: %(attempts)s."
 
+msgid "The panel was moving to another machine: nothing was changed."
+msgstr "Панель переезжала на другую машину: ничего не изменено."
+
 msgid "The panel writes its settings to the relay at the next sync. If this warning stays, press Update or Reinstall."
 msgstr "Панель запишет свои настройки на ретранслятор при ближайшей синхронизации. Если предупреждение не уходит, нажмите «Обновить» или «Переустановить»."
 
@@ -4187,6 +4193,9 @@ msgid_plural "The ports stay open for %(minutes)s minutes."
 msgstr[0] "Порты открыты %(minutes)s минуту."
 msgstr[1] "Порты открыты %(minutes)s минуты."
 msgstr[2] "Порты открыты %(minutes)s минут."
+
+msgid "The preparation stopped answering for too long, and the move was failed."
+msgstr "Подготовка слишком долго не отвечала, и перенос помечен неудачным."
 
 msgid "The preview failed. Save the article to see it."
 msgstr "Предпросмотр не удался. Сохраните статью, чтобы увидеть её."

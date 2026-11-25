@@ -13,7 +13,7 @@ from django.utils.translation import gettext as _
 from apps.backups.services.panel_restore import panel_restoring
 from apps.operations.models import Operation, OperationStatus
 from apps.relocation.models import PanelMove
-from apps.relocation.tasks import CHECK_DOMAIN_TASK
+from apps.relocation.tasks import CHECK_DOMAIN_TASK, FAIL_INTERRUPTED_TASK
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ RUN_OPERATION_TASK = "operations.run"
 # reports where the domain points while it waits read-only for the switch and tells the staff
 # once it has switched.
 ALWAYS_ALLOWED_TASKS = frozenset(
-    {"operations.fail_stale", CHECK_DOMAIN_TASK, "notifications.deliver"}
+    {"operations.fail_stale", FAIL_INTERRUPTED_TASK, CHECK_DOMAIN_TASK, "notifications.deliver"}
 )
 MOVING_ERROR = "panel_moving"
 RESTORING_ERROR = "panel_restoring"

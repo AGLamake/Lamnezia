@@ -1,5 +1,6 @@
 """Shared pieces of the panel move tests: a move in a given state and a fake new machine."""
 
+from collections.abc import Callable
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -31,13 +32,23 @@ def make_move(
 class FakeMachine:
     """Stands in for TargetMachine: records the calls, fails at the method it is told to."""
 
-    def __init__(self, fail_at: str | None = None, copy: str | None = MoveState.PREPARING) -> None:
+    def __init__(
+        self,
+        fail_at: str | None = None,
+        copy: str | None = MoveState.PREPARING,
+        during_install: Callable[[], None] | None = None,
+    ) -> None:
         self.fail_at = fail_at
         self.copy = copy
+        self.during_install = during_install
         self.calls: list[str] = []
         self.password = ""
+        self.beat: Callable[[], None] | None = None
 
-    def __call__(self, host: object, ctx: object, move_id: int) -> "FakeMachine":
+    def __call__(
+        self, host: object, ctx: object, move_id: int, beat: Callable[[], None] | None = None
+    ) -> "FakeMachine":
+        self.beat = beat
         return self
 
     def _do(self, name: str) -> None:
@@ -59,6 +70,8 @@ class FakeMachine:
 
     def install(self, archive: str, password: str) -> None:
         self.password = password
+        if self.during_install is not None:
+            self.during_install()
         self._do("install")
 
     def verify(self, expected_state: str) -> None:

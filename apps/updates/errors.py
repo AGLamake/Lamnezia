@@ -50,6 +50,7 @@ class UpdateError(CatalogError[UpdateErrorCode]):
 # The `reason` of deploy/update/lamnezia-deploy.sh release.
 HOST_REASONS: dict[str, Promise] = {
     "bad_request": _("The host could not read the request."),
+    "moving": _("The panel was moving to another machine: nothing was changed."),
     "not_git": _("The panel is not installed from git: update it by hand."),
     "fetch_failed": _("The release could not be fetched from GitHub."),
     "not_in_channel": _("The release is not on the branch this installation follows."),

@@ -314,6 +314,11 @@ UPDATE_DIR = BASE_DIR / "update"
 UPDATE_TIMEOUT = 60 * 60
 # Moving the panel to another machine (System -> Panel move): the installer may build the image.
 RELOCATION_INSTALL_TIMEOUT = 45 * 60
+# The installer runs on the new machine apart from the SSH session; its log is read this often.
+RELOCATION_INSTALL_POLL_SECONDS = 5
+# A preparation renews its flag for the host (services/heartbeat.py) at every step; one silent
+# for this long is failed and the panel accepts changes again.
+RELOCATION_HEARTBEAT_TIMEOUT = 15 * 60
 # Free disk the new machine needs: images, the database and the uploaded files.
 RELOCATION_MIN_FREE_MB = 3 * 1024
 # Requests that passed before the freeze finish before the archive is taken.
@@ -338,6 +343,12 @@ CELERY_BEAT_SCHEDULE = {
     # Only works after a panel move is handed over, until the domain points to the new machine.
     "relocation-check-domain": {
         "task": "relocation.check_domain",
+        "schedule": 60,
+        "options": {"expires": 60},
+    },
+    # Fails a move preparation whose worker died, so the panel does not stay frozen.
+    "relocation-fail-interrupted": {
+        "task": "relocation.fail_interrupted",
         "schedule": 60,
         "options": {"expires": 60},
     },

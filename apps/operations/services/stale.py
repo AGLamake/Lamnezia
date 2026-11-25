@@ -19,10 +19,11 @@ def fail_stale_operations(timeout: timedelta) -> int:
         Q(status=OperationStatus.PENDING, created_at__lt=cutoff)
         | Q(status=OperationStatus.RUNNING, started_at__lt=cutoff)
     ).values_list("pk", flat=True)
-    return sum(_fail_if_unfinished(pk) for pk in stale)
+    return sum(fail_if_unfinished(pk) for pk in stale)
 
 
-def _fail_if_unfinished(pk: int) -> bool:
+def fail_if_unfinished(pk: int) -> bool:
+    """Fail the operation as interrupted unless it has finished; True when it was failed."""
     with transaction.atomic():
         operation = Operation.objects.select_for_update().get(pk=pk)
         if operation.is_finished:

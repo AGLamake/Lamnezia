@@ -11,6 +11,8 @@
 #                    up healthy.
 #                    The status and the log are written to UPDATE_DIR/status on any exit.
 #
+# Neither runs while the panel moves to another machine (move_under_way below).
+#
 # Install as /usr/local/sbin/lamnezia-deploy (install.sh does it). For the SSH key allow only this
 # command in ~/.ssh/authorized_keys:
 #   restrict,command="/usr/local/sbin/lamnezia-deploy" ssh-ed25519 AAAA...
@@ -67,6 +69,17 @@ wait_healthy() {
     return 1
 }
 
+# The panel keeps UPDATE_DIR/request/moving ("<move id> <until, Unix time>") while an operation of
+# a panel move runs: a rebuild would kill it halfway. A flag past its time was left by a dead
+# worker and counts for nothing. Only a regular file is read, as with the request.
+move_under_way() {
+    flag=$UPDATE_DIR/request/moving
+    [ -f "$flag" ] && [ ! -L "$flag" ] || return 1
+    till=$(timeout 10 head -c 100 "$flag" | head -n 1 | tr -d '\r' |
+        sed -n 's/^[0-9][0-9]* \([0-9][0-9]*\)$/\1/p') || return 1
+    [ -n "$till" ] && [ "$till" -gt "$(date +%s)" ]
+}
+
 deploy() {
     if [ $# -ne 1 ] || ! printf '%s' "$1" | grep -Eqx '[0-9a-f]{40}'; then
         echo "usage: deploy <commit, 40 hex digits>" >&2
@@ -83,6 +96,10 @@ deploy() {
     # One update at a time.
     exec 9>"$LOCK_FILE"
     flock 9
+    if move_under_way; then
+        echo "The panel is moving to another machine: nothing is updated, deploy again later" >&2
+        exit 75
+    fi
 
     cd "$LAMNEZIA_DIR"
     if [ "$(git symbolic-ref --short HEAD)" != "$BRANCH" ]; then
@@ -303,6 +320,9 @@ release() {
     trap 'exit 143' HUP INT TERM
     write_status
     [ -n "$version" ] || fail bad_request
+    if move_under_way; then
+        fail moving
+    fi
     cd "$LAMNEZIA_DIR"
     [ -d .git ] || fail not_git
     # An installation on a detached HEAD (install.sh before 1.1) follows the releases branch.

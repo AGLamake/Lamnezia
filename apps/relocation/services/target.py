@@ -4,6 +4,9 @@ import hashlib
 import ipaddress
 import re
 import shlex
+import time
+from collections import deque
+from collections.abc import Callable
 from pathlib import Path
 
 from django.conf import settings
@@ -61,14 +64,53 @@ fi
 rm -rf "$dir"
 """
 
+# Starts install.sh as a transient systemd service, or in its own session without systemd, so it
+# outlives the SSH session. The runner takes the password from the pipe, writes the log and, at
+# the end, the exit code; its pid leads the process group a timeout stops. The last line hands
+# the password from stdin to the pipe, and gives up if the runner never opens it.
+_START_INSTALL = """
+set -e
+work={work}
+rm -f "$work/password" "$work/install.log" "$work/install.exit" "$work/install.pid"
+mkfifo -m 600 "$work/password"
+cat > "$work/install.run" <<'RUN'
+cd /
+[ -n "$HOME" ] || export HOME=/root
+IFS= read -r LAMNEZIA_ARCHIVE_PASSWORD < "$1/password"
+rm -f "$1/password"
+export LAMNEZIA_ARCHIVE_PASSWORD
+echo $$ > "$1/install.pid"
+bash {install_dir}/install.sh --dir {install_dir} --restore "$2" --moving > "$1/install.log" 2>&1
+echo $? > "$1/install.exit.new"
+mv -f "$1/install.exit.new" "$1/install.exit"
+RUN
+if [ -d /run/systemd/system ] && command -v systemd-run >/dev/null; then
+    systemd-run --quiet --collect --unit {unit} sh "$work/install.run" "$work" {archive}
+else
+    setsid -f sh "$work/install.run" "$work" {archive} </dev/null >/dev/null 2>&1
+fi
+timeout 60 sh -c 'head -n 1 > "$0"' "$work/password"
+"""
+
+
+def _no_heartbeat() -> None:
+    """The default of `TargetMachine`: an operation that does not report it is alive."""
+
 
 class TargetMachine:
     """The machine the panel moves to, as a root shell over SSH."""
 
-    def __init__(self, host: RemoteHost, ctx: OperationContext, move_id: int) -> None:
+    def __init__(
+        self,
+        host: RemoteHost,
+        ctx: OperationContext,
+        move_id: int,
+        beat: Callable[[], None] = _no_heartbeat,
+    ) -> None:
         self._host = host
         self._ctx = ctx
         self._move_id = move_id
+        self._beat = beat
         self._work_dir = f"/var/tmp/lamnezia-move-{move_id}"
 
     def check(self) -> None:
@@ -106,22 +148,19 @@ class TargetMachine:
         return remote
 
     def install(self, archive: str, password: str) -> None:
-        """Run install.sh with the archive; the password goes through stdin only."""
-        script = (
-            "IFS= read -r LAMNEZIA_ARCHIVE_PASSWORD\n"
-            "export LAMNEZIA_ARCHIVE_PASSWORD\n"
-            f"exec bash {INSTALL_DIR}/install.sh --dir {INSTALL_DIR} "
-            f"--restore {shlex.quote(archive)} --moving 2>&1"
+        """Run install.sh with the archive apart from this SSH session and follow its log.
+
+        A broken connection or a restarted worker leaves the installer running; the password
+        reaches it through a pipe in the work folder, never a command line or a file.
+        """
+        script = _START_INSTALL.format(
+            work=self._work_dir,
+            install_dir=INSTALL_DIR,
+            unit=f"lamnezia-move-{self._move_id}",
+            archive=shlex.quote(archive),
         )
-        result = self._host.sh(
-            script, stdin=f"{password}\n".encode(), timeout=settings.RELOCATION_INSTALL_TIMEOUT
-        )
-        lines = _COLOR.sub("", result.output).splitlines()
-        shown = [line for line in lines if line.startswith(_INSTALL_LOG_PREFIXES)]
-        for line in shown if result.ok else lines[-_FAILURE_TAIL:]:
-            self._ctx.log(line)
-        if not result.ok:
-            raise MoveError(MoveErrorCode.INSTALL_FAILED, f"exit {result.exit_code}")
+        self._host.run(script, stdin=f"{password}\n".encode())
+        InstallLog(self._host, self._ctx, self._work_dir, self._beat).follow()
 
     def verify(self, expected_state: str) -> None:
         """The copy answers its health check and holds the move in the expected state."""
@@ -203,11 +242,65 @@ class TargetMachine:
         digest = hashlib.sha256()
         with local.open("rb") as source:
             while chunk := source.read(_CHUNK):
+                self._beat()
                 digest.update(chunk)
                 self._host.run(f"cat >> {remote}", stdin=chunk)
         written = self._host.run(f"sha256sum {remote}").split()
         if not written or written[0] != digest.hexdigest():
             raise MoveError(MoveErrorCode.UPLOAD_FAILED, remote)
+
+
+class InstallLog:
+    """The installer `TargetMachine.install` started, followed through its files in the work dir."""
+
+    def __init__(
+        self, host: RemoteHost, ctx: OperationContext, work_dir: str, beat: Callable[[], None]
+    ) -> None:
+        self._host = host
+        self._ctx = ctx
+        self._work_dir = work_dir
+        self._beat = beat
+        self._seen = 0
+        self._tail: deque[str] = deque(maxlen=_FAILURE_TAIL)
+
+    def follow(self) -> None:
+        """Log the installer's steps as they come; fail on its error or after the timeout."""
+        deadline = time.monotonic() + settings.RELOCATION_INSTALL_TIMEOUT
+        while (code := self._read()) is None:
+            if time.monotonic() > deadline:
+                self._stop()
+                raise MoveError(MoveErrorCode.INSTALL_FAILED, "timeout")
+            time.sleep(settings.RELOCATION_INSTALL_POLL_SECONDS)
+        if code != "0":
+            for line in self._tail:
+                self._ctx.log(line)
+            raise MoveError(MoveErrorCode.INSTALL_FAILED, f"exit {code}")
+
+    def _read(self) -> str | None:
+        """Take the new lines of the log; the exit code once the installer has ended."""
+        self._beat()
+        work = self._work_dir
+        output = self._host.run(
+            f'printf "%s\\n" "$(cat {work}/install.exit 2>/dev/null)"; '
+            f"tail -n +{self._seen + 1} {work}/install.log 2>/dev/null; true"
+        )
+        code, _newline, log = output.partition("\n")
+        code = code.strip()
+        lines = log.split("\n")
+        # The last piece is a line still being written, unless the installer has ended.
+        complete = lines if code and lines[-1] else lines[:-1]
+        self._seen += len(complete)
+        for raw in complete:
+            line = _COLOR.sub("", raw).rstrip("\r")
+            self._tail.append(line)
+            if line.startswith(_INSTALL_LOG_PREFIXES):
+                self._ctx.log(line)
+        return code or None
+
+    def _stop(self) -> None:
+        self._host.sh(
+            f'pid=$(cat {self._work_dir}/install.pid 2>/dev/null) && kill -TERM -- "-$pid"; true'
+        )
 
 
 def _addresses(values: list[str]) -> set[ipaddress.IPv4Address | ipaddress.IPv6Address]:

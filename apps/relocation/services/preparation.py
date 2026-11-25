@@ -7,7 +7,8 @@ through the installer's stdin, and the archive is deleted there and here when th
 import os
 import secrets
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 from django.conf import settings
@@ -22,6 +23,7 @@ from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.models import MoveState, PanelMove
 from apps.relocation.services.bundle import write_code_bundle
 from apps.relocation.services.freeze import MOVE_KIND_PREFIX, refuse
+from apps.relocation.services.heartbeat import MoveFlag, PreparationHeartbeat
 from apps.relocation.services.relay_guard import RelayGuard
 from apps.relocation.services.target import TargetMachine
 from apps.servers.services.connection import connect
@@ -55,14 +57,17 @@ class MovePreparation:
         self._archive = folder / _STAGING.format(pk=move.pk, suffix=".lamnezia")
         self._bundle = folder / _STAGING.format(pk=move.pk, suffix=".tar.gz")
         self._copying = False
+        self._flag = MoveFlag.from_settings()
+        self._heartbeat = PreparationHeartbeat(move, self._flag)
 
     def run(self) -> None:
         if self._move.state != MoveState.PREPARING or self._move.target is None:
             raise MoveError(MoveErrorCode.WRONG_STATE, self._move.state)
         self._archive.parent.mkdir(parents=True, exist_ok=True)
+        heartbeat = settings.RELOCATION_HEARTBEAT_TIMEOUT
         try:
-            with connect(self._move.target) as host:
-                machine = TargetMachine(host, self._ctx, self._move.pk)
+            with self._flag.held(self._move.pk, heartbeat), connect(self._move.target) as host:
+                machine = TargetMachine(host, self._ctx, self._move.pk, self._heartbeat.beat)
                 try:
                     self._prepare(machine, RelayGuard(host, self._ctx))
                 except Exception:
@@ -70,37 +75,47 @@ class MovePreparation:
                         self._discard(machine)
                     raise
         except Exception:
-            self._move.mark(MoveState.FAILED)
+            # A move failed for silence may have been cancelled since: its state stays.
+            self._move.mark_from(MoveState.PREPARING, MoveState.FAILED)
             raise
         finally:
             self._archive.unlink(missing_ok=True)
             self._bundle.unlink(missing_ok=True)
-        self._move.mark(MoveState.READY)
+        if not self._move.mark_from(MoveState.PREPARING, MoveState.READY):
+            raise MoveError(MoveErrorCode.INTERRUPTED)
 
     def _prepare(self, machine: TargetMachine, relay: RelayGuard) -> None:
         password = secrets.token_urlsafe(32)
-        with self._ctx.step(_("Check the new machine")):
+        with self._step(_("Check the new machine")):
             machine.check()
             relay.remember()
-        with self._ctx.step(_("Wait for the changes already under way")):
+        with self._step(_("Wait for the changes already under way")):
             self._settle()
-        with self._ctx.step(_("Save the panel into an archive")):
+        with self._step(_("Save the panel into an archive")):
             self._write_archive(password, self._archive)
             size = filesizeformat(self._archive.stat().st_size)
             self._ctx.log(_("Archive of %(size)s.") % {"size": size})
-        with self._ctx.step(_("Copy the panel to the new machine")):
+        with self._step(_("Copy the panel to the new machine")):
             write_code_bundle(settings.BASE_DIR, self._bundle)
             self._copying = True
             machine.upload_code(self._bundle)
             remote_archive = machine.upload_archive(self._archive)
-        with self._ctx.step(_("Install the panel there and restore the archive")):
+        with self._step(_("Install the panel there and restore the archive")):
             try:
                 machine.install(remote_archive, password)
             finally:
                 machine.remove_uploads()
-        with self._ctx.step(_("Check the copy on the new machine")):
+        with self._step(_("Check the copy on the new machine")):
             machine.verify(MoveState.PREPARING)
             relay.check()
+        self._heartbeat.beat()
+
+    @contextmanager
+    def _step(self, title: str) -> Iterator[None]:
+        """A step of the journal that starts with a heartbeat."""
+        with self._ctx.step(title):
+            self._heartbeat.beat()
+            yield
 
     def _settle(self) -> None:
         """Operations queued before the freeze end here; a running one stops the move."""

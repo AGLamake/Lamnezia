@@ -156,3 +156,12 @@ class PanelMove(models.Model):
             self.handed_over_at = timezone.now()
             fields.append("handed_over_at")
         self.save(update_fields=fields)
+
+    def mark_from(self, expected: MoveState, state: MoveState) -> bool:
+        """Change the state only if it is still `expected`: another worker may have moved on."""
+        changed = PanelMove.objects.filter(pk=self.pk, state=expected).update(
+            state=state, updated_at=timezone.now()
+        )
+        if changed:
+            self.state = state
+        return bool(changed)

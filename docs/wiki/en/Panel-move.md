@@ -29,7 +29,9 @@ step is pointing the panel domain to the new machine.
 2. The *prepare* operation checks the machine, makes an archive with a one-time password, uploads
    the same code version and the archive, runs `install.sh --restore … --moving` and checks that the
    copy answers. The archive password reaches the installer through stdin only; the archive is
-   deleted on both machines afterwards. The copy starts read-only too.
+   deleted on both machines afterwards. The copy starts read-only too. The installer runs on the
+   new machine apart from the SSH session (`systemd-run`, or `setsid` without systemd) and writes
+   its output to a log the panel reads every few seconds, so a dropped connection does not kill it.
 3. A relay on the machine is checked before the install and after it: if a Docker reinstall stopped
    it, it is started again; it must run with the same ports.
 4. When the copy is ready, press **Confirm the move**. The copy starts accepting changes; this panel
@@ -103,6 +105,15 @@ takes the request.
   marked by `/opt/lamnezia/.moving`).
 - A failed preparation removes what it installed. If the new machine cannot be reached, the cancel
   still unfreezes the panel and says how to remove the copy by hand.
+- **An interrupted preparation** (the worker or the whole stack restarted halfway) fails by
+  itself: the preparation reports that it is alive while it runs, and if it stays silent for 15
+  minutes the panel fails the move and accepts changes again. Then cancel the move or start it once
+  more; the copy left on the new machine is removed first.
+- While the preparation, the confirmation or the cancel runs, the host does not update the panel:
+  the panel keeps the flag `request/moving` in the folder of the update unit, and
+  `lamnezia-deploy.sh` refuses to deploy (exit code 75) or to apply an update requested from the
+  panel. Deploy again once the move step is over; a flag left by a stopped worker counts only until
+  its time runs out.
 - A copy that already accepts changes is never removed; confirm the move again instead.
 - **A confirmation that did not finish** (the new machine went down halfway) leaves the panel
   read-only: the copy may already accept changes. The screen then offers **Retry the confirmation**

@@ -3,6 +3,7 @@
 import os
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -271,6 +272,58 @@ def test_a_bad_request_changes_nothing(host: Host) -> None:
     assert (host.status()["state"], host.status()["reason"]) == ("failed", "bad_request")
     assert host.version() == "1.0.0"
     assert not (host.update / "request" / "update").exists()
+
+
+def hold_move(host: Host, seconds: int) -> None:
+    """The flag the panel keeps while a move operation runs, as services/heartbeat.py writes it."""
+    until = int(time.time()) + seconds
+    (host.update / "request" / "moving").write_text(f"5 {until}\n", newline="\n")
+
+
+def test_no_update_while_the_panel_moves(host: Host) -> None:
+    hold_move(host, 600)
+
+    done = host.run(f"v1.1.0 {RUN}")
+
+    assert done.returncode != 0
+    host.assert_refused("moving")
+    assert not (host.update / "request" / "update").exists()
+
+
+def test_a_flag_left_by_a_dead_worker_does_not_stop_the_update(host: Host) -> None:
+    hold_move(host, -1)
+
+    done = host.run(f"v1.1.0 {RUN}")
+
+    assert done.returncode == 0, host.log()
+    assert host.version() == "1.1.0"
+
+
+def test_no_deploy_while_the_panel_moves(host: Host) -> None:
+    hold_move(host, 600)
+    environment = {
+        **os.environ,
+        "PATH": f"{(host.root / 'bin').as_posix()}{os.pathsep}{os.environ['PATH']}",
+        "LAMNEZIA_DIR": host.panel.as_posix(),
+        "UPDATE_DIR": host.update.as_posix(),
+        "LOCK_FILE": (host.root / "lock").as_posix(),
+        "DEPLOY_SETTINGS": (host.root / "settings").as_posix(),
+        "FAKE_LOG": (host.root / "docker.log").as_posix(),
+        "SSH_ORIGINAL_COMMAND": f"deploy {host.commits['1.1.0']}",
+    }
+
+    done = subprocess.run(
+        [shutil.which("sh") or "sh", SCRIPT.as_posix()],
+        input=b"token\n",
+        env=environment,
+        capture_output=True,
+        check=False,
+    )
+
+    assert done.returncode == 75, done.stderr
+    assert b"moving to another machine" in done.stderr
+    assert host.version() == "1.0.0"
+    assert not (host.root / "docker.log").exists()
 
 
 def test_a_ready_image_install_pulls_the_checked_image(host: Host) -> None:

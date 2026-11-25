@@ -1,5 +1,9 @@
 import hashlib
+import os
+import shutil
+import subprocess
 import tarfile
+import time
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -14,7 +18,7 @@ from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.services.bundle import write_code_bundle
 from apps.relocation.services.relay_guard import RelayGuard
 from apps.relocation.services.shutdown import STOP_REQUEST
-from apps.relocation.services.target import TargetMachine
+from apps.relocation.services.target import _START_INSTALL, TargetMachine
 from apps.ssh.services import CommandResult, RemoteHost
 from apps.ssh.tests.fakes import TIMEOUTS, FakeRunner, result
 
@@ -179,26 +183,116 @@ def test_files_go_in_chunks_and_are_checked(
     assert error.value.code == MoveErrorCode.UPLOAD_FAILED
 
 
-def test_the_password_reaches_the_installer_through_stdin_only(ctx: OperationContext) -> None:
-    output = b"\x1b[1;34m==>\x1b[0m Restoring the database\nnoise\n"
-    target, runner = machine(ctx, {"install.sh": result(stdout=output)})
+class InstallerRunner(FakeRunner):
+    """Answers the reads of the installer's log with the given outputs, one per read."""
 
+    def __init__(self, reads: list[bytes]) -> None:
+        super().__init__()
+        self.reads = reads
+
+    def run(self, command: str, *, stdin: bytes = b"", timeout: float | None = None) -> Any:
+        if "tail -n +" in command:
+            self.calls.append((command, stdin))
+            return result(stdout=self.reads.pop(0) if self.reads else b"\n")
+        return super().run(command, stdin=stdin, timeout=timeout)
+
+
+def install(
+    ctx: OperationContext, reads: list[bytes], beats: list[int] | None = None
+) -> InstallerRunner:
+    runner = InstallerRunner(reads)
+    counted = beats if beats is not None else []
+    target = TargetMachine(RemoteHost(runner, TIMEOUTS), ctx, 7, lambda: counted.append(1))
     target.install("/var/tmp/panel.lamnezia", PASSWORD)
+    return runner
 
-    command, stdin = runner.calls[-1]
-    assert PASSWORD not in command
+
+def test_the_installer_runs_apart_from_the_ssh_session(ctx: OperationContext) -> None:
+    beats: list[int] = []
+    runner = install(
+        ctx,
+        [
+            b"\n\x1b[1;34m==>\x1b[0m Restoring the database\nnoi",
+            b"0\nnoise\n==> The copy is running\n",
+        ],
+        beats,
+    )
+
+    start, stdin = next(call for call in runner.calls if "mkfifo" in call[0])
+    assert "systemd-run --quiet --collect --unit lamnezia-move-7" in start
+    assert "setsid -f" in start
+    assert '--restore "$2" --moving' in start
     assert stdin == f"{PASSWORD}\n".encode()
-    assert "--moving" in command
-    assert step_log() == "==> Restoring the database\n"
+    assert all(PASSWORD not in command for command, _ in runner.calls)
+    reads = [command for command, _ in runner.calls if "tail -n +" in command]
+    assert ("tail -n +1 " in reads[0], "tail -n +2 " in reads[1]) == (True, True)
+    assert step_log() == "==> Restoring the database\n==> The copy is running\n"
+    assert len(beats) == len(reads)
 
 
 def test_a_failed_install_shows_its_last_lines(ctx: OperationContext) -> None:
-    target, _ = machine(ctx, {"install.sh": result(1, stdout=b"step\nError: no space\n")})
+    with pytest.raises(MoveError) as error:
+        install(ctx, [b"1\nstep\nError: no space\n"])
+    assert error.value.code == MoveErrorCode.INSTALL_FAILED
+    assert error.value.detail == "exit 1"
+    assert "step\nError: no space" in step_log()
+
+
+FAKE_INSTALLER = """#!/bin/sh
+echo "==> Restoring with $3 $4"
+[ "$LAMNEZIA_ARCHIVE_PASSWORD" = "archive-password-123" ] && echo "==> The password came"
+exit 3
+"""
+# Without root or systemd the transient service is a background process like setsid's.
+FAKE_SYSTEMD_RUN = '#!/bin/sh\nshift 4\nexec setsid -f "$@"\n'
+FAKE_SETSID = '#!/bin/sh\nshift\n"$@" </dev/null >/dev/null 2>&1 &\n'
+
+
+@pytest.mark.skipif(
+    any(shutil.which(tool) is None for tool in ("sh", "mkfifo", "timeout")),
+    reason="no sh, mkfifo or timeout",
+)
+def test_the_start_script_hands_the_password_over_and_records_the_end(tmp_path: Path) -> None:
+    install_dir, work, bin_dir = tmp_path / "opt", tmp_path / "work", tmp_path / "bin"
+    for folder in (install_dir, work, bin_dir):
+        folder.mkdir()
+    (install_dir / "install.sh").write_text(FAKE_INSTALLER, newline="\n")
+    for name, body in (("systemd-run", FAKE_SYSTEMD_RUN), ("setsid", FAKE_SETSID)):
+        (bin_dir / name).write_text(body, newline="\n")
+        (bin_dir / name).chmod(0o755)
+    script = _START_INSTALL.format(
+        work=work.as_posix(), install_dir=install_dir.as_posix(), unit="u", archive="panel.x"
+    )
+    environment = {**os.environ, "PATH": f"{bin_dir.as_posix()}{os.pathsep}{os.environ['PATH']}"}
+
+    subprocess.run(
+        [shutil.which("sh") or "sh", "-c", script],
+        input=f"{PASSWORD}\n".encode(),
+        env=environment,
+        check=True,
+        timeout=30,
+    )
+
+    deadline = time.monotonic() + 20
+    while not (work / "install.exit").exists() and time.monotonic() < deadline:
+        time.sleep(0.1)
+    assert (work / "install.exit").read_text().strip() == "3"
+    log = (work / "install.log").read_text()
+    assert "==> Restoring with --restore panel.x" in log
+    assert "==> The password came" in log
+    assert not (work / "password").exists()
+    assert PASSWORD not in (work / "install.run").read_text()
+
+
+def test_an_installer_past_its_time_is_stopped(ctx: OperationContext, settings: Any) -> None:
+    settings.RELOCATION_INSTALL_TIMEOUT = -1
+    runner = InstallerRunner([])
+    target = TargetMachine(RemoteHost(runner, TIMEOUTS), ctx, 7)
 
     with pytest.raises(MoveError) as error:
         target.install("/var/tmp/panel.lamnezia", PASSWORD)
-    assert error.value.code == MoveErrorCode.INSTALL_FAILED
-    assert "Error: no space" in step_log()
+    assert error.value.detail == "timeout"
+    assert 'kill -TERM -- "-$pid"' in commands(runner)
 
 
 def test_the_copy_must_answer_and_hold_the_move(ctx: OperationContext) -> None:

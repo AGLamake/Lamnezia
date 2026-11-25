@@ -22,6 +22,7 @@ class MoveErrorCode(StrEnum):
     ARRIVED = "arrived"
     NOT_DISCARDED = "not_discarded"
     PARTLY_CONFIRMED = "partly_confirmed"
+    INTERRUPTED = "move_interrupted"
 
 
 MOVE_ERRORS: dict[MoveErrorCode, ErrorDescription] = {
@@ -97,6 +98,13 @@ MOVE_ERRORS: dict[MoveErrorCode, ErrorDescription] = {
         _(
             "Retry the confirmation once the new machine answers, or cancel the move without the "
             "new machine on System → Panel move."
+        ),
+    ),
+    MoveErrorCode.INTERRUPTED: ErrorDescription(
+        _("The preparation stopped answering for too long, and the move was failed."),
+        _(
+            "The panel accepts changes again. Start the move once more: the copy left on the new "
+            "machine is removed first."
         ),
     ),
 }
