@@ -54,6 +54,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_MONITOR_DETAIL_DAYS` | `1` | Days of readings kept in full; older whole days keep one reading per quarter of an hour. |
 | `LAMNEZIA_OPERATION_RETENTION_DAYS` | `90` | Days a finished operation stays in the journal. |
 | `LAMNEZIA_NOTIFICATION_RETENTION_DAYS` | `90` | Days a sent or failed notification delivery stays in the log. |
+| `LAMNEZIA_API_CALL_RETENTION_DAYS` | `30` | Days an **API call** record stays in the audit log; older ones are deleted once a day, other events are not touched. |
 | `LAMNEZIA_TRAFFIC_HOURLY_DAYS` | `35` | Days of hourly traffic; older hours are folded into one row per key and day (at least 1). Totals, statistics and limits stay the same. |
 | `LAMNEZIA_GITHUB_TOKEN` | empty | GitHub token without scopes. Raises the API limit for Amnezia release links. |
 | `LAMNEZIA_GITHUB_PROXY` | empty | A proxy for the requests to api.github.com (Amnezia release links, the panel update check), like `LAMNEZIA_TELEGRAM_PROXY`. |

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Retention of API calls in the audit log**: **API call** records are deleted once a day after
+  `LAMNEZIA_API_CALL_RETENTION_DAYS` (30 by default), so monitoring that calls the API every minute
+  does not fill the log. Other events, calls with a disabled token included, stay.
 - **Restore the archive after a rolled back update**: when the host rolls a panel update back,
   the **Panel update** page offers to restore the archive made before that update. It asks for the
   archive password and a confirmation, runs as the usual panel restore operation, is for

@@ -330,6 +330,8 @@ MONITOR_DETAIL_DAYS = env.int("MONITOR_DETAIL_DAYS", default=1)
 # this many days; hourly traffic older than TRAFFIC_HOURLY_DAYS is folded into one row a day.
 OPERATION_RETENTION_DAYS = env.int("OPERATION_RETENTION_DAYS", default=90)
 NOTIFICATION_RETENTION_DAYS = env.int("NOTIFICATION_RETENTION_DAYS", default=90)
+# API calls in the audit journal are deleted after this many days; other events stay.
+API_CALL_RETENTION_DAYS = env.int("API_CALL_RETENTION_DAYS", default=30)
 TRAFFIC_HOURLY_DAYS = env.int("TRAFFIC_HOURLY_DAYS", default=35)
 CELERY_BEAT_SCHEDULE = {
     "operations-fail-stale": {"task": "operations.fail_stale", "schedule": 10 * 60},
@@ -387,6 +389,7 @@ CELERY_BEAT_SCHEDULE = {
     "relays-update-split-lists": {"task": "relays.update_split_lists", "schedule": 60 * 60},
     "operations-prune": {"task": "operations.prune", "schedule": 24 * 60 * 60},
     "notifications-prune": {"task": "notifications.prune", "schedule": 24 * 60 * 60},
+    "audit-prune-api-calls": {"task": "audit.prune_api_calls", "schedule": 24 * 60 * 60},
     "protocols-prune-speed-results": {
         "task": "protocols.prune_speed_results",
         "schedule": 24 * 60 * 60,

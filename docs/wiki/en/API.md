@@ -76,4 +76,6 @@ the client address, so guessing tokens gets nowhere.
 Every call with a working token goes to the [Audit log](Audit.md) as **API call** with the token
 prefix, the path and the status. A call with a disabled or expired token is **API call with a
 disabled token**. Calls with unknown tokens are not written, so guessing does not flood the log.
-Creating and disabling a token are written too.
+Creating and disabling a token are written too. **API call** records are kept for 30 days
+(`LAMNEZIA_API_CALL_RETENTION_DAYS`, [Configuration](Configuration.md)); older ones are deleted
+once a day. Other records of the log, calls with a disabled token included, are not deleted.
