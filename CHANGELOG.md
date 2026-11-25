@@ -629,6 +629,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Troubles of a deleted relay**: removing a relay, or the server it runs on, takes its outage and
+  settings mismatch off the list of troubles by the relay's own key; deleting another server whose
+  number equals the relay's no longer drops them.
 - **Relay load charts**: the **24 hours** / **7 days** switch works without JavaScript, and an
   interval without readings is drawn as a pale "No data" gap instead of a bar of zero, so missing
   data no longer looks like no traffic. Nothing to do on upgrade.

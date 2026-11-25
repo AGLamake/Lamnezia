@@ -14,6 +14,7 @@ from apps.notifications.services.delivery import emit
 from apps.notifications.services.sign_in import SignInAlerts
 from apps.notifications.services.trouble import forget_troubles
 from apps.protocols.signals import keys_changed, keys_moved, keys_revoked, short_id_changed
+from apps.relays.models import Relay
 from apps.servers.models import Server
 from apps.traffic.signals import limit_reached
 
@@ -39,14 +40,15 @@ def on_short_id_changed(sender: object, user: User, server: str, **kwargs: Any) 
 
 
 def on_server_deleted(sender: object, instance: Server, **kwargs: Any) -> None:
-    """A deleted server or relay leaves no trouble behind in the list of troubles."""
-    for event in (
-        Event.SERVER_DOWN,
-        Event.RELAY_DOWN,
-        Event.AWG3_DROPPED,
-        Event.RELAY_SETTINGS_DIFFER,
-    ):
+    """A deleted server leaves no trouble behind; its relay goes too (on_relay_deleted)."""
+    for event in (Event.SERVER_DOWN, Event.AWG3_DROPPED):
         forget_troubles(f"{event}:{instance.pk}:")
+
+
+def on_relay_deleted(sender: object, instance: Relay, **kwargs: Any) -> None:
+    """An outage of a relay is keyed by the relay, a mismatch of its settings by its server."""
+    forget_troubles(f"{Event.RELAY_DOWN}:{instance.pk}:")
+    forget_troubles(f"{Event.RELAY_SETTINGS_DIFFER}:{instance.server_id}:")
 
 
 def on_logged_out(sender: object, request: HttpRequest, user: User | None, **kwargs: Any) -> None:
@@ -72,6 +74,7 @@ def connect() -> None:
     user_locked_out.connect(on_locked_out, dispatch_uid="notifications.locked_out")
     user_logged_out.connect(on_logged_out, dispatch_uid="notifications.logged_out")
     post_delete.connect(on_server_deleted, sender=Server, dispatch_uid="notifications.server")
+    post_delete.connect(on_relay_deleted, sender=Relay, dispatch_uid="notifications.relay")
     limit_reached.connect(on_limit_reached, dispatch_uid="notifications.limit_reached")
     keys_changed.connect(on_keys_changed, dispatch_uid="notifications.keys_changed")
     keys_revoked.connect(on_keys_revoked, dispatch_uid="notifications.keys_revoked")
