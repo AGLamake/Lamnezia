@@ -327,14 +327,17 @@ save_image() {
     printf 'LAMNEZIA_IMAGE=%s\n' "$IMAGE" >>"$env_file"
 }
 
+# A panel move asks for the image of its version and builds it here only if the pull fails.
 prepare_images() {
     if grep -q '^LAMNEZIA_IMAGE=' "$DIR/.env"; then
         log "Pulling the ready image"
-        (cd "$DIR" && docker compose pull -q)
-    else
-        log "Building the image (the first build takes a few minutes)"
-        (cd "$DIR" && docker compose build -q)
+        if (cd "$DIR" && docker compose pull -q); then return; fi
+        [ "$MOVING" = 1 ] || die "the ready image could not be pulled"
+        warn "the ready image could not be pulled: building it here instead"
+        sed -i '/^LAMNEZIA_IMAGE=/d' "$DIR/.env"
     fi
+    log "Building the image (the first build takes a few minutes)"
+    (cd "$DIR" && docker compose build -q)
 }
 
 start_stack() {

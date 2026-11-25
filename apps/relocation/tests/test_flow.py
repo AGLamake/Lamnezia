@@ -96,6 +96,38 @@ def test_a_refused_machine_is_left_alone(monkeypatch: pytest.MonkeyPatch, stagin
     assert fake.calls == ["check"]
 
 
+def test_the_panel_freezes_only_after_the_machine_fits(
+    monkeypatch: pytest.MonkeyPatch, staging: Path
+) -> None:
+    frozen: list[bool] = []
+
+    def record() -> None:
+        frozen.append(PanelMove.objects.get().frozen)
+
+    fake = FakeMachine(during_check=record, during_install=record)
+    monkeypatch.setattr(f"{PREPARATION}.ready_image", lambda: "1.4.2")
+
+    move = prepare(monkeypatch, fake, make_move(MoveState.CHECKING))
+
+    assert move.state == MoveState.READY
+    assert frozen == [False, True]
+    assert fake.image == "1.4.2"
+
+
+def test_an_unfit_machine_fails_the_move_before_the_freeze(
+    monkeypatch: pytest.MonkeyPatch, staging: Path
+) -> None:
+    fake = FakeMachine(fail_at="check")
+
+    with pytest.raises(MoveError):
+        prepare(monkeypatch, fake, make_move(MoveState.CHECKING))
+
+    move = PanelMove.objects.get()
+    assert move.state == MoveState.FAILED
+    assert not move.frozen
+    assert fake.calls == ["check"]
+
+
 def test_queued_jobs_are_refused_and_a_running_one_stops_the_move(
     monkeypatch: pytest.MonkeyPatch, staging: Path
 ) -> None:

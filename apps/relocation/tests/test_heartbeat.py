@@ -92,8 +92,11 @@ def run_preparation(monkeypatch: pytest.MonkeyPatch, fake: FakeMachine, move: Pa
     MovePreparation(move, OperationContext(OperationFactory()), write_archive).run()
 
 
-def test_a_silent_preparation_fails_and_the_panel_accepts_changes(flag: MoveFlag) -> None:
-    move = make_move(operation_status=OperationStatus.RUNNING)
+@pytest.mark.parametrize("state", [MoveState.CHECKING, MoveState.PREPARING])
+def test_a_silent_preparation_fails_and_the_panel_accepts_changes(
+    flag: MoveFlag, state: MoveState
+) -> None:
+    move = make_move(state, OperationStatus.RUNNING)
     ran_out(flag, move)
 
     assert fail_interrupted_preparation(flag) == move

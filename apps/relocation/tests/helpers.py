@@ -37,10 +37,13 @@ class FakeMachine:
         fail_at: str | None = None,
         copy: str | None = MoveState.PREPARING,
         during_install: Callable[[], None] | None = None,
+        during_check: Callable[[], None] | None = None,
     ) -> None:
         self.fail_at = fail_at
         self.copy = copy
         self.during_install = during_install
+        self.during_check = during_check
+        self.image: str | None = None
         self.calls: list[str] = []
         self.password = ""
         self.beat: Callable[[], None] | None = None
@@ -57,6 +60,8 @@ class FakeMachine:
             raise MoveError(MoveErrorCode.INSTALL_FAILED)
 
     def check(self) -> None:
+        if self.during_check is not None:
+            self.during_check()
         self._do("check")
 
     def upload_code(self, bundle: Path) -> None:
@@ -68,8 +73,9 @@ class FakeMachine:
         self._do("upload_archive")
         return "/var/tmp/panel.lamnezia"
 
-    def install(self, archive: str, password: str) -> None:
+    def install(self, archive: str, password: str, image: str | None = None) -> None:
         self.password = password
+        self.image = image
         if self.during_install is not None:
             self.during_install()
         self._do("install")

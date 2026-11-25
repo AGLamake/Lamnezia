@@ -14,6 +14,7 @@ class MoveErrorCode(StrEnum):
     TARGET_IN_USE = "target_in_use"
     SAME_MACHINE = "same_machine"
     LOW_DISK = "low_disk"
+    LOW_MEMORY = "low_memory"
     PORTS_BUSY = "ports_busy"
     UPLOAD_FAILED = "upload_failed"
     INSTALL_FAILED = "install_failed"
@@ -54,7 +55,17 @@ MOVE_ERRORS: dict[MoveErrorCode, ErrorDescription] = {
     ),
     MoveErrorCode.LOW_DISK: ErrorDescription(
         _("The new machine has too little free disk space."),
-        _("Free some space or choose a machine with a larger disk."),
+        _(
+            "The panel needs at least 3 GB free on / for its images, database and files. Free "
+            "some space or choose a machine with a larger disk."
+        ),
+    ),
+    MoveErrorCode.LOW_MEMORY: ErrorDescription(
+        _("The new machine has too little memory."),
+        _(
+            "The panel needs about 1 GB of memory, swap included. Add a swap file there or "
+            "choose a machine with more memory."
+        ),
     ),
     MoveErrorCode.PORTS_BUSY: ErrorDescription(
         _("Ports 80 and 443 of the new machine are taken, and there is no nginx on it."),

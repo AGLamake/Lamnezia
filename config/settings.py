@@ -321,6 +321,8 @@ RELOCATION_INSTALL_POLL_SECONDS = 5
 RELOCATION_HEARTBEAT_TIMEOUT = 15 * 60
 # Free disk the new machine needs: images, the database and the uploaded files.
 RELOCATION_MIN_FREE_MB = 3 * 1024
+# Memory with swap the new machine needs; a machine sold as 1 GB reports a little less.
+RELOCATION_MIN_MEMORY_MB = 900
 # Requests that passed before the freeze finish before the archive is taken.
 RELOCATION_SETTLE_SECONDS = 5
 # Resolvers the move asks where the panel domain points: "system" and IP addresses of public ones.

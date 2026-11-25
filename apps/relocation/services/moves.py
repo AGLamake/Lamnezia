@@ -9,7 +9,7 @@ from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
 from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.models import MoveState, PanelMove
-from apps.relocation.services.freeze import MOVE_KIND_PREFIX, frozen_move
+from apps.relocation.services.freeze import MOVE_KIND_PREFIX
 from apps.servers.models import Server
 
 PREPARE_KIND = "relocation.prepare"
@@ -21,7 +21,7 @@ _ACTIVE = (OperationStatus.PENDING, OperationStatus.RUNNING)
 
 
 def start_move(target: Server, user: User, ip: str | None, *, auto_stop: bool = True) -> PanelMove:
-    """Freeze the panel and queue the preparation of the copy on `target`.
+    """Queue the preparation of the copy on `target`: it checks the machine, then freezes the panel.
 
     With `auto_stop` this copy stops itself once the domain points to `target`.
     """
@@ -29,12 +29,17 @@ def start_move(target: Server, user: User, ip: str | None, *, auto_stop: bool = 
         # The settings row is the panel-wide lock: two admins never start two moves.
         SiteSettings.load()
         SiteSettings.objects.select_for_update().get(pk=1)
-        if frozen_move() is not None:
+        latest = PanelMove.latest()
+        if latest is not None and latest.under_way:
             raise MoveError(MoveErrorCode.WRONG_STATE)
         if Operation.objects.filter(status__in=_ACTIVE).exists():
             raise MoveError(MoveErrorCode.BUSY)
         move = PanelMove.objects.create(
-            target=target, target_host=target.host, auto_stop=auto_stop, created_by=user
+            target=target,
+            target_host=target.host,
+            state=MoveState.CHECKING,
+            auto_stop=auto_stop,
+            created_by=user,
         )
         _launch(move, PREPARE_KIND, user)
         data = {"host": target.host, "auto_stop": auto_stop}

@@ -1,5 +1,6 @@
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import tarfile
@@ -15,12 +16,14 @@ from apps.operations.models import OperationStep
 from apps.operations.services.context import OperationContext
 from apps.operations.tests.factories import OperationFactory
 from apps.relocation.errors import MoveError, MoveErrorCode
-from apps.relocation.services.bundle import write_code_bundle
+from apps.relocation.services import bundle
+from apps.relocation.services.bundle import ready_image, write_code_bundle
 from apps.relocation.services.relay_guard import RelayGuard
 from apps.relocation.services.shutdown import STOP_REQUEST
 from apps.relocation.services.target import _START_INSTALL, TargetMachine
 from apps.ssh.services import CommandResult, RemoteHost
 from apps.ssh.tests.fakes import TIMEOUTS, FakeRunner, result
+from apps.updates.services.versions import Version
 
 pytestmark = pytest.mark.django_db
 
@@ -30,6 +33,7 @@ CLEAN = {
     "[ -f /opt/lamnezia/.moving ]": result(1),
     "[ -e /opt/lamnezia ]": result(1),
     "df -Pm": result(stdout=b"20000\n"),
+    "/proc/meminfo": result(stdout=b"1950\n"),
 }
 
 
@@ -69,6 +73,8 @@ def test_a_clean_machine_passes_the_checks(ctx: OperationContext) -> None:
         ({"command -v apt-get": result(1)}, MoveErrorCode.UNSUPPORTED_SYSTEM),
         ({"[ -e /opt/lamnezia ]": result(0)}, MoveErrorCode.TARGET_IN_USE),
         ({"df -Pm": result(stdout=b"900\n")}, MoveErrorCode.LOW_DISK),
+        ({"/proc/meminfo": result(stdout=b"480\n")}, MoveErrorCode.LOW_MEMORY),
+        ({"/proc/meminfo": result(stdout=b"\n")}, MoveErrorCode.LOW_MEMORY),
     ],
 )
 def test_an_unfit_machine_is_refused(
@@ -198,13 +204,33 @@ class InstallerRunner(FakeRunner):
 
 
 def install(
-    ctx: OperationContext, reads: list[bytes], beats: list[int] | None = None
+    ctx: OperationContext,
+    reads: list[bytes],
+    beats: list[int] | None = None,
+    image: str | None = None,
 ) -> InstallerRunner:
     runner = InstallerRunner(reads)
     counted = beats if beats is not None else []
     target = TargetMachine(RemoteHost(runner, TIMEOUTS), ctx, 7, lambda: counted.append(1))
-    target.install("/var/tmp/panel.lamnezia", PASSWORD)
+    target.install("/var/tmp/panel.lamnezia", PASSWORD, image)
     return runner
+
+
+def start_command(runner: FakeRunner) -> str:
+    return next(command for command, _ in runner.calls if "mkfifo" in command)
+
+
+def test_the_new_machine_pulls_the_image_of_the_running_version(ctx: OperationContext) -> None:
+    runner = install(ctx, [b"0\n"], image="1.4.2")
+
+    assert '--image 1.4.2 --restore "$2" --moving' in start_command(runner)
+    assert "pulls the ready image 1.4.2" in step_log()
+
+
+def test_without_an_image_the_new_machine_builds_it(ctx: OperationContext) -> None:
+    runner = install(ctx, [b"0\n"])
+
+    assert "--image" not in start_command(runner)
 
 
 def test_the_installer_runs_apart_from_the_ssh_session(ctx: OperationContext) -> None:
@@ -261,7 +287,11 @@ def test_the_start_script_hands_the_password_over_and_records_the_end(tmp_path: 
         (bin_dir / name).write_text(body, newline="\n")
         (bin_dir / name).chmod(0o755)
     script = _START_INSTALL.format(
-        work=work.as_posix(), install_dir=install_dir.as_posix(), unit="u", archive="panel.x"
+        work=work.as_posix(),
+        install_dir=install_dir.as_posix(),
+        image="",
+        unit="u",
+        archive="panel.x",
     )
     environment = {**os.environ, "PATH": f"{bin_dir.as_posix()}{os.pathsep}{os.environ['PATH']}"}
 
@@ -397,6 +427,84 @@ def test_the_code_bundle_leaves_out_secrets_and_data(tmp_path: Path) -> None:
     with tarfile.open(bundle) as archive:
         files = {member.name for member in archive.getmembers() if member.isfile()}
     assert files == {"./install.sh", "./apps/x.py"}
+
+
+def test_the_ready_image_is_the_running_release(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LAMNEZIA_IMAGE", raising=False)
+    monkeypatch.setattr(bundle, "running_version", lambda: Version(1, 4, 2))
+    assert ready_image() == "1.4.2"
+
+    monkeypatch.setattr(bundle, "running_version", lambda: None)
+    assert ready_image() is None
+
+
+def test_a_panel_on_a_ready_image_passes_it_in_the_archive(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LAMNEZIA_IMAGE", "ghcr.io/example/lamnezia:1.4.2")
+    monkeypatch.setattr(bundle, "running_version", lambda: Version(1, 4, 2))
+
+    assert ready_image() is None
+
+
+# Answers `docker compose pull` with the given code and records every call.
+FAKE_DOCKER = '#!/bin/sh\necho "$*" >> "$CALLS"\n[ "$2" != pull ] || exit "$PULL"\n'
+
+
+def prepare_images(tmp_path: Path, *, moving: int, pull: int) -> tuple[int, str, str]:
+    """Run `prepare_images` of install.sh with a fake docker; the code, its calls and .env."""
+    script = (settings.BASE_DIR / "install.sh").read_text(encoding="utf-8")
+    function = re.search(r"^prepare_images\(\) \{\n.*?^\}\n", script, re.M | re.S)
+    assert function is not None
+    bin_dir, calls = tmp_path / "bin", tmp_path / "calls"
+    bin_dir.mkdir()
+    (bin_dir / "docker").write_text(FAKE_DOCKER, newline="\n")
+    (bin_dir / "docker").chmod(0o755)
+    (tmp_path / ".env").write_text("A=1\nLAMNEZIA_IMAGE=ghcr.io/x/lamnezia:1.4.2\n", newline="\n")
+    helpers = "log() { :; }\nwarn() { :; }\ndie() { exit 1; }\nprepare_images\n"
+    done = subprocess.run(
+        [shutil.which("bash") or "bash", "-c", function.group(0) + helpers],
+        env={
+            **os.environ,
+            "PATH": f"{bin_dir.as_posix()}{os.pathsep}{os.environ['PATH']}",
+            "DIR": tmp_path.as_posix(),
+            "MOVING": str(moving),
+            "PULL": str(pull),
+            "CALLS": calls.as_posix(),
+        },
+        check=False,
+        timeout=30,
+    )
+    recorded = calls.read_text() if calls.exists() else ""
+    return done.returncode, recorded, (tmp_path / ".env").read_text()
+
+
+needs_bash = pytest.mark.skipif(
+    any(shutil.which(tool) is None for tool in ("bash", "sed", "grep")),
+    reason="no bash, sed or grep",
+)
+
+
+@needs_bash
+def test_a_move_builds_the_image_when_the_pull_fails(tmp_path: Path) -> None:
+    code, calls, env = prepare_images(tmp_path, moving=1, pull=1)
+
+    assert code == 0
+    assert calls == "compose pull -q\ncompose build -q\n"
+    assert env == "A=1\n"
+
+
+@needs_bash
+def test_a_pulled_image_is_not_built(tmp_path: Path) -> None:
+    code, calls, env = prepare_images(tmp_path, moving=1, pull=0)
+
+    assert (code, calls) == (0, "compose pull -q\n")
+    assert "LAMNEZIA_IMAGE=" in env
+
+
+@needs_bash
+def test_an_install_that_chose_an_image_stops_when_the_pull_fails(tmp_path: Path) -> None:
+    code, calls, _env = prepare_images(tmp_path, moving=0, pull=1)
+
+    assert (code, calls) == (1, "compose pull -q\n")
 
 
 def test_the_installer_knows_the_move_option() -> None:

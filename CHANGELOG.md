@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A panel move checks the new machine before the freeze and takes the ready image**: the move
+  starts in the state *checking the new machine*, and the panel accepts changes until the system,
+  free disk (3 GB on `/`), memory with swap (900 MB) and ports fit; a machine that does not fit
+  fails the move with the reason on the move page and the panel never becomes read-only. A panel of a release passes `--image X.Y.Z` to `install.sh` on the new
+  machine, and with `--moving` a failed pull falls back to building the image.
+
 - **A panel move survives a deploy and a dropped SSH connection**: while the preparation, the
   confirmation or the cancel of a move runs, the panel keeps the flag `request/moving` in the
   folder of the update unit, and `lamnezia-deploy.sh` refuses to deploy (exit code 75) or to apply

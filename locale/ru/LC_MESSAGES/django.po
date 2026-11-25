@@ -1444,9 +1444,6 @@ msgstr "Свободно на диске"
 msgid "Free disk space: %(size)s MB."
 msgstr "Свободно на диске: %(size)s МБ."
 
-msgid "Free some space or choose a machine with a larger disk."
-msgstr "Освободите место или выберите машину с диском побольше."
-
 msgid "Free the UDP port of the group on the server, then join."
 msgstr "Освободите UDP-порт группы на сервере, затем вступайте."
 
@@ -2103,6 +2100,9 @@ msgstr "Участники записаны %(when)s."
 
 msgid "Memory"
 msgstr "Память"
+
+msgid "Memory with swap: %(size)s MB."
+msgstr "Память вместе со swap: %(size)s МБ."
 
 msgid "Messengers"
 msgstr "Мессенджеры"
@@ -4008,11 +4008,20 @@ msgstr "На новой машине уже есть панель или её с
 msgid "The new machine does not run Debian or Ubuntu."
 msgstr "На новой машине не Debian и не Ubuntu."
 
+msgid "The new machine fits the panel: the panel is read-only from now."
+msgstr "Новая машина подходит панели: с этого момента панель только для чтения."
+
 msgid "The new machine has too little free disk space."
 msgstr "На новой машине мало свободного места на диске."
 
+msgid "The new machine has too little memory."
+msgstr "На новой машине мало памяти."
+
 msgid "The new machine is the machine this panel runs on."
 msgstr "Новая машина — та, на которой работает эта панель."
+
+msgid "The new machine pulls the ready image %(tag)s."
+msgstr "Новая машина скачивает готовый образ %(tag)s."
 
 msgid "The new version could not be started."
 msgstr "Не удалось запустить новую версию."
@@ -4052,6 +4061,9 @@ msgstr "Панель не может прочитать состояние ре�
 
 msgid "The panel checks GitHub for a new release. The update runs on the host: the panel makes an archive, the host moves to the release, checks that the panel answers and goes back to the previous version if it does not."
 msgstr "Панель проверяет новые релизы на GitHub. Обновление выполняет хост: панель создаёт архив, хост переходит на релиз, проверяет, что панель отвечает, а если нет — возвращает предыдущую версию."
+
+msgid "The panel checks the new machine over SSH: free disk, memory, ports. It still accepts changes and becomes read-only only once the machine fits."
+msgstr "Панель проверяет новую машину по SSH: свободный диск, память, порты. Пока она принимает изменения и станет только для чтения, лишь когда машина подойдёт."
 
 msgid "The panel compares its keys with the server files regularly. A difference appears when clients are added or removed in the Amnezia app or by hand."
 msgstr "Панель регулярно сравнивает свои ключи с файлами на серверах. Расхождение появляется, когда клиентов добавляют или удаляют в приложении Amnezia или вручную."
@@ -4130,6 +4142,12 @@ msgstr "Панель переехала на %(host)s. Эта копия тол�
 #, python-format
 msgid "The panel moved to %(host)s. This copy is read-only."
 msgstr "Панель переехала на %(host)s. Эта копия только для чтения."
+
+msgid "The panel needs about 1 GB of memory, swap included. Add a swap file there or choose a machine with more memory."
+msgstr "Панели нужно около 1 ГБ памяти вместе со swap. Добавьте там файл подкачки или выберите машину с большей памятью."
+
+msgid "The panel needs at least 3 GB free on / for its images, database and files. Free some space or choose a machine with a larger disk."
+msgstr "Панели нужно не меньше 3 ГБ свободного места на / для образов, базы и файлов. Освободите место или выберите машину с диском побольше."
 
 msgid "The panel needs these ports for its web server. Free them, or install nginx on the machine: then the panel adds a site to it."
 msgstr "Эти порты нужны веб-серверу панели. Освободите их или установите на машину nginx: тогда панель добавит в него свой сайт."
@@ -5196,6 +5214,9 @@ msgstr "проверено %(when)s назад"
 
 msgid "checked at"
 msgstr "проверен"
+
+msgid "checking the new machine"
+msgstr "проверка новой машины"
 
 msgid "clients get no answer"
 msgstr "клиенты без ответа"

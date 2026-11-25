@@ -21,7 +21,7 @@ from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.models import MoveState, PanelMove
-from apps.relocation.services.bundle import write_code_bundle
+from apps.relocation.services.bundle import ready_image, write_code_bundle
 from apps.relocation.services.freeze import MOVE_KIND_PREFIX, refuse
 from apps.relocation.services.heartbeat import MoveFlag, PreparationHeartbeat
 from apps.relocation.services.relay_guard import RelayGuard
@@ -61,7 +61,7 @@ class MovePreparation:
         self._heartbeat = PreparationHeartbeat(move, self._flag)
 
     def run(self) -> None:
-        if self._move.state != MoveState.PREPARING or self._move.target is None:
+        if self._move.state not in PanelMove.PREPARATION or self._move.target is None:
             raise MoveError(MoveErrorCode.WRONG_STATE, self._move.state)
         self._archive.parent.mkdir(parents=True, exist_ok=True)
         heartbeat = settings.RELOCATION_HEARTBEAT_TIMEOUT
@@ -76,7 +76,7 @@ class MovePreparation:
                     raise
         except Exception:
             # A move failed for silence may have been cancelled since: its state stays.
-            self._move.mark_from(MoveState.PREPARING, MoveState.FAILED)
+            self._move.mark_from(MoveState(self._move.state), MoveState.FAILED)
             raise
         finally:
             self._archive.unlink(missing_ok=True)
@@ -90,6 +90,7 @@ class MovePreparation:
             machine.check()
             relay.remember()
         with self._step(_("Wait for the changes already under way")):
+            self._freeze()
             self._settle()
         with self._step(_("Save the panel into an archive")):
             self._write_archive(password, self._archive)
@@ -102,7 +103,7 @@ class MovePreparation:
             remote_archive = machine.upload_archive(self._archive)
         with self._step(_("Install the panel there and restore the archive")):
             try:
-                machine.install(remote_archive, password)
+                machine.install(remote_archive, password, ready_image())
             finally:
                 machine.remove_uploads()
         with self._step(_("Check the copy on the new machine")):
@@ -116,6 +117,14 @@ class MovePreparation:
         with self._ctx.step(title):
             self._heartbeat.beat()
             yield
+
+    def _freeze(self) -> None:
+        """The new machine fits: from here the panel accepts no changes."""
+        if self._move.state != MoveState.CHECKING:
+            return
+        if not self._move.mark_from(MoveState.CHECKING, MoveState.PREPARING):
+            raise MoveError(MoveErrorCode.INTERRUPTED)
+        self._ctx.log(_("The new machine fits the panel: the panel is read-only from now."))
 
     def _settle(self) -> None:
         """Operations queued before the freeze end here; a running one stops the move."""

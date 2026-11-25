@@ -11,6 +11,7 @@ from apps.operations.models import OperationStatus
 
 
 class MoveState(models.TextChoices):
+    CHECKING = "checking", _("checking the new machine")
     PREPARING = "preparing", _("preparing the new machine")
     READY = "ready", _("the copy on the new machine is ready")
     LEFT = "left", _("the panel moved away from here")
@@ -31,13 +32,17 @@ class DomainStatus(models.TextChoices):
 class PanelMove(models.Model):
     """One move; the latest move decides whether the panel accepts changes.
 
-    The archive taken for the move holds this row in PREPARING, so the copy on the new machine
-    starts read-only too and accepts changes only after `arrive`.
+    A move starts CHECKING: the new machine is checked while the panel still accepts changes, and
+    the panel freezes only once it fits. The archive taken for the move holds this row in
+    PREPARING, so the copy on the new machine starts read-only too and accepts changes only after
+    `arrive`.
     """
 
     FROZEN: ClassVar[frozenset[str]] = frozenset(
         {MoveState.PREPARING, MoveState.READY, MoveState.LEFT}
     )
+    # The states of the preparation operation, which renews its heartbeat in both.
+    PREPARATION: ClassVar[frozenset[str]] = frozenset({MoveState.CHECKING, MoveState.PREPARING})
     # After these states only the domain is left to switch to the new machine.
     HANDED_OVER: ClassVar[frozenset[str]] = frozenset({MoveState.LEFT, MoveState.ARRIVED})
 
@@ -104,6 +109,18 @@ class PanelMove(models.Model):
         return self.state in self.FROZEN
 
     @property
+    def under_way(self) -> bool:
+        """Being checked or keeping the panel read-only: no other move starts meanwhile."""
+        return self.state == MoveState.CHECKING or self.frozen
+
+    @property
+    def failure(self) -> str:
+        """Why a failed move failed, with what to do: its operation's error."""
+        if self.state != MoveState.FAILED or self.operation is None:
+            return ""
+        return f"{self.operation.error_message} {self.operation.error_hint}".strip()
+
+    @property
     def busy(self) -> bool:
         """An operation of the move is queued or running."""
         status = self.operation.status if self.operation else None
@@ -136,7 +153,7 @@ class PanelMove(models.Model):
     @property
     def can_switch_auto_stop(self) -> bool:
         """The old copy has not asked its host to stop yet; only it decides about its stack."""
-        waiting = (MoveState.PREPARING, MoveState.READY, MoveState.LEFT)
+        waiting = (MoveState.CHECKING, MoveState.PREPARING, MoveState.READY, MoveState.LEFT)
         return self.state in waiting and self.stop_requested_at is None
 
     @property

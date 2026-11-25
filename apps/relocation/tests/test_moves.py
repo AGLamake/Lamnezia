@@ -27,17 +27,19 @@ from apps.servers.tests.factories import ServerFactory
 pytestmark = pytest.mark.django_db
 
 
-def test_starting_freezes_the_panel_and_queues_the_preparation() -> None:
+def test_starting_queues_the_check_and_keeps_the_panel_writable() -> None:
     admin = UserFactory(role=Role.ADMIN)
     server = ServerFactory()
 
     move = start_move(server, admin, "10.0.0.1")
 
     assert (move.state, move.target_host, move.created_by) == (
-        MoveState.PREPARING,
+        MoveState.CHECKING,
         server.host,
         admin,
     )
+    assert not move.frozen
+    assert move.under_way
     assert move.operation is not None
     assert (move.operation.kind, move.operation.params) == (PREPARE_KIND, {"move_id": move.pk})
     assert AuditEvent.objects.filter(action=PREPARE_KIND).count() == 1
@@ -162,6 +164,30 @@ def test_the_page_shows_the_buttons_and_the_dns_hint(client: Client) -> None:
     page = client.get("/backups/move/").content.decode()
     assert f"Point the panel domain to {ready.target_host}" in page
     assert "Confirm the move" not in page
+
+
+def test_the_page_shows_why_the_move_failed(client: Client) -> None:
+    admin_client(client)
+    move = make_move(MoveState.FAILED, OperationStatus.FAILED)
+    error = MoveError(MoveErrorCode.LOW_MEMORY)
+    assert move.operation is not None
+    move.operation.error_message, move.operation.error_hint = str(error.message), str(error.hint)
+    move.operation.save()
+
+    page = client.get("/backups/move/").content.decode()
+
+    assert str(error.message) in page
+    assert "Start the move" in page
+
+
+def test_the_page_explains_the_check_and_hides_the_form(client: Client) -> None:
+    admin_client(client)
+    make_move(MoveState.CHECKING, OperationStatus.RUNNING)
+
+    page = client.get("/backups/move/").content.decode()
+
+    assert "It still accepts changes" in page
+    assert "Start the move" not in page
 
 
 def test_a_refused_action_returns_to_the_page_with_the_reason(client: Client) -> None:

@@ -29,7 +29,9 @@ _CADDY_PORTS = (("tcp", 80), ("tcp", 443), ("udp", 443))
 _SS_LOCAL = 4
 _PUBLISHED = re.compile(r":(\d+)->\d+/(tcp|udp)")
 _COLOR = re.compile(r"\x1b\[[0-9;]*m")
-_INSTALL_LOG_PREFIXES = ("==>", "Error:")
+_INSTALL_LOG_PREFIXES = ("==>", "Error:", "Warning:")
+# Memory and swap of the machine in MB.
+_MEMORY = "awk '/^(MemTotal|SwapTotal):/ {kb += $2} END {print int(kb / 1024)}' /proc/meminfo"
 _FAILURE_TAIL = 15
 # Addresses of the machine: its interfaces and its containers (the panel may be one of them).
 _OWN_ADDRESSES = """
@@ -80,7 +82,8 @@ IFS= read -r LAMNEZIA_ARCHIVE_PASSWORD < "$1/password"
 rm -f "$1/password"
 export LAMNEZIA_ARCHIVE_PASSWORD
 echo $$ > "$1/install.pid"
-bash {install_dir}/install.sh --dir {install_dir} --restore "$2" --moving > "$1/install.log" 2>&1
+bash {install_dir}/install.sh --dir {install_dir} {image}--restore "$2" --moving \\
+  > "$1/install.log" 2>&1
 echo $? > "$1/install.exit.new"
 mv -f "$1/install.exit.new" "$1/install.exit"
 RUN
@@ -125,6 +128,7 @@ class TargetMachine:
         if self._host.sh(f"[ -e {INSTALL_DIR} ] || [ -e {NGINX_SITE} ]").ok:
             raise MoveError(MoveErrorCode.TARGET_IN_USE)
         self._check_disk()
+        self._check_memory()
         if self._host.sh("command -v nginx").ok:
             self._ctx.log(_("nginx is installed: the panel adds a site to it."))
         else:
@@ -147,18 +151,22 @@ class TargetMachine:
         self._upload(archive, remote)
         return remote
 
-    def install(self, archive: str, password: str) -> None:
+    def install(self, archive: str, password: str, image: str | None = None) -> None:
         """Run install.sh with the archive apart from this SSH session and follow its log.
 
         A broken connection or a restarted worker leaves the installer running; the password
-        reaches it through a pipe in the work folder, never a command line or a file.
+        reaches it through a pipe in the work folder, never a command line or a file. With
+        `image` the installer pulls that published image and builds only if the pull fails.
         """
         script = _START_INSTALL.format(
             work=self._work_dir,
             install_dir=INSTALL_DIR,
+            image=f"--image {shlex.quote(image)} " if image else "",
             unit=f"lamnezia-move-{self._move_id}",
             archive=shlex.quote(archive),
         )
+        if image:
+            self._ctx.log(_("The new machine pulls the ready image %(tag)s.") % {"tag": image})
         self._host.run(script, stdin=f"{password}\n".encode())
         InstallLog(self._host, self._ctx, self._work_dir, self._beat).follow()
 
@@ -219,6 +227,13 @@ class TargetMachine:
         if not free.isdigit() or int(free) < settings.RELOCATION_MIN_FREE_MB:
             raise MoveError(MoveErrorCode.LOW_DISK, f"{free} MB")
         self._ctx.log(_("Free disk space: %(size)s MB.") % {"size": free})
+
+    def _check_memory(self) -> None:
+        """Memory with swap: the panel's containers take about 800 MB."""
+        memory = self._host.run(_MEMORY).strip()
+        if not memory.isdigit() or int(memory) < settings.RELOCATION_MIN_MEMORY_MB:
+            raise MoveError(MoveErrorCode.LOW_MEMORY, f"{memory} MB")
+        self._ctx.log(_("Memory with swap: %(size)s MB.") % {"size": memory})
 
     def _check_caddy_ports(self) -> None:
         """Caddy of the panel needs 80 and 443; a relay never takes them (RESERVED_PORTS)."""

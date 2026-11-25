@@ -92,7 +92,7 @@ class PreparationHeartbeat:
         with transaction.atomic():
             preparing = (
                 PanelMove.objects.select_for_update()
-                .filter(pk=self._move.pk, state=MoveState.PREPARING)
+                .filter(pk=self._move.pk, state__in=PanelMove.PREPARATION)
                 .first()
             )
             if preparing is None:
@@ -116,7 +116,7 @@ def fail_interrupted_preparation(flag: MoveFlag | None = None) -> PanelMove | No
         if flag.read() != held:
             return None
         flag.release(move_id)
-        if move is None or move.state != MoveState.PREPARING:
+        if move is None or move.state not in PanelMove.PREPARATION:
             return None
         move.mark(MoveState.FAILED)
         if move.operation_id is not None:
