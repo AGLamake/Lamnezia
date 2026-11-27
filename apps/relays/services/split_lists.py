@@ -27,8 +27,8 @@ from django.db.models import Q, QuerySet
 from amnezia_core.relay import DomainList, NetworkList, domains_file, networks_file
 from amnezia_core.split_lists import (
     Direction,
-    SourceFormat,
     ListMode,
+    SourceFormat,
     SplitListError,
     Target,
     listed_networks,

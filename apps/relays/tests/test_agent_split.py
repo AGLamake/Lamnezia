@@ -12,7 +12,6 @@ from typing import NoReturn
 import pytest
 
 from amnezia_core.keys import KeyPair
-from amnezia_core.split_lists import ListMode
 from amnezia_core.relay import (
     Clone,
     GroupState,
@@ -23,6 +22,7 @@ from amnezia_core.relay import (
     ServicePeer,
     SplitRouting,
 )
+from amnezia_core.split_lists import ListMode
 from apps.relays.agent.relay_agent import (
     MARK_BASE,
     UPLINK_SILENCE,

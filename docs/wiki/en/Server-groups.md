@@ -210,8 +210,8 @@ that, the panel no longer updates the relay by itself and only shows the warning
 Split routing lets Russian sites see the relay's Russian address while other sites see the address
 abroad, with no settings on the devices and no new keys. The relay agent can also run a group in **split** routing instead of forwarding its port. The relay
 then answers the clients itself with a copy of the group's interface (same key and parameters, the
-group's port), sends traffic to the networks of the group's list and to private networks straight
-out of the relay, and sends everything else to the active member over an AmneziaWG uplink with the
+group's port), sends traffic that stays at home by the group's list (and to private networks)
+straight out of the relay, and sends everything else to the active member over an AmneziaWG uplink with the
 group's parameters. A switch to another member only changes the uplink's address: the clients'
 sessions stay. The uplink moves to another member only after 30 seconds in which no check passed
 through it: short drops on the way abroad do not move it. A member the uplink failed through is
@@ -244,11 +244,22 @@ the new relay image: use **Reinstall** on the relay card once.
 
 #### Network list
 
-A split group shows its **Network list** on the group page. The relay sends the networks of the
-list straight out and everything else abroad over the uplink (a "black list" of what stays at home).
+A split group shows its **Network list** on the group page. The list works in one of two modes:
 
-- **Sources.** On the first switch to split routing the group gets one source: the RIPE NCC
-  delegations to Russia. Add more by address and format: networks one per line (`#` starts a
+- **Blacklist** (the default): the relay sends the networks of the list straight out and
+  everything else abroad over the uplink. Fits when most sites should go abroad and the list holds
+  what stays at home, such as the Russian networks.
+- **Whitelist**: the relay sends only the networks of the list abroad and everything else straight
+  out. Fits when most traffic is Russian and only a few services must go abroad. With no list, only
+  the own entries abroad go abroad.
+
+The mode is changed by **Change the mode** in the network list. A list chosen for one mode sends the
+wrong traffic in the other, so the change turns off every source of the group: turn on only those
+that suit the new mode. Own entries stay as they are. The change is written to the audit log and
+reaches the relay within seconds.
+
+- **Sources.** On the first switch to split routing a blacklist group gets one source: the RIPE NCC
+  delegations to Russia; a whitelist group gets none. Add more by address and format: networks one per line (`#` starts a
   comment), the site list of the Amnezia application (JSON), or the RIPE NCC delegations. A source
   can be turned off or deleted. The panel downloads every enabled source once a day (each address
   once for all groups), merges the networks of all sources and gives the relay the result as a
@@ -258,7 +269,8 @@ list straight out and everything else abroad over the uplink (a "black list" of 
   tries again every hour. While a source fails, the administrators get the notification
   **Network list not updated** once a day, with the number of days since the last good list.
 - **Own entries.** An IPv4 network, an address or a domain that always goes one way:
-  **straight from the relay** or **abroad through the uplink**. An entry abroad wins over the lists.
+  **straight from the relay** or **abroad through the uplink**. An entry wins over the lists in
+  both modes, and an entry abroad wins over an entry straight out.
   Domains are looked up by the relay itself, every 10 minutes and right after a change; a name that
   does not resolve keeps its last addresses. The panel resolves no domains, and the relay logs
   neither the names nor their addresses. A site behind a CDN may share addresses with other sites:
@@ -282,6 +294,11 @@ resolver that does not start or stops is started again after a minute; until the
 where the keys send them. Only the keys' DNS addresses are intercepted: a DNS server set by hand on
 a device is not. The resolver comes with the new relay image: use **Reinstall** on the relay card
 once.
+
+In the whitelist mode a DNS query (port 53) that the resolver does not answer, such as one to a DNS
+server set by hand on a device, goes abroad over the uplink, so the network in Russia sees no names
+in clear text. The resolver still answers from Moscow: a site behind a CDN may resolve to Russian
+nodes that are not in the list and then go straight out. Add such a site as an own domain abroad.
 
 #### Traffic, online status and limits
 
@@ -363,8 +380,8 @@ services block. Keep two or three exits at different hosting providers for the f
 
 #### Limitations
 
-- Only the blacklist mode: the networks of the list go straight out, everything else abroad. A
-  whitelist (only the list abroad) is not there yet.
+- There is no ready-made source for the whitelist: add the lists of the services that must go
+  abroad yourself.
 - IPv4 only, and only AmneziaWG 3.1 groups.
 - Routing is chosen for the whole group, not per user or key.
 - One exit is active at a time; there is no balancing between members.

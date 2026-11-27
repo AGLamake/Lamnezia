@@ -1,4 +1,4 @@
-"""The network list of a split group on the group page: its sources and own entries."""
+"""The network list of a split group on the group page: its mode, sources and own entries."""
 
 import pytest
 from django.test import Client
@@ -7,7 +7,7 @@ from django.urls import reverse
 from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.audit.models import AuditEvent
-from apps.groups.models import GroupRouting, ServerGroup
+from apps.groups.models import GroupListMode, GroupRouting, ServerGroup
 from apps.protocols.tests.awg_case import OnCommit
 from apps.relays.models import SourceKind, SplitDirection, SplitEntry, SplitSource
 from apps.relays.tests.conftest import FakeLists
@@ -136,3 +136,60 @@ def test_only_admins_change_the_list(client: Client, split: ServerGroup) -> None
     client.post(reverse("relays:entry_add", args=[split.pk]), {"value": "example.ru"})
 
     assert not SplitEntry.objects.exists()
+
+
+def test_the_mode_change_turns_off_the_lists_and_keeps_the_own_entries(
+    browser: Client, split: ServerGroup
+) -> None:
+    SplitSource.objects.create(group=split, url=URL, kind=SourceKind.CIDR)
+    SplitEntry.objects.create(group=split, value="example.ru")
+
+    response = browser.post(
+        reverse("relays:list_mode", args=[split.pk]), {"list_mode": GroupListMode.INCLUDE}
+    )
+
+    assert response.url == lists_url(split)  # type: ignore[attr-defined]
+    split.refresh_from_db()
+    assert split.list_mode == GroupListMode.INCLUDE
+    assert not SplitSource.objects.get().enabled
+    assert SplitEntry.objects.exists()
+    event = AuditEvent.objects.get(action="relays.split_list_mode")
+    assert event.data == {"list_mode": "include", "sources_off": 1}
+
+
+def test_the_same_mode_changes_nothing(browser: Client, split: ServerGroup) -> None:
+    SplitSource.objects.create(group=split, url=URL, kind=SourceKind.CIDR)
+
+    browser.post(reverse("relays:list_mode", args=[split.pk]), {"list_mode": GroupListMode.EXCLUDE})
+
+    assert SplitSource.objects.get().enabled
+    assert not AuditEvent.objects.filter(action="relays.split_list_mode").exists()
+
+
+def test_an_unknown_mode_is_refused(browser: Client, split: ServerGroup) -> None:
+    browser.post(reverse("relays:list_mode", args=[split.pk]), {"list_mode": "both"})
+
+    split.refresh_from_db()
+    assert split.list_mode == GroupListMode.EXCLUDE
+
+
+def test_only_admins_change_the_mode(client: Client, split: ServerGroup) -> None:
+    client.force_login(UserFactory(role=Role.USER))
+
+    client.post(reverse("relays:list_mode", args=[split.pk]), {"list_mode": "include"})
+
+    split.refresh_from_db()
+    assert split.list_mode == GroupListMode.EXCLUDE
+
+
+def test_the_group_page_offers_the_mode_and_explains_the_whitelist(
+    browser: Client, split: ServerGroup
+) -> None:
+    split.list_mode = GroupListMode.INCLUDE
+    split.save()
+
+    page = browser.get(reverse("groups:detail", args=[split.pk])).content.decode()
+
+    assert reverse("relays:list_mode", args=[split.pk]) in page
+    assert 'name="list_mode"' in page
+    assert "Whitelist:" in page

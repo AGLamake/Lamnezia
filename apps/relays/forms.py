@@ -1,5 +1,5 @@
-"""Forms of the relay: the settings of the relay card, and the sources and own entries of the
-network list of a split group."""
+"""Forms of the relay: the settings of the relay card, and the mode, sources and own entries of
+the network list of a split group."""
 
 from urllib.parse import urlsplit
 
@@ -15,6 +15,14 @@ class RelaySettingsForm(forms.ModelForm):  # type: ignore[type-arg]
     class Meta:
         model = Relay
         fields = ("check_interval", "failures")
+
+
+class SplitListModeForm(forms.ModelForm):  # type: ignore[type-arg]
+    """The mode of the network list; the view changes it through the service, not `save`."""
+
+    class Meta:
+        model = ServerGroup
+        fields = ("list_mode",)
 
 
 class SplitSourceForm(forms.ModelForm):  # type: ignore[type-arg]

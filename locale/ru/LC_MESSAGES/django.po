@@ -260,6 +260,9 @@ msgstr "Ссылка"
 msgid "A link from the plan cannot be removed by hand."
 msgstr "Привязку от тарифа нельзя снять вручную."
 
+msgid "A list chosen for one mode sends the wrong traffic in the other, so the panel turns off the lists of the group; turn on only those that suit the new mode. Own entries stay as they are. Continue?"
+msgstr "Список, выбранный под один режим, в другом отправляет не тот трафик, поэтому панель выключит списки группы; включите только подходящие новому режиму. Свои записи останутся как есть. Продолжить?"
+
 msgid "A member of a group runs on the relay server."
 msgstr "Участник группы работает на сервере ретранслятора."
 
@@ -691,6 +694,9 @@ msgstr "Перед восстановлением панель сохраняе�
 msgid "Before the update the panel makes an archive (System → Panel archive) with this password. The database is not taken back when the update fails: if the previous version does not work with it, restore the archive."
 msgstr "Перед обновлением панель создаёт архив (Система → Архив панели) с этим паролем. При неудачном обновлении база данных не откатывается: если предыдущая версия с ней не работает, восстановите архив."
 
+msgid "Blacklist: the relay sends the networks of these lists straight out and everything else abroad through the uplink."
+msgstr "Чёрный список: сети из этих списков ретранслятор отправляет напрямую, всё остальное — за рубеж через канал."
+
 msgid "Block this user?"
 msgstr "Заблокировать этого пользователя?"
 
@@ -783,6 +789,9 @@ msgstr "Сменить адрес"
 
 msgid "Change email"
 msgstr "Сменить почту"
+
+msgid "Change the mode"
+msgstr "Сменить режим"
 
 msgid "Change the protocol settings of a group"
 msgstr "Смена настроек протокола группы"
@@ -2329,6 +2338,9 @@ msgstr "Ни один список ещё не получен."
 
 msgid "No list: the relay sends everything abroad through the uplink."
 msgstr "Списка нет: ретранслятор отправляет всё за рубеж через канал."
+
+msgid "No list: the relay sends everything straight out but the own entries abroad."
+msgstr "Списка нет: ретранслятор отправляет всё напрямую, кроме своих записей за рубеж."
 
 msgid "No materials yet."
 msgstr "Материалов пока нет."
@@ -3992,6 +4004,13 @@ msgstr "Ссылка работает один раз и недолго."
 msgid "The list is downloaded by HTTP or HTTPS."
 msgstr "Список скачивается по HTTP или HTTPS."
 
+#, python-format
+msgid "The list mode is changed and %(count)d list is turned off: turn on only a list that suits the new mode."
+msgid_plural "The list mode is changed and %(count)d lists are turned off: turn on only lists that suit the new mode."
+msgstr[0] "Режим списка изменён, выключен %(count)d список: включите только список, подходящий новому режиму."
+msgstr[1] "Режим списка изменён, выключено %(count)d списка: включите только списки, подходящие новому режиму."
+msgstr[2] "Режим списка изменён, выключено %(count)d списков: включите только списки, подходящие новому режиму."
+
 msgid "The log of the step shows the reason. Fix it and start the move again."
 msgstr "Причина — в журнале шага. Устраните её и начните перенос снова."
 
@@ -4094,6 +4113,9 @@ msgstr "Панели не удалось прочитать настройки �
 
 msgid "The panel could not read the traffic counters there, so the traffic of their keys is unknown (not zero) and the limits do not grow. Counting resumes by itself after the cause is fixed."
 msgstr "Панель не смогла прочитать там счётчики трафика, поэтому трафик их ключей неизвестен (а не равен нулю) и лимиты не растут. Учёт возобновится сам, когда причина будет устранена."
+
+msgid "The panel downloads every list once a day and gives the relay the merged list; a list that did not download, did not read or shrank to less than half is not taken, and the relay keeps the one it has."
+msgstr "Панель скачивает каждый список раз в сутки и отдаёт ретранслятору объединённый список; список, который не скачался, не разобрался или уменьшился больше чем вдвое, не принимается, и ретранслятор остаётся с прежним."
 
 msgid "The panel first reads the traffic counters of the members, then moves the tunnels of the clients. Every client of the group makes one new handshake. Continue?"
 msgstr "Панель сначала снимет счётчики трафика участников, затем перенесёт туннели клиентов. Каждый клиент группы сделает один новый handshake. Продолжить?"
@@ -4312,12 +4334,12 @@ msgstr "Ретранслятор отправит клиентов группы 
 msgid "The relay sends the clients to another server: no switch needed."
 msgstr "Ретранслятор отправляет клиентов на другой сервер: переключение не нужно."
 
-msgid "The relay sends the networks of these lists straight out and everything else abroad through the uplink. The panel downloads every list once a day and gives the relay the merged list; a list that did not download, did not read or shrank to less than half is not taken, and the relay keeps the one it has."
-msgstr "Сети из этих списков ретранслятор отправляет напрямую, всё остальное — за рубеж через канал. Панель скачивает каждый список раз в сутки и отдаёт ретранслятору объединённый список; список, который не скачался, не разобрался или уменьшился больше чем вдвое, не принимается, и ретранслятор остаётся с прежним."
-
 #
 msgid "The relay skips the server until the panel copies the group files onto it."
 msgstr "Ретранслятор пропускает сервер, пока панель не скопирует на него файлы группы."
+
+msgid "The relay stops sending the networks of this list abroad. Continue?"
+msgstr "Ретранслятор перестанет отправлять сети этого списка за рубеж. Продолжить?"
 
 msgid "The relay stops sending the networks of this list straight out. Continue?"
 msgstr "Ретранслятор перестанет отправлять сети этого списка напрямую. Продолжить?"
@@ -4327,6 +4349,9 @@ msgstr "Ретранслятор принимает клиентов групп,
 
 msgid "The relay takes the UDP port of the group on its server, and every member listens on that same port. Take a server other than the relay, or pick another relay."
 msgstr "Ретранслятор занимает UDP-порт группы на своём сервере, а каждый участник слушает тот же порт. Возьмите другой сервер или выберите другой ретранслятор."
+
+msgid "The relay's resolver answers the clients from Moscow, so a site behind a CDN may resolve to Russian nodes that are not in the list; add such a site as an own domain abroad. DNS queries the resolver does not answer go abroad."
+msgstr "Резолвер ретранслятора отвечает клиентам из Москвы, поэтому сайт за CDN может получить адреса российских узлов, которых нет в списке; добавьте такой сайт своим доменом за рубеж. DNS-запросы, на которые резолвер не отвечает, идут за рубеж."
 
 msgid "The release could not be fetched from GitHub."
 msgstr "Не удалось получить релиз с GitHub."
@@ -5004,6 +5029,9 @@ msgstr "Куда панель сообщает о событиях: чаты, п
 msgid "Which device is the key for?"
 msgstr "Для какого устройства ключ?"
 
+msgid "Whitelist: the relay sends only the networks of these lists abroad through the uplink and everything else straight out."
+msgstr "Белый список: за рубеж через канал ретранслятор отправляет только сети из этих списков, всё остальное — напрямую."
+
 msgid "Who"
 msgstr "Кто"
 
@@ -5188,6 +5216,9 @@ msgstr "как в тарифе"
 
 msgid "author"
 msgstr "автор"
+
+msgid "blacklist: abroad all but the list"
+msgstr "чёрный список: за рубеж всё, кроме списка"
 
 #, python-format
 msgid "branch %(channel)s"
@@ -5478,6 +5509,9 @@ msgstr "привязанные аккаунты"
 
 msgid "linked at"
 msgstr "привязан"
+
+msgid "list mode"
+msgstr "режим списка"
 
 msgid "list taken at"
 msgstr "список получен"
@@ -6096,6 +6130,9 @@ msgstr "был недоступен во время изменения"
 
 msgid "what"
 msgstr "что"
+
+msgid "whitelist: abroad only the list"
+msgstr "белый список: за рубеж только список"
 
 msgid "whole zone"
 msgstr "вся зона"

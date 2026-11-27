@@ -23,11 +23,11 @@ listens on its port, packets to private networks leave the relay directly, and t
 of the group decides the rest. In the blacklist mode packets to the networks of its list leave
 directly and the rest gets a firewall mark and goes over the uplink `lu<port>`, a client of the
 group on the active member; in the whitelist mode only packets to the networks of its list get
-the mark, and a DNS query the relay's resolver does not answer goes over the uplink too. A new active member only changes the uplink's endpoint, so the
-clients' sessions stay. When the uplink fails on every live member, the group falls back to
-forwarding (`Lane`). The own domains of a split group are resolved here, in the background every
-few minutes (`Domains`): their addresses go straight out or always over the uplink. The names
-and addresses are not logged.
+the mark, and a DNS query the relay's resolver does not answer goes over the uplink too. A new
+active member only changes the uplink's endpoint, so the clients' sessions stay. When the uplink
+fails on every live member, the group falls back to forwarding (`Lane`). The own domains of a
+split group are resolved here, in the background every few minutes (`Domains`): their addresses
+go straight out or always over the uplink. The names and addresses are not logged.
 
 The clients of a split group ask its keys' DNS addresses; the relay answers those queries with
 its own resolver (`Resolver`), which asks 1.1.1.1 over DNS-over-TLS straight from the relay: the

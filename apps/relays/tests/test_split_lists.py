@@ -7,7 +7,7 @@ import pytest
 from django.utils import timezone
 
 from apps.accounts.models import User
-from apps.groups.models import GroupRouting, ServerGroup
+from apps.groups.models import GroupListMode, GroupRouting, ServerGroup
 from apps.groups.tests.conftest import succeeded
 from apps.notifications.events import Event
 from apps.protocols.tests.awg_case import OnCommit, Start
@@ -241,3 +241,43 @@ def test_a_second_split_keeps_the_sources(plain: ServerGroup) -> None:
     assert (
         split_lists.add_default_source(ServerGroup.objects.create(name="Ufa", port=1)) is not None
     )
+
+
+def test_a_whitelist_takes_no_default_list() -> None:
+    group = ServerGroup.objects.create(name="Ufa", port=1, list_mode=GroupListMode.INCLUDE)
+
+    assert split_lists.add_default_source(group) is None
+
+
+def test_the_whitelist_takes_the_lists_but_the_local_entries(plain: ServerGroup) -> None:
+    plain.list_mode = GroupListMode.INCLUDE
+    plain.save()
+    source(plain, networks="5.8.0.0/23\n")
+    for value, direction in [
+        ("5.8.0.0/24", SplitDirection.LOCAL),
+        ("192.0.2.0/24", SplitDirection.ABROAD),
+    ]:
+        SplitEntry.objects.create(group=plain, value=value, direction=direction)
+
+    found = GroupList.of(plain)
+
+    assert [str(network) for network in found.networks] == ["5.8.1.0/24", "192.0.2.0/24"]
+
+
+def test_the_mode_change_syncs_the_relay_and_turns_off_the_lists(
+    relayed: ServerGroup,
+    relay_server: Server,
+    admin: User,
+    django_capture_on_commit_callbacks: OnCommit,
+) -> None:
+    source(relayed)
+    Relay.objects.create(server=relay_server, installed_at=timezone.now())
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        turned_off = split_lists.change_list_mode(relayed, GroupListMode.INCLUDE, user=admin)
+
+    assert turned_off == 1
+    relayed.refresh_from_db()
+    assert relayed.list_mode == GroupListMode.INCLUDE
+    (batch,) = [callback for callback in callbacks if isinstance(callback, SyncBatch)]
+    assert batch.servers == {relay_server.pk}

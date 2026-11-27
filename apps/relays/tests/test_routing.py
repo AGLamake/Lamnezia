@@ -8,7 +8,7 @@ import pytest
 from amnezia_core.awg import AWG_CONFIG_PATH, AwgServerConfig
 from apps.accounts.models import User
 from apps.audit.models import AuditEvent
-from apps.groups.models import GroupMember, GroupRouting, ServerGroup
+from apps.groups.models import GroupListMode, GroupMember, GroupRouting, ServerGroup
 from apps.groups.services.replication import catch_up_lagging
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, Fakes, succeeded
 from apps.keys.models import AccessKey
@@ -79,7 +79,24 @@ def test_split_gives_every_member_the_uplink_and_the_relay_a_clone(  # noqa: PLR
     assert group["split"]["clone"]["private_key"] == leader.private_key
     assert group["split"]["uplink"]["private_key"] == peer.private_key
     assert group["split"]["dns"] == list(leader.dns)
+    assert group["split"]["list_mode"] == "exclude"
     assert f"PublicKey = {key.public_key}" in relay_fake.files[PEERS].decode()
+
+
+def test_the_relay_gets_the_list_mode_of_the_group(
+    installed: ServerGroup,
+    leader: ProtocolInstance,
+    relay_fake: FakeRelayServer,
+    admin: User,
+    start: Start,
+) -> None:
+    installed.list_mode = GroupListMode.INCLUDE
+    installed.save()
+
+    succeeded(route(installed, GroupRouting.SPLIT, admin, start))
+
+    assert written_group(relay_fake)["split"]["list_mode"] == "include"
+    assert not installed.split_sources.exists()
 
 
 def test_forward_again_drops_the_clone_and_then_the_uplink(

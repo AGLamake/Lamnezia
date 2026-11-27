@@ -1,21 +1,30 @@
 """Buttons of the relay card on the server page: install, update, remove and the settings; and
-the network list of a split group on the group page: its sources and own entries."""
+the network list of a split group on the group page: its mode, sources and own entries."""
+
+from typing import Any
 
 from django.contrib import messages
 from django.db import transaction
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.translation import ngettext
 from django.views import View
 
 from apps.accounts.permissions import SectionRequiredMixin
 from apps.accounts.services.access import Section
 from apps.audit.services import journal as audit
+from apps.groups.models import GroupListMode
 from apps.relays.errors import RelayError
-from apps.relays.forms import RelaySettingsForm, SplitEntryForm, SplitSourceForm
+from apps.relays.forms import (
+    RelaySettingsForm,
+    SplitEntryForm,
+    SplitListModeForm,
+    SplitSourceForm,
+)
 from apps.relays.models import Relay, SplitEntry, SplitSource
 from apps.relays.services.deployment import INSTALL_KIND, REMOVE_KIND, UPDATE_KIND, start
-from apps.relays.services.split_lists import update_soon
+from apps.relays.services.split_lists import change_list_mode, update_soon
 
 # The block of the network list on the group page.
 _LISTS = "#split-lists"
@@ -74,7 +83,7 @@ def _to_lists(group_id: int) -> HttpResponse:
     return response
 
 
-def _report(request: HttpRequest, form: "ModelForm[SplitSource] | ModelForm[SplitEntry]") -> None:
+def _report(request: HttpRequest, form: "ModelForm[Any]") -> None:
     for errors in form.errors.values():
         messages.error(request, " ".join(map(str, errors)))
 
@@ -159,3 +168,30 @@ class SplitEntryDeleteView(SectionRequiredMixin, View):
             audit.log_request(request, "relays.split_entry_delete", entry, value=entry.value)
             entry.delete()
         return _to_lists(entry.group_id)
+
+
+class SplitListModeView(SectionRequiredMixin, View):
+    """Move the list of a group between the blacklist and the whitelist; its sources are turned
+    off, since a list chosen for one mode sends the wrong traffic in the other."""
+
+    section = Section.SERVERS
+    whole_zone_only = True
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        group = get_object_or_404(self.zone.groups(), pk=pk)
+        form = SplitListModeForm(request.POST)
+        if not form.is_valid():
+            _report(request, form)
+            return _to_lists(group.pk)
+        mode = GroupListMode(form.cleaned_data["list_mode"])
+        turned_off = change_list_mode(group, mode, user=self.member, ip=self.client_ip)
+        if turned_off:
+            text = ngettext(
+                "The list mode is changed and %(count)d list is turned off: turn on only a list "
+                "that suits the new mode.",
+                "The list mode is changed and %(count)d lists are turned off: turn on only lists "
+                "that suit the new mode.",
+                turned_off,
+            )
+            messages.warning(request, text % {"count": turned_off})
+        return _to_lists(group.pk)

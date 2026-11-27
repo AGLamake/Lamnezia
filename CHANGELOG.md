@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Whitelist for split routing**: the network list of a split group now has a mode. In the
+  blacklist (as before) the networks of the list go straight out and everything else abroad; in
+  the whitelist only the networks of the list and the own entries abroad go abroad, and DNS
+  queries the relay's resolver does not answer go abroad too. **Change the mode** turns off the
+  sources of the group, since a list chosen for one mode is wrong in the other. Existing groups
+  stay in the blacklist. Nothing to do on upgrade: the relay gets the new agent with its next sync.
 - **Why a VPN interface was lost**: before the panel restarts a container without its interface,
   the operation log keeps the tail of `docker logs` and the OOM killer lines of `dmesg`; a
   container the restarts did not bring back is listed in **Needs attention** on the dashboard.

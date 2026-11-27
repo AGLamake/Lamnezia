@@ -54,6 +54,9 @@ msgstr "Отмена переноса панели без новой машин�
 msgid "Change email"
 msgstr "Смена почты"
 
+msgid "Change list mode of split routing"
+msgstr "Смена режима списка раздельной маршрутизации"
+
 msgid "Change notification channel"
 msgstr "Изменение канала уведомлений"
 

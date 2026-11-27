@@ -48,7 +48,7 @@ from apps.groups.tasks import check_group_domain
 from apps.keys.services.counts import InstanceKeyCount
 from apps.protocols.models import ProtocolInstance
 from apps.relays.errors import RelayError
-from apps.relays.forms import SplitEntryForm, SplitSourceForm
+from apps.relays.forms import SplitEntryForm, SplitListModeForm, SplitSourceForm
 from apps.relays.models import Relay
 from apps.relays.services.health import GroupHealth
 from apps.relays.services.routing import start_routing
@@ -173,6 +173,7 @@ class GroupDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-ar
             lists_taken=group.split_sources.filter(enabled=True).aggregate(taken=Max("updated_at"))[
                 "taken"
             ],
+            list_mode_form=SplitListModeForm(instance=group),
             source_form=SplitSourceForm(group=group),
             entry_form=SplitEntryForm(group=group),
             **kwargs,
