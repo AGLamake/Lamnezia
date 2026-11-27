@@ -1,9 +1,11 @@
 import base64
 import hashlib
 import io
+import os
 import shutil
 import subprocess
 import tarfile
+import tracemalloc
 from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
@@ -22,6 +24,7 @@ from amnezia_core.container_archive import (
     ArchiveFormatError,
     ContainerArchive,
 )
+from amnezia_core.services import ONION_PATH
 from amnezia_core.tests.pki import FakeCa
 
 
@@ -156,3 +159,31 @@ def test_the_dump_in_a_copy_is_pinned_as_for_the_fingerprint() -> None:
 
     assert pin in TOR_STATE.archive_command()
     assert pin in TOR_STATE.fingerprint_command()
+
+
+ONION = "exampleonionaddress.onion"
+UPLOAD = "/var/www/html/wp-content/uploads/video.mp4"
+
+
+def test_a_copy_in_a_file_is_checked_and_hashed_a_chunk_at_a_time(tmp_path: Path) -> None:
+    with (tmp_path / "copy.tar.gz").open("w+b") as file:
+        file.write(tar_gz({ONION_PATH: f"{ONION}\n".encode(), UPLOAD: os.urandom(16 << 20)}))
+        tracemalloc.start()
+        try:
+            with ContainerArchive(TOR_STATE, file) as archive:
+                checked = (archive.identity(), archive.paths(), len(archive.digest()))
+            _, peak = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+
+        assert file.closed
+    assert checked == (ONION, (ONION_PATH, UPLOAD), 64)
+    assert peak < 4 << 20
+
+
+def test_one_file_is_read_from_the_copy() -> None:
+    archive = ContainerArchive(TOR_STATE, tar_gz({ONION_PATH: b"site.onion", UPLOAD: b"video"}))
+
+    assert archive.read(UPLOAD) == b"video"
+    assert archive.read("/var/www/html/missing") is None
+    assert "site.onion" not in repr(archive)

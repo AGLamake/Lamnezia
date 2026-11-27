@@ -285,8 +285,10 @@ service has no state.
 **Where the copies are kept.** A service copy is a file in the `media` volume of the panel
 (`service-backups/`), encrypted under a key of its own; that key is kept encrypted in the
 database. The file is encrypted in chunks of 64 KiB (AES-256-GCM, each chunk checked on its own),
-so saving and restoring a copy of hundreds of megabytes needs no second copy of it in memory; a
-damaged, cut or reordered file is refused with the reason, and the restore stops before it
+so saving and restoring a copy of hundreds of megabytes needs no second copy of it in memory. The
+copy comes from the server into a temporary file and is checked, hashed and encrypted from it a
+chunk at a time: the panel takes the copy of a large site or of the uploads without holding it in
+memory. A damaged, cut or reordered file is refused with the reason, and the restore stops before it
 touches the server. The panel archive and the backup service take the folder along. Before the
 hourly copy the panel asks the server for the size and a checksum of the files: unchanged since
 the last copy, they are not sent again, and the **Backup** section says when they were last

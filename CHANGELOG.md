@@ -537,6 +537,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Service copies no longer sit in the panel memory**: the copy of the Tor site, the SFTP uploads
+  and the other services comes from the server into a temporary file and is checked, hashed and
+  encrypted from it a chunk at a time, so the memory a read takes no longer grows with the size of
+  the copy. Nothing to do on upgrade.
 - **Imported XRay keys waiting for a profile are counted faster**: a key now stores whether its
   profile is built, so the server card counts the waiting keys with one database query instead of
   decrypting every profile. An update marks the existing keys.

@@ -6,7 +6,9 @@ the upstream scripts and the app wrote, so a container set up from it is the sam
 """
 
 import logging
+import tempfile
 from abc import ABC, abstractmethod
+from contextlib import ExitStack
 from ipaddress import IPv4Network
 from typing import Any, ClassVar
 
@@ -44,11 +46,20 @@ logger = logging.getLogger(__name__)
 
 
 def read_archive(host: RemoteHost, state: ContainerState) -> ContainerArchive:
-    """A copy of the state folders of a running container."""
-    result = host.container(state.container).sh(state.archive_command(), timeout=state.timeout)
-    if not result.ok:
-        raise SshCommandError(ErrorCode.COMMAND_FAILED, f"tar exit {result.exit_code}")
-    return ContainerArchive(state, result.stdout)
+    """A copy of the state folders of a running container, in a temporary file it owns.
+
+    The tar.gz goes from the server into the file as it comes, so the copy of a large site
+    or of the uploads is never all in the memory of the panel.
+    """
+    with ExitStack() as unless_returned:
+        copy = unless_returned.enter_context(tempfile.TemporaryFile())
+        container = host.container(state.container)
+        result = container.sh_into(state.archive_command(), copy, timeout=state.timeout)
+        if not result.ok:
+            raise SshCommandError(ErrorCode.COMMAND_FAILED, f"tar exit {result.exit_code}")
+        archive = ContainerArchive(state, copy)
+        unless_returned.pop_all()
+    return archive
 
 
 class ArchivedProtocol(ABC):
@@ -90,13 +101,15 @@ class ArchivedProtocol(ABC):
         A container with another server key or CA is not the one the panel keys belong to:
         it does not replace the copy, None is returned.
         """
-        archive = self.read(host)
-        if archive.identity() != self.identity(instance):
-            logger.warning("%s has another server identity, its backup is kept", instance.source)
-            return None
+        with self.read(host) as archive:
+            if archive.identity() != self.identity(instance):
+                logger.warning(
+                    "%s has another server identity, its backup is kept", instance.source
+                )
+                return None
+            encoded = archive.encode()
         backup, _created = ProtocolBackup.objects.update_or_create(
-            instance=instance,
-            defaults={"archive": archive.encode(), "taken_at": timezone.now()},
+            instance=instance, defaults={"archive": encoded, "taken_at": timezone.now()}
         )
         return backup
 

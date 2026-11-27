@@ -1,3 +1,4 @@
+import io
 import shlex
 
 import pytest
@@ -131,6 +132,26 @@ def test_container_scripts_run_through_docker_exec() -> None:
     assert command.startswith("sh -c ")
     assert "docker exec -i amnezia-awg2 sh -c" in command
     assert "awg show all dump" in command
+
+
+def test_container_output_goes_into_a_sink() -> None:
+    runner = FakeRunner({"docker exec": result(stdout=b"tar.gz")})
+    sink = io.BytesIO()
+
+    answer = host_for(runner).container("amnezia-tor").sh_into("tar -czf -", sink)
+
+    assert "docker exec -i amnezia-tor sh -c" in runner.last_command
+    assert (answer.ok, answer.stdout, sink.getvalue()) == (True, b"", b"tar.gz")
+
+
+def test_container_output_into_a_sink_reports_a_stopped_container() -> None:
+    stopped = result(1, stderr=b"Error response from daemon: container x is not running")
+    runner = FakeRunner({"docker exec": stopped})
+
+    with pytest.raises(DockerError) as error:
+        host_for(runner).container("amnezia-tor").sh_into("tar -czf -", io.BytesIO())
+
+    assert error.value.code == ErrorCode.CONTAINER_NOT_RUNNING
 
 
 def test_container_file_read() -> None:

@@ -62,11 +62,11 @@ class ArchiveSeed:
                 docker.shell.run(FINISH_COMMAND)
                 return
             docker.shell.run(EXTRACT_COMMAND, stdin=self._archive.data)
-            self._ctx.log(_("Files put back: %(count)d.") % {"count": len(self._archive.files())})
+            self._ctx.log(_("Files put back: %(count)d.") % {"count": len(self._archive.paths())})
             if self._own_keys:
                 docker.restart()
         database = self._archive.state.database
-        if database and database.path in self._archive.files():  # older copies have none
+        if database and database.path in self._archive.paths():  # older copies have none
             with self._ctx.step(_("Load the saved database")):
                 docker.shell.run(database.load_command(), timeout=database.load_timeout)
         docker.shell.run(FINISH_COMMAND)
@@ -160,10 +160,11 @@ class ServiceRestorer:
     def run(self) -> None:
         with self._ctx.step(_("Prepare the files from the panel")):
             copy = self._saved_copy()
-        installer = self._archived.installer(self._host, self._ctx, self._service, copy)
-        installer.seed = ArchiveSeed(copy, self._ctx, own_keys=self._archived.makes_own_keys)
-        installer.guard = self._archived.guard(self._ctx, self._service)
-        installer.run()
+        with copy:
+            installer = self._archived.installer(self._host, self._ctx, self._service, copy)
+            installer.seed = ArchiveSeed(copy, self._ctx, own_keys=self._archived.makes_own_keys)
+            installer.guard = self._archived.guard(self._ctx, self._service)
+            installer.run()
         with self._ctx.step(_("Save a copy of the server files")):
             if self._archived.save(self._service, self._host) is None:
                 raise RestoreError(RestoreErrorCode.OTHER_CONTAINER, str(self._service))
@@ -174,11 +175,21 @@ class ServiceRestorer:
             raise RestoreError(RestoreErrorCode.NO_BACKUP, str(self._service))
         try:
             copy = service_copies.archive(backup, self._archived.state)
+        except AmneziaFormatError as error:
+            raise RestoreError(RestoreErrorCode.BACKUP_INVALID, str(error)) from error
+        try:
+            self._check(copy)
+        except BaseException:
+            copy.close()
+            raise
+        taken_at = f"{timezone.localtime(backup.taken_at):%Y-%m-%d %H:%M}"
+        self._ctx.log(_("Copy of the server files from %(date)s.") % {"date": taken_at})
+        return copy
+
+    def _check(self, copy: ContainerArchive) -> None:
+        try:
             matches = self._archived.copy_matches(self._service, copy)
         except AmneziaFormatError as error:
             raise RestoreError(RestoreErrorCode.BACKUP_INVALID, str(error)) from error
         if not matches:
             raise RestoreError(RestoreErrorCode.BACKUP_OF_OTHER_SERVER, str(self._service))
-        taken_at = f"{timezone.localtime(backup.taken_at):%Y-%m-%d %H:%M}"
-        self._ctx.log(_("Copy of the server files from %(date)s.") % {"date": taken_at})
-        return copy

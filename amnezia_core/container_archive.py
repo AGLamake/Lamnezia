@@ -14,9 +14,11 @@ import hashlib
 import io
 import shlex
 import tarfile
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import PurePosixPath
+from typing import IO, Self
 
 from amnezia_core import ipsec, openvpn
 from amnezia_core.awg import AwgServerConfig
@@ -192,15 +194,31 @@ class ContainerState:
         return any(path == d or path.startswith(f"{d}/") for d in self.directories)
 
 
-@dataclass(frozen=True, repr=False)
 class ContainerArchive:
-    """A checked copy of the state folders of one container; `repr` hides the secrets in it."""
+    """A checked copy of the state folders of one container.
 
-    state: ContainerState
-    data: bytes
+    The tar.gz is bytes or a seekable binary file: a copy of the Tor site or the SFTP uploads
+    read from a server is a temporary file, and checking, hashing or sealing it reads it a
+    chunk at a time. A copy over a file owns it: close it, or use the copy as a context
+    manager. `repr` hides the secrets in it.
+    """
 
-    def __post_init__(self) -> None:
-        self.files()  # refuse a copy that is not ours before it is kept or unpacked
+    def __init__(self, state: ContainerState, data: bytes | IO[bytes]) -> None:
+        self.state = state
+        self._file = io.BytesIO(data) if isinstance(data, bytes) else data
+        self.paths()  # refuse a copy that is not ours before it is kept or unpacked
+
+    def __repr__(self) -> str:
+        return f"ContainerArchive({self.state.container})"
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        self._file.close()
 
     @classmethod
     def decode(cls, state: ContainerState, text: str) -> "ContainerArchive":
@@ -213,14 +231,29 @@ class ContainerArchive:
     def encode(self) -> str:
         return base64.b64encode(self.data).decode()
 
+    @property
+    def data(self) -> bytes:
+        """The whole tar.gz, for the small copies the database keeps and a restore sends."""
+        with self.stream() as tar_gz:
+            return tar_gz.read()
+
+    @contextmanager
+    def stream(self) -> Iterator[IO[bytes]]:
+        """The tar.gz from its start, to read a chunk at a time."""
+        self._file.seek(0)
+        yield self._file
+
+    def paths(self) -> tuple[str, ...]:
+        """Absolute paths of the files in the copy."""
+        return tuple(self._scan(lambda path: False))
+
+    def read(self, path: str) -> bytes | None:
+        """The content of one file of the copy; None if the copy has no such file."""
+        return self._scan(path.__eq__).get(path)
+
     def files(self) -> dict[str, bytes]:
         """Absolute paths and contents of the files in the copy."""
-        try:
-            with tarfile.open(fileobj=io.BytesIO(self.data), mode="r:gz") as archive:
-                return self._read(archive)
-        except (tarfile.TarError, EOFError, OSError) as error:
-            name = self.state.container
-            raise ArchiveFormatError(f"the copy of {name} cannot be read") from error
+        return {path: content or b"" for path, content in self._scan(lambda path: True).items()}
 
     def digest(self) -> str:
         """The SHA-256 of the uncompressed tar: what `fingerprint_command` prints for these files.
@@ -229,20 +262,31 @@ class ContainerArchive:
         files changed without the server reading them again.
         """
         digest = hashlib.sha256()
-        with gzip.GzipFile(fileobj=io.BytesIO(self.data)) as tar:
+        with self.stream() as tar_gz, gzip.GzipFile(fileobj=tar_gz) as tar:
             while chunk := tar.read(_DIGEST_CHUNK):
                 digest.update(chunk)
         return digest.hexdigest()
 
     def identity(self) -> str:
         """The server key or CA fingerprint the files of the copy hold."""
-        content = self.files().get(self.state.identity_path)
+        content = self.read(self.state.identity_path)
         if content is None:
             raise ArchiveFormatError(f"the copy has no {self.state.identity_path}")
         return self.state.identity(content.decode())
 
-    def _read(self, archive: tarfile.TarFile) -> dict[str, bytes]:
-        files: dict[str, bytes] = {}
+    def _scan(self, extract: Callable[[str], bool]) -> dict[str, bytes | None]:
+        """Checks every member; the files by path, with the contents `extract` asks for."""
+        try:
+            with self.stream() as tar_gz, tarfile.open(fileobj=tar_gz, mode="r:gz") as archive:
+                return self._read(archive, extract)
+        except (tarfile.TarError, EOFError, OSError) as error:
+            name = self.state.container
+            raise ArchiveFormatError(f"the copy of {name} cannot be read") from error
+
+    def _read(
+        self, archive: tarfile.TarFile, extract: Callable[[str], bool]
+    ) -> dict[str, bytes | None]:
+        files: dict[str, bytes | None] = {}
         total = 0
         for member in archive:
             path = self._checked_path(member)
@@ -250,8 +294,8 @@ class ContainerArchive:
             if total > self.state.max_size:
                 raise ArchiveTooLargeError(total)
             if member.isfile():
-                extracted = archive.extractfile(member)
-                files[path] = extracted.read() if extracted else b""
+                extracted = archive.extractfile(member) if extract(path) else None
+                files[path] = extracted.read() if extracted else None
         return files
 
     def _checked_path(self, member: tarfile.TarInfo) -> str:

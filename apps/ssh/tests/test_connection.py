@@ -63,6 +63,18 @@ def test_passes_stdin_to_command(port: int) -> None:
     assert result.stdout == payload
 
 
+def test_run_into_writes_the_output_into_the_sink_as_it_comes(port: int) -> None:
+    output = "x" * 200_000
+    sink = io.BytesIO()
+
+    with SshConnection(credentials(port), timeouts=TIMEOUTS) as connection:
+        result = connection.run_into(output, sink)
+
+    assert result.ok
+    assert result.stdout == b""
+    assert sink.getvalue() == output.encode()
+
+
 def test_returns_exit_code_and_stderr(port: int) -> None:
     with SshConnection(credentials(port), timeouts=TIMEOUTS) as connection:
         result = connection.run("exit 3")

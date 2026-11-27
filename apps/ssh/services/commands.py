@@ -1,7 +1,8 @@
 """What the rest of the SSH layer needs from a connection: run a command, start a long one."""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from typing import IO
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,17 @@ class CommandRunner(ABC):
         self, command: str, *, stdin: bytes = b"", timeout: float | None = None
     ) -> CommandResult:
         """Run the command to the end. Stdin data never appears in errors or logs."""
+
+    def run_into(
+        self, command: str, sink: IO[bytes], *, timeout: float | None = None
+    ) -> CommandResult:
+        """Run the command, writing its stdout into `sink`; the result holds no stdout.
+
+        A connection writes the output as it comes, so a large one is never all in memory.
+        """
+        result = self.run(command, timeout=timeout)
+        sink.write(result.stdout)
+        return replace(result, stdout=b"")
 
     @abstractmethod
     def start(self, command: str) -> RemoteProcess: ...

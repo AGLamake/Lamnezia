@@ -109,10 +109,11 @@ class ArchivedService(ABC):
             copy = read_archive(host, self.state)
         except ArchiveTooLargeError as error:
             return self._too_large(service, error.size)
-        if not self._runs_service(service, host, copy):
-            logger.warning("%s has other keys, its backup is kept", self.state.container)
-            return None
-        return self._kept(service, copy, fingerprint)
+        with copy:
+            if not self._runs_service(service, host, copy):
+                logger.warning("%s has other keys, its backup is kept", self.state.container)
+                return None
+            return self._kept(service, copy, fingerprint)
 
     @staticmethod
     def _kept(
@@ -152,7 +153,7 @@ class ArchivedService(ABC):
 
 
 def _copied_text(copy: ContainerArchive, path: str) -> str:
-    return copy.files().get(path, b"").decode(errors="replace")
+    return (copy.read(path) or b"").decode(errors="replace")
 
 
 class TorSiteBackup(ArchivedService):

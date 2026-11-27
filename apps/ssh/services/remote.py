@@ -2,6 +2,7 @@
 
 import shlex
 from abc import ABC, abstractmethod
+from typing import IO
 
 from apps.ssh.errors import (
     DockerError,
@@ -29,6 +30,12 @@ class ShellTarget(ABC):
     @abstractmethod
     def sh(self, script: str, *, stdin: bytes = b"", timeout: float | None = None) -> CommandResult:
         """Run a POSIX sh script as root and return the result, whatever the exit code."""
+
+    @abstractmethod
+    def sh_into(
+        self, script: str, sink: IO[bytes], *, timeout: float | None = None
+    ) -> CommandResult:
+        """As `sh`, with the stdout written into `sink` as it comes instead of kept."""
 
     def run(self, script: str, *, stdin: bytes = b"", timeout: float | None = None) -> str:
         """Run a script that must succeed; return its stdout."""
@@ -90,6 +97,11 @@ class RemoteHost(ShellTarget):
     def sh(self, script: str, *, stdin: bytes = b"", timeout: float | None = None) -> CommandResult:
         return self._runner.run(self._as_root(script), stdin=stdin, timeout=timeout)
 
+    def sh_into(
+        self, script: str, sink: IO[bytes], *, timeout: float | None = None
+    ) -> CommandResult:
+        return self._runner.run_into(self._as_root(script), sink, timeout=timeout)
+
     def client_address(self) -> str | None:
         """The address the server sees this connection come from; sudo would drop SSH_CONNECTION."""
         fields = self._runner.run('printf %s "$SSH_CONNECTION"').output.split()
@@ -128,10 +140,19 @@ class DockerContainer(ShellTarget):
         self.name = name
 
     def sh(self, script: str, *, stdin: bytes = b"", timeout: float | None = None) -> CommandResult:
-        command = shlex.join(["docker", "exec", "-i", self.name, "sh", "-c", script])
-        result = self._host.sh(command, stdin=stdin, timeout=timeout)
+        result = self._host.sh(self._exec(script), stdin=stdin, timeout=timeout)
         _raise_for_docker(result)
         return result
+
+    def sh_into(
+        self, script: str, sink: IO[bytes], *, timeout: float | None = None
+    ) -> CommandResult:
+        result = self._host.sh_into(self._exec(script), sink, timeout=timeout)
+        _raise_for_docker(result)
+        return result
+
+    def _exec(self, script: str) -> str:
+        return shlex.join(["docker", "exec", "-i", self.name, "sh", "-c", script])
 
 
 def _raise_for_docker(result: CommandResult) -> None:

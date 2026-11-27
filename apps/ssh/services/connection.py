@@ -4,9 +4,9 @@ import io
 import socket
 import time
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from types import TracebackType
-from typing import Self
+from typing import IO, Self
 
 import paramiko
 from django.conf import settings
@@ -116,13 +116,25 @@ class SshConnection(CommandRunner):
     def run(
         self, command: str, *, stdin: bytes = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdout = io.BytesIO()
+        result = self._run(command, stdin, stdout, timeout)
+        return replace(result, stdout=stdout.getvalue())
+
+    def run_into(
+        self, command: str, sink: IO[bytes], *, timeout: float | None = None
+    ) -> CommandResult:
+        return self._run(command, b"", sink, timeout)
+
+    def _run(
+        self, command: str, stdin: bytes, stdout: IO[bytes], timeout: float | None
+    ) -> CommandResult:
         timeout = timeout or self.timeouts.command
         channel = self._open_channel(command, timeout)
         try:
             if stdin:
                 channel.sendall(stdin)
             channel.shutdown_write()
-            return _collect(channel, time.monotonic() + timeout)
+            return _collect(channel, stdout, time.monotonic() + timeout)
         except (TimeoutError, OSError, paramiko.SSHException, EOFError) as exc:
             raise _command_error(exc) from exc
         finally:
@@ -216,12 +228,13 @@ def _load_private_key(creds: SshCredentials) -> paramiko.PKey:
     raise SshConnectionError(code)
 
 
-def _collect(channel: paramiko.Channel, deadline: float) -> CommandResult:
-    stdout, stderr = bytearray(), bytearray()
+def _collect(channel: paramiko.Channel, stdout: IO[bytes], deadline: float) -> CommandResult:
+    """Waits for the command, writing its stdout into `stdout`; the result holds stderr only."""
+    stderr = bytearray()
 
     def finished() -> bool:
         while channel.recv_ready():
-            stdout.extend(channel.recv(_READ_CHUNK))
+            stdout.write(channel.recv(_READ_CHUNK))
         while channel.recv_stderr_ready():
             stderr.extend(channel.recv_stderr(_READ_CHUNK))
         return channel.exit_status_ready() and not (
@@ -232,7 +245,7 @@ def _collect(channel: paramiko.Channel, deadline: float) -> CommandResult:
     exit_code = channel.recv_exit_status()
     if exit_code == -1:  # paramiko: the channel closed without an exit status
         raise SshCommandError(ErrorCode.CONNECTION_LOST, "channel closed")
-    return CommandResult(exit_code, bytes(stdout), bytes(stderr))
+    return CommandResult(exit_code, b"", bytes(stderr))
 
 
 def _poll_until(condition: Callable[[], bool], deadline: float) -> None:

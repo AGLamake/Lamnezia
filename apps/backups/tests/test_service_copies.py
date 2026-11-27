@@ -1,5 +1,7 @@
 """Service copies as files: unchanged and oversized files, old copies, interrupted restores."""
 
+import os
+import tracemalloc
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import replace
@@ -15,6 +17,7 @@ from django.test import Client
 from amnezia_core.container_archive import (
     MTPROXY_STATE,
     RESTORE_DONE,
+    SFTP_HOST_KEY_PATH,
     ArchiveFormatError,
     ArchiveTooLargeError,
     ContainerArchive,
@@ -27,9 +30,10 @@ from apps.backups.models import ServiceBackup
 from apps.backups.services import archived_services as archived_module
 from apps.backups.services import snapshot
 from apps.backups.services.archive_restore import ArchiveSeed
+from apps.backups.services.archived import read_archive
 from apps.backups.services.sealed_files import MAGIC, is_sealed, is_stream_key
 from apps.backups.services.service_copies import FOLDER, service_copies
-from apps.backups.tests.fake_containers import TarServiceHost
+from apps.backups.tests.fake_containers import TarServiceHost, pack
 from apps.backups.tests.test_services import CASES, OTHER_SECRET, installed, restore
 from apps.servers.models import Server
 from apps.ssh.services import CommandResult, RemoteHost
@@ -52,6 +56,45 @@ def test_fingerprint_command_and_its_answer() -> None:
     for output in ("", "3", f"x {'a' * 64}", "3 abc"):
         with pytest.raises(ArchiveFormatError):
             StateFingerprint.parse(output)
+
+
+def test_a_large_copy_is_sealed_and_opened_from_file_to_file(
+    media_root: Path, tmp_path: Path
+) -> None:
+    service, archived, _fake = installed(CASES["sftp"])
+    files = {SFTP_HOST_KEY_PATH: b"host key", UPLOAD: os.urandom(16 << 20)}
+    with (tmp_path / "copy.tar.gz").open("w+b") as file:
+        file.write(pack(files, archived.state.archive_command()).stdout)
+        del files
+        tracemalloc.start()
+        try:
+            with ContainerArchive(archived.state, file) as copy:
+                backup = service_copies.save(service, copy, copy.digest())
+            with service_copies.archive(backup, archived.state) as restored:
+                paths = restored.paths()
+            _, peak = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+
+    assert paths == (SFTP_HOST_KEY_PATH, UPLOAD)
+    assert peak < 4 << 20
+
+
+def test_a_read_copy_is_in_a_temporary_file_closed_after_the_save(
+    monkeypatch: pytest.MonkeyPatch, media_root: Path
+) -> None:
+    service, archived, fake = installed(CASES["sftp"])
+    copies: list[ContainerArchive] = []
+
+    def kept(*args: Any) -> ContainerArchive:
+        copies.append(read_archive(*args))
+        return copies[-1]
+
+    monkeypatch.setattr(archived_module, "read_archive", kept)
+    assert archived.save(service, fake.host(), changed=True) is not None
+
+    with pytest.raises(ValueError, match="closed"):
+        copies[0].paths()
 
 
 def test_unchanged_files_are_not_copied_again(

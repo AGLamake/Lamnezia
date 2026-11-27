@@ -4,13 +4,14 @@ A copy of the Tor site or of the SFTP uploads may be hundreds of megabytes: it i
 media folder, which the panel archive and the backup service take along, not a value in the
 database. The key of the file is kept encrypted in its row (`ServiceBackup.file_key`): the file
 alone tells nothing, and rotating LAMNEZIA_ENCRYPTION_KEY re-encrypts the key with the rest.
-The file is sealed in chunks (`sealed_files`), so sealing and opening it take a chunk of memory
-beside the copy itself. A file sealed whole by Fernet, as older panels did, is still read, and
-the next read of the service replaces it.
+The copy comes from the server as a temporary file and is sealed and opened in chunks
+(`sealed_files`), from file to file: memory holds a chunk, whatever the size of the copy. A
+file sealed whole by Fernet, as older panels did, is still read, and the next read of the
+service replaces it.
 """
 
-import io
 import tempfile
+from contextlib import ExitStack
 from functools import partial
 from uuid import uuid4
 
@@ -23,9 +24,9 @@ from django.utils import timezone
 from amnezia_core.container_archive import ArchiveFormatError, ContainerArchive, ContainerState
 from apps.backups.models import ServiceBackup
 from apps.backups.services.sealed_files import (
-    Readable,
     SealedFileError,
     StreamCipher,
+    Writable,
     generate_key,
     is_stream_key,
 )
@@ -46,7 +47,8 @@ class ServiceCopies:
         """Keep a new copy of the files whose fingerprint is `digest`."""
         key = generate_key()
         with tempfile.TemporaryFile() as sealed:
-            StreamCipher(key).seal(io.BytesIO(copy.data), sealed)
+            with copy.stream() as tar_gz:
+                StreamCipher(key).seal(tar_gz, sealed)
             sealed.seek(0)
             name = default_storage.save(f"{FOLDER}/{uuid4().hex}.bin", File(sealed))
         try:
@@ -93,25 +95,29 @@ class ServiceCopies:
         return backup
 
     def archive(self, backup: ServiceBackup, state: ContainerState) -> ContainerArchive:
-        """The saved copy, checked; ArchiveFormatError if it cannot be read."""
+        """The saved copy, checked, in a temporary file it owns; ArchiveFormatError if bad."""
         if not backup.file:
             return ContainerArchive.decode(state, backup.archive)  # saved by an older panel
+        with ExitStack() as unless_returned:
+            opened = unless_returned.enter_context(tempfile.TemporaryFile())
+            self._open(backup, opened)
+            archive = ContainerArchive(state, opened)
+            unless_returned.pop_all()
+        return archive
+
+    @staticmethod
+    def _open(backup: ServiceBackup, target: Writable) -> None:
+        """Decrypt the file of the copy into `target`."""
         try:
             with default_storage.open(str(backup.file.name), "rb") as sealed:
-                data = self._opened(backup.file_key, sealed)
+                if not is_stream_key(backup.file_key):  # sealed whole by an older panel
+                    target.write(Fernet(backup.file_key.encode()).decrypt(sealed.read()))
+                else:
+                    StreamCipher(backup.file_key).open(sealed, target)
         except SealedFileError as error:
             raise ArchiveFormatError(f"the file of the copy cannot be read: {error}") from error
         except (OSError, InvalidToken, ValueError) as error:
             raise ArchiveFormatError("the file of the copy cannot be read") from error
-        return ContainerArchive(state, data)
-
-    @staticmethod
-    def _opened(key: str, sealed: Readable) -> bytes:
-        if not is_stream_key(key):
-            return Fernet(key.encode()).decrypt(sealed.read())  # sealed whole by an older panel
-        opened = io.BytesIO()
-        StreamCipher(key).open(sealed, opened)
-        return opened.getvalue()
 
     @staticmethod
     def _locked(service: ServiceInstance) -> ServiceBackup:
