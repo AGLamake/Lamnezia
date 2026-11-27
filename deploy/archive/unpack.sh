@@ -69,9 +69,10 @@ unpack_v2() {
     salt=$(file_hex "$archive" $((body_at + 8)) 8)
     material=$(openssl "${OPENSSL_ARGS[@]}" -P -S "$salt" -pass fd:3 3<<<"$password") ||
         die "openssl cannot derive the archive key"
-    [[ $material =~ key\ *=\ *([0-9A-Fa-f]{64}) ]] && key=${BASH_REMATCH[1]} &&
-        [[ $material =~ iv\ *=\ *([0-9A-Fa-f]{32}) ]] && iv=${BASH_REMATCH[1]} ||
-        die "openssl cannot derive the archive key"
+    [[ $material =~ key\ *=\ *([0-9A-Fa-f]{64}) ]] || die "openssl cannot derive the archive key"
+    key=${BASH_REMATCH[1]}
+    [[ $material =~ iv\ *=\ *([0-9A-Fa-f]{32}) ]] || die "openssl cannot derive the archive key"
+    iv=${BASH_REMATCH[1]}
     [ "$({ hex_bytes "$key$iv"; printf check; } | sha256_hex)" = \
         "$(file_hex "$archive" "$HEADER_SIZE" "$DIGEST_SIZE")" ] ||
         die "wrong archive password"

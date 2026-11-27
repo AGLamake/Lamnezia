@@ -31,7 +31,7 @@ backup() {
 
 # Delete all but the newest $KEEP files named <kind>-<stamp><extension>.
 rotate() {
-    ls -1 | grep -E "^$1-[0-9]{8}-[0-9]{6}$2\$" | sort -r |
+    printf '%s\n' * | grep -E "^$1-[0-9]{8}-[0-9]{6}$2\$" | sort -r |
         tail -n "+$((KEEP + 1))" | while read -r name; do rm -f -- "$name"; done
 }
 

@@ -29,6 +29,7 @@ RELEASE_SIGNERS=
 LOCK_FILE=${LOCK_FILE:-/run/lock/lamnezia-deploy.lock}
 DEPLOY_SETTINGS=${DEPLOY_SETTINGS:-/etc/default/lamnezia-deploy}
 if [ -r "$DEPLOY_SETTINGS" ]; then
+    # shellcheck source=/dev/null
     . "$DEPLOY_SETTINGS"
 fi
 COMPOSE_PROJECT=${COMPOSE_PROJECT:-$(basename "$LAMNEZIA_DIR")}
@@ -311,7 +312,7 @@ release() {
     exec 9>"$LOCK_FILE"
     flock 9
     status_dir=$UPDATE_DIR/status
-    run= version= reason= previous_version= finished= work=
+    run='' version='' reason='' previous_version='' finished='' work=''
     state=running
     started=$(date +%s)
     read_request
@@ -347,7 +348,7 @@ release() {
     fi
     compose up -d --no-build || roll_back start_failed
     wait_healthy || roll_back unhealthy
-    state=done
+    state='done'
     echo "Lamnezia $version is running"
 
     if [ -n "$old_image" ] && [ "$old_image" != "$new_image" ]; then
