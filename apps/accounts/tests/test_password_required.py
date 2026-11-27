@@ -1,3 +1,4 @@
+from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
@@ -5,7 +6,7 @@ from django.test import Client
 from django.urls import reverse
 
 from apps.accounts.forms import PasswordChangeForm, SetPasswordForm
-from apps.accounts.models import User
+from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -55,6 +56,18 @@ def test_page_and_signing_out_stay_open(client: Client, held: User) -> None:
     client.post(reverse("accounts:logout"))
 
     assert "_auth_user_id" not in client.session
+
+
+def test_admin_sets_up_the_second_factor_before_the_new_password(
+    client: Client, settings: Any
+) -> None:
+    settings.REQUIRE_ADMIN_2FA = True
+    client.force_login(UserFactory(role=Role.ADMIN, must_change_password=True))
+    setup = reverse("accounts:two-factor-setup")
+
+    held_at = urlsplit(client.get(NEW_PASSWORD)["Location"]).path
+
+    assert (held_at, client.get(setup).status_code) == (setup, 200)
 
 
 def test_new_password_lets_the_user_in(client: Client, held: User) -> None:

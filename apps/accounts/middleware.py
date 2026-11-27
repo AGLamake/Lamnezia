@@ -110,8 +110,10 @@ class PasswordChangeRequiredMiddleware:
 
     The installer leaves the first administrator's password in a file on the server, so it
     stops being a secret once anyone reads that file. Goes after `TwoFactorMiddleware`: the
-    second factor comes first, the new password next.
+    second factor comes first, the new password next, so its pages stay open here.
     """
+
+    OPEN = frozenset({NEW_PASSWORD, VERIFY, SETUP, *_ALWAYS_OPEN})
 
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponseBase]) -> None:
         self.get_response = get_response
@@ -126,6 +128,6 @@ class PasswordChangeRequiredMiddleware:
         if not isinstance(user, User) or not user.must_change_password:
             return None
         view_name = request.resolver_match.view_name if request.resolver_match else ""
-        if view_name in {NEW_PASSWORD, *_ALWAYS_OPEN}:
+        if view_name in self.OPEN:
             return None
         return redirect_to_login(request.get_full_path(), reverse(NEW_PASSWORD))

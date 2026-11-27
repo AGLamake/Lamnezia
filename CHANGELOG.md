@@ -643,6 +643,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The first administrator of an unattended install could not sign in**: the required
+  two-factor setup and the required new password sent each other back and forth until the
+  browser stopped on too many redirects. The second factor comes first again, the new password
+  next. Nothing to do on upgrade.
 - **Cloud metadata block on nftables, for IPv6 and on old servers**: with Docker on its native
   nftables backend, which has no `DOCKER-USER`, the rule goes to a table of its own
   (`inet lamnezia_metadata`); the IPv6 metadata address `fd00:ec2::254` is closed too, in
