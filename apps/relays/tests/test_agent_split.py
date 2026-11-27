@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import dataclass, field
 from ipaddress import IPv4Address, IPv4Interface
 from pathlib import Path
+from typing import NoReturn
 
 import pytest
 
@@ -474,15 +475,22 @@ def test_chain_and_set_names_are_not_nft_keywords() -> None:
     assert names and not NFT_KEYWORDS.intersection(names)
 
 
+def skip_without_nft(reason: str) -> NoReturn:
+    """Skip the nft check, unless CI demands it (LAMNEZIA_REQUIRE_NFT=1) and a skip must fail."""
+    if os.environ.get("LAMNEZIA_REQUIRE_NFT") == "1":
+        pytest.fail(f"{reason}, but LAMNEZIA_REQUIRE_NFT=1")
+    pytest.skip(reason)
+
+
 def test_ruleset_passes_the_nft_syntax_check() -> None:
     nft = shutil.which("nft")
     if nft is None:
-        pytest.skip("nft is not installed")
+        skip_without_nft("nft is not installed")
     check = subprocess.run(
         [nft, "-c", "-f", "-"], input=mixed_ruleset(), capture_output=True, text=True, check=False
     )
     if "Operation not permitted" in check.stderr:
-        pytest.skip("nft needs CAP_NET_ADMIN")
+        skip_without_nft("nft needs CAP_NET_ADMIN")
     assert check.returncode == 0, check.stderr
 
 

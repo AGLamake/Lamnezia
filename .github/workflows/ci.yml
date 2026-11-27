@@ -97,6 +97,8 @@ jobs:
           --health-retries 10
     env:
       LAMNEZIA_DATABASE_URL: postgres://lamnezia:lamnezia@localhost:5432/lamnezia
+      # The relay agent's nft ruleset is checked by the real `nft -c`: no nft must fail, not skip.
+      LAMNEZIA_REQUIRE_NFT: "1"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
@@ -106,7 +108,9 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext nftables
+      # `nft -c` talks to the kernel; the capability lets the unprivileged test run it.
+      - run: sudo setcap cap_net_admin+ep /usr/sbin/nft
       - run: uv sync --locked
       - run: uv run python manage.py makemigrations --check --dry-run --settings=config.settings_test
       # Tests of the Russian interface need the compiled catalogs (*.mo are not in git).

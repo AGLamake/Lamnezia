@@ -81,6 +81,10 @@ uv run python manage.py compilemessages --ignore=.venv   # или: make compilem
 `amnezia_core`, `make format` исправляет оформление. Интеграционные SSH-тесты идут в CI против
 тестового контейнера sshd.
 
+Набор правил nft агента ретранслятора проверяет настоящий `nft -c`. Локально тест пропускается без
+`nft` или без `CAP_NET_ADMIN`; CI ставит nftables и задаёт `LAMNEZIA_REQUIRE_NFT=1`, при котором
+такой пропуск — ошибка.
+
 ## Интерфейс
 
 Страницы — серверные шаблоны Django; HTMX подменяет фрагменты, Alpine (CSP-сборка) держит мелкое

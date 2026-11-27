@@ -81,6 +81,10 @@ keys when `LAMNEZIA_SECRET_KEY` and `LAMNEZIA_ENCRYPTION_KEY` are not set.
 `amnezia_core`, `make format` fixes the formatting. SSH integration tests run in CI against a test
 sshd container.
 
+The relay agent's nft ruleset is checked by the real `nft -c`. Locally the test is skipped without
+`nft` or without `CAP_NET_ADMIN`; CI installs nftables and sets `LAMNEZIA_REQUIRE_NFT=1`, which
+turns such a skip into a failure.
+
 ## Interface
 
 Pages are server-side Django templates; HTMX swaps fragments, Alpine (the CSP build) keeps small
