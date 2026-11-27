@@ -308,7 +308,13 @@ The limits act on the clone too:
   is policed. The relay agent puts the rules back after every new clone. The agent that applies
   them comes with the relay update: use **Reinstall** on the relay card once.
 
-In forwarding everything is counted and limited on the servers, as before.
+In forwarding everything is counted and limited on the servers, as before. The speed limits of
+the group keys act where the relay sends the clients now: when it forwards them to a member other
+than the leading server (after a switch, while the leading server is down, or in the emergency
+forward of a split group), that active member gets the personal limits of the keys and the total
+limit of the leading server instead of its own. Once the clients leave it, for another member or
+for the clone in split routing, its own limits come back, so the limits act in one place only.
+The panel moves them right after the relay reading that shows the new member or mode.
 
 #### What the panel shows
 

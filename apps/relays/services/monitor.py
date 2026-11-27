@@ -14,6 +14,8 @@ A reading is also compared with the groups the panel wrote and the ports the con
 publishes, read over the same SSH connection (services/mismatch.py): a new mismatch drops the
 synced digest, so the next sync writes the relay again and starts the container on the right
 ports. A mismatch is told once when it shows and once when the relay matches again.
+A reading that moves the clients of a group to another member moves its speed limits there
+(services/speed.py).
 """
 
 import logging
@@ -52,6 +54,7 @@ from apps.relays.services.health import (
     Switched,
 )
 from apps.relays.services.mismatch import RelayMismatch
+from apps.relays.services.speed import follow_clients
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.ssh.errors import SshError
@@ -131,6 +134,7 @@ class RelayMonitor:
             group = groups.get(change.port)
             if group is not None:
                 _notify(change, group, relay, health.updated_at)
+        follow_clients(previous, health)
 
     def _failed(self, relay: Relay, code: str) -> None:
         logger.warning("relay %s state not read: %s", relay.server.name, code)

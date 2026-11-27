@@ -17,7 +17,11 @@ again, too, when the poll finds the script, the tc rules or the IFB device gone
 without the upload limits; the new operation loads the module or polices upload.
 
 The clone of a split group on its relay carries the clients of the leading instance; its
-script has the same rules (`clone_speed_script`), and the relay deployment writes it.
+script has the same rules (`clone_speed_script`), and the relay deployment writes it. Another
+member of a group that the relay forwards the clients to, in forward routing or the emergency
+forward of a split group, carries them too: `speed_stand_ins` names it, and it gets the rules and
+the total of the leading instance instead of its own. Once the clients go elsewhere it has its
+own again, so the limits move with them and act in one place only.
 """
 
 from collections import defaultdict
@@ -29,6 +33,7 @@ from django.db.models import Q
 
 from amnezia_core.containers import WgContainer
 from amnezia_core.xray import XrayContainer
+from apps.core.services.providers import Providers
 from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.instances import Instance, instances
 from apps.operations.models import Operation, OperationStatus
@@ -50,31 +55,50 @@ _UNFINISHED = (OperationStatus.PENDING, OperationStatus.RUNNING)
 RulesJson = list[dict[str, Any]]
 
 
+class SpeedStandIns(Providers[tuple[str, str]]):
+    """Instances that carry the clients of another one now, as (their source, the source of
+    the keys): the relay forwards the clients of a group to a member that is not leading.
+    Usage: ``@speed_stand_ins.register`` on a function that yields the pairs.
+    """
+
+
+speed_stand_ins = SpeedStandIns()
+
+
 class SpeedLimiter:
     def sync_all(self) -> list[Operation]:
         """Start an operation for every instance whose rules changed; return what started."""
-        wanted = self.wanted_rules()
+        stand_ins = dict(speed_stand_ins)
+        wanted = self._wanted(stand_ins)
+        found = list(instances)
+        by_source = {instance.source: instance for instance in found}
         started = []
-        for instance in instances:
+        for instance in found:
             if not isinstance(instance.container, WgContainer | XrayContainer):
                 continue  # other protocols have no speed limits
             rules = wanted.get(instance.source, [])
             params: dict[str, Any] = {"source": instance.source, "rules": rules}
             if isinstance(instance.container, WgContainer):
                 params["started"] = _container_started(instance.source)
-                total = _total_of(instance)
+                keys = stand_ins.get(instance.source, instance.source)
+                total = _total_of(by_source.get(keys, instance))
                 if total:
                     params["total"] = total.to_json()
             if self._needs_apply(instance, params):
                 started.append(launch(SPEED_APPLY, params, subject=instance.title))
         return started
 
-    @staticmethod
-    def wanted_rules() -> dict[str, RulesJson]:
+    @classmethod
+    def wanted_rules(cls) -> dict[str, RulesJson]:
         """Rules by instance source, sorted, as operation params: one per active key of a user
         whose plan limits speed, and on a WireGuard instance with a total limit one per active key.
-        A WireGuard key is found by its address, an XRay key by email.
+        A WireGuard key is found by its address, an XRay key by email. A stand-in instance has
+        the rules of the keys it carries.
         """
+        return cls._wanted(dict(speed_stand_ins))
+
+    @staticmethod
+    def _wanted(stand_ins: Mapping[str, str]) -> dict[str, RulesJson]:
         subscriptions = (
             UserLimits.objects.filter(plan__isnull=False)
             .select_related("plan")
@@ -104,6 +128,8 @@ class SpeedLimiter:
         # A peer has one address, so rules never compare by speed.
         wanted = {source: _as_json(sorted(rules)) for source, rules in peers.items()}
         wanted.update({source: _as_json(sorted(rules)) for source, rules in clients.items()})
+        for source, carried in stand_ins.items():
+            wanted[source] = wanted.get(carried, [])
         return wanted
 
     @staticmethod

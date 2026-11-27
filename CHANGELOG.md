@@ -659,6 +659,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   settings with **Reissue the keys imported from the server** told the owner of such a key both
   **Keys reissued** and **Keys must be imported again**; now only **Keys reissued** comes. Nothing
   to do on upgrade.
+- **Speed limits follow the clients of a relayed group**: they were set only on the leading
+  server and the clone, so a group forwarded to another member, after a switch or in the
+  emergency forward of a split group, had no speed limits. Now the active member gets the limits
+  of the group keys and the total limit of the leading server until the clients leave it.
+  Nothing to do on upgrade.
 - **A new server address no longer takes group keys off the relay**: the keys of a group's
   leading server behind a running relay stayed on the group address only until the server got a
   new **Host**; **Keys after the address change** moved them to the server itself. Nothing to do

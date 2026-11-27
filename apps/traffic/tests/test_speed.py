@@ -21,7 +21,7 @@ from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
 from apps.ssh.services.commands import CommandResult
 from apps.traffic.models import Shaping, TrafficSource
 from apps.traffic.services.shaping import SpeedRule, TotalSpeed
-from apps.traffic.services.speed import NO_IFB, SPEED_APPLY, SpeedLimiter
+from apps.traffic.services.speed import NO_IFB, SPEED_APPLY, SpeedLimiter, speed_stand_ins
 
 pytestmark = pytest.mark.django_db
 
@@ -383,3 +383,59 @@ def test_without_any_limit_tc_is_not_installed(
 
     assert not any("apk add" in command or "modprobe" in command for command in server.commands)
     assert "tc qdisc del" in server.files[SPEED_SCRIPT]
+
+
+@pytest.fixture
+def stand_ins() -> Iterator[dict[str, str]]:
+    """The stand-in instances the test names: their source and that of the keys they carry."""
+    found: dict[str, str] = {}
+
+    def provider() -> list[tuple[str, str]]:
+        return list(found.items())
+
+    speed_stand_ins.register(provider)
+    yield found
+    speed_stand_ins.unregister(provider)
+
+
+def operation_of(started: list[Operation], source: str) -> Operation:
+    return next(operation for operation in started if operation.params["source"] == source)
+
+
+def test_a_stand_in_gets_the_rules_and_the_total_of_the_keys_it_carries(
+    shared: FakeAwgServer,
+    admin: KeyActions,
+    django_capture_on_commit_callbacks: OnCommit,
+    sync: Callable[[], list[Operation]],
+    stand_ins: dict[str, str],
+) -> None:
+    key = issued_on(SHARED, admin, subscriber(speed=10), django_capture_on_commit_callbacks)
+    stand_ins[SOURCE] = SHARED
+
+    started = sync()
+
+    carried = operation_of(started, SOURCE).params
+    assert carried["rules"] == [rule(key, 10).to_json()]
+    assert carried["total"] == TotalSpeed(100, 20).to_json()
+    assert operation_of(started, SHARED).params["rules"] == carried["rules"]
+    assert SpeedLimiter.wanted_rules()[SOURCE] == carried["rules"]
+    assert sync() == []
+
+
+def test_limits_leave_a_stand_in_once_the_clients_go_elsewhere(
+    shared: FakeAwgServer,
+    admin: KeyActions,
+    django_capture_on_commit_callbacks: OnCommit,
+    sync: Callable[[], list[Operation]],
+    stand_ins: dict[str, str],
+) -> None:
+    issued_on(SHARED, admin, subscriber(speed=10), django_capture_on_commit_callbacks)
+    stand_ins[SOURCE] = SHARED
+    sync()
+    stand_ins.clear()
+
+    (operation,) = sync()
+
+    assert operation.params["source"] == SOURCE
+    assert operation.params["rules"] == []
+    assert "total" not in operation.params
