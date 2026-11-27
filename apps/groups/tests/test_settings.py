@@ -22,6 +22,7 @@ from apps.groups.tests.conftest import (
     server_files,
     succeeded,
 )
+from apps.keys.models import AccessKey, KeyStatus
 from apps.keys.services.profile import ServerProfile
 from apps.notifications.events import Event
 from apps.notifications.models import Notification
@@ -54,6 +55,7 @@ class Change:
         dns: tuple[str, str] | None = None,
         subnet: str = "",
         mtu: int = 0,
+        reissue: bool = False,
     ) -> Operation:
         self._leader.refresh_from_db()
         current = AwgSettings.of(self._leader)
@@ -66,7 +68,7 @@ class Change:
             mtu or current.mtu,
         )
         return self._start(
-            lambda: start_group_settings(self._group, settings, user=self._admin, reissue=False)
+            lambda: start_group_settings(self._group, settings, user=self._admin, reissue=reissue)
         )
 
 
@@ -175,6 +177,26 @@ def test_mtu_reaches_every_member_and_the_keys_of_the_group(
     assert (server_files(servers[JOINER_HOST]), server_files(servers[LEADER_HOST])) == before
     assert set(ProtocolInstance.objects.values_list("mtu", flat=True)) == {1280}
     assert not lagging(joined)
+
+
+def test_owner_of_a_reissued_key_is_told_once(
+    leader: ProtocolInstance, joined: GroupMember, change: Change
+) -> None:
+    owner = UserFactory()
+    AccessKey.objects.create(
+        source=leader.source,
+        name="laptop",
+        public_key=KeyPair.generate().public_key,
+        status=KeyStatus.ACTIVE,
+        imported=True,
+        user=owner,
+    )
+    issued_key(leader, owner)
+
+    succeeded(change(params={"Jc": "7"}, reissue=True))
+
+    (told,) = Notification.objects.filter(user=owner)
+    assert told.event == Event.KEYS_REISSUED
 
 
 def test_no_member_answers_nothing_changes(

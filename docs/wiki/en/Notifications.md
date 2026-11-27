@@ -91,7 +91,8 @@ with.
 **Keys reissued** (`keys_reissued`) comes to the owner once per reissue of their keys on one
 server — by the staff, in a batch or after a change of group or protocol settings: the old keys no
 longer connect, and the new ones are imported again. A user who reissues their own key in the
-personal account or the bot is not told.
+personal account or the bot is not told. An owner told so after a change of settings does not
+also get **Keys must be imported again** for the same change.
 
 `member_unreachable` comes once per outage of a member. The outage ends, and `member_reachable`
 comes, only after the member has answered every probe the panel saw for 5 minutes, so a member

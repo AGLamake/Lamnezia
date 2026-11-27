@@ -287,6 +287,8 @@ class InstanceSettings:
     def __init__(self, instance: ProtocolInstance, ctx: OperationContext) -> None:
         self._instance = instance
         self._ctx = ctx
+        # Owners the reissue tells by itself: one notice is enough for them.
+        self._told_by_reissue: set[User] = set()
 
     def save(self, settings: AwgSettings) -> list[AccessKey]:
         """Store the settings and update the profiles; returns the keys whose owners must know.
@@ -354,6 +356,7 @@ class InstanceSettings:
         all of them by one operation of their own.
 
         Returns the keys that get a new one; an owner who may not have keys keeps the old.
+        The reissue tells their owners, except the actor, so `tell_owners` skips them.
         """
         if actor is None:
             self._ctx.log(_("Nobody to reissue the keys on behalf of."))
@@ -362,10 +365,13 @@ class InstanceSettings:
         for key in started.kept:
             self._ctx.log(_("Key %(key)s is kept: its owner may not have keys.") % {"key": key})
         self._ctx.log(_("Keys to reissue: %(count)d.") % {"count": len(started.reissued)})
+        self._told_by_reissue |= {
+            key.user for key in started.reissued if key.user is not None and key.user != actor
+        }
         return started.reissued
 
     def tell_owners(self, keys: list[AccessKey]) -> None:
-        owners = {key.user for key in keys if key.user is not None}
+        owners = {key.user for key in keys if key.user is not None} - self._told_by_reissue
         server = self._instance.server.name
         for owner in owners:
             transaction.on_commit(partial(keys_changed.send, type(self), user=owner, server=server))

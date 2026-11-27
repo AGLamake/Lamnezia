@@ -655,6 +655,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or moderator role or linked Telegram saw `/admin`, `/overview`, `/today` and `/incidents` only
   after the bots restarted, and a member who lost the role kept them; the panel now sets the menu
   of that chat right away. Nothing to do on upgrade.
+- **One notice per owner when settings reissue the imported keys**: a change of group or protocol
+  settings with **Reissue the keys imported from the server** told the owner of such a key both
+  **Keys reissued** and **Keys must be imported again**; now only **Keys reissued** comes. Nothing
+  to do on upgrade.
 - **A new server address no longer takes group keys off the relay**: the keys of a group's
   leading server behind a running relay stayed on the group address only until the server got a
   new **Host**; **Keys after the address change** moved them to the server itself. Nothing to do

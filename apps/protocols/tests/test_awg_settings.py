@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from dataclasses import replace
 from typing import Any
 
@@ -335,6 +335,34 @@ def test_imported_keys_are_reissued_on_request(
     new = AccessKey.objects.get(source=instance.source, name="laptop", imported=False)
     assert batch.params == {"source": instance.source, "pairs": [[imported.pk, new.pk, "active"]]}
     assert not Operation.objects.filter(kind__in=["keys.issue", "keys.revoke"]).exists()
+
+
+def test_owner_of_a_reissued_key_is_told_once(
+    connected: FakeAwgServer,
+    instance: ProtocolInstance,
+    admin: User,
+    start: Start,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "apps.protocols.providers.connect", lambda server: nullcontext(connected.host())
+    )
+    owner = UserFactory()
+    AccessKey.objects.create(
+        source=instance.source,
+        name="laptop",
+        public_key=KeyPair.generate().public_key,
+        status=KeyStatus.ACTIVE,
+        imported=True,
+        user=owner,
+    )
+    issued_key(instance, owner)
+    settings = settings_of(instance, params={"Jc": "8"})
+
+    start(lambda: start_settings_change(instance, settings, admin, reissue=True))
+
+    (told,) = Notification.objects.filter(user=owner)
+    assert told.event == Event.KEYS_REISSUED
 
 
 @pytest.fixture
