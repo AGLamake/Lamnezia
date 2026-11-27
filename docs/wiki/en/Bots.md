@@ -131,8 +131,9 @@ works as well; it is sent by the panel Discord bot. A Telegram chat works the sa
 
 A linked administrator or moderator sees **Administration** in the bot menu (or types `/admin`).
 In Telegram, their own chat with the bot also lists `/admin`, `/overview`, `/today` and
-`/incidents` in the command menu; the bot sets it at its start, so a new staff member sees them
-after the bots restart. Users never see these commands.
+`/incidents` in the command menu. The menu follows by itself, without a restart of the bots, when
+the administrator or moderator role is given or taken away and when Telegram is linked or
+unlinked. Users never see these commands.
 
 - **Server summary**: each server online or not, CPU, memory and disk load, maintenance and open
   incidents.

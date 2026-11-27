@@ -651,6 +651,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The Telegram staff menu follows the role and the link**: a member who got the administrator
+  or moderator role or linked Telegram saw `/admin`, `/overview`, `/today` and `/incidents` only
+  after the bots restarted, and a member who lost the role kept them; the panel now sets the menu
+  of that chat right away. Nothing to do on upgrade.
 - **A new server address no longer takes group keys off the relay**: the keys of a group's
   leading server behind a running relay stayed on the group address only until the server got a
   new **Host**; **Keys after the address change** moved them to the server itself. Nothing to do
