@@ -7,10 +7,11 @@ import pytest
 
 from amnezia_core.relay import DomainList
 from amnezia_core.split_lists import (
+    ListMode,
     SourceFormat,
     SplitListError,
     Target,
-    direct_networks,
+    listed_networks,
 )
 
 
@@ -120,21 +121,52 @@ class TestTarget:
             Target.parse(value)
 
 
-class TestDirectNetworks:
+class TestBlacklist:
     def test_sources_and_local_entries_without_abroad_ones(self) -> None:
-        found = direct_networks(
-            nets("5.8.0.0/16", "5.9.0.0/16"), nets("10.10.0.0/24"), nets("5.8.128.0/17")
+        found = listed_networks(
+            ListMode.EXCLUDE,
+            nets("5.8.0.0/16", "5.9.0.0/16"),
+            nets("10.10.0.0/24"),
+            nets("5.8.128.0/17"),
         )
 
         assert found == nets("5.8.0.0/17", "5.9.0.0/16", "10.10.0.0/24")
 
     def test_an_abroad_network_wider_than_a_list_network_drops_it(self) -> None:
-        assert direct_networks(nets("5.8.1.0/24", "2.60.0.0/16"), (), nets("5.8.0.0/16")) == (
-            nets("2.60.0.0/16")
+        found = listed_networks(
+            ListMode.EXCLUDE, nets("5.8.1.0/24", "2.60.0.0/16"), (), nets("5.8.0.0/16")
         )
 
+        assert found == nets("2.60.0.0/16")
+
     def test_everything_abroad_leaves_nothing(self) -> None:
-        assert direct_networks(nets("5.8.0.0/16"), (), nets("0.0.0.0/0")) == ()
+        assert listed_networks(ListMode.EXCLUDE, nets("5.8.0.0/16"), (), nets("0.0.0.0/0")) == ()
+
+
+class TestWhitelist:
+    def test_sources_without_local_entries_and_with_abroad_ones(self) -> None:
+        found = listed_networks(
+            ListMode.INCLUDE,
+            nets("104.16.0.0/13", "142.250.0.0/15"),
+            nets("104.16.0.0/16"),
+            nets("10.10.0.0/24"),
+        )
+
+        assert found == nets(
+            "10.10.0.0/24", "104.17.0.0/16", "104.18.0.0/15", "104.20.0.0/14", "142.250.0.0/15"
+        )
+
+    def test_an_abroad_entry_wins_over_a_local_one(self) -> None:
+        found = listed_networks(ListMode.INCLUDE, (), nets("1.2.0.0/16"), nets("1.2.3.0/24"))
+
+        assert found == nets("1.2.3.0/24")
+
+    def test_everything_local_leaves_only_the_abroad_entries(self) -> None:
+        found = listed_networks(
+            ListMode.INCLUDE, nets("8.8.8.0/24"), nets("0.0.0.0/0"), nets("1.1.1.1/32")
+        )
+
+        assert found == nets("1.1.1.1/32")
 
 
 def test_domain_list_text_names_the_direction_of_each_domain() -> None:

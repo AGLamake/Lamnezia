@@ -8,6 +8,10 @@ updated for so many days. A failed source is tried again at the next hourly run.
 
 The relay gets the merged list of a group and its own domains as files next to the clone
 peers; the relay itself never downloads lists. A changed list asks for a relay sync.
+
+The list mode of a group says what its list holds: the networks sent straight out (blacklist)
+or the only ones sent abroad (whitelist). A list chosen for one mode sends the wrong traffic in
+the other, so a change of the mode turns the sources of the group off.
 """
 
 import math
@@ -24,11 +28,14 @@ from amnezia_core.relay import DomainList, NetworkList, domains_file, networks_f
 from amnezia_core.split_lists import (
     Direction,
     SourceFormat,
+    ListMode,
     SplitListError,
     Target,
-    direct_networks,
+    listed_networks,
 )
-from apps.groups.models import ServerGroup
+from apps.accounts.models import User
+from apps.audit.services import journal as audit
+from apps.groups.models import GroupListMode, ServerGroup
 from apps.notifications.events import Event
 from apps.notifications.services.addresses import AddressGuard
 from apps.notifications.services.channels import DeliveryError, HttpClient
@@ -46,13 +53,35 @@ DOWNLOAD_LIMIT = 64 * 1024 * 1024
 DOWNLOAD_TIMEOUT = 120
 UPDATE_INTERVAL = timedelta(days=1)
 _DAY = timedelta(days=1).total_seconds()
+LIST_MODE_ACTION = "relays.split_list_mode"
 
 
 def add_default_source(group: ServerGroup) -> SplitSource | None:
-    """The RIPE NCC delegations to Russia for a group that has no source yet."""
-    if group.split_sources.exists():
+    """The RIPE NCC delegations to Russia for a blacklist group that has no source yet; a
+    whitelist has no default."""
+    if group.list_mode != GroupListMode.EXCLUDE or group.split_sources.exists():
         return None
     return SplitSource.objects.create(group=group, url=RIPE_DELEGATIONS_URL, kind=SourceKind.RIPE)
+
+
+def change_list_mode(
+    group: ServerGroup, mode: GroupListMode, *, user: User, ip: str | None = None
+) -> int:
+    """Give the group another list mode and turn its sources off; the number turned off.
+
+    Saving the group asks for a relay sync, which writes the new mode and list. The own entries
+    stay: their direction means the same in both modes.
+    """
+    with transaction.atomic():
+        group = ServerGroup.objects.select_for_update().get(pk=group.pk)
+        if group.list_mode == mode:
+            return 0
+        turned_off = group.split_sources.filter(enabled=True).update(enabled=False)
+        group.list_mode = mode
+        group.save(update_fields=["list_mode"])
+        data = {"list_mode": str(mode), "sources_off": turned_off}
+        audit.log(LIST_MODE_ACTION, actor=user, target=group, data=data, ip=ip)
+    return turned_off
 
 
 def update_soon() -> None:
@@ -69,7 +98,7 @@ def stored_networks(text: str) -> list[IPv4Network]:
 
 @dataclass(frozen=True)
 class GroupList:
-    """What the relay routes for a split group: the networks sent straight out, merged from the
+    """What the relay routes for a split group: the networks of its list mode, merged from the
     enabled sources and the own networks, and the own domains the agent resolves."""
 
     networks: tuple[IPv4Network, ...]
@@ -91,13 +120,17 @@ class GroupList:
                 networks[entry.direction].append(target.network)
             else:
                 domains[entry.direction].append(target.domain)
-        merged = direct_networks(sources, networks[Direction.LOCAL], networks[Direction.ABROAD])
+        mode = ListMode(group.list_mode)
+        merged = listed_networks(
+            mode, sources, networks[Direction.LOCAL], networks[Direction.ABROAD]
+        )
         local, abroad = domains[Direction.LOCAL], domains[Direction.ABROAD]
         return cls(merged, DomainList(tuple(sorted(local)), tuple(sorted(abroad))))
 
     def files(self, port: int) -> dict[str, str]:
-        """The list files of the group's port; a group without a list or domains has none, and
-        the agent then sends everything but the private networks over the uplink."""
+        """The list files of the group's port; a group without a list or domains has none. The
+        agent then sends everything but the private networks over the uplink in the blacklist
+        mode, and everything straight out in the whitelist mode."""
         files = {}
         if self.networks:
             files[networks_file(port)] = NetworkList(self.networks).to_text()

@@ -12,6 +12,7 @@ from typing import NoReturn
 import pytest
 
 from amnezia_core.keys import KeyPair
+from amnezia_core.split_lists import ListMode
 from amnezia_core.relay import (
     Clone,
     GroupState,
@@ -77,7 +78,7 @@ class Unbound:
         return [process for _, process in self.started if process.code is None]
 
 
-def group(routing: Routing = Routing.SPLIT) -> RelayGroup:
+def group(routing: Routing = Routing.SPLIT, list_mode: ListMode = ListMode.EXCLUDE) -> RelayGroup:
     backends = tuple(core(backend) for backend in (A, B, C))
     if routing == Routing.FORWARD:
         return RelayGroup(PORT, backends, service())
@@ -90,11 +91,17 @@ def group(routing: Routing = Routing.SPLIT) -> RelayGroup:
     )
     clone = Clone(KeyPair.generate().private_key, IPv4Interface("10.8.1.1/24"), {"Jc": "4"})
     dns = tuple(map(IPv4Address, DNS))
-    return RelayGroup(PORT, backends, service(), routing, SplitRouting(clone, uplink, dns=dns))
+    split = SplitRouting(clone, uplink, dns=dns, list_mode=list_mode)
+    return RelayGroup(PORT, backends, service(), routing, split)
 
 
-def write_config(folder: Path, routing: Routing = Routing.SPLIT, moment: int = 1) -> None:
-    config = RelayConfig((group(routing),), failures=1, recovery=2)
+def write_config(
+    folder: Path,
+    routing: Routing = Routing.SPLIT,
+    moment: int = 1,
+    list_mode: ListMode = ListMode.EXCLUDE,
+) -> None:
+    config = RelayConfig((group(routing, list_mode),), failures=1, recovery=2)
     (folder / "config.json").write_text(config.to_json())
     os.utime(folder / "config.json", (moment, moment))
 
@@ -413,6 +420,39 @@ def test_split_ruleset_marks_all_but_the_list_and_local_networks() -> None:
     assert "dnat" not in rules
 
 
+def test_a_whitelist_group_marks_only_the_networks_of_its_list(
+    network: FakeNetwork, folder: Path
+) -> None:
+    write_config(folder, moment=2, list_mode=ListMode.INCLUDE)
+
+    started(network, folder)
+
+    listed = f'iifname "lg{PORT}" ip daddr != @local ip daddr @ru_{PORT} ip daddr != @dl_{PORT}'
+    assert listed in network.rules
+    assert f"!= @ru_{PORT}" not in network.rules
+
+
+def test_whitelist_ruleset_marks_the_list_the_abroad_domains_and_other_dns() -> None:
+    mark = f"meta mark set {MARK_BASE + PORT}"
+    route = SplitRoute(PORT, SUBNET, ("104.16.0.0/13",), ("ya.ru",), ("1.2.3.4",), DNS, "include")
+
+    rules = ruleset({}, [route])
+
+    assert f'iifname "lg{PORT}" ip daddr != @local ip daddr @da_{PORT} {mark}' in rules
+    assert (
+        f'iifname "lg{PORT}" ip daddr != @local ip daddr @ru_{PORT} ip daddr != @dl_{PORT} {mark}'
+    ) in rules
+    assert f'iifname "lg{PORT}" ip daddr != @local udp dport 53 {mark}' in rules
+    assert f'iifname "lg{PORT}" ip daddr != @local tcp dport 53 {mark}' in rules
+    assert "redirect to :53" in rules
+
+
+def test_blacklist_ruleset_does_not_mark_dns_by_port() -> None:
+    rules = ruleset({}, [SplitRoute(PORT, SUBNET, ("5.8.0.0/15",), dns=DNS)])
+
+    assert "ip daddr != @local udp dport 53" not in rules
+
+
 def test_split_ruleset_redirects_dns_only_with_addresses() -> None:
     redirect = f'iifname "lg{PORT}" ip daddr {{ 1.1.1.1, 1.0.0.1 }} udp dport 53 redirect to :53'
 
@@ -466,7 +506,8 @@ def mixed_ruleset() -> str:
     split = SplitRoute(
         9733, SUBNET, ("5.8.0.0/15",), ("93.184.215.14",), ("5.8.1.1", "5.8.1.2"), DNS
     )
-    return ruleset({PORT: A, 51820: None}, [split])
+    whitelist = SplitRoute(9734, "10.8.2.0/24", ("104.16.0.0/13",), list_mode="include")
+    return ruleset({PORT: A, 51820: None}, [split, whitelist])
 
 
 def test_chain_and_set_names_are_not_nft_keywords() -> None:
@@ -506,6 +547,29 @@ def test_settings_refuse_an_unknown_routing() -> None:
 
     with pytest.raises(ValueError, match="routing"):
         Settings.parse(text)
+
+
+def test_settings_read_the_list_mode_of_a_split_group() -> None:
+    blacklist = Settings.parse(RelayConfig((group(),)).to_json()).groups[0].split
+    whitelist = Settings.parse(RelayConfig((group(list_mode=ListMode.INCLUDE),)).to_json())
+
+    assert blacklist is not None and blacklist.list_mode == "exclude"
+    assert whitelist.groups[0].split is not None
+    assert whitelist.groups[0].split.list_mode == "include"
+
+
+def test_settings_refuse_an_unknown_list_mode() -> None:
+    text = RelayConfig((group(),)).to_json().replace('"list_mode": "exclude"', '"list_mode": "x"')
+
+    with pytest.raises(ValueError, match="list mode"):
+        Settings.parse(text)
+
+
+def test_settings_without_a_list_mode_read_a_blacklist() -> None:
+    text = RelayConfig((group(),)).to_json().replace(', "list_mode": "exclude"', "")
+
+    split = Settings.parse(text).groups[0].split
+    assert split is not None and split.list_mode == "exclude"
 
 
 def test_settings_read_a_split_group() -> None:

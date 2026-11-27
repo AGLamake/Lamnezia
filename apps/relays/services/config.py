@@ -29,6 +29,7 @@ from amnezia_core.relay import (
     speed_file,
 )
 from amnezia_core.relay import ServicePeer as CoreServicePeer
+from amnezia_core.split_lists import ListMode
 from apps.groups.models import GroupMember, GroupRouting, ServerGroup
 from apps.groups.services.replication import backends
 from apps.protocols.services.installer import ipv4_addresses
@@ -87,7 +88,12 @@ class RelayPlan:
             split = None
             if group.routing == GroupRouting.SPLIT and uplink is not None:
                 dns = tuple(map(IPv4Address, leader.instance.dns))
-                split = SplitRouting(_clone(leader), _core_peer(uplink, leader), dns=dns)
+                split = SplitRouting(
+                    _clone(leader),
+                    _core_peer(uplink, leader),
+                    dns=dns,
+                    list_mode=ListMode(group.list_mode),
+                )
             groups.append(
                 RelayGroup(
                     group.port,

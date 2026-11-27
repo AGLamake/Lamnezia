@@ -20,6 +20,13 @@ class GroupRouting(models.TextChoices):
     SPLIT = "split", _("split")
 
 
+class GroupListMode(models.TextChoices):
+    """What the network list of a split group holds (`amnezia_core.split_lists.ListMode`)."""
+
+    EXCLUDE = "exclude", _("blacklist: abroad all but the list")
+    INCLUDE = "include", _("whitelist: abroad only the list")
+
+
 class ServerGroup(models.Model):
     """Servers with one identity: the server key, [Interface], subnet, port and peers of the leader.
 
@@ -47,6 +54,9 @@ class ServerGroup(models.Model):
     )
     routing = models.CharField(
         _("routing"), max_length=16, choices=GroupRouting, default=GroupRouting.FORWARD
+    )
+    list_mode = models.CharField(
+        _("list mode"), max_length=16, choices=GroupListMode, default=GroupListMode.EXCLUDE
     )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
 

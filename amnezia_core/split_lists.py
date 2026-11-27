@@ -1,9 +1,11 @@
 """Network lists of split routing: the formats of their sources, own entries and the merge.
 
-A split group sends the networks of its list straight out of the relay and the rest over the
-uplink (docs/SPLIT.md 4.5). The panel downloads the sources, reads them here and merges them with
-the administrator's own entries: networks and domains that always go through the relay
-(`local`) or always abroad (`abroad`). The relay agent resolves the domains itself.
+A split group in the blacklist mode sends the networks of its list straight out of the relay and
+the rest over the uplink; in the whitelist mode it sends the networks of its list over the uplink
+and the rest straight out (docs/SPLIT.md 4.5). The panel downloads the sources, reads them here
+and merges them with the administrator's own entries: networks and domains that always go
+through the relay (`local`) or always abroad (`abroad`). The relay agent resolves the domains
+itself.
 
 A source is a CIDR text (one network per line), the JSON of the Amnezia application's site list
 (`lib4u`, an array of `{hostname, ip, ips}`, read as `ipSplitTunnelingController.cpp` reads it)
@@ -165,15 +167,39 @@ def _domain(value: str) -> str:
     return name
 
 
-def direct_networks(
-    sources: Iterable[IPv4Network], local: Iterable[IPv4Network], abroad: Iterable[IPv4Network]
+class ListMode(StrEnum):
+    """What the list of a split group holds: the networks sent straight out (`exclude`, a
+    blacklist of the uplink) or the only networks sent abroad (`include`, a whitelist)."""
+
+    EXCLUDE = "exclude"
+    INCLUDE = "include"
+
+
+def listed_networks(
+    mode: ListMode,
+    sources: Iterable[IPv4Network],
+    local: Iterable[IPv4Network],
+    abroad: Iterable[IPv4Network],
 ) -> tuple[IPv4Network, ...]:
-    """The networks a split group sends straight out: the sources and the own `local` networks
-    without the own `abroad` ones, merged. An abroad entry wins over a list."""
-    networks = list(collapse_addresses([*sources, *local]))
-    for excluded in collapse_addresses(abroad):
-        networks = [part for network in networks for part in _without(network, excluded)]
-    return tuple(collapse_addresses(networks))
+    """The merged list a split group routes by, with the own networks over the sources.
+
+    In the blacklist mode it is the networks sent straight out: the sources and the own `local`
+    networks without the own `abroad` ones. In the whitelist mode it is the networks sent
+    abroad: the sources without the own `local` networks, and the own `abroad` ones. An abroad
+    entry wins over a local one in both modes.
+    """
+    if mode == ListMode.EXCLUDE:
+        return _subtract([*sources, *local], abroad)
+    return tuple(collapse_addresses([*_subtract(sources, local), *abroad]))
+
+
+def _subtract(
+    networks: Iterable[IPv4Network], excluded: Iterable[IPv4Network]
+) -> tuple[IPv4Network, ...]:
+    kept = list(collapse_addresses(networks))
+    for gone in collapse_addresses(excluded):
+        kept = [part for network in kept for part in _without(network, gone)]
+    return tuple(collapse_addresses(kept))
 
 
 def _without(network: IPv4Network, excluded: IPv4Network) -> Iterable[IPv4Network]:

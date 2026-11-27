@@ -19,9 +19,11 @@ active member and none gets an answer, round after round, the state says so. It 
 on that: clients with keys the servers no longer know go unanswered by every member.
 
 A group in split routing (docs/SPLIT.md) is not forwarded: a clone of the group `lg<port>`
-listens on its port, packets to the networks of its list and to private networks leave the
-relay directly, the rest gets a firewall mark and goes over the uplink `lu<port>`, a client of
-the group on the active member. A new active member only changes the uplink's endpoint, so the
+listens on its port, packets to private networks leave the relay directly, and the list mode
+of the group decides the rest. In the blacklist mode packets to the networks of its list leave
+directly and the rest gets a firewall mark and goes over the uplink `lu<port>`, a client of the
+group on the active member; in the whitelist mode only packets to the networks of its list get
+the mark, and a DNS query the relay's resolver does not answer goes over the uplink too. A new active member only changes the uplink's endpoint, so the
 clients' sessions stay. When the uplink fails on every live member, the group falls back to
 forwarding (`Lane`). The own domains of a split group are resolved here, in the background every
 few minutes (`Domains`): their addresses go straight out or always over the uplink. The names
@@ -73,6 +75,9 @@ DEFAULT_UPLINK_CHECK = "1.1.1.1"
 FORWARD = "forward"
 SPLIT = "split"
 UPLINK_KINDS = ("awg",)
+# List modes of a split group (`amnezia_core.split_lists.ListMode`).
+EXCLUDE = "exclude"
+INCLUDE = "include"
 # Firewall mark and route table of a split group: the base plus the port, clear of the main ones.
 MARK_BASE = 0x10000
 # Never sent over the uplink: private, loopback, link-local and multicast networks.
@@ -131,6 +136,7 @@ class Split:
     uplink: Mapping[str, Any]
     kind: str = "awg"
     dns: tuple[str, ...] = ()
+    list_mode: str = EXCLUDE
 
     @property
     def subnet(self) -> str:
@@ -141,9 +147,17 @@ class Split:
         if not isinstance(data, dict):
             raise ValueError("split must be an object")
         dns = tuple(str(ipaddress.IPv4Address(address)) for address in data.get("dns", []))
-        split = cls(dict(data["clone"]), dict(data["uplink"]), str(data.get("kind", "awg")), dns)
+        split = cls(
+            dict(data["clone"]),
+            dict(data["uplink"]),
+            str(data.get("kind", "awg")),
+            dns,
+            str(data.get("list_mode", EXCLUDE)),
+        )
         if split.kind not in UPLINK_KINDS:
             raise ValueError(f"unknown uplink kind {split.kind!r}")
+        if split.list_mode not in (EXCLUDE, INCLUDE):
+            raise ValueError(f"unknown list mode {split.list_mode!r}")
         ipaddress.IPv4Interface(split.clone["address"])
         ipaddress.IPv4Interface(split.uplink["address"])
         return split
@@ -434,7 +448,8 @@ class Lane:
 
 @dataclass(frozen=True)
 class SplitRoute:
-    """The nftables part of a split group: its clone's subnet, the networks sent directly, the
+    """The nftables part of a split group: its clone's subnet, the networks of its list (sent
+    directly in the blacklist mode, the only ones over the uplink in the whitelist mode), the
     addresses of its own domains, sent directly (`local`) or always over the uplink (`abroad`),
     and the DNS addresses whose queries the relay's resolver answers."""
 
@@ -444,6 +459,7 @@ class SplitRoute:
     local: tuple[str, ...] = ()
     abroad: tuple[str, ...] = ()
     dns: tuple[str, ...] = ()
+    list_mode: str = EXCLUDE
 
 
 def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] = ()) -> str:
@@ -453,10 +469,13 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
     Declaring and deleting the table first replaces it atomically, with no moment without rules,
     and a new network list with it. Masquerade keeps the relay in the path: without it the
     member answers the client directly. A packet from a split group's clone to an address out of
-    its list, its local domains and the private networks gets the group's mark, which routes it
-    into the uplink; so does one to an address of its abroad domains, even one in the list. A
+    the private networks and its local domains gets the group's mark, which routes it into the
+    uplink, when the address is out of its list in the blacklist mode, or in its list in the
+    whitelist mode; so does one to an address of its abroad domains, whatever the list says. A
     DNS query from the clone to one of the group's DNS addresses is redirected to the relay's
     resolver; the local routing table comes before the mark, so the query stays on the relay.
+    In the whitelist mode any other DNS query is marked: plain DNS straight out of the relay
+    would show the names to the Russian network and take its answers.
     """
     ports = sorted({*routes, *(split.port for split in splits)})
     counters = [
@@ -492,11 +511,17 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
         sets += _set(f"dl_{port}", split.local)
         sets += _set(f"da_{port}", split.abroad)
         mark = f"meta mark set {MARK_BASE + port}"
+        listed = "" if split.list_mode == INCLUDE else "!= "
         marks.append(f'\t\tiifname "{clone}" ip daddr != @local ip daddr @da_{port} {mark}')
         marks.append(
-            f'\t\tiifname "{clone}" ip daddr != @local ip daddr != @ru_{port} '
+            f'\t\tiifname "{clone}" ip daddr != @local ip daddr {listed}@ru_{port} '
             f"ip daddr != @dl_{port} {mark}"
         )
+        if split.list_mode == INCLUDE:
+            marks += [
+                f'\t\tiifname "{clone}" ip daddr != @local {proto} dport {DNS_PORT} {mark}'
+                for proto in ("udp", "tcp")
+            ]
         masquerade.append(f'\t\tip saddr {split.subnet} oifname != "{clone}" masquerade')
         count.append(f'\t\tiifname "{clone}" counter name "from_clients_{port}"')
         count.append(f'\t\toifname "{clone}" counter name "to_clients_{port}"')
@@ -1093,7 +1118,8 @@ class Agent:
     def _split_route(self, port: int, split: Split, serving: bool) -> SplitRoute:
         local, abroad = self._domains.addresses(port)
         dns = split.dns if serving else ()
-        return SplitRoute(port, split.subnet, self._networks.get(port, ()), local, abroad, dns)
+        networks = self._networks.get(port, ())
+        return SplitRoute(port, split.subnet, networks, local, abroad, dns, split.list_mode)
 
     def _take_request(self) -> tuple[str, int, Backend] | None:
         """The switch request of the panel, removed so it is done once; a bad one is dropped."""

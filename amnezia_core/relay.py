@@ -8,8 +8,10 @@ also write a switch request; the agent answers it in the state file. The files a
 `version`, so an agent and a panel of different releases notice a format they do not know.
 
 A group in split routing (docs/SPLIT.md) ends the tunnel on the relay: a clone of the group
-answers its clients, Russian networks go straight out and the rest goes over the uplink, a
-client of the group on the active member. Its peers, its list of networks and its own domains,
+answers its clients and sends part of the traffic straight out, the rest over the uplink, a
+client of the group on the active member. Its list mode says which part the list names: the
+networks sent straight out (blacklist, Russian networks) or the only ones sent abroad
+(whitelist). Its peers, its list of networks and its own domains,
 which the agent resolves, come in files of their own, so issuing a key or a new list does not
 rewrite the config.
 """
@@ -25,6 +27,7 @@ from typing import Any
 from amnezia_core.awg import AWG_INTERFACE_PARAMS, SPECIAL_JUNK, Peer
 from amnezia_core.errors import AmneziaFormatError, RelayFormatError
 from amnezia_core.keys import decode_key
+from amnezia_core.split_lists import ListMode
 
 FORMAT_VERSION = 1
 # Measured in P12-01 (docs/research/relay-fallback.md): a failure is seen in about 14 s, which
@@ -163,13 +166,15 @@ class SplitRouting:
     group that the relay connects to the active member with.
 
     `dns` are the DNS addresses of the group's keys: the relay answers the clients' queries to
-    them with its own resolver, so Russian names resolve to Russian addresses.
+    them with its own resolver, so Russian names resolve to Russian addresses. `list_mode` says
+    what the network list of the group holds.
     """
 
     clone: Clone
     uplink: ServicePeer
     kind: UplinkKind = UplinkKind.AWG
     dns: tuple[IPv4Address, ...] = ()
+    list_mode: ListMode = ListMode.EXCLUDE
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -177,6 +182,7 @@ class SplitRouting:
             "clone": self.clone.to_dict(),
             "uplink": self.uplink.to_dict(),
             "dns": [str(address) for address in self.dns],
+            "list_mode": str(self.list_mode),
         }
 
     @classmethod
@@ -186,6 +192,7 @@ class SplitRouting:
             uplink=ServicePeer.from_dict(_object(data, "uplink")),
             kind=_choice(UplinkKind, data.get("kind", UplinkKind.AWG), "uplink kind"),
             dns=_addresses(data, "dns"),
+            list_mode=_choice(ListMode, data.get("list_mode", ListMode.EXCLUDE), "list mode"),
         )
 
 
@@ -347,7 +354,8 @@ class DomainList:
 
 @dataclass(frozen=True)
 class NetworkList:
-    """Networks a split group sends straight out of the relay; the rest goes over the uplink.
+    """The network list of a split group: in the blacklist mode the networks sent straight out
+    of the relay, in the whitelist mode the only ones sent over the uplink.
 
     The file has one network per line, `#` starts a comment. It is never empty: the agent
     refuses an empty or broken file and keeps the list it has.
