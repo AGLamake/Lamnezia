@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The installer checks that Docker and cron survive a reboot**: with systemd it warns when Docker
+  is not enabled at boot (`systemctl enable docker`); without systemd the list of what does not
+  work gets Docker when no init script starts it, and the certificate renewal only when cron does
+  not run. Nothing to do on upgrade.
 - **Audit log filters for the API**: **API events** shows only the `api.*` events or hides them,
   and **API token** keeps the events of a token by the beginning of its value. Nothing to do on
   upgrade.

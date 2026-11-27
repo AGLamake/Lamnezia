@@ -30,6 +30,8 @@ SUMMARY_FILE="install-summary.txt"
 # Where the timers and units go, and the folder that exists only while systemd runs the host.
 SYSTEMD_DIR=/etc/systemd/system
 SYSTEMD_RUN=/run/systemd/system
+# Without systemd an init script starts Docker at boot if a start link for it is in a runlevel here.
+RC_DIR=/etc
 DEPLOY_SCRIPT=/usr/local/sbin/lamnezia-deploy
 # What the host cannot do without systemd, each with the way to do it by hand.
 NO_SYSTEMD=()
@@ -137,6 +139,22 @@ enable_unit() {
 
 reload_nginx() {
     if has_systemd; then systemctl reload nginx; else nginx -s reload 2>/dev/null || nginx; fi
+}
+
+# The containers come back after a reboot by themselves (restart: unless-stopped) once Docker runs.
+check_docker_autostart() {
+    if has_systemd; then
+        systemctl is-enabled --quiet docker ||
+            warn "Docker does not start at boot, so the panel will not either: systemctl enable docker"
+        return 0
+    fi
+    compgen -G "$RC_DIR/rc[2-5].d/S*docker" >/dev/null ||
+        NO_SYSTEMD+=("start of Docker after a reboot, and with it the panel: enable its init script with update-rc.d docker defaults, or start dockerd from the host's startup")
+}
+
+# certbot renews the certificate from /etc/cron.d/certbot when there is no systemd timer.
+cron_runs() {
+    pgrep -x cron >/dev/null 2>&1 || pgrep -x crond >/dev/null 2>&1
 }
 
 warn_no_systemd() {
@@ -356,7 +374,8 @@ start_stack() {
 setup_nginx() {
     local site="/etc/nginx/sites-available/lamnezia"
     local bind port
-    has_systemd || NO_SYSTEMD+=("renewal of the Let's Encrypt certificate unless cron runs: certbot renews it from /etc/cron.d/certbot; without cron run certbot renew every month")
+    has_systemd || cron_runs ||
+        NO_SYSTEMD+=("renewal of the Let's Encrypt certificate, as cron does not run: start cron (apt-get install cron) or run certbot renew every month")
     bind="$(sed -n 's/^LAMNEZIA_HTTP_BIND=//p' "$DIR/.env")"
     port="${bind##*:}"
     if [ -f "$site" ]; then
@@ -546,6 +565,7 @@ main() {
     start_stack
     install_stop_timer
     install_update_unit
+    check_docker_autostart
     if [ "$PROXY" = "nginx" ]; then setup_nginx; fi
     warn_no_systemd
     if [ "$MOVING" = 1 ]; then

@@ -71,9 +71,15 @@ curl -fsSL https://raw.githubusercontent.com/AGLamake/Lamnezia/releases/install.
 | Повтор запроса сертификата, пока домен ведёт на другой сервер | когда домен поведёт сюда: `certbot --nginx -d panel.example.com --redirect` |
 | Остановка этой копии после переезда панели | когда домен поведёт на новую машину: `cd /opt/lamnezia && docker compose down` |
 | Обновление со страницы **Обновление** | `cd /opt/lamnezia && git pull && docker compose up -d --build`, см. [Обновление](Upgrade.md) |
-| Продление сертификата Let's Encrypt с nginx, если нет и cron | `certbot renew` раз в месяц |
+| Запуск Docker после перезагрузки, если его не запускает init-скрипт | `update-rc.d docker defaults` или запуск `dockerd` при старте хоста; контейнеры панели поднимутся сами |
+| Продление сертификата Let's Encrypt с nginx, если cron не запущен | запустить cron (`apt-get install cron`) или `certbot renew` раз в месяц |
 
-nginx перечитывает настройки через `nginx -s reload`, а не `systemctl`.
+nginx перечитывает настройки через `nginx -s reload`, а не `systemctl`. Строки про Docker и cron
+появляются, только если установщик не нашёл ссылку запуска Docker в `/etc/rc2.d`–`/etc/rc5.d` или
+запущенный `cron`.
+
+С systemd установщик проверяет, что Docker включён при загрузке, и иначе предупреждает:
+`systemctl enable docker`.
 
 ### Без домена
 

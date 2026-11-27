@@ -72,9 +72,15 @@ install goes on, and at the end it prints what does not work and how to do it by
 | Certificate retry while the domain points elsewhere | once the domain points here: `certbot --nginx -d panel.example.com --redirect` |
 | Stop of this copy after a panel move | once the domain points to the new machine: `cd /opt/lamnezia && docker compose down` |
 | Updates from the **Update** page | `cd /opt/lamnezia && git pull && docker compose up -d --build`, see [Upgrade](Upgrade.md) |
-| Let's Encrypt renewal with nginx, if cron does not run either | `certbot renew` once a month |
+| Docker start after a reboot, if no init script starts it | `update-rc.d docker defaults` or start `dockerd` when the host boots; the panel containers come back by themselves |
+| Let's Encrypt renewal with nginx, if cron does not run | start cron (`apt-get install cron`) or `certbot renew` once a month |
 
-nginx is reloaded with `nginx -s reload` instead of `systemctl`.
+nginx is reloaded with `nginx -s reload` instead of `systemctl`. The Docker and cron rows show
+only when the installer finds no start link of Docker in `/etc/rc2.d`–`/etc/rc5.d` or no running
+`cron`.
+
+With systemd the installer checks that Docker starts at boot and warns otherwise:
+`systemctl enable docker`.
 
 ### Without a domain
 
