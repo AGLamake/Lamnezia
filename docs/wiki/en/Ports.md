@@ -59,8 +59,11 @@ and the speeds are kept: not who measured, nor their IP address or network. Resu
 90 days are removed every day; the **Storage** section of **Statistics** shows how many there are. A test
 through the user portal goes to the same history.
 
-- The browser needs WebTransport: Chrome or Edge 100+, Firefox 125+. In Safari and older browsers
-  the page suggests iperf3.
+- The browser needs WebTransport: Chrome or Edge 100+, Firefox 125+. In a browser without
+  WebTransport the page suggests iperf3.
+- Safari supports WebTransport with a self-signed certificate since 26.4, but it has not been
+  checked against the test server of the panel. If every port shows "No answer" in Safari, test
+  again in Chrome, Edge or Firefox or with iperf3: it does not mean UDP is blocked.
 - A server at an IPv6 address cannot be measured in the browser; choose iperf3.
 - Browsers never connect to some ports, such as 22, 25, 53, 5060, 6000 and 6665–6669 (the "bad
   ports" of the Fetch Standard). The form refuses them for the browser test: measure them with
