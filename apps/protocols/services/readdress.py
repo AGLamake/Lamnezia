@@ -3,7 +3,8 @@
 vpn:// carries the server address. Keys issued by the panel keep the server half of the profile,
 so the new address is written into it and the owner imports the key again. Imported keys have no
 profile; they are reissued, if the administrator asks. A key sent to another checked address of
-the server keeps it; once that address is removed, the key moves to the server's own one.
+the server keeps it; once that address is removed, the key moves to the server's own one. Keys
+of a group's leading server behind a running relay stay on the address of the group.
 """
 
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ from django.db import transaction
 from apps.accounts.models import User
 from apps.audit.services import journal as audit
 from apps.keys.models import AccessKey, KeyStatus
+from apps.keys.services.instances import instances
 from apps.keys.services.profile import profile_host, with_host
 from apps.keys.services.reissue import KeyReissue
 from apps.protocols.models import ProtocolInstance
@@ -44,6 +46,10 @@ class ServerReaddress:
         self._addresses = set(
             server.addresses.filter(verified_at__isnull=False).values_list("host", flat=True)
         )
+        sources = set(ProtocolInstance.sources_of(server))
+        self._instances = {
+            instance.source: instance for instance in instances if instance.source in sources
+        }
         self.outdated = [
             key for key in keys if key.profile and profile_host(key.profile) != self._host(key)
         ]
@@ -58,7 +64,7 @@ class ServerReaddress:
         """Move the profiles, reissue imported keys if asked, and tell the owners."""
         for key in self.outdated:
             host = self._host(key)
-            key.address = "" if host == self.server.host else host
+            key.address = "" if host == self._own_host(key) else host
             key.profile = with_host(key.profile, host)
             key.save(update_fields=["profile", "address"])
         reissued = self._reissue(actor, ip) if reissue else []
@@ -83,7 +89,16 @@ class ServerReaddress:
         return result
 
     def _host(self, key: AccessKey) -> str:
+        """Where the key should send clients, as a newly issued key of its instance would."""
+        instance = self._instances.get(key.source)
+        if instance is not None:
+            return instance.client_host(key.address)
         return key.address if key.address in self._addresses else self.server.host
+
+    def _own_host(self, key: AccessKey) -> str:
+        """The instance's address; the server's for a key of a removed container."""
+        instance = self._instances.get(key.source)
+        return instance.host if instance is not None else self.server.host
 
     def _reissue(self, actor: User, ip: str | None) -> list[AccessKey]:
         """One operation per protocol of the server, however many keys it has."""

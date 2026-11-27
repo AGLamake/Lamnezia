@@ -31,6 +31,7 @@ from apps.notifications.events import Event
 from apps.notifications.models import Notification
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.providers import key_instances, traffic_targets
+from apps.protocols.services.readdress import ServerReaddress
 from apps.protocols.tests.awg_case import issued_key
 from apps.relays.models import Relay
 from apps.servers.models import Server
@@ -348,3 +349,19 @@ class TestDomainCheck:
         behind(group, relay_server)
 
         assert self.warnings(group, {}, [LEADER_HOST]) == []
+
+
+def test_a_new_address_of_the_leading_server_leaves_the_keys_on_the_relay(
+    group: ServerGroup, leader: ProtocolInstance, relay_server: Server
+) -> None:
+    key = issued_key(leader, UserFactory())
+    install(relay_server)
+    behind(group, relay_server, DOMAIN)
+    GroupKeyAddress(group).apply()
+    Server.objects.filter(pk=leader.server_id).update(host="198.51.100.77")
+
+    readdress = ServerReaddress(Server.objects.get(pk=leader.server_id))
+    readdress.apply(UserFactory(), reissue=False)
+
+    assert readdress.outdated == []
+    assert endpoint(key) == (DOMAIN, PORT)

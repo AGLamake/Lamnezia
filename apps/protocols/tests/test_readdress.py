@@ -175,3 +175,14 @@ def test_keys_of_a_removed_address_move_to_the_server_address(
     admin_client.post(response["Location"], {})
     assert host_of(key) == NEW
     assert key.address == ""
+
+
+def test_keys_of_a_removed_container_move_to_the_server_address(
+    instance: ProtocolInstance,
+) -> None:
+    key = issued(instance, OLD)
+    ProtocolInstance.objects.filter(pk=instance.pk).update(container_removed_at=timezone.now())
+
+    ServerReaddress(instance.server).apply(UserFactory(), reissue=False)
+
+    assert host_of(key) == NEW

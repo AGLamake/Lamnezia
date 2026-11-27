@@ -36,7 +36,8 @@ the new address in their profile at once (nothing changes on the server), and th
 from the server, which have no profile in the panel, are reissued if **Reissue the keys imported
 from the server** is ticked. The owners get the **Keys must be imported again** notification. **Later** keeps the keys as they are; the change is written to the audit log
 (`protocols.readdress`). The reissue is one `keys.reissue` operation per protocol of the server
-([Protocols](Protocols.md)).
+([Protocols](Protocols.md)). Keys of a group's leading server behind a running relay stay on the
+address of the group.
 
 A new host or SSH port also makes the panel forget the SSH fingerprint saved for the old one; the
 audit log keeps it (`servers.forget_host_key`, with the old host and port). The next check trusts

@@ -651,6 +651,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A new server address no longer takes group keys off the relay**: the keys of a group's
+  leading server behind a running relay stayed on the group address only until the server got a
+  new **Host**; **Keys after the address change** moved them to the server itself. Nothing to do
+  on upgrade.
 - **An outage of a slow server or relay could stay open for good**: a reading that waited long
   for a server, while newer readings got answers, kept the answer it started with. Its outage
   then carried an older moment than the next readings looked for: **Server answers again**
