@@ -88,15 +88,24 @@ def _report_down(server: Server) -> None:
 
 
 def _report_up(server: Server) -> None:
-    """Before an answer is kept: the outage with the same last answer ends."""
-    last_seen = _last_seen(server)
-    occurrence = f"{server.pk}:{last_seen or 'never'}"
-    report_recovery(
-        f"server_down:{occurrence}",
-        Event.SERVER_UP,
-        {"server": server.name, "host": server.host, "last_seen": last_seen},
-        key=f"server_up:{occurrence}",
-    )
+    """Before an answer is kept: every outage of the server ends.
+
+    The outage is looked up by the server, not by the last answer this reading started with:
+    a slow reading may start before the answer the outage was told with.
+    """
+    prefix = f"server_down:{server.pk}:"
+    for trouble in open_troubles(prefix):
+        moment = trouble.removeprefix(prefix)
+        report_recovery(
+            trouble,
+            Event.SERVER_UP,
+            {
+                "server": server.name,
+                "host": server.host,
+                "last_seen": "" if moment == "never" else moment,
+            },
+            key=f"server_up:{server.pk}:{moment}",
+        )
 
 
 def _report_awg3(server: Server, sample: ServerSample) -> None:

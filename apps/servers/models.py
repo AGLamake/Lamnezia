@@ -182,9 +182,17 @@ class Server(models.Model):
         return sorted(alerts, key=lambda alert: order.index(alert.resource))
 
     def record_sample(self, sample: "ServerSample") -> None:
+        """Keep the reading; only an answer moves the last answer.
+
+        A failed reading reads the last answer again instead of writing its own: a slow one
+        must neither take back the answer of a newer reading nor call the server offline.
+        """
         self.latest_sample = sample
-        if sample.answered:
-            self.last_seen_at = sample.at
+        if not sample.answered:
+            self.save(update_fields=["latest_sample"])
+            self.refresh_from_db(fields=["last_seen_at"])
+            return
+        self.last_seen_at = sample.at
         self.save(update_fields=["latest_sample", "last_seen_at"])
 
     def record_containers(self, containers: list[dict[str, object]]) -> None:

@@ -19,9 +19,10 @@ from apps.notifications.services.reminders import warn_expiring
 from apps.notifications.tests.conftest import FakeHttp
 from apps.notifications.tests.factories import ChannelFactory
 from apps.plans.tests.factories import UserLimitsFactory
+from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
 from apps.servers.tests.test_metrics import OUTPUT
-from apps.servers.tests.test_monitor import INTERVAL, FakeServers, poll
+from apps.servers.tests.test_monitor import INTERVAL, FakeServers, monitor, poll
 from apps.traffic.signals import LimitReason, limit_reached
 
 pytestmark = [pytest.mark.django_db, pytest.mark.usefixtures("commit")]
@@ -90,6 +91,40 @@ def test_a_server_answering_again_is_reported_with_nobody_told_it_was_down(
     poll(servers, server, now - INTERVAL)
 
     assert events_posted(http) == ["server_up"]
+
+
+def test_a_slow_reading_started_before_the_outage_ends_it(http: FakeHttp) -> None:
+    ChannelFactory(events=[Event.SERVER_UP])
+    server, servers = ServerFactory(), FakeServers()
+    now = timezone.now()
+    poll(servers, server, now - INTERVAL * 5)
+    slow = Server.objects.select_related("latest_sample").get(pk=server.pk)
+    poll(servers, server, now - INTERVAL * 4)
+    servers.down.add(server.name)
+    poll(servers, server, now - INTERVAL * 3)
+    servers.down.discard(server.name)
+    http.posts.clear()
+
+    monitor(servers, now - INTERVAL).poll(slow)
+    poll(servers, server, now)
+
+    assert events_posted(http) == ["server_up"]
+    assert not Trouble.objects.exists()
+
+
+def test_a_slow_failed_reading_keeps_the_answer_of_a_newer_one() -> None:
+    server, servers = ServerFactory(), FakeServers()
+    now = timezone.now()
+    poll(servers, server, now - INTERVAL * 3)
+    slow = Server.objects.select_related("latest_sample").get(pk=server.pk)
+    poll(servers, server, now - INTERVAL)
+    servers.down.add(server.name)
+
+    monitor(servers, now).poll(slow)
+
+    server.refresh_from_db()
+    assert (server.last_seen_at, server.online) == (now - INTERVAL, True)
+    assert not Trouble.objects.exists()
 
 
 def test_a_server_that_never_went_down_is_not_reported_up(http: FakeHttp) -> None:

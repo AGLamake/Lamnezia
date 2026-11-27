@@ -643,6 +643,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **An outage of a slow server or relay could stay open for good**: a reading that waited long
+  for a server, while newer readings got answers, kept the answer it started with. Its outage
+  then carried an older moment than the next readings looked for: **Server answers again**
+  never came, and the server stayed in the open troubles. A failed slow reading also wrote the
+  older answer back over the newer one. Now any answer ends every outage of the server or relay,
+  and a failed reading keeps the newest answer. An outage left open this way ends at the next
+  answer after the upgrade, with one **answers again** notice. Nothing to do on upgrade.
 - **The first administrator of an unattended install could not sign in**: the required
   two-factor setup and the required new password sent each other back and forth until the
   browser stopped on too many redirects. The second factor comes first again, the new password

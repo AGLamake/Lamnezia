@@ -270,15 +270,24 @@ def _report_down(relay: Relay) -> None:
 
 
 def _report_up(relay: Relay) -> None:
-    """Before a reading is kept: the outage with the same last reading ends."""
-    last_seen = _last_seen(relay)
-    occurrence = f"{relay.pk}:{last_seen or 'never'}"
-    report_recovery(
-        f"relay_down:{occurrence}",
-        Event.RELAY_UP,
-        {"relay": relay.server.name, "host": relay.server.host, "last_seen": last_seen},
-        key=f"relay_up:{occurrence}",
-    )
+    """Before a reading is kept: every outage of the relay ends.
+
+    The outage is looked up by the relay, not by the last reading this one started with: a
+    slow reading may start before the reading the outage was told with.
+    """
+    prefix = f"relay_down:{relay.pk}:"
+    for trouble in open_troubles(prefix):
+        moment = trouble.removeprefix(prefix)
+        report_recovery(
+            trouble,
+            Event.RELAY_UP,
+            {
+                "relay": relay.server.name,
+                "host": relay.server.host,
+                "last_seen": "" if moment == "never" else moment,
+            },
+            key=f"relay_up:{relay.pk}:{moment}",
+        )
 
 
 def _report_mismatch(relay: Relay) -> None:

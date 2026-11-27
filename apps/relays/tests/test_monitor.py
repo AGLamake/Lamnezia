@@ -13,7 +13,7 @@ from apps.groups.models import GroupMember, LagReason, ServerGroup
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT
 from apps.notifications.events import EVENTS as EVENT_TYPES
 from apps.notifications.events import Event
-from apps.notifications.models import Notification, Route
+from apps.notifications.models import Notification, Route, Trouble
 from apps.notifications.tests.factories import ChannelFactory
 from apps.relays.models import Relay
 from apps.relays.services.health import STEADY_SECONDS
@@ -406,6 +406,36 @@ def test_a_relay_answering_again_is_told_once_after_its_outage(
     assert told(Event.RELAY_UP) == [
         {"relay": relay.server.name, "host": relay.server.host, "last_seen": NOW.isoformat()}
     ]
+
+
+def test_a_slow_reading_started_before_the_outage_ends_it(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    watch = monitor(relay_fake, clock)
+    write_state(relay_fake)
+    watch.poll(relay)
+    slow = Relay.objects.select_related("server").get(pk=relay.pk)
+    clock.now = NOW + INTERVAL
+    watch.poll(relay)
+    clock.now = NOW + 4 * INTERVAL
+    RelayMonitor(INTERVAL, connect=silent, clock=clock).poll(relay)
+
+    write_state(relay_fake, at=AT + 5 * 60)
+    clock.now = NOW + 5 * INTERVAL
+    watch.poll(slow)
+    relay.refresh_from_db()
+    write_state(relay_fake, at=AT + 6 * 60)
+    clock.now = NOW + 6 * INTERVAL
+    watch.poll(relay)
+
+    assert told(Event.RELAY_UP) == [
+        {
+            "relay": relay.server.name,
+            "host": relay.server.host,
+            "last_seen": (NOW + INTERVAL).isoformat(),
+        }
+    ]
+    assert not Trouble.objects.filter(key__startswith="relay_down:").exists()
 
 
 def test_a_relay_answering_again_is_told_with_nobody_told_it_was_down(
