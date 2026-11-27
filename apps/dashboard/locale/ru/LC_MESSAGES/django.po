@@ -46,6 +46,10 @@ msgid "%(name)s does not answer"
 msgstr "%(name)s не отвечает"
 
 #, python-format
+msgid "%(name)s: %(container)s has no VPN interface, restarts did not help"
+msgstr "%(name)s: у %(container)s нет VPN-интерфейса, перезапуски не помогли"
+
+#, python-format
 msgid "%(name)s: VPS payment is due today"
 msgstr "%(name)s: оплата VPS сегодня"
 

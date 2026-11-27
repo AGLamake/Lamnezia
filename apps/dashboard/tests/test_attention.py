@@ -17,7 +17,7 @@ from apps.operations.models import Operation, OperationStatus
 from apps.operations.tests.factories import FailedOperationFactory
 from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay
-from apps.servers.models import LoadAlert, LoadResource, Server, ServerSample
+from apps.servers.models import InterfaceRepair, LoadAlert, LoadResource, Server, ServerSample
 from apps.servers.tests.factories import ServerFactory
 from apps.traffic.models import TrafficSource
 
@@ -253,3 +253,23 @@ def test_a_server_without_the_ifb_module_is_told() -> None:
 
     assert notice.text == "Germany: no ifb module, upload over the speed limits is dropped"
     assert notice.key == f"no-ifb:{policed.server_id}"
+
+
+def test_a_container_the_restarts_did_not_bring_back_needs_attention() -> None:
+    server = ServerFactory(name="Germany")
+    since = timezone.now()
+    InterfaceRepair.objects.create(
+        server=server, container="amnezia-awg2", missing_since=since, attempts=3, gave_up=True
+    )
+    InterfaceRepair.objects.create(
+        server=server, container="amnezia-awg", missing_since=since, attempts=1
+    )
+
+    [notice] = [
+        n
+        for n in Attention(UserFactory(role=Role.ADMIN)).notices()
+        if n.key.startswith("interface-repair:")
+    ]
+
+    assert notice.text == "Germany: amnezia-awg2 has no VPN interface, restarts did not help"
+    assert (notice.level, notice.url) == ("danger", reverse("servers:detail", args=[server.pk]))

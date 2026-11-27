@@ -71,6 +71,8 @@ class FakeAwgServer(FakeDebianServer):
     container_log: bytes = (
         b"Error response from daemon: configured logging driver does not support reading\n"
     )
+    # What the kernel log holds about the OOM killer, as `dmesg | grep` prints it.
+    oom_messages: bytes = b""
     server_keys: KeyPair = field(default_factory=KeyPair.generate)
     # The TSO/GSO workaround of the host: its scripts are answered by this fake.
     offload: FakeOffloadHost = field(default_factory=lambda: FakeOffloadHost(interfaces={}))
@@ -116,6 +118,8 @@ class FakeAwgServer(FakeDebianServer):
     def _on_host(self, script: str, command: str, stdin: bytes) -> CommandResult:
         if script in _OFFLOAD_SCRIPTS or any(path in script for path in _OFFLOAD_FILES):
             return self.offload.run(command, stdin=stdin)
+        if script.startswith("dmesg "):
+            return result(stdout=self.oom_messages)
         if script == "uname -r":
             return result(stdout=f"{self.kernel}\n".encode())
         if script.startswith("lsof "):

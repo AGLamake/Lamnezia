@@ -733,6 +733,9 @@ msgstr "Чтение сервиса"
 msgid "Read the settings back"
 msgstr "Чтение параметров с сервера"
 
+msgid "Read why the interface is gone"
+msgstr "Чтение причин пропажи интерфейса"
+
 #, python-format
 msgid "Reality public key: %(key)s"
 msgstr "Публичный ключ Reality: %(key)s"
@@ -1077,6 +1080,9 @@ msgstr "Первый пакет клиента, I1, выглядит как на
 
 msgid "The image was built before AmneziaWG 3.1. Move the server to 3.1 with the button on the server page: it builds a fresh image. The step log names the parameter."
 msgstr "Образ собран до AmneziaWG 3.1. Переведите сервер на 3.1 кнопкой на странице сервера: она собирает свежий образ. Какой параметр не принят — видно в журнале шага."
+
+msgid "The kernel log has no OOM messages."
+msgstr "В журнале ядра нет сообщений OOM."
 
 msgid "The keys and the backup are kept: the protocol can be restored."
 msgstr "Ключи и бэкап сохранены: протокол можно восстановить."

@@ -249,3 +249,32 @@ def test_the_restart_fails_when_the_interface_does_not_come_up(
     awg.awg_starts = False
 
     assert restart(django_capture_on_commit_callbacks).status == OperationStatus.FAILED
+
+
+def test_the_restart_logs_the_container_log_and_oom_kills_first(
+    awg: FakeAwgServer, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    awg.container_log = b"[#] awg-quick up awg0\n"
+    awg.oom_messages = b"Out of memory: Killed process 812 (amneziawg-go)\n"
+
+    log = diagnosis_first(restart(django_capture_on_commit_callbacks))
+
+    assert "awg-quick up awg0" in log
+    assert "Killed process 812 (amneziawg-go)" in log
+
+
+def test_the_restart_says_when_there_is_nothing_to_read(
+    awg: FakeAwgServer, django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    log = diagnosis_first(restart(django_capture_on_commit_callbacks))
+
+    assert "Turn on the container log in the protocol settings." in log
+    assert "The kernel log has no OOM messages." in log
+
+
+def diagnosis_first(operation: Operation) -> str:
+    """The log of the diagnosis step, which must come right before the restart."""
+    titles = [step.title for step in operation.steps.all()]
+    position = titles.index("Read why the interface is gone")
+    assert titles[position + 1] == "Restart the container"
+    return operation.steps.all()[position].log

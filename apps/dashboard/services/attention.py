@@ -26,7 +26,7 @@ from apps.guides.models import Suggestion, UsefulMaterial
 from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay
-from apps.servers.models import Server
+from apps.servers.models import InterfaceRepair, Server
 from apps.support.services.inbox import Inbox
 from apps.traffic.models import TrafficSource
 from apps.updates.services.releases import PanelRelease
@@ -167,6 +167,15 @@ class Attention:
         """Answering servers with a resource above its load threshold for a while."""
         return [server for server in self.servers if server.online and server.overloads]
 
+    def failed_repairs(self) -> list[InterfaceRepair]:
+        """Containers still without their VPN interface after every restart the monitor tried."""
+        return [
+            repair
+            for server in self.servers
+            for repair in server.interface_repairs.all()
+            if repair.gave_up
+        ]
+
     def without_ifb(self) -> list[Server]:
         """Servers whose speed limits drop upload over them: the host has no ifb module."""
         sources = TrafficSource.objects.filter(upload_policed=True).values_list("source", flat=True)
@@ -200,6 +209,17 @@ class Attention:
                 f"offline:{server.pk}",
             )
             for server in self.offline()
+        ]
+        notices += [
+            Notice(
+                "danger",
+                "server",
+                _("%(name)s: %(container)s has no VPN interface, restarts did not help")
+                % {"name": repair.server.name, "container": repair.container},
+                self._server_url(repair.server),
+                f"interface-repair:{repair.pk}",
+            )
+            for repair in self.failed_repairs()
         ]
         notices += [
             Notice(

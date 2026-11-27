@@ -47,8 +47,19 @@ SERVICE_LOGS_KIND = "protocols.service_logs"
 CHANGE_KINDS = (RESTART_KIND, STOP_KIND, REMOVE_KIND, RESTART_SERVICE_KIND, STOP_SERVICE_KIND)
 # Lines of `docker logs` shown in the operation.
 LOG_LINES = 200
+# Lines of `docker logs` and of kernel OOM messages kept before a lost interface is restarted.
+DIAGNOSIS_LINES = 30
+# Kernel messages of the OOM killer; `dmesg` needs root, which the panel's commands have.
+_OOM_LINES = (
+    "dmesg 2>/dev/null | grep -iE 'out of memory|oom-kill|killed process'"
+    f" | tail -n {DIAGNOSIS_LINES}"
+)
 # A container run with `--log-driver none` (as Amnezia does); docker logs then answers with this.
 _NO_LOG_MARKER = "does not support reading"
+_PROTOCOL_NO_LOG_HINT = gettext_lazy(
+    "The container keeps no log: it runs with logging turned off, as Amnezia starts it. "
+    "Turn on the container log in the protocol settings."
+)
 _STATE_FORMAT = (
     "{{.State.Status}} · started {{.State.StartedAt}} · exit code {{.State.ExitCode}}"
     " · restarts {{.RestartCount}}"
@@ -108,12 +119,16 @@ class ContainerControl:
         with self._ctx.step(_("Read the container state")):
             self._ctx.log(self._host.docker("inspect", "-f", _STATE_FORMAT, self._name).strip())
         with self._ctx.step(_("Read the container log")):
-            command = ["docker", "logs", "--tail", str(LOG_LINES), self._name]
-            result = self._host.sh(f"{shlex.join(command)} 2>&1")
-            if _NO_LOG_MARKER in result.output:
-                self._ctx.log(str(self.no_log_hint))
-                return
-            self._ctx.log(result.output.rstrip() or _("The log is empty."))
+            self._log_tail(LOG_LINES)
+
+    def _log_tail(self, lines: int) -> None:
+        """The last `lines` of `docker logs` into the operation log, or why there are none."""
+        command = ["docker", "logs", "--tail", str(lines), self._name]
+        result = self._host.sh(f"{shlex.join(command)} 2>&1")
+        if _NO_LOG_MARKER in result.output:
+            self._ctx.log(str(self.no_log_hint))
+            return
+        self._ctx.log(result.output.rstrip() or _("The log is empty."))
 
     def _before_down(self) -> None:
         """Nothing to save by default before the container goes down."""
@@ -132,8 +147,12 @@ class LostInterfaceRestart(ContainerControl):
     """Restart of a running WireGuard-family container whose interface is gone.
 
     The monitor asks for it; under the server lock the container is checked again, so one the
-    administrator stopped meanwhile or one that has its interface back is left as it is.
+    administrator stopped meanwhile or one that has its interface back is left as it is. Before
+    the restart the tail of the container log and the kernel's OOM messages go to the operation
+    log, since the restart wipes what is left of the reason.
     """
+
+    no_log_hint = _PROTOCOL_NO_LOG_HINT
 
     def __init__(self, host: RemoteHost, name: str, ctx: OperationContext) -> None:
         super().__init__(host, name, ctx)
@@ -145,6 +164,10 @@ class LostInterfaceRestart(ContainerControl):
                 if self._awg.state() != "running" or self._awg.awg_is_up():
                     self._ctx.log(_("The container is not running or has its interface again."))
                     return
+            with self._ctx.step(_("Read why the interface is gone")):
+                self._log_tail(DIAGNOSIS_LINES)
+                oom = self._host.sh(_OOM_LINES).output.rstrip()
+                self._ctx.log(oom or _("The kernel log has no OOM messages."))
             with self._ctx.step(_("Restart the container")):
                 self._host.docker("restart", self._name)
             with self._ctx.step(_("Wait for the VPN interface")):
@@ -154,10 +177,7 @@ class LostInterfaceRestart(ContainerControl):
 class ContainerLifecycle(ContainerControl):
     """The container of one protocol instance: a restart waits until the VPN serves again."""
 
-    no_log_hint = gettext_lazy(
-        "The container keeps no log: it runs with logging turned off, as Amnezia starts it. "
-        "Turn on the container log in the protocol settings."
-    )
+    no_log_hint = _PROTOCOL_NO_LOG_HINT
 
     def __init__(self, host: RemoteHost, instance: ProtocolInstance, ctx: OperationContext) -> None:
         super().__init__(host, instance.container, ctx)

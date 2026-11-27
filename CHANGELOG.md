@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Why a VPN interface was lost**: before the panel restarts a container without its interface,
+  the operation log keeps the tail of `docker logs` and the OOM killer lines of `dmesg`; a
+  container the restarts did not bring back is listed in **Needs attention** on the dashboard.
+  Nothing to do on upgrade.
 - **The installer checks that Docker and cron survive a reboot**: with systemd it warns when Docker
   is not enabled at boot (`systemctl enable docker`); without systemd the list of what does not
   work gets Docker when no init script starts it, and the certificate renewal only when cron does

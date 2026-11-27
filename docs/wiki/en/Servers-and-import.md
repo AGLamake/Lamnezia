@@ -158,8 +158,11 @@ background job of its own, so a server that does not answer does not delay the o
   `awg show` / `wg show` inside every running WireGuard-family container (AmneziaWG, legacy
   AmneziaWG, WireGuard). After 3 readings in a row without the interface the panel restarts the
   container with a background operation under the server lock, at most 3 times with a pause of
-  5, 10 and 20 minutes; the card shows how many restarts it took. If the interface is still not
-  back, the panel stops and says so on the card. Nothing is restarted while an operation on the
+  5, 10 and 20 minutes; the card shows how many restarts it took. Before each restart the
+  operation log keeps the last 30 lines of `docker logs` (when the container log is on) and the
+  OOM killer lines of `dmesg`, since the restart wipes the reason. If the interface is still not
+  back, the panel stops, says so on the card and keeps the container in **Needs attention**
+  until the interface returns or the container is stopped. Nothing is restarted while an operation on the
   server, its protocols or services is running, and a container stopped by the administrator is
   not touched ([Notifications](Notifications.md)).
 
