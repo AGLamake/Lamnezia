@@ -22,8 +22,8 @@ The panel keeps three kinds of backups:
 
 ## Panel archive
 
-The archive is one file `lamnezia-YYYYMMDD-HHMMSS.lamnezia` (UTC time) with everything a new panel
-needs: the database, `.env` with the secrets encryption key `LAMNEZIA_ENCRYPTION_KEY`, the `media`
+The archive is one file `lamnezia-YYYYMMDD-HHMMSS.lamnezia` (UTC time; a second archive of the
+same second gets `-2`, `-3` and so on) with everything a new panel needs: the database, `.env` with the secrets encryption key `LAMNEZIA_ENCRYPTION_KEY`, the `media`
 volume. It is encrypted with a password (AES-256, the key derived by PBKDF2-SHA256 with 600,000
 iterations) and signed with HMAC-SHA256; without the password it cannot be read. The panel does
 not keep the password: lose it and the archive cannot be restored.
@@ -164,7 +164,8 @@ bash install.sh --restore /root/lamnezia-20260101-030000.lamnezia
 The installer asks for the archive password (or takes it from `LAMNEZIA_ARCHIVE_PASSWORD`),
 decrypts and checks the archive, writes `.env` from it, restores the database and the files, starts
 the panel and sets up HTTPS as a normal install does. Sign in with the old accounts: the panel sees
-the same servers, keys and SSH credentials.
+the same servers, keys and SSH credentials. Sessions of the archive are dropped, so everyone signs
+in again; only the copy of a [panel move](Panel-move.md) keeps them.
 
 - Another domain: `--domain new.example.com`; its DNS record must point to the new server.
 - The reverse proxy is chosen anew (`--proxy`), as on install.
@@ -182,7 +183,9 @@ panel: [Restoring a protocol](#restoring-a-protocol-on-a-new-vps).
 **System → Panel archive → Restore from an archive** replaces the data of an installed panel with
 an archive: upload the file or pick one of the archives on the panel, enter its password and
 confirm. Only an administrator can do it. The restore runs in the worker as an operation; its page
-shows each step.
+shows each step. The [audit log](Audit.md) names the archive (the name of the uploaded file) and
+where the restore came from: the page, the rollback of an update or the command. The restored
+journal gets the entry **Panel restored from archive** once the restore is over.
 
 1. The password, the checksums and the version are checked. A wrong password, a damaged file or an
    archive of a newer panel stop the restore here, and nothing changes.
@@ -206,11 +209,16 @@ What to expect afterwards:
   names the panel settings of the archive's `.env` that differ from this one (names only, no
   values); copy the ones you need into `.env` and restart the panel. The domain, the port, the image
   and the keys always stay those of this installation.
+  The administrators also get the notification **Panel settings differ after a restore**
+  (`panel_settings_differ`).
 - The operation history of the archive replaces the current one; the restore operation itself is
-  kept.
+  kept. Operations the archive caught unfinished are closed as failed at once.
+- The readings of the servers are as old as the archive: a poll of every server is queued at once.
 
 An archive bigger than the upload limit of the reverse proxy (20 MB in the nginx config of the
-installer) does not pass through the page. Copy it to the server and restore it with the command:
+installer) does not pass through the page; the page names the limit
+(`LAMNEZIA_PANEL_ARCHIVE_UPLOAD_MB`, see [Configuration](Configuration.md)) and the command. Copy it
+to the server and restore it with the command:
 
 ```bash
 docker compose cp lamnezia-20260101-030000.lamnezia web:/tmp/panel.lamnezia
@@ -277,7 +285,8 @@ Of the services the panel copies what their users know them by:
 A service is copied only while its container runs with what the panel has: the same onion
 address, proxy secret or SFTP login and password. The copy of the Tor site and of SFTP may be up
 to 256 MB unpacked (64 MB for the others); a larger one is not taken, the last copy stays, and
-the **Backup** section shows a warning with the size the files take. The WordPress core is copied
+the **Backup** section shows a warning with the size the files take. A download that grows past
+the limit on the way is cut off at once rather than read to its end. The WordPress core is copied
 with the site, so a restore brings back the version the site ran, not the one of the image.
 SOCKS5 has nothing of its own to keep (its login and password are in the panel) and the DNS
 service has no state.

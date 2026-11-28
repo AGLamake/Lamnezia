@@ -2,7 +2,16 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, replace
-from typing import IO
+from typing import IO, Protocol
+
+# What a command reads: bytes, or a binary file sent from where it stands a chunk at a time.
+Stdin = bytes | IO[bytes]
+
+
+class Sink(Protocol):
+    """Where a command writes its output as it comes: a file, or a writer that checks it."""
+
+    def write(self, data: bytes, /) -> object: ...
 
 
 @dataclass(frozen=True)
@@ -47,13 +56,15 @@ class CommandRunner(ABC):
 
     @abstractmethod
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
         """Run the command to the end. Stdin data never appears in errors or logs."""
 
-    def run_into(
-        self, command: str, sink: IO[bytes], *, timeout: float | None = None
-    ) -> CommandResult:
+    def reconnect(self) -> None:
+        """Open the session again after it broke; a runner without a session has nothing to do."""
+        return
+
+    def run_into(self, command: str, sink: Sink, *, timeout: float | None = None) -> CommandResult:
         """Run the command, writing its stdout into `sink`; the result holds no stdout.
 
         A connection writes the output as it comes, so a large one is never all in memory.

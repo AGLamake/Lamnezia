@@ -6,8 +6,8 @@ from django.utils import timezone
 from amnezia_core.xray import client_fingerprint
 from apps.keys.signals import clients_adding, xray_restarting
 from apps.ssh.errors import ErrorCode, SshCommandError
-from apps.ssh.services import CommandResult, RemoteHost
-from apps.ssh.tests.fakes import TIMEOUTS, FakeRunner, result
+from apps.ssh.services import CommandResult, RemoteHost, Stdin
+from apps.ssh.tests.fakes import TIMEOUTS, FakeRunner, result, stdin_bytes
 from apps.traffic.models import TrafficCounter, TrafficHourly
 from apps.traffic.services.poller import TrafficPoller
 from apps.traffic.tests.test_poller import marker_output
@@ -32,8 +32,9 @@ def test_counters_are_read_before_the_restart() -> None:
 
 class DroppingRunner(FakeRunner):
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         if "statsquery" in command:
             raise SshCommandError(ErrorCode.COMMAND_TIMEOUT)
         return super().run(command, stdin=stdin, timeout=timeout)

@@ -31,7 +31,8 @@ PANEL_ARCHIVE_DELETE = "backups.delete_panel_archive"
 PASSWORD_PARAM = "password_token"
 # A scheduled archive takes the password from the settings in the worker, never in its params.
 SCHEDULED_PARAM = "scheduled"
-_NAME = re.compile(r"lamnezia-\d{8}-\d{6}\.lamnezia")
+# lamnezia-<UTC time>.lamnezia; a second archive started in the same second gets "-2" and on.
+_NAME = re.compile(r"lamnezia-(?P<stamp>\d{8}-\d{6})(?:-(?P<number>[2-9]|[1-9]\d+))?\.lamnezia")
 _STAGING_PREFIX = ".staging-"
 # An archive uploaded to restore waits under such a name until its operation takes it.
 UPLOAD_PREFIX = ".upload-"
@@ -72,7 +73,7 @@ class PanelArchiveFolder:
         if not self._root.is_dir():
             return []
         files = [path for path in self._root.iterdir() if _NAME.fullmatch(path.name)]
-        return sorted((_archive_file(path) for path in files), key=lambda a: a.name, reverse=True)
+        return sorted((_archive_file(path) for path in files), key=_age_order, reverse=True)
 
     def get(self, name: str) -> ArchiveFile:
         path = self._root / name
@@ -117,18 +118,34 @@ class PanelArchiveFolder:
         """
         self._root.mkdir(parents=True, exist_ok=True)
         self._remove_leftovers()
-        name = timezone.now().astimezone(UTC).strftime("lamnezia-%Y%m%d-%H%M%S.lamnezia")
-        staging = self._root / f"{_STAGING_PREFIX}{name}"
+        stamp = timezone.now().astimezone(UTC).strftime("%Y%m%d-%H%M%S")
+        staging = self._root / f"{_STAGING_PREFIX}{secrets.token_hex(8)}"
         writer = PanelArchiveWriter(
             password, dump or PostgresDump.from_settings(), os.environ, settings.MEDIA_ROOT
         )
         try:
             writer.write(staging)
             staging.chmod(0o600)
-            staging.replace(self._root / name)
+            name = self._place(staging, stamp)
         finally:
             staging.unlink(missing_ok=True)
         return self.get(name), self._prune() if prune else 0
+
+    def _place(self, staging: Path, stamp: str) -> str:
+        """Give the finished archive its name; another archive of the same second keeps its own."""
+        number = 1
+        while True:
+            name = (
+                f"lamnezia-{stamp}.lamnezia"
+                if number == 1
+                else f"lamnezia-{stamp}-{number}.lamnezia"
+            )
+            try:
+                os.link(staging, self._root / name)  # unlike a rename, never replaces a file
+            except FileExistsError:
+                number += 1
+                continue
+            return name
 
     def _remove_leftovers(self) -> None:
         """Files of an archive whose worker died; the unencrypted dump must not stay on disk."""
@@ -145,6 +162,13 @@ class PanelArchiveFolder:
         for archive in old:
             archive.path.unlink(missing_ok=True)
         return len(old)
+
+
+def _age_order(archive: ArchiveFile) -> tuple[str, int]:
+    """Sorts archives from the oldest: by their time, then by the number of the same second."""
+    match = _NAME.fullmatch(archive.name)
+    assert match is not None
+    return match["stamp"], int(match["number"] or 1)
 
 
 def _archive_file(path: Path) -> ArchiveFile:

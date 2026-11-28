@@ -56,8 +56,9 @@ MOVE_ERRORS: dict[MoveErrorCode, ErrorDescription] = {
     MoveErrorCode.LOW_DISK: ErrorDescription(
         _("The new machine has too little free disk space."),
         _(
-            "The panel needs at least 3 GB free on / for its images, database and files. Free "
-            "some space or choose a machine with a larger disk."
+            "The panel needs 3 GB free on / for its images and twice its database and files on "
+            "top: for the archive and the restored copy. Free some space or choose a machine "
+            "with a larger disk."
         ),
     ),
     MoveErrorCode.LOW_MEMORY: ErrorDescription(

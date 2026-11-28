@@ -1,9 +1,11 @@
 import json
 import os
 import tarfile
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from django.utils import timezone
 
 from apps.backups.errors import PanelArchiveError, PanelArchiveErrorCode
 from apps.backups.services.archive_cipher import ArchiveCipher
@@ -120,6 +122,23 @@ def test_the_folder_keeps_the_newest_archives(archive_settings: Path) -> None:
         "lamnezia-20260103-000000.lamnezia",
     ]
     assert (root / "notes.txt").exists()
+
+
+def test_an_archive_of_the_same_second_gets_a_number(
+    archive_settings: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    moment = datetime(2026, 11, 28, 10, 0, 0, tzinfo=UTC)
+    monkeypatch.setattr(timezone, "now", lambda: moment)
+
+    names = [folder(keep=5).create(PASSWORD, FakeDump())[0].name for _ in range(3)]
+
+    assert names == [
+        "lamnezia-20261128-100000.lamnezia",
+        "lamnezia-20261128-100000-2.lamnezia",
+        "lamnezia-20261128-100000-3.lamnezia",
+    ]
+    assert [a.name for a in folder().archives()] == names[::-1]
+    assert not list((archive_settings / "archives").glob(".staging-*"))
 
 
 def test_leftovers_of_a_dead_worker_are_removed(archive_settings: Path) -> None:

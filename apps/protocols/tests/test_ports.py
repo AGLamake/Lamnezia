@@ -39,8 +39,8 @@ from apps.protocols.services.speed_test import (
 from apps.protocols.services.xray_installer import XrayInstaller
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
-from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess
-from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result
+from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess, Stdin
+from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result, stdin_bytes
 
 type OnCommit = Callable[..., Any]
 
@@ -137,8 +137,9 @@ class FakeDockerHost(CommandRunner):
         return RemoteHost(self, TIMEOUTS)
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         if command == "id -u":
             return result(stdout=b"0\n")
         script = shlex.split(command)[2]

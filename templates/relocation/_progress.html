@@ -24,6 +24,10 @@
         </ol>
       </div>
       {% endfor %}
+      {% if move.stuck_in_queue %}
+      {% blocktranslate asvar text with minutes=queue_timeout_minutes %}No background worker took the operation yet: the queue stands. Check that the worker container runs (docker compose ps). The operation fails by itself after {{ minutes }} minutes in the queue.{% endblocktranslate %}
+      {% include "components/alert.html" with level="warning" text=text %}
+      {% endif %}
       {% include "relocation/_actions.html" %}
       {% include "relocation/_auto_stop.html" %}
     </div>

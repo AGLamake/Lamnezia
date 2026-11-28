@@ -33,7 +33,13 @@ from apps.backups.services.panel_archives import (
     ArchiveNotFoundError,
     PanelArchiveFolder,
 )
-from apps.backups.services.panel_restore import ARCHIVE_PARAM, PANEL_RESTORE_KIND, PanelRestore
+from apps.backups.services.panel_restore import (
+    ARCHIVE_PARAM,
+    PANEL_RESTORE_KIND,
+    PANEL_RESTORED_ACTION,
+    PanelRestore,
+    log_restore,
+)
 from apps.backups.services.restore import RESTORE_KIND, RESTORE_SERVICE_KIND, ProtocolRestorer
 from apps.backups.services.snapshot_restore import SNAPSHOT_RESTORE_KIND, SnapshotRestorer
 from apps.notifications.events import Event, english
@@ -42,6 +48,7 @@ from apps.operations.services.context import OperationContext
 from apps.operations.services.registry import operations
 from apps.protocols.models import ProtocolInstance, ServiceInstance
 from apps.servers.services.connection import connect
+from apps.servers.tasks import monitor_servers
 from apps.ssh.encryption import SecretCipher
 
 
@@ -111,7 +118,11 @@ def write_panel_archive(ctx: OperationContext) -> ArchiveFile:
 
 @operations.register(PANEL_RESTORE_KIND, gettext_lazy("Restore the panel from an archive"))
 def restore_panel(ctx: OperationContext) -> None:
-    """Replace the data of the panel with an archive; an uploaded archive goes afterwards."""
+    """Replace the data of the panel with an archive; an uploaded archive goes afterwards.
+
+    The journal of the archive lacks the restore: it is written there again. The readings of the
+    servers are as old as the archive, so they are taken again at once.
+    """
     password = _archive_password(ctx)
     folder = PanelArchiveFolder.from_settings()
     name = str(ctx.params.get(ARCHIVE_PARAM, ""))
@@ -122,6 +133,8 @@ def restore_panel(ctx: OperationContext) -> None:
     try:
         restore = PanelRestore(ctx, password, folder, PostgresLoad.from_settings(), os.environ)
         restore.run(archive)
+        log_restore(PANEL_RESTORED_ACTION, ctx.params, actor=ctx.user)
+        monitor_servers.delay()
     finally:
         if name.startswith(UPLOAD_PREFIX):
             archive.unlink(missing_ok=True)

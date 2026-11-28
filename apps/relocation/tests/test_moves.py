@@ -14,8 +14,10 @@ from apps.relocation.services.completion import arrive_here
 from apps.relocation.services.moves import (
     ABANDON_ACTION,
     CANCEL_KIND,
+    CHECK_KIND,
     CONFIRM_KIND,
     PREPARE_KIND,
+    SERVER_PARAM,
     abandon_move,
     cancel_move,
     confirm_move,
@@ -151,6 +153,19 @@ def test_the_page_starts_a_move_only_when_understood(client: Client) -> None:
     page = client.get("/backups/move/").content.decode()
     assert "Cancel the move" not in page
     assert server.host in page
+
+
+def test_the_page_checks_the_machine_without_starting_a_move(client: Client) -> None:
+    admin_client(client)
+    server = ServerFactory()
+
+    response = client.post("/backups/move/", {"target": server.pk, "check": "1"})
+
+    operation = Operation.objects.get()
+    assert (operation.kind, operation.params) == (CHECK_KIND, {SERVER_PARAM: server.pk})
+    assert response["Location"].endswith(f"/{operation.pk}/")
+    assert not PanelMove.objects.exists()
+    assert AuditEvent.objects.get().action == CHECK_KIND
 
 
 def test_the_page_shows_the_buttons_and_the_dns_hint(client: Client) -> None:

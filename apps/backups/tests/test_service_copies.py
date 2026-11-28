@@ -1,5 +1,6 @@
 """Service copies as files: unchanged and oversized files, old copies, interrupted restores."""
 
+import io
 import os
 import tracemalloc
 from collections.abc import Iterator
@@ -30,7 +31,7 @@ from apps.backups.models import ServiceBackup
 from apps.backups.services import archived_services as archived_module
 from apps.backups.services import snapshot
 from apps.backups.services.archive_restore import ArchiveSeed
-from apps.backups.services.archived import read_archive
+from apps.backups.services.archived import CappedSink, read_archive
 from apps.backups.services.sealed_files import MAGIC, is_sealed, is_stream_key
 from apps.backups.services.service_copies import FOLDER, service_copies
 from apps.backups.tests.fake_containers import TarServiceHost, pack
@@ -149,6 +150,32 @@ def test_too_large_files_keep_the_last_copy(
     assert backup.file.name == first.file.name
     assert backup.taken_at == first.taken_at
     assert len(copy_files(media_root)) == 1
+
+
+def test_a_download_past_the_limit_is_cut_off() -> None:
+    file = io.BytesIO()
+    sink = CappedSink(file, 10)
+    sink.write(b"12345")
+
+    with pytest.raises(ArchiveTooLargeError) as error:
+        sink.write(b"678901")
+
+    assert error.value.size == 11
+    assert file.getvalue() == b"12345"
+
+
+def test_a_changed_copy_too_large_is_not_downloaded_to_its_end(
+    monkeypatch: pytest.MonkeyPatch, media_root: Path
+) -> None:
+    service, archived, fake = installed(CASES["sftp"])
+    fake.put(SFTP_CONTAINER, UPLOAD, os.urandom(8192).hex())
+    monkeypatch.setattr(archived, "state", replace(archived.state, max_size=2048))
+
+    backup = archived.save(service, fake.host(), changed=True)
+
+    assert backup is not None
+    assert backup.too_large_size is not None and backup.too_large_size > 2048
+    assert copy_files(media_root) == []
 
 
 def test_a_read_over_the_limit_is_noted(monkeypatch: pytest.MonkeyPatch) -> None:

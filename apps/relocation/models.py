@@ -127,6 +127,14 @@ class PanelMove(models.Model):
         return status in (OperationStatus.PENDING, OperationStatus.RUNNING)
 
     @property
+    def stuck_in_queue(self) -> bool:
+        """No worker took the operation of the move for a while: the worker may not run."""
+        if self.operation is None or self.operation.status != OperationStatus.PENDING:
+            return False
+        waited = timezone.now() - self.operation.created_at
+        return waited.total_seconds() > settings.RELOCATION_QUEUE_WARNING
+
+    @property
     def can_confirm(self) -> bool:
         return self.state == MoveState.READY and not self.busy
 

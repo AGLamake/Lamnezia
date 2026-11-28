@@ -31,8 +31,13 @@ def check_domain() -> str | None:
 
 @shared_task(name=FAIL_INTERRUPTED_TASK)
 def fail_interrupted() -> int | None:
-    """Fail the move preparation whose worker died; the id of that move, if any."""
-    from apps.relocation.services.heartbeat import fail_interrupted_preparation  # noqa: PLC0415
+    """Fail the move operation whose worker died or never took it; the id of that move, if any."""
+    from django.utils import timezone  # noqa: PLC0415
 
-    move = fail_interrupted_preparation()
+    from apps.relocation.services.heartbeat import (  # noqa: PLC0415
+        fail_interrupted_move,
+        fail_unstarted_move,
+    )
+
+    move = fail_interrupted_move() or fail_unstarted_move(timezone.now())
     return move.pk if move else None

@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 
 from apps.protocols.tests.fakes import FakeDebianServer
 from apps.relays.services.container import FOLDER, NAME, VOLUME
-from apps.ssh.services import CommandResult
-from apps.ssh.tests.fakes import result
+from apps.ssh.services import CommandResult, Stdin
+from apps.ssh.tests.fakes import result, stdin_bytes
 
 _MISSING_EXIT = re.compile(r"\|\| exit (\d+);")
 _VERBS = {"ps", "build", "run", "rm", "rmi", "restart", "inspect", "exec", "volume"}
@@ -39,8 +39,9 @@ class FakeRelayServer(FakeDebianServer):
     inspect_fails: bool = False
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         argv = shlex.split(command)
         script = argv[2] if argv[:2] == ["sh", "-c"] else ""
         words = shlex.split(script) if script.startswith("docker ") else []

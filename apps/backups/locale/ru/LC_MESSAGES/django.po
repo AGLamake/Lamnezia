@@ -126,6 +126,10 @@ msgstr "Копию сохранить не удалось: ключи этого
 msgid "Old archives removed: %(count)d."
 msgstr "Удалено старых архивов: %(count)d."
 
+#, python-format
+msgid "Operations the archive caught unfinished are closed: %(count)d."
+msgstr "Закрыто операций, которые в архиве остались незавершёнными: %(count)d."
+
 msgid "Or an archive on the panel"
 msgstr "Или архив на панели"
 
@@ -454,3 +458,12 @@ msgstr "копии сервисов"
 
 msgid "size not copied"
 msgstr "размер без копии"
+
+msgid "the Panel archive page"
+msgstr "страница «Архив панели»"
+
+msgid "the command on the server"
+msgstr "команда на сервере"
+
+msgid "the rollback of an update"
+msgstr "откат обновления"

@@ -14,8 +14,9 @@ from django.conf import settings
 from django.contrib.sessions.models import Session
 from django.core.cache import cache
 from django.core.management import call_command
-from django.db import transaction
+from django.db import models, transaction
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from apps.accounts.models import User, UserSession
 from apps.audit.services import journal as audit
@@ -33,14 +34,21 @@ from apps.backups.services.panel_archive import (
 )
 from apps.backups.services.panel_archives import PASSWORD_PARAM, ArchiveFile, PanelArchiveFolder
 from apps.core.services.site_settings import cached_settings
+from apps.notifications.events import Event
+from apps.notifications.services.delivery import emit
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.operations.services.launcher import launch
+from apps.operations.services.stale import fail_if_unfinished
 from apps.ssh.encryption import SecretCipher, decrypting_also
 from apps.ssh.services.rotation import SecretRotation
 
 PANEL_RESTORE_KIND = "backups.restore_panel"
+PANEL_RESTORED_ACTION = "backups.panel_restored"
 ARCHIVE_PARAM = "archive"
+SOURCE_PARAM = "source"
+LABEL_PARAM = "label"
+_LABEL_LIMIT = 120
 ENCRYPTION_VARIABLE = "LAMNEZIA_ENCRYPTION_KEY"
 # Settings of this installation rather than of the panel: they stay and are not reported.
 MACHINE_VARIABLES = frozenset(
@@ -56,6 +64,29 @@ MACHINE_VARIABLES = frozenset(
 )
 _GATE_KEY = "backups:panel-restoring"
 _ACTIVE = (OperationStatus.PENDING, OperationStatus.RUNNING)
+
+
+class RestoreSource(models.TextChoices):
+    """Where a restore was started from, for the audit journal."""
+
+    PAGE = "page", gettext_lazy("the Panel archive page")
+    UPDATE_ROLLBACK = "update_rollback", gettext_lazy("the rollback of an update")
+    COMMAND = "command", gettext_lazy("the command on the server")
+
+
+def log_restore(
+    action: str, params: Mapping[str, object], *, actor: User | None, ip: str | None = None
+) -> None:
+    """Audit a restore with the name of its archive and where it came from."""
+    name = str(params.get(LABEL_PARAM) or params.get(ARCHIVE_PARAM, ""))
+    source = RestoreSource(str(params.get(SOURCE_PARAM, RestoreSource.PAGE)))
+    audit.log(
+        action,
+        actor=actor,
+        ip=ip,
+        data={"archive": name, "source": source.value},
+        summary=f"{name} · {source.label}",
+    )
 
 
 def panel_restoring() -> bool:
@@ -103,21 +134,33 @@ def active_restore_operation() -> Operation | None:
     )
 
 
-def start_panel_restore(
-    archive: str, password: str, user: User | None, ip: str | None
+def start_panel_restore(  # noqa: PLR0913 - where it came from is keyword-only
+    archive: str,
+    password: str,
+    user: User | None,
+    ip: str | None,
+    *,
+    source: RestoreSource,
+    label: str = "",
 ) -> Operation:
     """Queue the restore of an archive in the folder; the password travels encrypted.
 
-    While another restore waits or runs, that one is returned instead of a second.
+    `label` is the name the journal shows, e.g. of the uploaded file, when it differs from the
+    name in the folder. While another restore waits or runs, that one is returned instead.
     """
     with transaction.atomic():
         active = active_restore_operation()
         if active is not None:
             return active
         token = SecretCipher.from_settings().encrypt(password)
-        params = {ARCHIVE_PARAM: archive, PASSWORD_PARAM: token}
+        params = {
+            ARCHIVE_PARAM: archive,
+            PASSWORD_PARAM: token,
+            SOURCE_PARAM: source.value,
+            LABEL_PARAM: (label or archive)[:_LABEL_LIMIT],
+        }
         operation = launch(PANEL_RESTORE_KIND, params, user=user)
-        audit.log(PANEL_RESTORE_KIND, actor=user, ip=ip)
+        log_restore(PANEL_RESTORE_KIND, params, actor=user, ip=ip)
     return operation
 
 
@@ -221,17 +264,34 @@ class PanelRestore:
                 _("Secrets re-encrypted with the key of this panel: %(count)d.") % {"count": rows}
             )
             self._sign_out_everyone()
+            self._close_archived_operations()
             cached_settings.invalidate()
-            changed = changed_settings(env, self._environ)
-            if changed:
-                self._ctx.log(
-                    _(
-                        "These settings of the archive differ from the .env of this panel and "
-                        "stay as they are: %(names)s. Copy them into .env if needed and restart "
-                        "the panel."
-                    )
-                    % {"names": ", ".join(changed)}
-                )
+            self._report_settings(changed_settings(env, self._environ))
+
+    def _close_archived_operations(self) -> None:
+        """Jobs the archive caught under way have no worker here: they fail now, not in hours."""
+        others = Operation.objects.filter(status__in=_ACTIVE).exclude(pk=self._ctx.operation_id)
+        closed = sum(fail_if_unfinished(pk) for pk in others.values_list("pk", flat=True))
+        if closed:
+            self._ctx.log(
+                _("Operations the archive caught unfinished are closed: %(count)d.")
+                % {"count": closed}
+            )
+
+    def _report_settings(self, changed: list[str]) -> None:
+        """Settings live in .env, out of reach of the panel: the administrators hear of them."""
+        if not changed:
+            return
+        names = ", ".join(changed)
+        self._ctx.log(
+            _(
+                "These settings of the archive differ from the .env of this panel and "
+                "stay as they are: %(names)s. Copy them into .env if needed and restart "
+                "the panel."
+            )
+            % {"names": names}
+        )
+        emit(Event.PANEL_SETTINGS_DIFFER, {"names": names})
 
     def _sign_out_everyone(self) -> None:
         """Sessions of the archive could be ones revoked since; everyone signs in again."""

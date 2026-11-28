@@ -21,7 +21,8 @@ from apps.relocation.services.bundle import ready_image, write_code_bundle
 from apps.relocation.services.relay_guard import RelayGuard
 from apps.relocation.services.shutdown import STOP_REQUEST
 from apps.relocation.services.target import _START_INSTALL, TargetMachine
-from apps.ssh.services import CommandResult, RemoteHost
+from apps.ssh.errors import ErrorCode, SshCommandError
+from apps.ssh.services import CommandResult, RemoteHost, Stdin
 from apps.ssh.tests.fakes import TIMEOUTS, FakeRunner, result
 from apps.updates.services.versions import Version
 
@@ -146,6 +147,29 @@ def test_a_copy_left_by_an_earlier_move_is_removed_first(ctx: OperationContext) 
     assert "docker compose --profile caddy down" in commands(runner)
 
 
+def test_a_check_alone_only_names_the_leftover_copy(ctx: OperationContext) -> None:
+    leftover = {"[ -f /opt/lamnezia/.moving ]": result(0), "[ -e /opt/lamnezia ]": result(0)}
+    target, runner = machine(ctx, {**CLEAN, **leftover})
+
+    target.check(only_look=True)
+
+    assert "docker compose --profile caddy down" not in commands(runner)
+    assert "the move removes it" in step_log()
+
+
+def test_the_disk_must_hold_the_archive_and_the_restored_data(
+    ctx: OperationContext, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("apps.relocation.services.target.panel_data_mb", lambda: 9000)
+    target, _ = machine(ctx, CLEAN)
+
+    with pytest.raises(MoveError) as error:
+        target.check()
+
+    assert error.value.code == MoveErrorCode.LOW_DISK
+    assert error.value.detail == f"20000 MB < {3 * 1024 + 18000} MB"
+
+
 def test_without_nginx_caddy_needs_ports_80_and_443(ctx: OperationContext) -> None:
     busy = b"udp UNCONN 0 0 0.0.0.0:443 0.0.0.0:*\n"
     target, _ = machine(
@@ -190,22 +214,32 @@ def test_files_go_in_chunks_and_are_checked(
 
 
 class InstallerRunner(FakeRunner):
-    """Answers the reads of the installer's log with the given outputs, one per read."""
+    """Answers the reads of the installer's log with the given outputs, one per read.
 
-    def __init__(self, reads: list[bytes]) -> None:
+    An error among them is raised by its read, as a broken connection would.
+    """
+
+    def __init__(self, reads: list[bytes | SshCommandError]) -> None:
         super().__init__()
         self.reads = reads
+        self.reconnects = 0
 
-    def run(self, command: str, *, stdin: bytes = b"", timeout: float | None = None) -> Any:
-        if "tail -n +" in command:
-            self.calls.append((command, stdin))
-            return result(stdout=self.reads.pop(0) if self.reads else b"\n")
-        return super().run(command, stdin=stdin, timeout=timeout)
+    def run(self, command: str, *, stdin: Stdin = b"", timeout: float | None = None) -> Any:
+        if "tail -n +" not in command:
+            return super().run(command, stdin=stdin, timeout=timeout)
+        self.calls.append((command, b""))
+        answer = self.reads.pop(0) if self.reads else b"\n"
+        if isinstance(answer, SshCommandError):
+            raise answer
+        return result(stdout=answer)
+
+    def reconnect(self) -> None:
+        self.reconnects += 1
 
 
 def install(
     ctx: OperationContext,
-    reads: list[bytes],
+    reads: list[bytes | SshCommandError],
     beats: list[int] | None = None,
     image: str | None = None,
 ) -> InstallerRunner:
@@ -254,6 +288,26 @@ def test_the_installer_runs_apart_from_the_ssh_session(ctx: OperationContext) ->
     assert ("tail -n +1 " in reads[0], "tail -n +2 " in reads[1]) == (True, True)
     assert step_log() == "==> Restoring the database\n==> The copy is running\n"
     assert len(beats) == len(reads)
+
+
+def test_the_log_connects_again_and_reads_on_after_the_connection_broke(
+    ctx: OperationContext,
+) -> None:
+    lost = SshCommandError(ErrorCode.CONNECTION_LOST, "channel closed")
+    runner = install(ctx, [b"\n==> One\n", lost, b"0\n==> Two\n"])
+
+    assert runner.reconnects == 1
+    reads = [command for command, _ in runner.calls if "tail -n +" in command]
+    assert "tail -n +2 " in reads[-1]
+    assert "==> One\n" in step_log() and "==> Two\n" in step_log()
+    assert "connecting again" in step_log()
+
+
+def test_a_connection_that_stays_broken_fails_the_install(ctx: OperationContext) -> None:
+    timeout = SshCommandError(ErrorCode.COMMAND_TIMEOUT)
+
+    with pytest.raises(SshCommandError):
+        install(ctx, [timeout] * 5)
 
 
 def test_a_failed_install_shows_its_last_lines(ctx: OperationContext) -> None:
@@ -512,6 +566,15 @@ def test_the_installer_knows_the_move_option() -> None:
 
     assert "--moving) MOVING=1" in script
     assert "lamnezia-certificate.timer" in script
+
+
+def test_a_restore_signs_everyone_out_but_the_copy_of_a_move_keeps_sessions() -> None:
+    script = (settings.BASE_DIR / "install.sh").read_text(encoding="utf-8")
+    restore = script[script.index("restore_data() {") :]
+    restore = restore[: restore.index("\n}\n")]
+
+    assert 'if [ "$MOVING" = 0 ]; then' in restore
+    assert "delete from accounts_usersession; delete from django_session" in restore
 
 
 def test_the_installer_stops_the_stack_on_the_panel_request() -> None:

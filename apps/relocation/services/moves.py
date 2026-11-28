@@ -13,6 +13,8 @@ from apps.relocation.services.freeze import MOVE_KIND_PREFIX
 from apps.servers.models import Server
 
 PREPARE_KIND = "relocation.prepare"
+CHECK_KIND = "relocation.check_target"
+SERVER_PARAM = "server_id"
 CONFIRM_KIND = "relocation.confirm"
 CANCEL_KIND = "relocation.cancel"
 ABANDON_ACTION = "relocation.abandon"
@@ -45,6 +47,13 @@ def start_move(target: Server, user: User, ip: str | None, *, auto_stop: bool = 
         data = {"host": target.host, "auto_stop": auto_stop}
         audit.log(PREPARE_KIND, actor=user, target=target, data=data, ip=ip)
     return move
+
+
+def start_target_check(target: Server, user: User, ip: str | None) -> Operation:
+    """Queue the checks of the move on `target` alone: the panel stays as it is."""
+    operation = launch(CHECK_KIND, {SERVER_PARAM: target.pk}, user=user)
+    audit.log(CHECK_KIND, actor=user, target=target, ip=ip)
+    return operation
 
 
 def confirm_move(move_id: int, user: User, ip: str | None) -> PanelMove:

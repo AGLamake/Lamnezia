@@ -18,6 +18,7 @@ from django.utils import timezone
 
 from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
+from apps.audit.models import AuditEvent
 from apps.backups.errors import PanelArchiveError, PanelArchiveErrorCode
 from apps.backups.operations import restore_panel
 from apps.backups.services import panel_archive, panel_restore
@@ -33,7 +34,9 @@ from apps.backups.services.panel_archives import PASSWORD_PARAM, UPLOAD_PREFIX
 from apps.backups.services.panel_restore import (
     ARCHIVE_PARAM,
     PANEL_RESTORE_KIND,
+    PANEL_RESTORED_ACTION,
     PanelRestore,
+    RestoreSource,
     changed_settings,
     panel_restoring,
     replace_media,
@@ -41,6 +44,9 @@ from apps.backups.services.panel_restore import (
     start_panel_restore,
 )
 from apps.backups.tests.panel_archive_helpers import PASSWORD, FakeDump, folder
+from apps.notifications.events import Event
+from apps.notifications.models import Notification
+from apps.notifications.tests.factories import ChannelFactory
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.relocation.services.freeze import RESTORING_ERROR, TaskGate
@@ -54,7 +60,7 @@ pytestmark = pytest.mark.django_db
 class FakeLoad:
     """pg_restore without PostgreSQL: remembers the dumps and runs `effect` as the new data."""
 
-    def __init__(self, effect: Callable[[], None] = lambda: None, fail: bool = False) -> None:
+    def __init__(self, effect: Callable[[], object] = lambda: None, fail: bool = False) -> None:
         self.effect = effect
         self.fail = fail
         self.loaded: list[bytes] = []
@@ -222,6 +228,43 @@ def test_a_restore_saves_the_current_state_and_brings_in_the_archive(
     assert not list(Path(settings.PANEL_ARCHIVE_DIR).glob(".dump-*"))
 
 
+def test_operations_the_archive_caught_unfinished_are_closed_at_once(
+    archive_settings: Path, fake_dump: FakeDump, tmp_path: Path
+) -> None:
+    archive = make_archive(tmp_path / "panel.lmz")
+    operation = running_operation()
+
+    def archived_database() -> None:
+        Operation.objects.create(kind="backups.panel_archive", status=OperationStatus.RUNNING)
+        Operation.objects.create(kind="keys.issue")
+
+    restore(operation, FakeLoad(archived_database)).run(archive)
+
+    others = Operation.objects.exclude(pk=operation.pk)
+    assert {other.status for other in others} == {OperationStatus.FAILED}
+    assert "closed: 2" in logs(operation)
+
+
+def test_settings_that_differ_ask_the_staff_to_restart_the_panel(
+    archive_settings: Path,
+    fake_dump: FakeDump,
+    tmp_path: Path,
+    django_capture_on_commit_callbacks: Any,
+) -> None:
+    ChannelFactory(events=[Event.PANEL_SETTINGS_DIFFER])
+    archive = make_archive(tmp_path / "panel.lmz", {"LAMNEZIA_SITE_NAME": "Old"})
+
+    with django_capture_on_commit_callbacks(execute=True):
+        for environ in ({"LAMNEZIA_SITE_NAME": "Old"}, {}):
+            operation = running_operation()
+            restore(operation, FakeLoad(), environ=environ).run(archive)
+            Operation.objects.filter(pk=operation.pk).update(status=OperationStatus.SUCCEEDED)
+
+    (notice,) = Notification.objects.all()
+    assert notice.event == Event.PANEL_SETTINGS_DIFFER
+    assert notice.data == {"names": "LAMNEZIA_SITE_NAME"}
+
+
 def test_secrets_of_another_key_are_re_encrypted_with_this_one(
     archive_settings: Path, fake_dump: FakeDump, tmp_path: Path
 ) -> None:
@@ -333,7 +376,9 @@ def test_the_operation_forgets_the_password_and_removes_the_upload(
     monkeypatch.setattr(PostgresLoad, "from_settings", staticmethod(lambda: load))
     raw = make_archive(tmp_path / "panel.lmz").read_bytes()
     name = folder().upload([raw])
-    operation = start_panel_restore(name, PASSWORD, UserFactory(role=Role.ADMIN), None)
+    operation = start_panel_restore(
+        name, PASSWORD, UserFactory(role=Role.ADMIN), None, source=RestoreSource.PAGE
+    )
     assert PASSWORD not in str(operation.params)
     operation.status = OperationStatus.RUNNING
     operation.save()
@@ -345,8 +390,35 @@ def test_the_operation_forgets_the_password_and_removes_the_upload(
     assert len(load.loaded) == 1
 
 
+def test_the_restored_journal_records_the_restore_again(
+    archive_settings: Path, fake_dump: FakeDump, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    load = FakeLoad(lambda: AuditEvent.objects.all().delete())
+    monkeypatch.setattr(PostgresLoad, "from_settings", staticmethod(lambda: load))
+    polls: list[bool] = []
+    monkeypatch.setattr("apps.backups.operations.monitor_servers.delay", lambda: polls.append(True))
+    folder().create(PASSWORD, FakeDump())
+    (archive,) = folder().archives()
+    admin = UserFactory(role=Role.ADMIN, username="admin")
+    operation = start_panel_restore(
+        archive.name, PASSWORD, admin, None, source=RestoreSource.UPDATE_ROLLBACK
+    )
+    operation.status = OperationStatus.RUNNING
+    operation.save()
+
+    restore_panel(OperationContext(operation))
+
+    (event,) = AuditEvent.objects.all()
+    assert event.action == PANEL_RESTORED_ACTION
+    assert event.actor_name == "admin"
+    assert event.data == {"archive": archive.name, "source": "update_rollback"}
+    assert polls == [True]
+
+
 def test_a_missing_archive_fails_the_operation(archive_settings: Path) -> None:
-    operation = start_panel_restore(f"{UPLOAD_PREFIX}{'0' * 32}", PASSWORD, None, None)
+    operation = start_panel_restore(
+        f"{UPLOAD_PREFIX}{'0' * 32}", PASSWORD, None, None, source=RestoreSource.COMMAND
+    )
 
     with pytest.raises(PanelArchiveError) as error:
         restore_panel(OperationContext(operation))
@@ -355,9 +427,9 @@ def test_a_missing_archive_fails_the_operation(archive_settings: Path) -> None:
 
 
 def test_one_restore_runs_at_a_time(archive_settings: Path) -> None:
-    first = start_panel_restore("a", PASSWORD, None, None)
+    first = start_panel_restore("a", PASSWORD, None, None, source=RestoreSource.COMMAND)
 
-    assert start_panel_restore("b", PASSWORD, None, None) == first
+    assert start_panel_restore("b", PASSWORD, None, None, source=RestoreSource.COMMAND) == first
 
 
 def test_the_page_uploads_the_archive_and_starts_the_restore(
@@ -377,6 +449,23 @@ def test_the_page_uploads_the_archive_and_starts_the_restore(
     name = operation.params[ARCHIVE_PARAM]
     assert name.startswith(UPLOAD_PREFIX)
     assert (Path(settings.PANEL_ARCHIVE_DIR) / name).read_bytes() == raw
+    event = AuditEvent.objects.get(action=PANEL_RESTORE_KIND)
+    assert event.data == {"archive": "panel.lmz", "source": "page"}
+    assert event.target_repr.startswith("panel.lmz · ")
+
+
+def test_the_page_names_the_upload_limit_and_the_command(
+    client: Client, archive_settings: Path, settings: Any
+) -> None:
+    client.force_login(UserFactory(role=Role.ADMIN))
+    settings.PANEL_ARCHIVE_UPLOAD_MB = 20
+
+    page = client.get("/backups/panel/").content.decode()
+    assert "up to 20 MB" in page
+    assert "panel_archive restore /tmp/panel.lamnezia" in page
+
+    settings.PANEL_ARCHIVE_UPLOAD_MB = 0
+    assert "panel_archive restore" not in client.get("/backups/panel/").content.decode()
 
 
 def test_the_page_wants_an_archive(client: Client, archive_settings: Path) -> None:
@@ -410,6 +499,8 @@ def test_the_command_checks_the_archive_and_queues_the_restore(
 
     operation = Operation.objects.get(kind=PANEL_RESTORE_KIND)
     assert f"operation {operation.pk}" in out.getvalue()
+    event = AuditEvent.objects.get(action=PANEL_RESTORE_KIND)
+    assert event.data == {"archive": "panel.lmz", "source": "command"}
     assert SecretCipher.from_settings().decrypt(operation.params[PASSWORD_PARAM]) == PASSWORD
 
 

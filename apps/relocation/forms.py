@@ -31,9 +31,13 @@ class MoveForm(forms.Form):
         label=_("The panel accepts no changes until the move is confirmed or cancelled"),
     )
 
-    def __init__(self, *args: Any, panel: PanelMachine, **kwargs: Any) -> None:
+    def __init__(
+        self, *args: Any, panel: PanelMachine, checking: bool = False, **kwargs: Any
+    ) -> None:
+        """`checking`: only the machine is checked, so the move need not be understood yet."""
         super().__init__(*args, **kwargs)
         self._panel = panel
+        self.fields["understood"].required = not checking
 
     def clean_target(self) -> Server:
         target: Server = self.cleaned_data["target"]

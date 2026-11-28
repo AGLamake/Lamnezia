@@ -24,8 +24,8 @@ from apps.protocols.tests.fake_awg import FakeAwgServer
 from apps.protocols.tests.fakes import FakeDebianServer
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
-from apps.ssh.services import CommandResult, RemoteHost
-from apps.ssh.tests.fakes import result
+from apps.ssh.services import CommandResult, RemoteHost, Stdin
+from apps.ssh.tests.fakes import result, stdin_bytes
 
 pytestmark = pytest.mark.django_db
 
@@ -77,8 +77,9 @@ class FakeDummyServer(FakeDebianServer):
     scripts: list[str] = field(default_factory=list)
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         argv = shlex.split(command)
         if argv[:2] != ["sh", "-c"]:
             return super().run(command, stdin=stdin, timeout=timeout)

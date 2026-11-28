@@ -1,9 +1,12 @@
 import time
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
+from django.test import Client
+from django.utils import timezone
 
-from apps.operations.models import OperationStatus
+from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.operations.tests.factories import OperationFactory
 from apps.relocation.errors import MoveError, MoveErrorCode
@@ -12,7 +15,8 @@ from apps.relocation.services.freeze import TaskGate, panel_frozen
 from apps.relocation.services.heartbeat import (
     MoveFlag,
     PreparationHeartbeat,
-    fail_interrupted_preparation,
+    fail_interrupted_move,
+    fail_unstarted_move,
 )
 from apps.relocation.services.preparation import MovePreparation
 from apps.relocation.tasks import FAIL_INTERRUPTED_TASK, fail_interrupted
@@ -59,7 +63,7 @@ def test_a_broken_flag_counts_for_nothing(flag: MoveFlag, update_dir: Path) -> N
     flag_file(update_dir).write_text("7; rm -rf /\n")
 
     assert flag.read() is None
-    assert fail_interrupted_preparation(flag) is None
+    assert fail_interrupted_move(flag) is None
 
 
 def test_the_preparation_holds_the_flag_while_it_runs(
@@ -99,7 +103,7 @@ def test_a_silent_preparation_fails_and_the_panel_accepts_changes(
     move = make_move(state, OperationStatus.RUNNING)
     ran_out(flag, move)
 
-    assert fail_interrupted_preparation(flag) == move
+    assert fail_interrupted_move(flag) == move
 
     move.refresh_from_db()
     assert move.state == MoveState.FAILED
@@ -118,7 +122,7 @@ def test_a_preparation_that_beats_is_left_alone(flag: MoveFlag) -> None:
     move = make_move(operation_status=OperationStatus.RUNNING)
     PreparationHeartbeat(move, flag).beat()
 
-    assert fail_interrupted_preparation(flag) is None
+    assert fail_interrupted_move(flag) is None
     assert PanelMove.objects.get().state == MoveState.PREPARING
 
 
@@ -126,17 +130,102 @@ def test_the_copy_on_the_new_machine_is_never_failed(flag: MoveFlag) -> None:
     """The copy holds the move in PREPARING from the archive but has no flag of its own."""
     make_move(operation_status=OperationStatus.RUNNING)
 
-    assert fail_interrupted_preparation(flag) is None
+    assert fail_interrupted_move(flag) is None
     assert PanelMove.objects.get().state == MoveState.PREPARING
 
 
-def test_a_flag_left_by_another_step_is_only_removed(flag: MoveFlag) -> None:
+def test_a_silent_confirmation_fails_and_the_move_waits_for_another_try(flag: MoveFlag) -> None:
     move = make_move(MoveState.READY, OperationStatus.RUNNING, confirm_started=True)
     ran_out(flag, move)
 
-    assert fail_interrupted_preparation(flag) is None
+    assert fail_interrupted_move(flag) == move
+
+    move = PanelMove.objects.select_related("operation").get()
+    assert move.state == MoveState.READY
+    assert move.operation is not None and move.operation.status == OperationStatus.FAILED
+    assert move.partly_confirmed and move.can_confirm
+    assert flag.read() is None
+
+
+def test_a_flag_left_by_a_finished_step_is_only_removed(flag: MoveFlag) -> None:
+    move = make_move(MoveState.READY, OperationStatus.SUCCEEDED)
+    ran_out(flag, move)
+
+    assert fail_interrupted_move(flag) is None
     assert flag.read() is None
     assert PanelMove.objects.get().state == MoveState.READY
+
+
+def test_the_flag_is_renewed_while_the_archive_is_written(flag: MoveFlag) -> None:
+    move = make_move(operation_status=OperationStatus.RUNNING)
+    ran_out(flag, move)
+
+    with PreparationHeartbeat(move, flag).kept(every=0.02):
+        time.sleep(0.1)
+        assert fail_interrupted_move(flag) is None
+
+    held = flag.read()
+    assert held is not None and held[0] == move.pk
+
+
+def queued(move: PanelMove, minutes: int) -> None:
+    created = timezone.now() - timedelta(minutes=minutes)
+    assert move.operation_id is not None
+    Operation.objects.filter(pk=move.operation_id).update(created_at=created)
+
+
+def test_a_preparation_no_worker_took_fails_soon(settings: object) -> None:
+    settings.RELOCATION_QUEUE_TIMEOUT = 600  # type: ignore[attr-defined]
+    move = make_move(MoveState.CHECKING, OperationStatus.PENDING)
+    queued(move, 11)
+
+    assert fail_unstarted_move(timezone.now()) == move
+
+    move = PanelMove.objects.select_related("operation").get()
+    assert move.state == MoveState.FAILED
+    assert move.operation is not None and move.operation.error_code == "interrupted"
+    assert not panel_frozen()
+
+
+def test_a_short_wait_in_the_queue_is_left_alone(settings: object) -> None:
+    settings.RELOCATION_QUEUE_TIMEOUT = 600  # type: ignore[attr-defined]
+    move = make_move(MoveState.CHECKING, OperationStatus.PENDING)
+    queued(move, 5)
+
+    assert fail_unstarted_move(timezone.now()) is None
+    assert PanelMove.objects.get().state == MoveState.CHECKING
+
+
+def test_a_confirmation_no_worker_took_is_not_partly_confirmed(settings: object) -> None:
+    settings.RELOCATION_QUEUE_TIMEOUT = 600  # type: ignore[attr-defined]
+    move = make_move(MoveState.READY, OperationStatus.PENDING, confirm_started=True)
+    queued(move, 11)
+
+    assert fail_unstarted_move(timezone.now()) == move
+
+    move = PanelMove.objects.get()
+    assert move.state == MoveState.READY
+    assert not move.confirm_started
+    assert move.can_confirm and move.can_cancel and not move.can_abandon
+
+
+def test_the_task_fails_a_move_stuck_in_the_queue(settings: object) -> None:
+    settings.RELOCATION_QUEUE_TIMEOUT = 600  # type: ignore[attr-defined]
+    move = make_move(MoveState.CHECKING, OperationStatus.PENDING)
+    queued(move, 11)
+
+    assert fail_interrupted() == move.pk
+
+
+def test_the_page_says_the_queue_stands(admin_client: Client, settings: object) -> None:
+    settings.RELOCATION_QUEUE_WARNING = 60  # type: ignore[attr-defined]
+    move = make_move(MoveState.CHECKING, OperationStatus.PENDING)
+    url = f"/backups/move/{move.pk}/"
+
+    assert "the queue stands" not in admin_client.get(url).content.decode()
+
+    queued(move, 2)
+    assert "the queue stands" in admin_client.get(url).content.decode()
 
 
 def test_a_late_worker_stops_at_its_next_beat(flag: MoveFlag) -> None:

@@ -11,8 +11,8 @@ from amnezia_core.services import (
     TOR_CONTAINER,
 )
 from apps.protocols.tests.fakes import FakeDebianServer
-from apps.ssh.services import CommandResult
-from apps.ssh.tests.fakes import result
+from apps.ssh.services import CommandResult, Stdin
+from apps.ssh.tests.fakes import result, stdin_bytes
 
 ONION = "abcdefghijklmnopqrstuvwxyz234567abcdefghijklmnopqrstuvwx.onion"
 # upstream remove_container.sh: one docker command per line
@@ -54,8 +54,9 @@ class FakeServiceHost(FakeDebianServer):
     port_users: str = ""
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         argv = shlex.split(command)
         if argv[:2] != ["sh", "-c"]:
             return super().run(command, stdin=stdin, timeout=timeout)

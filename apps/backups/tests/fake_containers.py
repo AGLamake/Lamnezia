@@ -22,8 +22,8 @@ from apps.protocols.tests.fake_ipsec_host import FakeIpsecHost
 from apps.protocols.tests.fake_openvpn_host import FakeOpenVpnHost
 from apps.protocols.tests.fake_proxy_host import FakeProxyHost
 from apps.protocols.tests.fake_xray_host import FakeXrayHost
-from apps.ssh.services import CommandResult
-from apps.ssh.tests.fakes import result
+from apps.ssh.services import CommandResult, Stdin
+from apps.ssh.tests.fakes import result, stdin_bytes
 
 _ARCHIVE = "tar -czf - "
 _FINGERPRINT = "tar -cf - "
@@ -122,8 +122,9 @@ def copy_file(files: dict[str, bytes] | None, command: str) -> CommandResult | N
 @dataclass
 class TarAwgServer(FakeAwgServer):
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         copied = copy_file(self.container_files if self.container_state else None, command)
         return copied or super().run(command, stdin=stdin, timeout=timeout)
 
@@ -135,8 +136,9 @@ class TarAwgServer(FakeAwgServer):
 @dataclass
 class TarOpenVpnHost(FakeOpenVpnHost):
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         copied = copy_file(self.files if self.container_state else None, command)
         return copied or super().run(command, stdin=stdin, timeout=timeout)
 
@@ -148,8 +150,9 @@ class TarOpenVpnHost(FakeOpenVpnHost):
 @dataclass
 class TarXrayHost(FakeXrayHost):
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         copied = copy_file(self.volume if self.container_state else None, command)
         return copied or super().run(command, stdin=stdin, timeout=timeout)
 
@@ -161,8 +164,9 @@ class TarXrayHost(FakeXrayHost):
 @dataclass
 class TarIpsecHost(FakeIpsecHost):
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         copied = copy_file(self.files if self.container_state else None, command)
         return copied or super().run(command, stdin=stdin, timeout=timeout)
 
@@ -197,8 +201,9 @@ class TarServiceHost(FakeProxyHost):
     failing_extracts: int = 0
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         argv = shlex.split(command)
         words = shlex.split(argv[2]) if argv[:2] == ["sh", "-c"] else []
         if words[:2] == ["docker", "cp"]:

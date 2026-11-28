@@ -92,7 +92,7 @@ class MovePreparation:
         with self._step(_("Wait for the changes already under way")):
             self._freeze()
             self._settle()
-        with self._step(_("Save the panel into an archive")):
+        with self._step(_("Save the panel into an archive")), self._heartbeat.kept():
             self._write_archive(password, self._archive)
             size = filesizeformat(self._archive.stat().st_size)
             self._ctx.log(_("Archive of %(size)s.") % {"size": size})

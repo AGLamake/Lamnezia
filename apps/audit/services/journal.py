@@ -13,22 +13,27 @@ from apps.audit.models import AuditEvent
 _TARGET_REPR_LIMIT = 200
 
 
-def log(
+def log(  # noqa: PLR0913 - everything but the action is keyword-only
     action: str,
     *,
     actor: User | None,
     target: models.Model | None = None,
     data: Mapping[str, Any] | None = None,
     ip: str | None = None,
+    summary: str = "",
 ) -> AuditEvent:
-    """Record an action. `action` is "<app>.<verb>"; `data` must never hold secrets."""
+    """Record an action. `action` is "<app>.<verb>"; `data` must never hold secrets.
+
+    `summary` names the object of an action without a model, e.g. a file, in its place.
+    """
+    shown = str(target) if target is not None else summary
     return AuditEvent.objects.create(
         actor=actor,
         actor_name=actor.get_username() if actor else "",
         action=action,
         target_type=target._meta.label_lower if target is not None else "",
         target_id=str(target.pk) if target is not None else "",
-        target_repr=str(target)[:_TARGET_REPR_LIMIT] if target is not None else "",
+        target_repr=shown[:_TARGET_REPR_LIMIT],
         data=dict(data or {}),
         ip=ip,
     )

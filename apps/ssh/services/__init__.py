@@ -1,4 +1,4 @@
-from apps.ssh.services.commands import CommandResult, CommandRunner, RemoteProcess
+from apps.ssh.services.commands import CommandResult, CommandRunner, RemoteProcess, Sink, Stdin
 from apps.ssh.services.connection import (
     SshConnection,
     SshCredentials,
@@ -18,8 +18,10 @@ __all__ = [
     "RemoteProcess",
     "ServerLock",
     "ShellTarget",
+    "Sink",
     "SshConnection",
     "SshCredentials",
     "SshTimeouts",
+    "Stdin",
     "read_host_key",
 ]

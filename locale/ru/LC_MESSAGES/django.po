@@ -261,6 +261,9 @@ msgstr "Облачный сервер отвечает на 169.254.169.254 св
 msgid "A copy left by an earlier move is removed."
 msgstr "Копия, оставшаяся от прошлого переноса, удаляется."
 
+msgid "A copy left by an earlier move is there: the move removes it."
+msgstr "На машине есть копия от прежнего переноса: перенос её удалит."
+
 msgid "A link"
 msgstr "Ссылка"
 
@@ -897,6 +900,12 @@ msgstr "Проверить копию на новой машине"
 msgid "Check the free space and the connection, then start the move again."
 msgstr "Проверьте свободное место и связь, затем начните перенос снова."
 
+msgid "Check the machine"
+msgstr "Проверить машину"
+
+msgid "Check the machine runs the checks of the move alone: the panel keeps working and nothing on the machine changes."
+msgstr "«Проверить машину» запускает только проверки переноса: панель продолжает работать, на машине ничего не меняется."
+
 msgid "Check the new machine"
 msgstr "Проверить новую машину"
 
@@ -1057,6 +1066,10 @@ msgstr "Скопировать панель на новую машину"
 
 msgid "Copy the token now: the panel keeps only its hash and will not show it again."
 msgstr "Скопируйте токен сейчас: панель хранит только его хеш и больше его не покажет."
+
+#, python-format
+msgid "Could not connect yet: %(error)s"
+msgstr "Пока не удалось подключиться: %(error)s"
 
 msgid "Create"
 msgstr "Создать"
@@ -1488,8 +1501,8 @@ msgid "Free disk space"
 msgstr "Свободно на диске"
 
 #, python-format
-msgid "Free disk space: %(size)s MB."
-msgstr "Свободно на диске: %(size)s МБ."
+msgid "Free disk space: %(size)s MB, the move needs about %(need)d MB."
+msgstr "Свободно на диске: %(size)s МБ, переносу нужно около %(need)d МБ."
 
 msgid "Free the UDP port of the group on the server, then join."
 msgstr "Освободите UDP-порт группы на сервере, затем вступайте."
@@ -2201,6 +2214,9 @@ msgstr "Перенести ключи групп на адрес ретранс�
 msgid "Move the panel: cancel"
 msgstr "Перенос панели: отмена"
 
+msgid "Move the panel: check the new machine"
+msgstr "Перенос панели: проверка новой машины"
+
 msgid "Move the panel: hand over to the new machine"
 msgstr "Перенос панели: передача новой машине"
 
@@ -2334,6 +2350,10 @@ msgstr "Архивов пока нет."
 
 msgid "No articles yet."
 msgstr "Статей пока нет."
+
+#, python-format
+msgid "No background worker took the operation yet: the queue stands. Check that the worker container runs (docker compose ps). The operation fails by itself after %(minutes)s minutes in the queue."
+msgstr "Фоновый обработчик ещё не взял операцию: очередь стоит. Проверьте, что контейнер worker запущен (docker compose ps). Операция сама завершится ошибкой после %(minutes)s минут в очереди."
 
 msgid "No built-in entry is deleted."
 msgstr "Удалённых встроенных записей нет."
@@ -3900,6 +3920,9 @@ msgstr "Подтверждение уже началось, а копию на �
 msgid "The confirmation link is wrong or has expired."
 msgstr "Ссылка для подтверждения неверна или устарела."
 
+msgid "The connection to the new machine broke; connecting again."
+msgstr "Связь с новой машиной оборвалась; подключаюсь снова."
+
 #, python-format
 msgid "The container %(container)s is removed from the server with its configuration and clients, as the Amnezia app does it. %(keys)s key stops working until the protocol is restored from the backup. If you tick Delete all backups, the key is revoked and the panel forgets the protocol and its backup; this cannot be undone."
 msgid_plural "The container %(container)s is removed from the server with its configuration and clients, as the Amnezia app does it. %(keys)s keys stop working until the protocol is restored from the backup. If you tick Delete all backups, the keys are revoked and the panel forgets the protocol and its backup; this cannot be undone."
@@ -4138,6 +4161,9 @@ msgstr[2] "Режим списка изменён, выключено %(count)d 
 msgid "The log of the step shows the reason. Fix it and start the move again."
 msgstr "Причина — в журнале шага. Устраните её и начните перенос снова."
 
+msgid "The machine suits the move."
+msgstr "Машина подходит для переноса."
+
 msgid "The moderator has as many users as allowed."
 msgstr "У модератора уже столько пользователей, сколько разрешено."
 
@@ -4195,6 +4221,10 @@ msgstr "Собственные домены групп сохраняют адр
 
 msgid "The owners are notified that their keys must be imported again."
 msgstr "Владельцы получат уведомление, что ключи нужно импортировать заново."
+
+#, python-format
+msgid "The page takes an archive of up to %(upload_mb)s MB: the limit of the reverse proxy. Restore a larger one with the command on the server: copy it into the container with <code>docker compose cp FILE web:/tmp/panel.lamnezia</code>, then run <code>docker compose exec web python manage.py panel_archive restore /tmp/panel.lamnezia</code>."
+msgstr "Страница принимает архив до %(upload_mb)s МБ: это предел обратного прокси. Архив больше восстановите командой на сервере: скопируйте его в контейнер <code>docker compose cp ФАЙЛ web:/tmp/panel.lamnezia</code>, затем выполните <code>docker compose exec web python manage.py panel_archive restore /tmp/panel.lamnezia</code>."
 
 msgid "The page was open too long or cookies are blocked. Reload the page and send the form again."
 msgstr "Страница была открыта слишком долго или заблокированы cookie. Обновите страницу и отправьте форму ещё раз."
@@ -4304,11 +4334,11 @@ msgstr "Панель переехала на %(host)s. Эта копия тол�
 msgid "The panel moved to %(host)s. This copy is read-only."
 msgstr "Панель переехала на %(host)s. Эта копия только для чтения."
 
+msgid "The panel needs 3 GB free on / for its images and twice its database and files on top: for the archive and the restored copy. Free some space or choose a machine with a larger disk."
+msgstr "Панели нужно 3 ГБ свободного места на / для образов и сверх того вдвое больше её базы и файлов: для архива и восстановленной копии. Освободите место или выберите машину с диском побольше."
+
 msgid "The panel needs about 1 GB of memory, swap included. Add a swap file there or choose a machine with more memory."
 msgstr "Панели нужно около 1 ГБ памяти вместе со swap. Добавьте там файл подкачки или выберите машину с большей памятью."
-
-msgid "The panel needs at least 3 GB free on / for its images, database and files. Free some space or choose a machine with a larger disk."
-msgstr "Панели нужно не меньше 3 ГБ свободного места на / для образов, базы и файлов. Освободите место или выберите машину с диском побольше."
 
 msgid "The panel needs these ports for its web server. Free them, or install nginx on the machine: then the panel adds a site to it."
 msgstr "Эти порты нужны веб-серверу панели. Освободите их или установите на машину nginx: тогда панель добавит в него свой сайт."

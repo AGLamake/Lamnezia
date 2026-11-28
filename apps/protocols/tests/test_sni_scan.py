@@ -33,7 +33,7 @@ from apps.protocols.services.sni_scan import (
 from apps.protocols.services.xray_settings import XRAY_SETTINGS_KIND
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
-from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess
+from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess, Stdin
 from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result
 
 pytestmark = pytest.mark.django_db
@@ -81,7 +81,7 @@ class FakeScanHost(CommandRunner):
         return RemoteHost(self, TIMEOUTS)
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
         if command == "id -u":
             return result(stdout=b"0\n")

@@ -4,8 +4,8 @@ import shlex
 from dataclasses import dataclass, field
 
 from apps.protocols.services import metadata_scripts as scripts
-from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess
-from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result
+from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess, Stdin
+from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result, stdin_bytes
 
 METADATA_PATHS = frozenset(path for path, _content, _mode in scripts.FILES)
 
@@ -55,8 +55,9 @@ class FakeMetadataHost(CommandRunner):
             self._apply()
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         if command == "id -u":
             return result(stdout=b"0\n")
         argv = shlex.split(command)

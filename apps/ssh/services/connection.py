@@ -6,13 +6,13 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from types import TracebackType
-from typing import IO, Self
+from typing import Self
 
 import paramiko
 from django.conf import settings
 
 from apps.ssh.errors import ErrorCode, SshCommandError, SshConnectionError, SshError
-from apps.ssh.services.commands import CommandResult, CommandRunner, RemoteProcess
+from apps.ssh.services.commands import CommandResult, CommandRunner, RemoteProcess, Sink, Stdin
 from apps.ssh.services.host_keys import KnownHostVerifier
 
 _READ_CHUNK = 65536
@@ -113,26 +113,27 @@ class SshConnection(CommandRunner):
             self._client.close()
             self._client = None
 
+    def reconnect(self) -> None:
+        self.close()
+        self.connect()
+
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
         stdout = io.BytesIO()
         result = self._run(command, stdin, stdout, timeout)
         return replace(result, stdout=stdout.getvalue())
 
-    def run_into(
-        self, command: str, sink: IO[bytes], *, timeout: float | None = None
-    ) -> CommandResult:
+    def run_into(self, command: str, sink: Sink, *, timeout: float | None = None) -> CommandResult:
         return self._run(command, b"", sink, timeout)
 
     def _run(
-        self, command: str, stdin: bytes, stdout: IO[bytes], timeout: float | None
+        self, command: str, stdin: Stdin, stdout: Sink, timeout: float | None
     ) -> CommandResult:
         timeout = timeout or self.timeouts.command
         channel = self._open_channel(command, timeout)
         try:
-            if stdin:
-                channel.sendall(stdin)
+            _send(channel, stdin)
             channel.shutdown_write()
             return _collect(channel, stdout, time.monotonic() + timeout)
         except (TimeoutError, OSError, paramiko.SSHException, EOFError) as exc:
@@ -228,7 +229,16 @@ def _load_private_key(creds: SshCredentials) -> paramiko.PKey:
     raise SshConnectionError(code)
 
 
-def _collect(channel: paramiko.Channel, stdout: IO[bytes], deadline: float) -> CommandResult:
+def _send(channel: paramiko.Channel, stdin: Stdin) -> None:
+    if isinstance(stdin, bytes):
+        if stdin:
+            channel.sendall(stdin)
+        return
+    while chunk := stdin.read(_READ_CHUNK):
+        channel.sendall(chunk)
+
+
+def _collect(channel: paramiko.Channel, stdout: Sink, deadline: float) -> CommandResult:
     """Waits for the command, writing its stdout into `stdout`; the result holds stderr only."""
     stderr = bytearray()
 

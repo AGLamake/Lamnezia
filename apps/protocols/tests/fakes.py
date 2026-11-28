@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess
+from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess, Stdin
 from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result
 
 DEBIAN_12 = b'PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\nID=debian\n'
@@ -27,7 +27,7 @@ class FakeDebianServer(CommandRunner):
         return RemoteHost(self, TIMEOUTS)
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
         answers: tuple[tuple[str, Callable[[], CommandResult]], ...] = (
             ("id -u", lambda: result(stdout=b"0\n")),

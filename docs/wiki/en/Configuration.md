@@ -37,6 +37,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_BACKUP_INTERVAL` | `86400` | Seconds between backups of the database and uploaded files. |
 | `LAMNEZIA_BACKUP_KEEP` | `14` | Backups of each kind to keep. |
 | `LAMNEZIA_PANEL_ARCHIVE_KEEP` | `3` | Newest panel archives kept in the `archives` volume ([Panel archive](Backup.md#panel-archive)). |
+| `LAMNEZIA_PANEL_ARCHIVE_UPLOAD_MB` | `20` behind nginx, `0` with Caddy | The largest archive the reverse proxy lets through the restore form, in MB; the page names it and shows the command for a larger one. `0` is no limit. Change it together with `client_max_body_size` of nginx. |
 | `LAMNEZIA_PANEL_ARCHIVE_PASSWORD` | empty | Password of [scheduled archives](Backup.md#on-schedule), at least 12 characters; empty turns the schedule off. It is not put into the archive. |
 | `LAMNEZIA_PANEL_ARCHIVE_INTERVAL` | `24` | Hours between scheduled archives. |
 | `LAMNEZIA_PANEL_ARCHIVE_REMOTE` | empty | Where a copy of every archive goes: `s3://bucket/folder` or `sftp://user@host:22/folder` ([External storage](Backup.md#external-storage)). |

@@ -10,8 +10,8 @@ from amnezia_core.ipsec import (
     server_identity,
 )
 from apps.protocols.tests.fakes import FakeDebianServer
-from apps.ssh.services import CommandResult
-from apps.ssh.tests.fakes import result
+from apps.ssh.services import CommandResult, Stdin
+from apps.ssh.tests.fakes import result, stdin_bytes
 
 SCRIPT_PATH = "/opt/amnezia/configure_ipsec.sh"
 CA_BASE64 = b"MIIBCA==\n"
@@ -50,8 +50,9 @@ class FakeIpsecHost(FakeDebianServer):
     configure_scripts: list[str] = field(default_factory=list)
 
     def run(  # noqa: PLR0911
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         argv = shlex.split(command)
         if argv[:2] != ["sh", "-c"]:
             return super().run(command, stdin=stdin, timeout=timeout)

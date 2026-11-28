@@ -10,12 +10,14 @@ from collections.abc import Callable
 from pathlib import Path
 
 from django.conf import settings
+from django.db import connection
 from django.utils.translation import gettext as _
 
 from apps.operations.services.context import OperationContext
 from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.models import MoveState
 from apps.relocation.services.panel_machine import PanelMachine
+from apps.ssh.errors import ErrorCode, SshCommandError, SshConnectionError
 from apps.ssh.services import RemoteHost
 
 INSTALL_DIR = "/opt/lamnezia"
@@ -33,6 +35,9 @@ _INSTALL_LOG_PREFIXES = ("==>", "Error:", "Warning:")
 # Memory and swap of the machine in MB.
 _MEMORY = "awk '/^(MemTotal|SwapTotal):/ {kb += $2} END {print int(kb / 1024)}' /proc/meminfo"
 _FAILURE_TAIL = 15
+# Reads of the installer log that may fail in a row on a broken connection before the move fails.
+_LOG_READ_ATTEMPTS = 5
+_CONNECTION_BROKE = (ErrorCode.CONNECTION_LOST, ErrorCode.COMMAND_TIMEOUT)
 # Addresses of the machine: its interfaces and its containers (the panel may be one of them).
 _OWN_ADDRESSES = """
 ip -o addr show 2>/dev/null | awk '{print $4}'
@@ -96,6 +101,17 @@ timeout 60 sh -c 'head -n 1 > "$0"' "$work/password"
 """
 
 
+def panel_data_mb() -> int:
+    """The database and the uploaded files of this panel in MB, about the size of its archive."""
+    media = Path(settings.MEDIA_ROOT).rglob("*")
+    size = sum(file.stat().st_size for file in media if file.is_file())
+    if connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute("select pg_database_size(current_database())")
+            size += cursor.fetchone()[0]
+    return size // 2**20
+
+
 def _no_heartbeat() -> None:
     """The default of `TargetMachine`: an operation that does not report it is alive."""
 
@@ -116,16 +132,23 @@ class TargetMachine:
         self._beat = beat
         self._work_dir = f"/var/tmp/lamnezia-move-{move_id}"
 
-    def check(self) -> None:
-        """Refuse a machine the installer cannot use; a copy left by an earlier move goes."""
+    def check(self, *, only_look: bool = False) -> None:
+        """Refuse a machine the installer cannot use; a copy left by an earlier move goes.
+
+        With `only_look` nothing on the machine changes: the leftover copy is only named.
+        """
         self._host.check_privileges()
         self._check_not_the_panel()
         if not self._host.sh("command -v apt-get").ok:
             raise MoveError(MoveErrorCode.UNSUPPORTED_SYSTEM)
-        if self._host.sh(f"[ -f {MARKER} ]").ok:
+        leftover = self._host.sh(f"[ -f {MARKER} ]").ok
+        if leftover and only_look:
+            self._ctx.log(_("A copy left by an earlier move is there: the move removes it."))
+        elif leftover:
             self._ctx.log(_("A copy left by an earlier move is removed."))
             self.discard()
-        if self._host.sh(f"[ -e {INSTALL_DIR} ] || [ -e {NGINX_SITE} ]").ok:
+        named = leftover and only_look
+        if not named and self._host.sh(f"[ -e {INSTALL_DIR} ] || [ -e {NGINX_SITE} ]").ok:
             raise MoveError(MoveErrorCode.TARGET_IN_USE)
         self._check_disk()
         self._check_memory()
@@ -223,10 +246,15 @@ class TargetMachine:
             raise MoveError(MoveErrorCode.SAME_MACHINE)
 
     def _check_disk(self) -> None:
+        """Room for the images, then twice the data: its archive and the restored copy."""
+        need = settings.RELOCATION_MIN_FREE_MB + 2 * panel_data_mb()
         free = self._host.run("df -Pm / | awk 'NR == 2 {print $4}'").strip()
-        if not free.isdigit() or int(free) < settings.RELOCATION_MIN_FREE_MB:
-            raise MoveError(MoveErrorCode.LOW_DISK, f"{free} MB")
-        self._ctx.log(_("Free disk space: %(size)s MB.") % {"size": free})
+        if not free.isdigit() or int(free) < need:
+            raise MoveError(MoveErrorCode.LOW_DISK, f"{free} MB < {need} MB")
+        self._ctx.log(
+            _("Free disk space: %(size)s MB, the move needs about %(need)d MB.")
+            % {"size": free, "need": need}
+        )
 
     def _check_memory(self) -> None:
         """Memory with swap: the panel's containers take about 800 MB."""
@@ -266,7 +294,11 @@ class TargetMachine:
 
 
 class InstallLog:
-    """The installer `TargetMachine.install` started, followed through its files in the work dir."""
+    """The installer `TargetMachine.install` started, followed through its files in the work dir.
+
+    The installer runs apart from the SSH session: when the connection breaks, the log connects
+    again and reads on from the line it reached.
+    """
 
     def __init__(
         self, host: RemoteHost, ctx: OperationContext, work_dir: str, beat: Callable[[], None]
@@ -276,6 +308,7 @@ class InstallLog:
         self._work_dir = work_dir
         self._beat = beat
         self._seen = 0
+        self._failed_reads = 0
         self._tail: deque[str] = deque(maxlen=_FAILURE_TAIL)
 
     def follow(self) -> None:
@@ -295,10 +328,15 @@ class InstallLog:
         """Take the new lines of the log; the exit code once the installer has ended."""
         self._beat()
         work = self._work_dir
-        output = self._host.run(
-            f'printf "%s\\n" "$(cat {work}/install.exit 2>/dev/null)"; '
-            f"tail -n +{self._seen + 1} {work}/install.log 2>/dev/null; true"
-        )
+        try:
+            output = self._host.run(
+                f'printf "%s\\n" "$(cat {work}/install.exit 2>/dev/null)"; '
+                f"tail -n +{self._seen + 1} {work}/install.log 2>/dev/null; true"
+            )
+        except SshCommandError as error:
+            self._reconnect(error)
+            return None
+        self._failed_reads = 0
         code, _newline, log = output.partition("\n")
         code = code.strip()
         lines = log.split("\n")
@@ -311,6 +349,17 @@ class InstallLog:
             if line.startswith(_INSTALL_LOG_PREFIXES):
                 self._ctx.log(line)
         return code or None
+
+    def _reconnect(self, error: SshCommandError) -> None:
+        """Connect again after a read the connection broke; give up after a few in a row."""
+        self._failed_reads += 1
+        if error.code not in _CONNECTION_BROKE or self._failed_reads >= _LOG_READ_ATTEMPTS:
+            raise error
+        self._ctx.log(_("The connection to the new machine broke; connecting again."))
+        try:
+            self._host.reconnect()
+        except SshConnectionError as failed:
+            self._ctx.log(_("Could not connect yet: %(error)s") % {"error": failed.message})
 
     def _stop(self) -> None:
         self._host.sh(

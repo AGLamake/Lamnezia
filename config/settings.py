@@ -1,5 +1,6 @@
 """Django settings. Every value comes from LAMNEZIA_* environment variables (see .env.example)."""
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -284,6 +285,12 @@ PROTOCOL_BACKUP_INTERVAL = env.int("PROTOCOL_BACKUP_INTERVAL", default=3600)
 # Encrypted panel archives (database, .env, uploaded files); the newest PANEL_ARCHIVE_KEEP stay.
 PANEL_ARCHIVE_DIR = BASE_DIR / "archives"
 PANEL_ARCHIVE_KEEP = env.int("PANEL_ARCHIVE_KEEP", default=3)
+# The largest archive the reverse proxy lets through the restore form, in MB, for the page to name;
+# 0 is no limit. The nginx config of the installer takes 20 MB, the bundled Caddy has no limit.
+PANEL_ARCHIVE_UPLOAD_MB = env.int(
+    "PANEL_ARCHIVE_UPLOAD_MB",
+    default=0 if "caddy" in os.environ.get("COMPOSE_PROFILES", "").split(",") else 20,
+)
 # Archives on schedule: one every PANEL_ARCHIVE_INTERVAL hours with this password, only while it is
 # set. The password never goes into the archive itself.
 PANEL_ARCHIVE_PASSWORD = env.str("PANEL_ARCHIVE_PASSWORD", default="")
@@ -320,6 +327,10 @@ RELOCATION_INSTALL_POLL_SECONDS = 5
 # A preparation renews its flag for the host (services/heartbeat.py) at every step; one silent
 # for this long is failed and the panel accepts changes again.
 RELOCATION_HEARTBEAT_TIMEOUT = 15 * 60
+# An operation of a move that no worker took for this long fails: the worker does not run. The
+# move page says the queue stands after RELOCATION_QUEUE_WARNING.
+RELOCATION_QUEUE_TIMEOUT = 10 * 60
+RELOCATION_QUEUE_WARNING = 60
 # Free disk the new machine needs: images, the database and the uploaded files.
 RELOCATION_MIN_FREE_MB = 3 * 1024
 # Memory with swap the new machine needs; a machine sold as 1 GB reports a little less.
@@ -351,7 +362,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 60,
         "options": {"expires": 60},
     },
-    # Fails a move preparation whose worker died, so the panel does not stay frozen.
+    # Fails a move operation whose worker died or never took it, so the panel does not stay frozen.
     "relocation-fail-interrupted": {
         "task": "relocation.fail_interrupted",
         "schedule": 60,

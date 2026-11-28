@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Check the machine** on the panel move form runs the checks of the first step alone as an
+  operation: the panel keeps working and nothing on the machine changes. The disk check counts
+  twice the database and files of the panel on top of 3 GB and names the figure.
+- **Restore in the audit log**: a panel restore names the archive and where it came from (the
+  page, the rollback of an update or the command); the restored journal records the restore too.
+- **Panel settings differ after a restore** (`panel_settings_differ`): the administrators learn
+  which settings of the archive differ from the `.env` of the panel.
+- The **Panel archive** page names the upload limit of the reverse proxy
+  (`LAMNEZIA_PANEL_ARCHIVE_UPLOAD_MB`) and the command for a larger archive.
+
 - **Masking check on a schedule**: the panel checks every ready server that answers once a day
   (`LAMNEZIA_STEALTH_CHECK_INTERVAL`, `0` turns it off), and **Needs attention** names a server
   whose latest check found something to fix, with how many items. The server settings get **Own
@@ -602,6 +612,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- After a panel restore, operations the archive caught unfinished are closed as failed and every
+  server is polled at once. `install.sh --restore` signs everyone out; the copy of a panel move
+  keeps the sessions.
+- The Deploy workflow tries the update again every 5 minutes, for up to 30 minutes, while a
+  panel move holds it (exit code 75).
+
 - **API reads follow the owner's sections**: a token reads servers, users, keys and traffic only
   while its owner sees **Servers**, **Users**, **Keys** and **Statistics** in the panel, as
   managing already followed **Manage**. A moderator's token no longer reads servers until the
@@ -723,6 +739,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with one `syncconf` instead of one per key.
 
 ### Fixed
+
+- A panel move operation that no worker takes fails after 10 minutes, and the move screen warns
+  after a minute that the queue stands. A confirmation or a cancel whose worker died fails when
+  its flag runs out, not after an hour.
+- The panel move reads the install log on through a dropped SSH connection; five failed reads in
+  a row fail the move.
+- Writing the archive of a panel move keeps the move heartbeat, so a large panel is not taken for
+  a dead worker.
+- Two panel archives started in the same second no longer overwrite each other: the second gets
+  `-2`.
+- An upload to a server is sent a chunk at a time instead of read into memory, and a service copy
+  download that grows past its limit is cut off at once.
 
 - A slow poll (traffic, health, relays) is not started while the previous one still runs.
 - The traffic poll checks the XRay speed limits too: a missing nft file or a table not loaded

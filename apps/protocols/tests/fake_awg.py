@@ -9,8 +9,8 @@ from amnezia_core.keys import KeyPair
 from apps.protocols.services import offload_scripts
 from apps.protocols.tests.fake_offload_host import FakeOffloadHost
 from apps.protocols.tests.fakes import FakeDebianServer
-from apps.ssh.services import CommandResult
-from apps.ssh.tests.fakes import result
+from apps.ssh.services import CommandResult, Stdin
+from apps.ssh.tests.fakes import result, stdin_bytes
 
 PREVIOUS = "amnezia-awg2-previous"
 START_SCRIPT = "/opt/amnezia/start.sh"
@@ -78,8 +78,9 @@ class FakeAwgServer(FakeDebianServer):
     offload: FakeOffloadHost = field(default_factory=lambda: FakeOffloadHost(interfaces={}))
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         argv = shlex.split(command)
         if argv[:2] != ["sh", "-c"]:
             return super().run(command, stdin=stdin, timeout=timeout)

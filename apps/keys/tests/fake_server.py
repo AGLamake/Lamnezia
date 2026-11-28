@@ -6,8 +6,8 @@ import time
 
 from amnezia_core.awg import AwgServerConfig
 from amnezia_core.containers import AWG2, WgContainer
-from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess
-from apps.ssh.tests.fakes import TIMEOUTS, result
+from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess, Stdin
+from apps.ssh.tests.fakes import TIMEOUTS, result, stdin_bytes
 
 _LOCKED_MARKER = "lamnezia-locked"
 _READ = re.compile(r"cat -- ([\w/.-]+)")
@@ -99,8 +99,9 @@ class _Runner(CommandRunner):
         self._server = server
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         if command == "id -u":
             return result(stdout=b"0\n")
         return self._server.handle(command, stdin)

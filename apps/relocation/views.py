@@ -22,6 +22,7 @@ from apps.relocation.services.moves import (
     confirm_move,
     move_operations,
     start_move,
+    start_target_check,
 )
 from apps.relocation.services.panel_machine import PanelMachine
 from apps.relocation.services.shutdown import (
@@ -30,6 +31,8 @@ from apps.relocation.services.shutdown import (
     stop_unanswered,
     switch_auto_stop,
 )
+
+_CHECK_BUTTON = "check"
 
 
 class MoveView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
@@ -42,9 +45,17 @@ class MoveView(AdminRequiredMixin, FormView):  # type: ignore[type-arg]
         return super().get_context_data(move=PanelMove.latest(), **kwargs)
 
     def get_form_kwargs(self) -> dict[str, Any]:
-        return {**super().get_form_kwargs(), "panel": PanelMachine.current(self.request.get_host())}
+        return {
+            **super().get_form_kwargs(),
+            "panel": PanelMachine.current(self.request.get_host()),
+            "checking": _CHECK_BUTTON in self.request.POST,
+        }
 
     def form_valid(self, form: MoveForm) -> HttpResponse:
+        if _CHECK_BUTTON in self.request.POST:
+            target = form.cleaned_data["target"]
+            operation = start_target_check(target, self.member, self.client_ip)
+            return redirect("operations:detail", pk=operation.pk)
         try:
             move = start_move(
                 form.cleaned_data["target"],
@@ -77,6 +88,7 @@ class MoveProgressView(AdminRequiredMixin, DetailView):  # type: ignore[type-arg
             poll_seconds=poll_seconds,
             stop_unanswered=stop_unanswered(move),
             stop_help_url=stop_help_url(),
+            queue_timeout_minutes=settings.RELOCATION_QUEUE_TIMEOUT // 60,
             **kwargs,
         )
 

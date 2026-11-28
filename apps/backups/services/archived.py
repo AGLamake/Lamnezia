@@ -10,7 +10,7 @@ import tempfile
 from abc import ABC, abstractmethod
 from contextlib import ExitStack
 from ipaddress import IPv4Network
-from typing import Any, ClassVar
+from typing import IO, Any, ClassVar
 
 from django.utils import timezone
 
@@ -21,6 +21,7 @@ from amnezia_core.container_archive import (
     OPENVPN_STATE,
     WIREGUARD_STATE,
     XRAY_STATE,
+    ArchiveTooLargeError,
     ContainerArchive,
     ContainerState,
 )
@@ -43,23 +44,43 @@ from apps.ssh.errors import ErrorCode, SshCommandError
 from apps.ssh.services import RemoteHost
 
 logger = logging.getLogger(__name__)
+# A tar.gz of files that fit the limit may still be a little larger than it: tar headers and
+# padding, or gzip over files that do not compress. The download is cut 1/64 past the limit.
+_TAR_SLACK = 64
 
 
 def read_archive(host: RemoteHost, state: ContainerState) -> ContainerArchive:
     """A copy of the state folders of a running container, in a temporary file it owns.
 
     The tar.gz goes from the server into the file as it comes, so the copy of a large site
-    or of the uploads is never all in the memory of the panel.
+    or of the uploads is never all in the memory of the panel. One that grows past what the
+    copy may hold is cut off on the way (`ArchiveTooLargeError`), not read to its end.
     """
     with ExitStack() as unless_returned:
         copy = unless_returned.enter_context(tempfile.TemporaryFile())
         container = host.container(state.container)
-        result = container.sh_into(state.archive_command(), copy, timeout=state.timeout)
+        sink = CappedSink(copy, state.max_size + state.max_size // _TAR_SLACK)
+        result = container.sh_into(state.archive_command(), sink, timeout=state.timeout)
         if not result.ok:
             raise SshCommandError(ErrorCode.COMMAND_FAILED, f"tar exit {result.exit_code}")
         archive = ContainerArchive(state, copy)
         unless_returned.pop_all()
     return archive
+
+
+class CappedSink:
+    """Writes into a file and refuses to make it larger than `limit` bytes."""
+
+    def __init__(self, file: IO[bytes], limit: int) -> None:
+        self._file = file
+        self._limit = limit
+        self._written = 0
+
+    def write(self, data: bytes) -> int:
+        self._written += len(data)
+        if self._written > self._limit:
+            raise ArchiveTooLargeError(self._written)
+        return self._file.write(data)
 
 
 class ArchivedProtocol(ABC):

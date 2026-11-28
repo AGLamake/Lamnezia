@@ -81,6 +81,7 @@ class Event(StrEnum):
     ZONE_REPORT = "zone_report"
     PANEL_ARCHIVE_FAILED = "panel_archive_failed"
     PANEL_DOMAIN_SWITCHED = "panel_domain_switched"
+    PANEL_SETTINGS_DIFFER = "panel_settings_differ"
     TEST = "test"
 
 
@@ -576,6 +577,16 @@ EVENTS: dict[Event, EventType] = {
             "made stay in System → Panel archive."
         ),
         translated=("error",),
+    ),
+    # After a restore of a panel archive (apps/backups/services/panel_restore.py): `names` are the
+    # settings of the archive that differ from the .env of this panel.
+    Event.PANEL_SETTINGS_DIFFER: EventType(
+        _("Panel settings differ after a restore"),
+        _("The restored archive holds other panel settings"),
+        _(
+            "The archive holds other values of {names} than the .env of this panel; they stay as "
+            "they are. Copy them into .env if needed and restart the panel: docker compose up -d."
+        ),
     ),
     # Once per move, from the old copy while it is read-only (apps/relocation/services/domain.py):
     # every resolver leads the panel domain to the new machine `host`. `url` leads to the move

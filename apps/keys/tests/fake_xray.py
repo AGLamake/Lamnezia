@@ -4,8 +4,8 @@ import json
 import re
 
 from amnezia_core.xray import XRAY_CONFIG_PATH, XRAY_DIR
-from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess
-from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result
+from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess, Stdin
+from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result, stdin_bytes
 
 _READ = re.compile(r"cat -- ([\w/.-]+)")
 _WRITE_TARGET = re.compile(r"target=([\w/.-]+)")
@@ -75,8 +75,9 @@ class _Runner(CommandRunner):
         self._server = server
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         if command == "id -u":
             return result(stdout=b"0\n")
         return self._server.handle(command, stdin)

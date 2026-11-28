@@ -72,6 +72,7 @@
 | `relay_settings_differ` | Ретранслятор пересылает или публикует не те группы, что записала панель (расхождения — в карточке ретранслятора). Один раз за расхождение; ближайшая синхронизация записывает настройки панели заново. | `relay`, `host` |
 | `relay_settings_match` | Ретранслятор снова пересылает и публикует группы, записанные панелью, после `relay_settings_differ`. Один раз за расхождение, даже если `relay_settings_differ` не получил ни один канал. | `relay`, `host` |
 | `panel_archive_failed` | Операция архива панели не удалась: архив не создан или его копия не дошла до внешнего хранилища. Раз в сутки. | `error` — что пошло не так |
+| `panel_settings_differ` | В восстановленном [архиве панели](Backup.md#архив-панели) другие настройки панели, чем в её `.env`; они остаются прежними, пока их не перенесут в `.env` и не перезапустят панель. | `names` — настройки через запятую |
 | `panel_domain_switched` | При [переносе панели](Panel-move.md) все резолверы ведут домен панели на новую машину. Один раз за перенос, от старой копии, пока она работает только для чтения. | `domain`; `host` — новая машина; `url` — экран хода переноса |
 | `split_list_stale` | Источник списка сетей группы в раздельном режиме не дал список, который панель принимает: не скачался, не разобрался или в нём меньше половины прежних сетей. Ретранслятор работает с прежним списком. Раз в сутки, пока источник не обновляется. | `group`, `source` — хост адреса источника, `days` — дней с последнего удачного списка, `error` |
 | `split_emergency` | Агент ретранслятора сам перевёл группу из раздельного режима на проброс: канал не работает ни через одного участника, а участник отвечает на обычную проверку. | `group`, `relay`, `server` — участник, на который идёт проброс, или `null` |
@@ -181,6 +182,8 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/panel_archive_failed"}}}},
     {"if": {"properties": {"event": {"const": "panel_domain_switched"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/panel_domain_switched"}}}},
+    {"if": {"properties": {"event": {"const": "panel_settings_differ"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/panel_settings_differ"}}}},
     {"if": {"properties": {"event": {"const": "split_list_stale"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/split_list_stale"}}}},
     {"if": {"properties": {"event": {"const": "split_emergency"}}},
@@ -489,6 +492,11 @@
       "type": "object",
       "required": ["domain", "host", "url"],
       "properties": {"domain": {"type": "string"}, "host": {"type": "string"}, "url": {"type": "string", "format": "uri"}}
+    },
+    "panel_settings_differ": {
+      "type": "object",
+      "required": ["names"],
+      "properties": {"names": {"type": "string"}}
     },
     "split_list_stale": {
       "type": "object",

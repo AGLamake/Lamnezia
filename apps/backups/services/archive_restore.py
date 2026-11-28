@@ -61,7 +61,8 @@ class ArchiveSeed:
                 self._ctx.log(_("The container already has its files, they are kept."))
                 docker.shell.run(FINISH_COMMAND)
                 return
-            docker.shell.run(EXTRACT_COMMAND, stdin=self._archive.data)
+            with self._archive.stream() as tar_gz:
+                docker.shell.run(EXTRACT_COMMAND, stdin=tar_gz)
             self._ctx.log(_("Files put back: %(count)d.") % {"count": len(self._archive.paths())})
             if self._own_keys:
                 docker.restart()

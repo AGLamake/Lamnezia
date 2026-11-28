@@ -45,7 +45,11 @@
       {{ form.auto_stop.as_field_group }}
       {{ form.understood.as_field_group }}
       <p class="help-text">{% translate "A relay on the new machine keeps working: the panel checks its ports before the install and after it. Servers that allow SSH only from the panel address must allow the new address too." %}</p>
-      <div><button type="submit" class="btn btn-primary">{% icon "switch" %}{% translate "Start the move" %}</button></div>
+      <p class="help-text">{% translate "Check the machine runs the checks of the move alone: the panel keeps working and nothing on the machine changes." %}</p>
+      <div>
+        <button type="submit" class="btn btn-primary">{% icon "switch" %}{% translate "Start the move" %}</button>
+        <button type="submit" name="check" value="1" class="btn btn-secondary" formnovalidate>{% translate "Check the machine" %}</button>
+      </div>
     </div>
   </form>
   {% endif %}

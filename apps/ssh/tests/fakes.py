@@ -1,4 +1,4 @@
-from apps.ssh.services import CommandResult, CommandRunner, RemoteProcess, SshTimeouts
+from apps.ssh.services import CommandResult, CommandRunner, RemoteProcess, SshTimeouts, Stdin
 
 TIMEOUTS = SshTimeouts(connect=1, command=1, lock=5)
 
@@ -27,6 +27,11 @@ class FakeProcess(RemoteProcess):
         self.closed = True
 
 
+def stdin_bytes(stdin: Stdin) -> bytes:
+    """What a command was given on stdin, read out of a file if it came as one."""
+    return stdin if isinstance(stdin, bytes) else stdin.read()
+
+
 class FakeRunner(CommandRunner):
     """Answers commands by the first matching substring; records what was run."""
 
@@ -37,9 +42,9 @@ class FakeRunner(CommandRunner):
         self.started: list[str] = []
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
-        self.calls.append((command, stdin))
+        self.calls.append((command, stdin_bytes(stdin)))
         for needle, answer in self.answers.items():
             if needle in command:
                 return answer

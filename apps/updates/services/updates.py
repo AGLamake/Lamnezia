@@ -21,7 +21,7 @@ from apps.backups.services.panel_archives import (
     ArchiveNotFoundError,
     PanelArchiveFolder,
 )
-from apps.backups.services.panel_restore import start_panel_restore
+from apps.backups.services.panel_restore import RestoreSource, start_panel_restore
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.launcher import launch
 from apps.ssh.encryption import SecretCipher
@@ -141,4 +141,6 @@ class PanelUpdate:
         archive = self.rollback_archive()
         if archive is None:
             raise UpdateError(UpdateErrorCode.NO_ARCHIVE)
-        return start_panel_restore(archive.name, password, user, ip)
+        return start_panel_restore(
+            archive.name, password, user, ip, source=RestoreSource.UPDATE_ROLLBACK
+        )

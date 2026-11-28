@@ -42,6 +42,17 @@ jobs:
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/deploy ~/.ssh/known_hosts
-          printf '%s\n' "$GH_TOKEN" | ssh -i ~/.ssh/deploy -p "${DEPLOY_PORT:-22}" \
-            -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "${DEPLOY_USER:-root}@$DEPLOY_HOST" deploy "$COMMIT"
+          # Code 75: a panel move runs and the server updates nothing; try again a few times.
+          for attempt in 1 2 3 4 5 6; do
+            code=0
+            printf '%s\n' "$GH_TOKEN" | ssh -i ~/.ssh/deploy -p "${DEPLOY_PORT:-22}" \
+              -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              "${DEPLOY_USER:-root}@$DEPLOY_HOST" deploy "$COMMIT" || code=$?
+            if [ "$code" -ne 75 ]; then
+              exit "$code"
+            fi
+            echo "A panel move runs (attempt $attempt): the next one in 5 minutes."
+            sleep 300
+          done
+          echo "The panel move did not end in 30 minutes: run Deploy again later." >&2
+          exit 75

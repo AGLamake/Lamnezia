@@ -3,22 +3,31 @@
 While a move operation runs, the panel keeps `UPDATE_DIR/request/moving`: "<move id> <until>",
 with `until` in Unix time. deploy/update/lamnezia-deploy.sh refuses to rebuild the stack while the
 flag is in force, since a rebuild would kill the operation halfway. The preparation renews the flag
-as it goes, so a flag that ran out while its move still prepares means the worker died: the move
-fails and the panel accepts changes again (`fail_interrupted_preparation`).
+as it goes, so a flag that ran out while its operation still runs means the worker died: the
+operation fails, a preparation fails its move and the panel accepts changes again
+(`fail_interrupted_move`). A confirmation or a cancel holds the flag for its longest command and
+is failed the same way once it runs out.
+
+An operation of a move that no worker took within `RELOCATION_QUEUE_TIMEOUT` fails too
+(`fail_unstarted_move`): the worker does not run, and the panel should not wait an hour for
+`fail_stale`.
 
 The copy on the new machine is restored with the move in PREPARING, but without the flag, which
 lives on the host and not in the archive: the copy is never failed this way.
 """
 
 import logging
+import threading
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from django.conf import settings
 from django.db import transaction
 
+from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.stale import fail_if_unfinished
 from apps.relocation.errors import MoveError, MoveErrorCode
 from apps.relocation.models import MoveState, PanelMove
@@ -99,11 +108,33 @@ class PreparationHeartbeat:
                 raise MoveError(MoveErrorCode.INTERRUPTED)
             self._flag.hold(self._move.pk, settings.RELOCATION_HEARTBEAT_TIMEOUT)
 
+    @contextmanager
+    def kept(self, every: float | None = None) -> Iterator[None]:
+        """Renew the flag from a thread while one long call runs, such as writing the archive.
 
-def fail_interrupted_preparation(flag: MoveFlag | None = None) -> PanelMove | None:
-    """Fail the preparation whose flag ran out: its worker stopped renewing it.
+        The thread only rewrites the file: the state of the move is checked at the next `beat`.
+        """
+        stop = threading.Event()
+        interval = every or settings.RELOCATION_HEARTBEAT_TIMEOUT / 3
 
-    A flag that ran out after another move operation is removed and changes nothing else.
+        def renew() -> None:
+            while not stop.wait(interval):
+                self._flag.hold(self._move.pk, settings.RELOCATION_HEARTBEAT_TIMEOUT)
+
+        thread = threading.Thread(target=renew, name=f"move-{self._move.pk}-pulse", daemon=True)
+        thread.start()
+        try:
+            yield
+        finally:
+            stop.set()
+            thread.join()
+
+
+def fail_interrupted_move(flag: MoveFlag | None = None) -> PanelMove | None:
+    """Fail the move operation whose flag ran out: its worker died or stopped renewing it.
+
+    A preparation fails its move as well; after a confirmation or a cancel the move keeps its
+    state, and its page offers them again.
     """
     flag = flag or MoveFlag.from_settings()
     held = flag.read()
@@ -116,10 +147,43 @@ def fail_interrupted_preparation(flag: MoveFlag | None = None) -> PanelMove | No
         if flag.read() != held:
             return None
         flag.release(move_id)
-        if move is None or move.state not in PanelMove.PREPARATION:
+        if move is None:
             return None
-        move.mark(MoveState.FAILED)
-        if move.operation_id is not None:
-            fail_if_unfinished(move.operation_id)
-    logger.warning("move %s failed: its preparation stopped answering", move_id)
+        failed = move.operation_id is not None and fail_if_unfinished(move.operation_id)
+        if move.state in PanelMove.PREPARATION:
+            move.mark(MoveState.FAILED)
+        elif not failed:
+            return None
+    logger.warning("move %s: its operation stopped answering", move_id)
     return move
+
+
+def fail_unstarted_move(now: datetime) -> PanelMove | None:
+    """Fail the operation of the latest move that waits in the queue too long; None if none does.
+
+    A confirmation that never started is not a partly confirmed move: its mark is taken back.
+    """
+    cutoff = now - timedelta(seconds=settings.RELOCATION_QUEUE_TIMEOUT)
+    with transaction.atomic():
+        move = (
+            PanelMove.objects.select_for_update(of=("self",))
+            .select_related("operation")
+            .order_by("-pk")
+            .first()
+        )
+        operation = move.operation if move else None
+        if move is None or operation is None or not _queued_before(operation, cutoff):
+            return None
+        if not fail_if_unfinished(operation.pk):
+            return None
+        if move.state in PanelMove.PREPARATION:
+            move.mark(MoveState.FAILED)
+        if move.confirm_started and move.state == MoveState.READY:
+            move.confirm_started = False
+            move.save(update_fields=["confirm_started", "updated_at"])
+    logger.warning("move %s: no worker took its operation", move.pk)
+    return move
+
+
+def _queued_before(operation: Operation, cutoff: datetime) -> bool:
+    return operation.status == OperationStatus.PENDING and operation.created_at < cutoff

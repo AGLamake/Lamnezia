@@ -13,7 +13,7 @@ from apps.backups.errors import PanelArchiveError
 from apps.backups.services.archive_cipher import MIN_PASSWORD_LENGTH
 from apps.backups.services.panel_archive import PanelArchiveReader
 from apps.backups.services.panel_archives import PanelArchiveFolder
-from apps.backups.services.panel_restore import start_panel_restore
+from apps.backups.services.panel_restore import RestoreSource, start_panel_restore
 
 _CHUNK = 1024 * 1024
 
@@ -73,7 +73,9 @@ class Command(BaseCommand):
         with file.open("rb") as source:
             chunks = iter(lambda: source.read(_CHUNK), b"")
             name = PanelArchiveFolder.from_settings().upload(chunks)
-        operation = start_panel_restore(name, password, None, None)
+        operation = start_panel_restore(
+            name, password, None, None, source=RestoreSource.COMMAND, label=file.name
+        )
         self.stdout.write(
             f"The restore is operation {operation.pk}: follow it on the Operations page. "
             "Afterwards everyone signs in again."

@@ -26,7 +26,11 @@ from apps.backups.services.panel_archives import (
     log_download,
     start_panel_archive,
 )
-from apps.backups.services.panel_restore import active_restore_operation, start_panel_restore
+from apps.backups.services.panel_restore import (
+    RestoreSource,
+    active_restore_operation,
+    start_panel_restore,
+)
 from apps.backups.services.restore import start_restore, start_service_restore
 from apps.backups.services.snapshot_restore import delete_snapshot, start_snapshot_restore
 from apps.protocols.models import ProtocolInstance, ServiceInstance
@@ -101,6 +105,7 @@ class PanelArchiveListView(AdminRequiredMixin, FormView):  # type: ignore[type-a
             active=active_archive_operation(),
             restoring=active_restore_operation(),
             keep=settings.PANEL_ARCHIVE_KEEP,
+            upload_mb=settings.PANEL_ARCHIVE_UPLOAD_MB,
             failed=failed_archive_operation(),
             schedule=ArchiveSchedule.from_settings(),
             storage=_storage_label(),
@@ -134,7 +139,14 @@ class PanelRestoreView(PanelArchiveListView):
         else:
             name = form.cleaned_data["archive"]
         password = form.cleaned_data["restore_password"]
-        operation = start_panel_restore(name, password, self.member, self.client_ip)
+        operation = start_panel_restore(
+            name,
+            password,
+            self.member,
+            self.client_ip,
+            source=RestoreSource.PAGE,
+            label=upload.name if upload else name,
+        )
         return redirect("operations:detail", pk=operation.pk)
 
 

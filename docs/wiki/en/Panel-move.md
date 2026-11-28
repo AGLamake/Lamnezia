@@ -9,7 +9,8 @@ step is pointing the panel domain to the new machine.
 - Add the new machine as a server (**Servers → Add**): the move connects to it over SSH as root or
   a user with passwordless sudo. A plain machine is fine, and so is a VPN server or a member of a
   group with a relay: Amnezia containers and the relay keep working.
-- The machine runs Debian or Ubuntu, has at least 3 GB free on `/`, about 1 GB of memory with
+- The machine runs Debian or Ubuntu, has 3 GB free on `/` plus twice the database and files of the
+  panel (for the archive and the restored copy; the check names the figure), about 1 GB of memory with
   swap (`MemTotal` + `SwapTotal` at least 900 MB) and has no panel yet (`/opt/lamnezia` and the
   nginx site `lamnezia` must not exist).
 - It is not the machine this panel runs on: the form refuses a server whose address is the panel
@@ -19,6 +20,10 @@ step is pointing the panel domain to the new machine.
 - With nginx installed, the panel adds its site to it. Without nginx, the bundled Caddy needs TCP
   80/443 and UDP 443 free; a relay never takes them.
 - Servers that allow SSH only from the panel address must allow the address of the new machine.
+
+**Check the machine** on the move form runs the checks of the first step alone, as an operation:
+the panel keeps accepting changes and nothing on the machine changes (a copy left by an earlier
+move is only named). Start the move when the check passes.
 
 ## How it goes
 
@@ -36,6 +41,8 @@ step is pointing the panel domain to the new machine.
    deleted on both machines afterwards. The copy starts read-only too. The installer runs on the
    new machine apart from the SSH session (`systemd-run`, or `setsid` without systemd) and writes
    its output to a log the panel reads every few seconds, so a dropped connection does not kill it.
+   When the connection drops while the log is read, the panel connects again and reads on; five
+   failed reads in a row fail the move.
    A panel of a release passes `--image X.Y.Z`: the new machine pulls the ready image of the same
    version from the registry and builds it only when the pull fails. A panel built between releases
    has the image built there; a panel set to its own `LAMNEZIA_IMAGE` passes it in its archive.
@@ -116,6 +123,12 @@ takes the request.
   itself: the preparation reports that it is alive while it runs, and if it stays silent for 15
   minutes the panel fails the move and accepts changes again. Then cancel the move or start it once
   more; the copy left on the new machine is removed first.
+- **A confirmation or a cancel whose worker died** fails once its flag runs out (15 minutes for a
+  confirmation, the install time for a cancel), not after an hour; the move keeps its state and
+  the screen offers the button again.
+- **An operation no worker takes**: the move screen warns after a minute that the queue stands and
+  the worker container should be checked (`docker compose ps`); after
+  `RELOCATION_QUEUE_TIMEOUT` (10 minutes) the operation fails by itself.
 - While the preparation, the confirmation or the cancel runs, the host does not update the panel:
   the panel keeps the flag `request/moving` in the folder of the update unit, and
   `lamnezia-deploy.sh` refuses to deploy (exit code 75) or to apply an update requested from the

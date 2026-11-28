@@ -2,7 +2,6 @@
 
 import shlex
 from abc import ABC, abstractmethod
-from typing import IO
 
 from apps.ssh.errors import (
     DockerError,
@@ -11,7 +10,7 @@ from apps.ssh.errors import (
     SshCommandError,
     SshPrivilegeError,
 )
-from apps.ssh.services.commands import CommandResult, CommandRunner
+from apps.ssh.services.commands import CommandResult, CommandRunner, Sink, Stdin
 from apps.ssh.services.connection import SshTimeouts
 from apps.ssh.services.lock import ServerLock
 
@@ -28,16 +27,14 @@ class ShellTarget(ABC):
     """A place where shell scripts run as root: the server itself or a container on it."""
 
     @abstractmethod
-    def sh(self, script: str, *, stdin: bytes = b"", timeout: float | None = None) -> CommandResult:
+    def sh(self, script: str, *, stdin: Stdin = b"", timeout: float | None = None) -> CommandResult:
         """Run a POSIX sh script as root and return the result, whatever the exit code."""
 
     @abstractmethod
-    def sh_into(
-        self, script: str, sink: IO[bytes], *, timeout: float | None = None
-    ) -> CommandResult:
+    def sh_into(self, script: str, sink: Sink, *, timeout: float | None = None) -> CommandResult:
         """As `sh`, with the stdout written into `sink` as it comes instead of kept."""
 
-    def run(self, script: str, *, stdin: bytes = b"", timeout: float | None = None) -> str:
+    def run(self, script: str, *, stdin: Stdin = b"", timeout: float | None = None) -> str:
         """Run a script that must succeed; return its stdout."""
         result = self.sh(script, stdin=stdin, timeout=timeout)
         if not result.ok:
@@ -83,6 +80,10 @@ class RemoteHost(ShellTarget):
         self._timeouts = timeouts
         self._sudo_prefix: str | None = None
 
+    def reconnect(self) -> None:
+        """Open the SSH session again after it broke; the privileges found stay."""
+        self._runner.reconnect()
+
     def check_privileges(self) -> None:
         """Make sure the user is root or has passwordless sudo, as the Amnezia app requires."""
         if self._runner.run("id -u").output.strip() == "0":
@@ -94,12 +95,10 @@ class RemoteHost(ShellTarget):
             raise SshPrivilegeError(_privilege_error(result.errors, groups), result.errors)
         self._sudo_prefix = "sudo -n "
 
-    def sh(self, script: str, *, stdin: bytes = b"", timeout: float | None = None) -> CommandResult:
+    def sh(self, script: str, *, stdin: Stdin = b"", timeout: float | None = None) -> CommandResult:
         return self._runner.run(self._as_root(script), stdin=stdin, timeout=timeout)
 
-    def sh_into(
-        self, script: str, sink: IO[bytes], *, timeout: float | None = None
-    ) -> CommandResult:
+    def sh_into(self, script: str, sink: Sink, *, timeout: float | None = None) -> CommandResult:
         return self._runner.run_into(self._as_root(script), sink, timeout=timeout)
 
     def client_address(self) -> str | None:
@@ -139,14 +138,12 @@ class DockerContainer(ShellTarget):
         self._host = host
         self.name = name
 
-    def sh(self, script: str, *, stdin: bytes = b"", timeout: float | None = None) -> CommandResult:
+    def sh(self, script: str, *, stdin: Stdin = b"", timeout: float | None = None) -> CommandResult:
         result = self._host.sh(self._exec(script), stdin=stdin, timeout=timeout)
         _raise_for_docker(result)
         return result
 
-    def sh_into(
-        self, script: str, sink: IO[bytes], *, timeout: float | None = None
-    ) -> CommandResult:
+    def sh_into(self, script: str, sink: Sink, *, timeout: float | None = None) -> CommandResult:
         result = self._host.sh_into(self._exec(script), sink, timeout=timeout)
         _raise_for_docker(result)
         return result

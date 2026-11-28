@@ -5,8 +5,8 @@ from dataclasses import dataclass, field
 
 from amnezia_core.xray import XRAY_CONFIG_PATH, XRAY_CONTAINER, XRAY_DIR
 from apps.protocols.tests.fakes import FakeDebianServer
-from apps.ssh.services import CommandResult
-from apps.ssh.tests.fakes import result
+from apps.ssh.services import CommandResult, Stdin
+from apps.ssh.tests.fakes import result, stdin_bytes
 
 START_SCRIPT = "/opt/amnezia/start.sh"
 PLACEHOLDER = b"#!/bin/bash\ntail -f /dev/null\n"
@@ -58,8 +58,9 @@ class FakeXrayHost(FakeDebianServer):
     restarts: int = 0
 
     def run(  # noqa: PLR0911
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         argv = shlex.split(command)
         if argv[:2] != ["sh", "-c"]:
             return super().run(command, stdin=stdin, timeout=timeout)

@@ -331,6 +331,12 @@ restore_data() {
         die "the database is not empty; to start over: cd $DIR && docker compose down -v && rm .env"
     (cd "$DIR" && docker compose exec -T postgres pg_restore -U lamnezia -d lamnezia \
         --no-owner --no-privileges --exit-on-error) <"$RESTORE_DIR/database.dump"
+    # Sessions of an archive may be ones revoked since: everyone signs in again. The copy of a move
+    # keeps them, so the administrator who confirms the move goes on in the new panel.
+    if [ "$MOVING" = 0 ]; then
+        (cd "$DIR" && docker compose exec -T postgres psql -U lamnezia -d lamnezia -qc \
+            "delete from accounts_usersession; delete from django_session")
+    fi
     mkdir -p "$RESTORE_DIR/media"
     (cd "$DIR" && docker compose run --rm --no-deps --user root -v "$RESTORE_DIR/media:/restore:ro" \
         web sh -c 'cp -a /restore/. /app/media/ && chown -R lamnezia:lamnezia /app/media')

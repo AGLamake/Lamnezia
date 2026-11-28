@@ -100,7 +100,8 @@ With `LAMNEZIA_IMAGE` set (in `.env` or `/etc/default/lamnezia-deploy`) it build
 removes old panel images so they do not fill the disk: after a build, the untagged images of the
 project and build cache older than a week; after a pull, the previous version of the image.
 Without the `DEPLOY_HOST` secret the workflow does nothing. While a step of a
-[panel move](Panel-move.md) runs, the script updates nothing and exits with code 75: deploy later.
+[panel move](Panel-move.md) runs, the script updates nothing and exits with code 75; the workflow tries again every 5 minutes, up to
+6 times, and fails only after that.
 
 Setup, once:
 

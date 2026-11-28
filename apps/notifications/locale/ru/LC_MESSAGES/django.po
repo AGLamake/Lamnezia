@@ -266,6 +266,9 @@ msgstr "Домен панели переключился"
 msgid "Panel report since {since}"
 msgstr "Отчёт панели с {since}"
 
+msgid "Panel settings differ after a restore"
+msgstr "Настройки панели отличаются после восстановления"
+
 msgid "Payment received"
 msgstr "Оплата получена"
 
@@ -457,6 +460,10 @@ msgstr "Настройки XRay на сервере {server} изменилис�
 msgid "The amneziawg kernel module on {server} ({host}) is older than 3.1 and dropped the AmneziaWG 3.1 settings: clients with them do not connect. Update or remove the amneziawg module on the host and restart amnezia-awg2."
 msgstr "Модуль ядра amneziawg на сервере {server} ({host}) старше 3.1 и отбросил настройки AmneziaWG 3.1: клиенты с ними не подключаются. Обновите или удалите модуль amneziawg на хосте и перезапустите amnezia-awg2."
 
+#, python-brace-format
+msgid "The archive holds other values of {names} than the .env of this panel; they stay as they are. Copy them into .env if needed and restart the panel: docker compose up -d."
+msgstr "В архиве другие значения {names}, чем в .env этой панели; они остаются прежними. При необходимости перенесите их в .env и перезапустите панель: docker compose up -d."
+
 msgid "The body is signed with it in the X-Lamnezia-Signature header."
 msgstr "Им подписывается тело запроса в заголовке X-Lamnezia-Signature."
 
@@ -533,6 +540,9 @@ msgstr "Ретранслятор {relay} снова получает ответ 
 #, python-brace-format
 msgid "The request is now {status}."
 msgstr "Статус обращения: {status}."
+
+msgid "The restored archive holds other panel settings"
+msgstr "В восстановленном архиве другие настройки панели"
 
 #, python-brace-format
 msgid "The server {server} ({host}) answers again. Answer before the outage: {last_seen}."

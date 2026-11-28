@@ -15,8 +15,8 @@ from amnezia_core.proxies import (
 )
 from apps.protocols.services.settings_backup import ARCHIVE_PATH
 from apps.protocols.tests.fake_service_host import FakeServiceHost
-from apps.ssh.services import CommandResult
-from apps.ssh.tests.fakes import result
+from apps.ssh.services import CommandResult, Stdin
+from apps.ssh.tests.fakes import result, stdin_bytes
 
 SECRET = "0123456789abcdef0123456789abcdef"
 RENEWED_SECRET = "fedcba9876543210fedcba9876543210"
@@ -54,8 +54,9 @@ class FakeProxyHost(FakeServiceHost):
     archives: dict[str, dict[str, str]] = field(default_factory=dict)
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         argv = shlex.split(command)
         if argv[:2] == ["sh", "-c"] and _VOLUME_LOOP in argv[2]:
             removal = argv[2].partition(_VOLUME_LOOP)[0]

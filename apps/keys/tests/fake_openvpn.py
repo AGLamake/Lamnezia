@@ -17,8 +17,8 @@ from amnezia_core.openvpn import (
 )
 from amnezia_core.tests.pki import FakeCa
 from apps.keys.tests.steps import FIXTURES
-from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess
-from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result
+from apps.ssh.services import CommandResult, CommandRunner, RemoteHost, RemoteProcess, Stdin
+from apps.ssh.tests.fakes import TIMEOUTS, FakeProcess, result, stdin_bytes
 
 _READ = re.compile(r"^\[ -f (\S+) \] \|\| exit (\d+); cat -- \S+$")
 _EXISTS = re.compile(r"^\[ -f (\S+) \]$")
@@ -176,8 +176,9 @@ class _Runner(CommandRunner):
         self._server = server
 
     def run(
-        self, command: str, *, stdin: bytes = b"", timeout: float | None = None
+        self, command: str, *, stdin: Stdin = b"", timeout: float | None = None
     ) -> CommandResult:
+        stdin = stdin_bytes(stdin)
         if command == "id -u":
             return result(stdout=b"0\n")
         argv = shlex.split(command)

@@ -63,6 +63,22 @@ def test_passes_stdin_to_command(port: int) -> None:
     assert result.stdout == payload
 
 
+def test_passes_a_file_on_stdin_a_chunk_at_a_time(port: int) -> None:
+    payload = b"0123456789" * 50_000
+
+    with SshConnection(credentials(port), timeouts=TIMEOUTS) as connection:
+        result = connection.run("cat", stdin=io.BytesIO(payload))
+
+    assert result.stdout == payload
+
+
+def test_reconnect_opens_a_new_session(port: int) -> None:
+    with SshConnection(credentials(port), timeouts=TIMEOUTS) as connection:
+        connection.reconnect()
+
+        assert connection.run("hello").output == "hello"
+
+
 def test_run_into_writes_the_output_into_the_sink_as_it_comes(port: int) -> None:
     output = "x" * 200_000
     sink = io.BytesIO()
