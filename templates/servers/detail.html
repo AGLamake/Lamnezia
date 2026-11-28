@@ -246,6 +246,8 @@
 
   {% include "servers/_addresses.html" %}
 
+  {% include "servers/_stealth.html" %}
+
   {% whole_zone as whole %}{% if whole %}{% include "relays/_card.html" %}{% endif %}
 </div>{% endif %}
 {% if staff_block %}{% include "accounts/staff/_block.html" with block=staff_block %}{% endif %}

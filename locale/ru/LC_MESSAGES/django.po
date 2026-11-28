@@ -42,6 +42,13 @@ msgstr[1] "%(count)s ключа этого сервера перестанут �
 msgstr[2] "%(count)s ключей этого сервера перестанут работать."
 
 #, python-format
+msgid "%(count)s to fix"
+msgid_plural "%(count)s to fix"
+msgstr[0] "исправить: %(count)s"
+msgstr[1] "исправить: %(count)s"
+msgstr[2] "исправить: %(count)s"
+
+#, python-format
 msgid "%(counter)s key in total."
 msgid_plural "%(counter)s keys in total."
 msgstr[0] "Всего %(counter)s ключ."
@@ -895,6 +902,10 @@ msgstr "Проверьте почту"
 
 msgid "Checked"
 msgstr "Проверен"
+
+#, python-format
+msgid "Checked %(at)s"
+msgstr "Проверено %(at)s"
 
 #, python-format
 msgid "Checked %(date)s."
@@ -2075,6 +2086,9 @@ msgstr "Вход"
 msgid "Look at its logs there: cd /opt/lamnezia && docker compose logs web."
 msgstr "Посмотрите её журнал там: cd /opt/lamnezia && docker compose logs web."
 
+msgid "Looks for what lets a censor tell the server is a VPN: open ports, IPv6, proxies and the panel on its address, shared AmneziaWG parameters, MUX in XRay. Nothing is changed on the server."
+msgstr "Ищет то, по чему цензор поймёт, что сервер — VPN: открытые порты, IPv6, прокси и панель на его адресе, общие параметры AmneziaWG, MUX в XRay. На сервере ничего не меняется."
+
 msgid "Lost the key or think someone else has it?"
 msgstr "Потеряли ключ или думаете, что он попал к кому-то ещё?"
 
@@ -2117,6 +2131,9 @@ msgstr "Управление"
 
 msgid "Markdown."
 msgstr "Markdown."
+
+msgid "Masking check"
+msgstr "Проверка маскировки"
 
 msgid "Mbit/s"
 msgstr "Мбит/с"
@@ -5806,6 +5823,9 @@ msgstr "заметка"
 
 msgid "nothing delivered yet"
 msgstr "доставок ещё не было"
+
+msgid "nothing found"
+msgstr "ничего не найдено"
 
 msgid "notification language"
 msgstr "язык уведомлений"

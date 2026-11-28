@@ -54,6 +54,11 @@ _FIXED_PARAMS = {
     "RandomTrailers": "on",
     "DisableCookies": "on",
 }
+# The obfuscation values every new server of the app gets alike (awg_fingerprint.py).
+DEFAULT_OBFUSCATION = {
+    name: _FIXED_PARAMS[name]
+    for name in ("Jmin", "Jmax", "S1", "S2", "S3", "S4", "H1", "H2", "H3", "H4")
+}
 # Timers of AmneziaWG 3.1 that make a client behind a relay reach a new server in 7-9 s instead
 # of 18-22 s (measured in P12-01): the outage is the upper bound of KeepaliveTimeout plus
 # RekeyTimeout. On lossy mobile networks they cost extra handshakes.

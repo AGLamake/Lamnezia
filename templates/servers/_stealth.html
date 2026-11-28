@@ -1,0 +1,30 @@
+{% load i18n ui %}
+<details class="disclosure"{% if stealth.warnings %} open{% endif %}>
+  <summary>{% icon "eye-off" "icon-sm text-muted" %}<span>{% translate "Masking check" %}</span>
+    <span class="disclosure-meta">{% if not stealth %}<span class="badge badge-muted">{% translate "not checked" %}</span>{% elif stealth.warnings %}<span class="badge badge-warning">{% blocktranslate count count=stealth.warnings %}{{ count }} to fix{% plural %}{{ count }} to fix{% endblocktranslate %}</span>{% else %}<span class="badge badge-success">{% translate "nothing found" %}</span>{% endif %}</span>
+  </summary>
+  <div class="disclosure-body">
+    <p class="help-text">{% translate "Looks for what lets a censor tell the server is a VPN: open ports, IPv6, proxies and the panel on its address, shared AmneziaWG parameters, MUX in XRay. Nothing is changed on the server." %}</p>
+    {% if stealth %}
+      <p class="help-text">{% blocktranslate with at=stealth.checked_at|date:"SHORT_DATETIME_FORMAT" %}Checked {{ at }}{% endblocktranslate %}</p>
+      <ul class="divide-y divide-border">
+        {% for finding in stealth.findings %}
+          <li class="space-y-1 py-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-medium">{{ finding.item.label }}</span>
+              <span class="badge {% if finding.warns %}badge-warning{% elif finding.status == "ok" %}badge-success{% else %}badge-muted{% endif %}">{{ finding.status.label }}</span>
+            </div>
+            {% if finding.warns %}
+              <p class="break-words">{{ finding.problem }}</p>
+              <p class="help-text">{{ finding.advice }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <form method="post" action="{% url 'servers:stealth' server.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-secondary">{% icon "refresh" "icon-sm" %}{% if stealth %}{% translate "Check again" %}{% else %}{% translate "Check" %}{% endif %}</button>
+    </form>
+  </div>
+</details>

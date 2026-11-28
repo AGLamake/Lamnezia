@@ -82,6 +82,29 @@ def client_fingerprint(client_id: str) -> str:
     return hashlib.sha256(client_id.encode()).hexdigest()
 
 
+def mux_enabled(config_text: str) -> bool:
+    """server.json turns on multiplexing: a `mux` block with `enabled` or an XHTTP `xmux` one.
+
+    The app never sets either; the multiplexed stream looks unlike one browser connection.
+    """
+    try:
+        config = json.loads(config_text)
+    except ValueError as error:
+        raise ConfigFormatError(f"server.json is not JSON: {error}") from error
+    return _has_mux(config)
+
+
+def _has_mux(node: object) -> bool:
+    if isinstance(node, list):
+        return any(_has_mux(item) for item in node)
+    if not isinstance(node, dict):
+        return False
+    mux = node.get("mux")
+    if (isinstance(mux, dict) and mux.get("enabled") is True) or node.get("xmux"):
+        return True
+    return any(_has_mux(value) for value in node.values())
+
+
 def is_valid_site(site: str) -> bool:
     """A masking site the app accepts: XrayConfigModel::isValidSni, an IPv4 or a domain."""
     site = site.strip()

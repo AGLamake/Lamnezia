@@ -7,17 +7,39 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #, python-format
+msgid "%(addresses)d global addresses, %(ports)d public ports"
+msgstr "глобальных адресов: %(addresses)d, публичных портов: %(ports)d"
+
+#, python-format
 msgid "%(gb).1f GB free"
 msgstr "свободно %(gb).1f ГБ"
 
+msgid "A block learnt on one server takes the other too. Give each server its own values in the protocol settings; clients import their keys again."
+msgstr "Блокировка, выученная на одном сервере, задевает и другой. Задайте каждому серверу свои значения в настройках протокола; клиенты заново импортируют ключи."
+
 msgid "A second IP of the server or a domain pointing to one of its IPs."
 msgstr "Второй IP сервера или домен, указывающий на один из его IP."
+
+msgid "A server with nothing on 443 looks unlike a web server. Put XRay on 443: Reality answers as its masking site; or run a web server with a plain site there."
+msgstr "Сервер, на 443 которого ничего нет, не похож на веб-сервер. Поставьте XRay на 443 — Reality отвечает как сайт маскировки — или запустите там веб-сервер с простым сайтом."
 
 msgid "A server with this host and port is already added."
 msgstr "Сервер с таким хостом и портом уже добавлен."
 
 msgid "Amnezia containers"
 msgstr "контейнеры Amnezia"
+
+msgid "AmneziaWG 2.0 takes a range for H1-H4 and picks a new value for each packet. Set ranges that do not overlap in the protocol settings; clients import their keys again."
+msgstr "AmneziaWG 2.0 принимает для H1-H4 диапазон и выбирает новое значение для каждого пакета. Задайте непересекающиеся диапазоны в настройках протокола; клиенты заново импортируют ключи."
+
+msgid "AmneziaWG defaults"
+msgstr "Значения AmneziaWG по умолчанию"
+
+msgid "AmneziaWG header ranges"
+msgstr "Диапазоны заголовков AmneziaWG"
+
+msgid "AmneziaWG parameters of other servers"
+msgstr "Параметры AmneziaWG других серверов"
 
 msgid "Any"
 msgstr "Любой"
@@ -55,17 +77,26 @@ msgstr "Проверить ответчик из интернета"
 msgid "Check the server first, then check the address again."
 msgstr "Сначала проверьте сервер, затем проверьте адрес ещё раз."
 
+msgid "Check the server masking"
+msgstr "Проверить маскировку сервера"
+
 msgid "Choose another port for the probe."
 msgstr "Выберите для проверки другой порт."
 
 msgid "Compare the SSH key at the address with the server's"
 msgstr "Сравнить SSH-ключ по адресу с ключом сервера"
 
+msgid "Compare with the panel and the other servers"
+msgstr "Сравнить с панелью и другими серверами"
+
 msgid "Connect to the server"
 msgstr "Подключиться к серверу"
 
 msgid "Country or any label that tells servers apart, e.g. «Germany, Hetzner»."
 msgstr "Страна или любая метка, по которой серверы различать, например «Германия, Hetzner»."
+
+msgid "DPI learns values that many servers share. Set your own in the protocol settings; clients import their keys again."
+msgstr "DPI запоминает значения, общие для многих серверов. Задайте свои в настройках протокола; клиенты заново импортируют ключи."
 
 msgid "Disk"
 msgstr "Диск"
@@ -82,6 +113,9 @@ msgstr "Введите имя хоста или IP-адрес без имени 
 msgid "Enter the password."
 msgstr "Введите пароль."
 
+msgid "Every extra service tells a scanner more about the server. Stop the services you do not need or close their ports in the firewall."
+msgstr "Каждая лишняя служба рассказывает сканеру о сервере больше. Остановите ненужные службы или закройте их порты в файрволе."
+
 msgid "Free disk space is unknown."
 msgstr "Свободное место узнать не удалось."
 
@@ -90,6 +124,9 @@ msgstr "ГБ за сутки"
 
 msgid "IP or domain"
 msgstr "IP или домен"
+
+msgid "IPv6"
+msgstr "IPv6"
 
 msgid "Install the reachability probe"
 msgstr "Установка проверки доступности"
@@ -100,11 +137,28 @@ msgstr "Пароль ключа"
 msgid "Leave empty to keep the saved one."
 msgstr "Оставьте пустым, чтобы сохранить прежний."
 
+#, python-format
+msgid "Left at the values of every new server: %(facts)s."
+msgstr "Оставлены значения, как у любого нового сервера: %(facts)s."
+
+msgid "Lists of Tor nodes and open proxies are public and blocked by IP, and the keys of this address go down with them. Move the proxy to another server or close it to strangers."
+msgstr "Списки Tor-нод и открытых прокси публичны и блокируются по IP, а с ними и ключи этого адреса. Перенесите прокси на другой сервер или закройте его от посторонних."
+
 msgid "Little free disk space: a protocol may fail to install."
 msgstr "Мало свободного места на диске: протокол может не установиться."
 
+msgid "MUX in XRay"
+msgstr "MUX в XRay"
+
 msgid "Memory"
 msgstr "Память"
+
+msgid "Nothing answers on TCP port 443."
+msgstr "На TCP-порту 443 никто не отвечает."
+
+#, python-format
+msgid "On the same IP: %(facts)s."
+msgstr "На том же IP: %(facts)s."
 
 msgid "Only if the key is protected by one."
 msgstr "Только если ключ им защищён."
@@ -112,11 +166,17 @@ msgstr "Только если ключ им защищён."
 msgid "Open it in the firewall of the server and of the hosting provider."
 msgstr "Откройте его в брандмауэре сервера и хостинга."
 
+msgid "Open ports"
+msgstr "Открытые порты"
+
 msgid "Open the UDP port in the firewall of the server and of the hosting provider, then install the probe again."
 msgstr "Откройте UDP-порт в брандмауэре сервера и хостинга и установите проверку снова."
 
 msgid "OpenSSH or PEM, Ed25519, ECDSA or RSA."
 msgstr "OpenSSH или PEM, Ed25519, ECDSA или RSA."
+
+msgid "Panel address"
+msgstr "Адрес панели"
 
 msgid "Password"
 msgstr "Пароль"
@@ -124,8 +184,18 @@ msgstr "Пароль"
 msgid "Paste the private key."
 msgstr "Вставьте приватный ключ."
 
+#, python-format
+msgid "Ports that no protocol of the panel uses are open: %(facts)s."
+msgstr "Открыты порты, которые не использует ни один протокол панели: %(facts)s."
+
 msgid "Private key"
 msgstr "Приватный ключ"
+
+msgid "Read the XRay config"
+msgstr "Прочитать конфигурацию XRay"
+
+msgid "Read the addresses, ports and containers of the server"
+msgstr "Прочитать адреса, порты и контейнеры сервера"
 
 msgid "Remove the probe container"
 msgstr "Удалить контейнер проверки"
@@ -154,11 +224,21 @@ msgstr "Поиск"
 msgid "See the step log. Check that Docker works and the server has internet."
 msgstr "Смотрите журнал шага. Проверьте, что Docker работает и у сервера есть интернет."
 
+#, python-format
+msgid "Set to one number: %(facts)s."
+msgstr "Заданы одним числом: %(facts)s."
+
+msgid "Site on port 443"
+msgstr "Сайт на порту 443"
+
 msgid "Start the probe container"
 msgstr "Запустить контейнер проверки"
 
 msgid "Status"
 msgstr "Статус"
+
+msgid "The Amnezia app does not use it, and the multiplexed stream looks unlike one browser connection. Remove the mux block from server.json and restart the container."
+msgstr "Приложение Amnezia его не использует, а мультиплексированный поток не похож на одно соединение браузера. Удалите блок mux из server.json и перезапустите контейнер."
 
 msgid "The SSH fingerprint is forgotten: the check saves the new one."
 msgstr "Отпечаток SSH забыт: проверка сохранит новый."
@@ -179,6 +259,10 @@ msgid "The panel has not saved the SSH key of the server yet."
 msgstr "Панель ещё не сохранила SSH-ключ сервера."
 
 #, python-format
+msgid "The panel is on the address of the server: %(facts)s."
+msgstr "Панель на адресе сервера: %(facts)s."
+
+#, python-format
 msgid "The probe answers on UDP port %(port)d."
 msgstr "Ответчик отвечает на UDP-порту %(port)d."
 
@@ -188,11 +272,19 @@ msgstr "Контейнер проверки не запустился."
 msgid "The probe does not answer from the internet."
 msgstr "Ответчик не отвечает из интернета."
 
+#, python-format
+msgid "The same obfuscation parameters as on %(facts)s."
+msgstr "Те же параметры обфускации, что на %(facts)s."
+
 msgid "The server already has this address."
 msgstr "У сервера уже есть этот адрес."
 
 msgid "The server has other owners: leave its list instead."
 msgstr "У сервера есть другие владельцы: вместо удаления выйдите из его списка."
+
+#, python-format
+msgid "The server has the IPv6 address %(facts)s, but no key uses it."
+msgstr "У сервера есть IPv6-адрес %(facts)s, но ни один ключ его не использует."
 
 msgid "The server is deleted from the panel."
 msgstr "Сервер удалён из панели."
@@ -205,6 +297,15 @@ msgstr "Сервер — ретранслятор групп серверов: �
 
 msgid "This port is used by SSH or a protocol on the server."
 msgstr "Этот порт занят SSH или протоколом на сервере."
+
+msgid "Tor and public proxies"
+msgstr "Tor и публичные прокси"
+
+msgid "Tor node"
+msgstr "Tor-нода"
+
+msgid "Traffic may leave the server past the VPN, and the address is one more to scan. Turn IPv6 off on the server (sysctl net.ipv6.conf.all.disable_ipv6=1) or add the address to the server for the keys."
+msgstr "Трафик может уйти с сервера мимо VPN, а адрес — лишняя цель для сканирования. Выключите IPv6 на сервере (sysctl net.ipv6.conf.all.disable_ipv6=1) или добавьте адрес серверу для ключей."
 
 msgid "UDP port"
 msgstr "UDP-порт"
@@ -220,6 +321,9 @@ msgstr "Дождаться других операций на сервере"
 
 msgid "Where to pay for the VPS: the hosting provider's site or its billing page."
 msgstr "Где платить за VPS: сайт хостера или его страница оплаты."
+
+msgid "Whoever finds the panel finds the VPN, and a block of one takes the other. Move the panel to another server or another address."
+msgstr "Кто нашёл панель, нашёл и VPN, а блокировка одного задевает другое. Перенесите панель на другой сервер или другой адрес."
 
 msgid "You are the only owner of the server."
 msgstr "Вы единственный владелец сервера."
@@ -263,6 +367,9 @@ msgstr "диск"
 msgid "error"
 msgstr "ошибка"
 
+msgid "fine"
+msgstr "в порядке"
+
 msgid "free disk space"
 msgstr "свободно на диске"
 
@@ -304,6 +411,12 @@ msgstr "расположение"
 
 msgid "login with"
 msgstr "вход"
+
+msgid "masking check"
+msgstr "проверка маскировки"
+
+msgid "masking checks"
+msgstr "проверки маскировки"
 
 msgid "measure"
 msgstr "показатель"
@@ -347,6 +460,9 @@ msgstr "ресурс"
 msgid "restarts"
 msgstr "перезапуски"
 
+msgid "results"
+msgstr "результаты"
+
 msgid "server"
 msgstr "сервер"
 
@@ -362,11 +478,17 @@ msgstr "замер сервера"
 msgid "server readings"
 msgstr "замеры серверов"
 
+msgid "server.json of XRay turns multiplexing on."
+msgstr "В server.json XRay включено мультиплексирование."
+
 msgid "servers"
 msgstr "серверы"
 
 msgid "status"
 msgstr "статус"
+
+msgid "to fix"
+msgstr "исправить"
 
 msgid "told at"
 msgstr "сообщено"

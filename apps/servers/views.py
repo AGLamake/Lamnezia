@@ -27,8 +27,8 @@ from apps.servers.forms import (
     ServerFilterForm,
     ServerForm,
 )
-from apps.servers.models import CheckWarning, Server, ServerAddress
-from apps.servers.services import probe
+from apps.servers.models import CheckWarning, Server, ServerAddress, StealthReport
+from apps.servers.services import probe, stealth
 from apps.servers.services.addresses import ServerAddresses
 from apps.servers.services.check import start_check
 from apps.servers.services.history import latest_operation
@@ -82,6 +82,7 @@ class ServerDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-a
             host_key=trusted_host_key(server),
             ipsec=IpsecIdentity.of(server),
             speed_history=speed_summary(server, timezone.now()),
+            stealth=StealthReport.objects.filter(server=server).first(),
             **(progress_context(latest) if latest else {}),
             **kwargs,
         )
@@ -166,6 +167,17 @@ class ServerCheckView(SectionRequiredMixin, View):
     def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         server = get_object_or_404(self.zone.servers(), pk=pk)
         start_check(server, self.member)
+        return redirect("servers:detail", pk=server.pk)
+
+
+class ServerStealthView(SectionRequiredMixin, View):
+    """Start the masking check; its report shows on the server card."""
+
+    section = Section.SERVERS
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        server = get_object_or_404(self.zone.servers(), pk=pk)
+        stealth.start(server, self.member)
         return redirect("servers:detail", pk=server.pk)
 
 

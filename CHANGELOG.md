@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Masking check**: a background check from the server card reports what gives the server
+  away — unused IPv6, extra open ports, nothing on 443, Tor or a public proxy on the same IP, the
+  panel on the server address, AmneziaWG parameters at their defaults or shared with another
+  server, fixed H1–H4 where a range is possible, MUX in XRay — with what to do for each item.
 - **Load on the address**: thresholds of active keys and of GB per day per server in
   **Settings → Server load**, empty (off) by default. A server at a threshold is in **Needs
   attention**, its card says so, and `address_busy` / `address_calm` notify the staff.

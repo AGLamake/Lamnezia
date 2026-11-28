@@ -13,7 +13,7 @@ from apps.operations.services.registry import operations
 from apps.operations.services.subjects import subjects
 from apps.protocols.services.lifecycle import LostInterfaceRestart
 from apps.servers.models import Server, ServerAddress
-from apps.servers.services import interface_watch, probe
+from apps.servers.services import interface_watch, probe, stealth
 from apps.servers.services.addresses import CHECK_ADDRESS_KIND, AddressCheck
 from apps.servers.services.check import CHECK_KIND, ServerCheck
 from apps.servers.services.connection import connect
@@ -44,6 +44,16 @@ def check_address(ctx: OperationContext) -> None:
         return
     with ctx.step(_("Compare the SSH key at the address with the server's")):
         AddressCheck(address, ctx).run()
+
+
+@operations.register(stealth.KIND, gettext_lazy("Check the server masking"))
+def check_stealth(ctx: OperationContext) -> None:
+    server = Server.objects.get(pk=ctx.params["server_id"])
+    with ExitStack() as stack:
+        with ctx.step(_("Connect to the server")):
+            host = stack.enter_context(connect(server))
+        findings = stealth.StealthCheck(server, host, ctx).run()
+    stealth.save(server, findings)
 
 
 @operations.register(probe.INSTALL_KIND, gettext_lazy("Install the reachability probe"))

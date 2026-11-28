@@ -428,6 +428,130 @@ class ServerAddress(models.Model):
         self.save(update_fields=["verified_at", "error"])
 
 
+class StealthItem(models.TextChoices):
+    """What the masking check looks at (apps/servers/services/stealth.py); the label is a title."""
+
+    IPV6 = "ipv6", _("IPv6")
+    PORTS = "ports", _("Open ports")
+    STUB = "stub", _("Site on port 443")
+    PROXY = "proxy", _("Tor and public proxies")
+    PANEL = "panel", _("Panel address")
+    AWG_DEFAULTS = "awg_defaults", _("AmneziaWG defaults")
+    AWG_SHARED = "awg_shared", _("AmneziaWG parameters of other servers")
+    AWG_RANGES = "awg_ranges", _("AmneziaWG header ranges")
+    XRAY_MUX = "xray_mux", _("MUX in XRay")
+
+
+class StealthStatus(models.TextChoices):
+    OK = "ok", _("fine")
+    WARN = "warn", _("to fix")
+    SKIP = "skip", _("not checked")
+
+
+# What a warning of each item found; %(facts)s are the addresses, ports or names it is about.
+_STEALTH_PROBLEMS = {
+    StealthItem.IPV6: _("The server has the IPv6 address %(facts)s, but no key uses it."),
+    StealthItem.PORTS: _("Ports that no protocol of the panel uses are open: %(facts)s."),
+    StealthItem.STUB: _("Nothing answers on TCP port 443."),
+    StealthItem.PROXY: _("On the same IP: %(facts)s."),
+    StealthItem.PANEL: _("The panel is on the address of the server: %(facts)s."),
+    StealthItem.AWG_DEFAULTS: _("Left at the values of every new server: %(facts)s."),
+    StealthItem.AWG_SHARED: _("The same obfuscation parameters as on %(facts)s."),
+    StealthItem.AWG_RANGES: _("Set to one number: %(facts)s."),
+    StealthItem.XRAY_MUX: _("server.json of XRay turns multiplexing on."),
+}
+_STEALTH_ADVICE = {
+    StealthItem.IPV6: _(
+        "Traffic may leave the server past the VPN, and the address is one more to scan. Turn "
+        "IPv6 off on the server (sysctl net.ipv6.conf.all.disable_ipv6=1) or add the address to "
+        "the server for the keys."
+    ),
+    StealthItem.PORTS: _(
+        "Every extra service tells a scanner more about the server. Stop the services you do not "
+        "need or close their ports in the firewall."
+    ),
+    StealthItem.STUB: _(
+        "A server with nothing on 443 looks unlike a web server. Put XRay on 443: Reality "
+        "answers as its masking site; or run a web server with a plain site there."
+    ),
+    StealthItem.PROXY: _(
+        "Lists of Tor nodes and open proxies are public and blocked by IP, and the keys of this "
+        "address go down with them. Move the proxy to another server or close it to strangers."
+    ),
+    StealthItem.PANEL: _(
+        "Whoever finds the panel finds the VPN, and a block of one takes the other. Move the "
+        "panel to another server or another address."
+    ),
+    StealthItem.AWG_DEFAULTS: _(
+        "DPI learns values that many servers share. Set your own in the protocol settings; "
+        "clients import their keys again."
+    ),
+    StealthItem.AWG_SHARED: _(
+        "A block learnt on one server takes the other too. Give each server its own values in "
+        "the protocol settings; clients import their keys again."
+    ),
+    StealthItem.AWG_RANGES: _(
+        "AmneziaWG 2.0 takes a range for H1-H4 and picks a new value for each packet. Set ranges "
+        "that do not overlap in the protocol settings; clients import their keys again."
+    ),
+    StealthItem.XRAY_MUX: _(
+        "The Amnezia app does not use it, and the multiplexed stream looks unlike one browser "
+        "connection. Remove the mux block from server.json and restart the container."
+    ),
+}
+
+
+@dataclass(frozen=True)
+class StealthFinding:
+    """One item of the masking check: its status and the facts a warning is about."""
+
+    item: StealthItem
+    status: StealthStatus
+    facts: str = ""
+
+    @property
+    def problem(self) -> str:
+        return str(_STEALTH_PROBLEMS[self.item]) % {"facts": self.facts}
+
+    @property
+    def advice(self) -> str:
+        return str(_STEALTH_ADVICE[self.item])
+
+    @property
+    def warns(self) -> bool:
+        return self.status == StealthStatus.WARN
+
+    def as_json(self) -> dict[str, str]:
+        return {"item": self.item, "status": self.status, "facts": self.facts}
+
+    @classmethod
+    def from_json(cls, data: dict[str, str]) -> "StealthFinding":
+        return cls(StealthItem(data["item"]), StealthStatus(data["status"]), data.get("facts", ""))
+
+
+class StealthReport(models.Model):
+    """The latest masking check of a server: one finding per StealthItem."""
+
+    server = models.OneToOneField(Server, on_delete=models.CASCADE, related_name="stealth_report")
+    results = models.JSONField(_("results"), default=list)
+    checked_at = models.DateTimeField(_("checked at"))
+
+    class Meta:
+        verbose_name = _("masking check")
+        verbose_name_plural = _("masking checks")
+
+    def __str__(self) -> str:
+        return str(self.server_id)
+
+    @property
+    def findings(self) -> list[StealthFinding]:
+        return [StealthFinding.from_json(data) for data in self.results]
+
+    @property
+    def warnings(self) -> int:
+        return sum(finding.warns for finding in self.findings)
+
+
 def _used_percent(total: int | None, free: int | None) -> float | None:
     if not total or free is None:
         return None

@@ -100,6 +100,30 @@ The other findings are only warnings, the server is still «ready»:
 
 Every check is recorded in **Operations** with its steps and log.
 
+## Masking check
+
+Server card → **Masking check** → **Check** looks for what lets a censor tell the server is a
+VPN. It is a background operation: it reads the addresses, listening ports and running
+containers of the server and the `server.json` of XRay, compares them with what the panel
+knows, and changes nothing on the server. The card keeps the latest report; each item is
+**fine**, **to fix** with what was found and what to do, or **not checked** when it does not
+apply (no AmneziaWG, no XRay, `ss` missing, the panel address does not resolve).
+
+| Item | Warns when | What to do |
+|---|---|---|
+| IPv6 | the server has a global IPv6 address that neither its address nor its **Other addresses** use | turn IPv6 off (`sysctl net.ipv6.conf.all.disable_ipv6=1`) or add the address for the keys |
+| Open ports | something listens on a public address on a port no protocol, service, probe or relayed group of the panel uses (SSH, 80 and 443 are expected) | stop the service or close the port in the firewall |
+| Site on port 443 | nothing listens on TCP 443 | put XRay on 443 (Reality answers as its masking site) or a web server with a plain site |
+| Tor and public proxies | a SOCKS5, MTProxy or Telemt container runs, or Tor listens on a public port | move the proxy to another server or close it to strangers |
+| Panel address | the address of `SITE_URL` is one of the server's | move the panel to another server or address |
+| AmneziaWG defaults | Jmin, Jmax, S1–S4 or H1–H4 keep the values every new server gets | set your own in the protocol settings; clients import their keys again |
+| AmneziaWG parameters of other servers | another server has the same obfuscation values (members of one [group](Server-groups.md) share them by design and are skipped) | give each server its own values |
+| AmneziaWG header ranges | H1–H4 of AmneziaWG 2.0 are single numbers | set ranges that do not overlap |
+| MUX in XRay | `server.json` has `mux` enabled or `xmux` | remove the block and restart the container |
+
+New servers get the defaults of the Amnezia app, so the AmneziaWG items warn on them until the
+values are changed.
+
 ## Import from a server set up in the Amnezia app
 
 On the server page press **Import from the server**. The panel:
