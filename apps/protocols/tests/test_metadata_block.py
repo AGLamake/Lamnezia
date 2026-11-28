@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 from django.conf import settings
 from django.test import Client
+from django.utils import timezone
 
 from amnezia_core.containers import AWG2
 from apps.accounts.models import Role, User
@@ -26,8 +27,9 @@ from apps.protocols.services.installation import INSTALL_KIND
 from apps.protocols.services.metadata_block import MetadataBlocker
 from apps.protocols.services.metadata_scripts import MetadataReading
 from apps.protocols.tests.fake_metadata_host import FakeMetadataHost
-from apps.servers.models import Server
+from apps.servers.models import Server, ServerSample
 from apps.servers.tests.factories import ServerFactory
+from apps.ssh.errors import ErrorCode, SshConnectionError
 from apps.ssh.services import RemoteHost
 
 pytestmark = pytest.mark.django_db
@@ -90,9 +92,12 @@ def awg_instance(server: Server) -> ProtocolInstance:
 def test_reading_keeps_the_timer_the_jump_and_the_bridges() -> None:
     reading = MetadataReading.parse(
         "timer active\njump yes\nclosed docker0\nclosed br-1a2b3c4d5e6f\nclosed bad;name\n"
+        "closed6 docker0\nbackend nftables\nbackend other\n"
     )
 
-    assert reading == MetadataReading(True, True, ("docker0", "br-1a2b3c4d5e6f"))
+    assert reading == MetadataReading(
+        True, True, ("docker0", "br-1a2b3c4d5e6f"), ("docker0",), "nftables"
+    )
     assert reading.closed
 
 
@@ -296,6 +301,46 @@ def test_catch_up_leaves_opened_and_empty_servers(server: Server) -> None:
     assert not MetadataBlock.objects.filter(script_version=scripts.VERSION).exists()
 
 
+def heard(server: Server, *, answered: bool) -> None:
+    """The latest monitor reading of the server: answered or not."""
+    sample = ServerSample.objects.create(
+        server=server, at=timezone.now(), error="" if answered else "host_unreachable"
+    )
+    seen = sample.at if answered else None
+    Server.objects.filter(pk=server.pk).update(latest_sample=sample, last_seen_at=seen)
+
+
+def test_catch_up_waits_for_a_silent_server_to_answer(server: Server) -> None:
+    awg_instance(server)
+    heard(server, answered=False)
+
+    assert metadata_block.catch_up() == []
+    assert not MetadataBlock.objects.filter(script_version=scripts.VERSION).exists()
+
+    heard(server, answered=True)
+    assert len(metadata_block.catch_up()) == 1
+
+
+def test_a_server_the_operation_could_not_reach_is_caught_up_again(
+    server: Server, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    awg_instance(server)
+
+    @contextmanager
+    def unreachable(_server: Server) -> Iterator[RemoteHost]:
+        raise SshConnectionError(ErrorCode.HOST_UNREACHABLE, server.host)
+        yield  # pragma: no cover
+
+    monkeypatch.setattr("apps.protocols.operations.connect", unreachable)
+    [operation] = metadata_block.catch_up()
+
+    run_operation(operation.pk)
+
+    operation.refresh_from_db()
+    assert operation.status == OperationStatus.FAILED
+    assert len(metadata_block.catch_up()) == 1
+
+
 def test_catch_up_runs_every_hour() -> None:
     schedule = settings.CELERY_BEAT_SCHEDULE["protocols-metadata-catch-up"]
     assert schedule == {"task": "protocols.metadata_catch_up", "schedule": 60 * 60}
@@ -420,12 +465,18 @@ def test_card_buttons_start_the_operations(
 
 def test_card_shows_the_reading(admin_client: Client, server: Server) -> None:
     awg_instance(server)
-    metadata_block.record(server, MetadataReading(True, True, ("docker0",)))
+    metadata_block.record(server, MetadataReading(True, True, ("docker0",), (), "iptables"))
 
     page = admin_client.get(f"/servers/{server.pk}/").content.decode()
 
     assert "Closed for: docker0." in page
+    assert "IPv6 is not closed" in page
+    assert "Rules in iptables." in page
     assert f"/protocols/metadata/{server.pk}/disable/" in page
+
+    metadata_block.record(server, MetadataReading(True, True, ("docker0",), ("docker0",)))
+    page = admin_client.get(f"/servers/{server.pk}/").content.decode()
+    assert "IPv6 closed for: docker0." in page
 
 
 def test_card_is_hidden_without_containers(admin_client: Client, server: Server) -> None:

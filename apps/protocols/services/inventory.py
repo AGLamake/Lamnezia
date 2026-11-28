@@ -13,6 +13,8 @@ from apps.protocols.catalog import CATALOG, ContainerGroup
 from apps.protocols.models import ProtocolInstance, ServiceInstance
 from apps.protocols.services.awg_migration import MigrationState, can_migrate
 from apps.protocols.services.awg_upgrade import can_upgrade
+from apps.protocols.services.sni_choice import is_mass_sni
+from apps.protocols.services.xray_settings import XrayPanelSettings
 from apps.servers.models import Server
 
 RUNNING = "running"
@@ -67,6 +69,14 @@ class ContainerRow:
         if self.instance is None or self.instance.container != XRAY_CONTAINER:
             return 0
         return waiting_profiles(self.instance.source)
+
+    @property
+    def mass_sni(self) -> str:
+        """The SNI of an XRay container when many Reality servers use it; empty otherwise."""
+        if self.instance is None or self.instance.container != XRAY_CONTAINER:
+            return ""
+        sni = XrayPanelSettings.of(self.instance).server.sni
+        return sni if is_mass_sni(sni) else ""
 
 
 def server_containers(server: Server) -> list[ContainerRow]:

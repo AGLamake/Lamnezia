@@ -42,6 +42,10 @@ msgstr[1] "%(count)d полезных материала скрыты: ссыл�
 msgstr[2] "%(count)d полезных материалов скрыты: ссылки не работают"
 
 #, python-format
+msgid "%(name)s answers, but its outage is still open: a reading did not close it"
+msgstr "%(name)s отвечает, но его сбой всё ещё открыт: опрос его не закрыл"
+
+#, python-format
 msgid "%(name)s does not answer"
 msgstr "%(name)s не отвечает"
 
@@ -78,6 +82,13 @@ msgid_plural "%(name)s: pay for the VPS within %(days)d days"
 msgstr[0] "%(name)s: оплатите VPS в течение %(days)d дня"
 msgstr[1] "%(name)s: оплатите VPS в течение %(days)d дней"
 msgstr[2] "%(name)s: оплатите VPS в течение %(days)d дней"
+
+#, python-format
+msgid "%(name)s: the masking check found %(count)d thing to fix"
+msgid_plural "%(name)s: the masking check found %(count)d things to fix"
+msgstr[0] "%(name)s: проверка маскировки нашла %(count)d пункт исправить"
+msgstr[1] "%(name)s: проверка маскировки нашла %(count)d пункта исправить"
+msgstr[2] "%(name)s: проверка маскировки нашла %(count)d пунктов исправить"
 
 msgid "A new subscription link is ready."
 msgstr "Новая ссылка-подписка готова."
@@ -230,6 +241,10 @@ msgstr "Тариф"
 
 msgid "Reissue keys"
 msgstr "Перевыпустить ключи"
+
+#, python-format
+msgid "Relay %(name)s answers, but its outage is still open: a reading did not close it"
+msgstr "Ретранслятор %(name)s отвечает, но его сбой всё ещё открыт: опрос его не закрыл"
 
 #, python-format
 msgid "Relay %(name)s: its state cannot be read"

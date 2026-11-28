@@ -1645,6 +1645,13 @@ msgstr "IP-адрес"
 msgid "IPsec server certificate"
 msgstr "Сертификат сервера IPsec"
 
+#, python-format
+msgid "IPv6 closed for: %(bridges)s."
+msgstr "IPv6 закрыт для: %(bridges)s."
+
+msgid "IPv6 is not closed: Docker keeps no IPv6 rules on this server."
+msgstr "IPv6 не закрыт: Docker не держит правил IPv6 на этом сервере."
+
 msgid "If a provider blocks the server address for some users, give their keys another IP or domain of the server. The panel checks that the address leads to this server: it compares the SSH key shown there with the server's."
 msgstr "Если провайдер блокирует адрес сервера для части пользователей, дайте их ключам другой IP или домен сервера. Панель проверяет, что адрес ведёт на этот сервер: сравнивает SSH-ключ, который там показывается, с ключом сервера."
 
@@ -2756,6 +2763,10 @@ msgstr "Обзор"
 msgid "Own entries"
 msgstr "Свои записи"
 
+#, python-format
+msgid "Own ports, not counted as extra: %(ports)s. They are set in the server settings."
+msgstr "Свои порты, не считаются лишними: %(ports)s. Они задаются в настройках сервера."
+
 msgid "Owner"
 msgstr "Владелец"
 
@@ -3241,6 +3252,10 @@ msgstr "Строк"
 msgid "Rows per page"
 msgstr "Строк на странице"
 
+#, python-format
+msgid "Rules in %(backend)s."
+msgstr "Правила в %(backend)s."
+
 msgid "Run install.sh of the current version on the host once: it installs the lamnezia-update unit. Or update by hand as the Upgrade page of the wiki says."
 msgstr "Один раз запустите на хосте install.sh текущей версии: он установит юнит lamnezia-update. Или обновите панель вручную, как описано на странице вики «Обновление»."
 
@@ -3582,6 +3597,10 @@ msgstr "Скорость"
 msgid "Speed limit of the server"
 msgstr "Предел скорости сервера"
 
+#, python-format
+msgid "Speed limits are not in the container: %(reason)s. The panel applies them again."
+msgstr "Ограничений скорости нет в контейнере: %(reason)s. Панель применяет их заново."
+
 msgid "Speed test"
 msgstr "Замер скорости"
 
@@ -3794,6 +3813,10 @@ msgstr "SNI %(sni)s также стоит у XRay на серверах: %(serve
 #, python-format
 msgid "The SNI %(sni)s is widely used: guides and defaults hand it out, so many Reality servers have it. Pick a domain of a neighbour instead."
 msgstr "SNI %(sni)s массовый: его дают инструкции и умолчания, поэтому он стоит у многих серверов Reality. Лучше выберите домен соседа."
+
+#, python-format
+msgid "The SNI %(sni)s is widely used: many Reality servers have it. Pick a domain of a neighbour in the protocol settings."
+msgstr "SNI %(sni)s массовый: он стоит у многих серверов Reality. Выберите домен соседа в настройках протокола."
 
 msgid "The VPN service is stopped."
 msgstr "VPN-сервис остановлен."
@@ -4786,6 +4809,9 @@ msgstr "Этот сервер вам недоступен."
 msgid "This server leads a split group: %(copies)s takes its peers from the active keys of the panel, not from the server. A peer marked “not in the clone” works on the server, but its client does not work through the relay until the panel takes the peer as an active key."
 msgstr "Этот сервер ведёт группу в раздельном режиме: %(copies)s берёт пиры из активных ключей панели, а не с сервера. Пир с пометкой «нет в клоне» работает на сервере, но через ретранслятор его клиент не работает, пока панель не примет пир как активный ключ."
 
+msgid "This site is a widely used SNI: guides and defaults hand it out, so many Reality servers have it. A domain of a neighbour of the server is safer; the settings of the protocol can find one after the install."
+msgstr "Этот сайт — массовый SNI: его дают инструкции и умолчания, поэтому он стоит у многих серверов Reality. Домен соседа сервера надёжнее; подобрать его можно в настройках протокола после установки."
+
 msgid "This version is not the latest release newer than the panel."
 msgstr "Эта версия — не последний релиз новее панели."
 
@@ -4879,6 +4905,9 @@ msgstr "Трафик по дням"
 
 msgid "Traffic for 7 days"
 msgstr "Трафик за 7 дней"
+
+msgid "Traffic in 24 hours"
+msgstr "Трафик за 24 часа"
 
 msgid "Traffic in total"
 msgstr "Трафик всего"

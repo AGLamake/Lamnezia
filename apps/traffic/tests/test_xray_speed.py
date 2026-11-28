@@ -24,7 +24,7 @@ from apps.plans.models import UserLimits
 from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
 from apps.ssh.services import CommandResult
 from apps.ssh.tests.fakes import result
-from apps.traffic.models import TrafficSource
+from apps.traffic.models import Shaping, TrafficSource
 from apps.traffic.services.speed import SPEED_APPLY, SpeedLimiter
 from apps.traffic.services.xray_shaping import XraySpeedRule
 
@@ -194,6 +194,30 @@ def test_limits_come_back_after_the_app_recreated_the_container(
     assert routing(server)[0]["user"] == [key.public_key]
     assert '"stats"' in server.files[XRAY_CONFIG_PATH]
     assert HOOK in server.files[START_SCRIPT_PATH]
+
+
+@pytest.mark.parametrize("shaping", [Shaping.MISSING, Shaping.LOST])
+def test_limits_come_back_when_the_poll_finds_them_gone(
+    server: XrayWithApi,
+    issue: Callable[[User], AccessKey],
+    sync: Callable[[], list[Operation]],
+    shaping: Shaping,
+) -> None:
+    issue(subscriber(speed=10))
+    sync()
+    TrafficSource.objects.update_or_create(
+        source=SOURCE,
+        defaults={"available": True, "shaping": Shaping.OK, "checked_at": timezone.now()},
+    )
+    assert sync() == []
+
+    del server.files[NFT]
+    TrafficSource.objects.filter(source=SOURCE).update(shaping=shaping, checked_at=timezone.now())
+    (again,) = sync()
+
+    assert again.status == OperationStatus.SUCCEEDED
+    assert "limit rate" in server.files[NFT]
+    assert sync() == []
 
 
 def test_statistics_lost_before_the_operation_start_nothing(

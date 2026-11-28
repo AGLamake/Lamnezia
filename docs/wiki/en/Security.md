@@ -183,8 +183,10 @@ An install closes the server on its own after the container is set up. An import
 on the server itself and starts a separate operation, **Close the cloud metadata service after an
 import or a panel update**. The panel starts the same operation every hour for servers added
 before the block or closed by an older version of its script; each such server is tried once per
-version of the script. A server without systemd, or one that did not answer, is left open, and
-the operation log says why; the server card closes it.
+version of the script. A server without systemd is left open, and the operation log says why;
+the server card closes it. A server that did not answer is tried again in an hour when the
+monitor hears it. The card shows for which Docker bridges IPv6 is closed and whether the rules
+are in iptables or nftables.
 
 The server card has **Cloud metadata service for VPN clients**: the state, *Check*, *Close* and
 *Open*. Open it only if VPN clients need a local service of the hoster in `169.254.0.0/16` (for

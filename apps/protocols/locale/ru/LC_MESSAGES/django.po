@@ -1377,6 +1377,9 @@ msgstr "дополнительные секреты"
 msgid "answered"
 msgstr "ответил"
 
+msgid "bridges closed for IPv6"
+msgstr "мосты, закрытые для IPv6"
+
 msgid "certutil could not issue or delete the IPsec server certificate."
 msgstr "certutil не смог выпустить или удалить сертификат сервера IPsec."
 
@@ -1431,6 +1434,9 @@ msgstr "Не удалось установить ethtool для обхода TSO
 msgid "ethtool is not installed: turning the workaround on installs it."
 msgstr "ethtool не установлен: включение обхода установит его."
 
+msgid "firewall"
+msgstr "файрвол"
+
 msgid "imported"
 msgstr "импортирован"
 
@@ -1452,6 +1458,9 @@ msgstr "ключи переведены"
 
 msgid "legacy AmneziaWG"
 msgstr "старый AmneziaWG"
+
+msgid "limits file missing"
+msgstr "нет файла с лимитами"
 
 msgid "login"
 msgstr "логин"
@@ -1476,6 +1485,9 @@ msgstr "переводы на AmneziaWG 3.1"
 
 msgid "network"
 msgstr "сеть"
+
+msgid "nftables table missing"
+msgstr "нет таблицы nftables"
 
 msgid "none"
 msgstr "нет"

@@ -1,10 +1,13 @@
+import re
 from typing import Any
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from amnezia_core.xray import is_valid_site
 from apps.ssh.encryption import EncryptedTextField
 
 
@@ -38,6 +41,21 @@ class SmtpSecurity(models.TextChoices):
     STARTTLS = "starttls", "STARTTLS"
     SSL = "ssl", "SSL/TLS"
     NONE = "none", _("None")
+
+
+def parse_domains(text: str) -> frozenset[str]:
+    """Domains of a list separated by spaces, commas or lines, in lower case."""
+    domains = frozenset(item for item in re.split(r"[\s,]+", text.strip().lower()) if item)
+    wrong = sorted(domain for domain in domains if not is_valid_site(domain))
+    if wrong:
+        raise ValidationError(
+            _("Not a domain name: %(domains)s."), params={"domains": ", ".join(wrong)}
+        )
+    return domains
+
+
+def validate_domains(text: str) -> None:
+    parse_domains(text)
 
 
 class SiteSettings(models.Model):
@@ -168,6 +186,14 @@ class SiteSettings(models.Model):
         validators=[MinValueValidator(1)],
         help_text=_(
             "The same for the traffic through a server in the last 24 hours. Empty turns it off."
+        ),
+    )
+    mass_snis = models.TextField(
+        _("more widely used SNI"),
+        blank=True,
+        validators=[validate_domains],
+        help_text=_(
+            "Domains to warn about as the SNI of XRay, besides the built-in list: one per line."
         ),
     )
     report_frequency = models.CharField(

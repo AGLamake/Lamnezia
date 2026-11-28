@@ -1,4 +1,17 @@
-from apps.traffic.services.xray_shaping import XraySpeedRule, speed_marks, speed_nft
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+import pytest
+
+from apps.traffic.services.xray_shaping import (
+    SPEED_NFT_PATH,
+    XraySpeedRule,
+    speed_marks,
+    speed_nft,
+    xray_shaping_probe,
+)
 
 EMAIL = "a" * 64
 OTHER = "b" * 64
@@ -35,3 +48,32 @@ def test_rule_round_trips_through_json() -> None:
     rule = XraySpeedRule(EMAIL, 10)
 
     assert XraySpeedRule.from_json(rule.to_json()) == rule
+
+
+@pytest.mark.parametrize(
+    ("nft_file", "table_loaded", "word"),
+    [
+        (None, False, "missing"),
+        ("limits", False, "lost"),
+        ("limits", True, "ok"),
+        ("removal", False, "ok"),
+    ],
+)
+def test_probe_tells_what_is_left_of_the_limits(
+    tmp_path: Path, nft_file: str | None, table_loaded: bool, word: str
+) -> None:
+    rules = [XraySpeedRule("alice", 10)] if nft_file == "limits" else []
+    path = tmp_path / "lamnezia_speed.nft"
+    if nft_file:
+        path.write_text(speed_nft(rules), newline="\n")
+    nft = tmp_path / "nft"
+    nft.write_text(f"#!/bin/sh\nexit {0 if table_loaded else 1}\n", newline="\n")
+    nft.chmod(0o755)
+    env = {**os.environ, "PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}"}
+    probe = xray_shaping_probe().replace(SPEED_NFT_PATH, path.as_posix())
+
+    completed = subprocess.run(
+        [str(shutil.which("sh")), "-c", probe], env=env, capture_output=True, text=True, check=True
+    )
+
+    assert completed.stdout.strip() == word

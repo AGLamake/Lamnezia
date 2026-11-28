@@ -4,7 +4,7 @@ The rule and its timer are in services/metadata_scripts.py. An install closes th
 own (`MetadataBlocker.ensure`) and an import, which changes nothing on the server, starts an
 operation that does (`close_after_import`), unless an administrator opened it on the server card.
 Servers added before the block, or closed by an older script, get the same operation from an
-hourly task (`catch_up`).
+hourly task (`catch_up`); a server that did not answer then gets it once the monitor hears it again.
 The panel keeps the latest reading in `MetadataBlock`, so the card shows it without connecting.
 """
 
@@ -122,6 +122,8 @@ def record(server: Server, reading: MetadataReading) -> MetadataBlock:
         defaults={
             "enabled": reading.closed,
             "bridges": list(reading.bridges),
+            "ipv6_bridges": list(reading.ipv6_bridges),
+            "backend": reading.backend,
             "checked_at": timezone.now(),
         },
     )
@@ -151,19 +153,28 @@ def close_after_import(server: Server, user: User | None) -> Operation | None:
 def catch_up() -> list[Operation]:
     """Start closing the servers added before the block, or closed by an older script.
 
-    Each server is tried once per script version: one that cannot be closed (no systemd, no
-    answer) stays as it is, and the server card closes it later.
+    Each server that answers is tried once per script version: one that cannot be closed (no
+    systemd) stays as it is, and the server card closes it later. A server the monitor last
+    found silent waits for an hour it answers in, and so does one the operation could not reach
+    (`missed`).
     """
-    behind = Server.objects.exclude(metadata_block__script_version__gte=scripts.VERSION)
+    behind = Server.objects.exclude(
+        metadata_block__script_version__gte=scripts.VERSION
+    ).select_related("latest_sample")
     started = []
     for server in behind.order_by("pk"):
-        if not should_close(server):
+        if server.online is False or not should_close(server):
             continue
         MetadataBlock.objects.update_or_create(
             server=server, defaults={"script_version": scripts.VERSION}
         )
         started.append(launch(ENSURE_KIND, {"server_id": server.pk}, subject=server.name))
     return started
+
+
+def missed(server: Server) -> None:
+    """The operation did not reach the server: `catch_up` tries it again."""
+    MetadataBlock.objects.filter(server=server).update(script_version=0)
 
 
 def start(kind: str, server: Server, user: User, *, ip: str | None = None) -> Operation:

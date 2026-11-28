@@ -4,6 +4,7 @@ import pytest
 from django.conf import settings
 
 from apps.servers.services.monitor import ServerMonitor
+from apps.servers.services.poll_guard import PollGuard
 from apps.servers.tasks import monitor_server, monitor_servers
 from apps.servers.tests.factories import ServerFactory
 
@@ -30,3 +31,35 @@ def test_a_server_deleted_meanwhile_is_skipped(monkeypatch: pytest.MonkeyPatch) 
     monitor_server(404)
 
     assert polled == []
+
+
+def test_a_reading_is_not_started_over_one_under_way(monkeypatch: pytest.MonkeyPatch) -> None:
+    server = ServerFactory()
+    polled: list[str] = []
+
+    def slow(self: ServerMonitor, server: Any) -> None:
+        # The beat queues the next reading while this one still waits for the server.
+        polled.append("slow")
+        if len(polled) == 1:
+            monitor_server(server.pk)
+
+    monkeypatch.setattr(ServerMonitor, "poll", slow)
+
+    monitor_server(server.pk)
+    assert polled == ["slow"]
+
+    monitor_server(server.pk)
+    assert polled == ["slow", "slow"]
+
+
+def test_a_reading_that_failed_lets_the_next_one_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    server = ServerFactory()
+
+    def broken(self: ServerMonitor, server: Any) -> None:
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr(ServerMonitor, "poll", broken)
+    with pytest.raises(RuntimeError):
+        monitor_server(server.pk)
+
+    assert not PollGuard.over_ssh(f"server:{server.pk}").busy()

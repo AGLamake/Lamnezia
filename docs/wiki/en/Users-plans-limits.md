@@ -135,6 +135,11 @@ line and the statistics blocks are gone. The traffic collector then finds no XRa
 and the next run of the speed limits applies them again, statistics included. The operation fails
 if the xray statistics API does not answer after it, and is then not repeated by itself.
 
+Every traffic poll also checks that the nft file is in the container and its table is loaded:
+a re-created container has neither, or has the file but no `nftables`. The poll then applies
+the limits again, and until then the speed limit card on the server page warns that the limits
+are not in the container. The same warning appears for WireGuard-family containers.
+
 ## Users
 
 The **Users** page of the admin interface (`/users/`, administrators and moderators) lists everyone

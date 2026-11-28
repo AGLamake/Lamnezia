@@ -18,6 +18,7 @@ from apps.ssh.services import RemoteHost
 from apps.traffic.services.recorder import Reading, TrafficRecorder
 from apps.traffic.services.shaping import shaping_probe
 from apps.traffic.services.targets import PollTarget, peer_owners
+from apps.traffic.services.xray_shaping import xray_shaping_probe
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +60,9 @@ class Channel:
 
 def dump_script(channels: Iterable[str | Channel]) -> str:
     """Print the counters of every container after a marker with the exit code of its command,
-    what is left of the speed limits of a WireGuard-family container (`shaping_probe`, `-` for
-    others) and the container's start time, which tells a restart between two readings.
+    what is left of its speed limits (`shaping_probe`, `xray_shaping_probe`; `-` for an
+    interface of a container with several) and the container's start time, which tells a
+    restart between two readings.
 
     The start time of an interface also has its index, which changes when the interface is
     created again: its peers then count from zero, though the container ran on.
@@ -78,16 +80,25 @@ def _channel_script(channel: str | Channel) -> str:
         index = shlex.quote(f"/sys/class/net/{channel.interface}/ifindex")
         started += f"/$(docker exec {name} cat {index} 2>/dev/null)"
     shaping = ""
-    if (kind := WG_CONTAINERS.get(channel.container)) and not channel.interface:
+    if probe := _shaping_probe(channel):
         # Only the word it prints, so nothing else can break the marker line.
-        probe = shlex.quote(shaping_probe(kind))
-        shaping = f"$(docker exec {name} sh -c {probe} 2>/dev/null | tr -cd a-z_)"
+        shaping = f"$(docker exec {name} sh -c {shlex.quote(probe)} 2>/dev/null | tr -cd a-z_)"
     return (
         f"out=$(docker exec {name} sh -c {command} 2>&1); code=$?\n"
         f'started="{started}"; shaping="{shaping}"\n'
         f'printf "{_MARKER} %s %s %s %s\\n%s\\n" {shlex.quote(channel.label)} "$code"'
         ' "${shaping:--}" "$started" "$out"\n'
     )
+
+
+def _shaping_probe(channel: Channel) -> str:
+    """The probe of the speed limits of the container; none for one of its several interfaces."""
+    if channel.interface:
+        return ""
+    if channel.container == XRAY_CONTAINER:
+        return xray_shaping_probe()
+    kind = WG_CONTAINERS.get(channel.container)
+    return shaping_probe(kind) if kind else ""
 
 
 @dataclass(frozen=True)

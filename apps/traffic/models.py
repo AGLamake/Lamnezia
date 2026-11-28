@@ -86,7 +86,7 @@ class TrafficSource(models.Model):
     container restarted and its counters started from zero.
     `upload_policed` says the speed limits drop the upload over them instead of delaying it.
     `shaping` is what the latest reading found of the speed limits in the container, empty when
-    it was not looked at (XRay, a container of a group clone).
+    it was not looked at (an interface of a container with several, such as a group clone).
     `key_source` is the source of the keys a member of a server group holds, empty for a source
     of its own keys: while the member gives no reading, the traffic of those keys is unknown.
     """

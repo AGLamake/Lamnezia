@@ -5,6 +5,7 @@
   </summary>
   <div class="disclosure-body">
     <p class="help-text">{% translate "Looks for what lets a censor tell the server is a VPN: open ports, IPv6, proxies and the panel on its address, shared AmneziaWG parameters, MUX in XRay. Nothing is changed on the server." %}</p>
+    {% if server.own_ports %}<p class="help-text">{% blocktranslate with ports=server.own_ports %}Own ports, not counted as extra: {{ ports }}. They are set in the server settings.{% endblocktranslate %}</p>{% endif %}
     {% if stealth %}
       <p class="help-text">{% blocktranslate with at=stealth.checked_at|date:"SHORT_DATETIME_FORMAT" %}Checked {{ at }}{% endblocktranslate %}</p>
       <ul class="divide-y divide-border">

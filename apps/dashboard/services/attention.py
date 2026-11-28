@@ -10,7 +10,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import cached_property
 
-from django.db.models import QuerySet
+from django.conf import settings
+from django.db.models import Q, QuerySet
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -23,10 +24,12 @@ from apps.accounts.services.zone import Zone
 from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.groups.services.membership import join_failed, leave_failed
 from apps.guides.models import Suggestion, UsefulMaterial
+from apps.notifications.events import Event
+from apps.notifications.models import Trouble
 from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.relays.models import Relay
-from apps.servers.models import InterfaceRepair, Server
+from apps.servers.models import InterfaceRepair, Server, StealthReport
 from apps.support.services.inbox import Inbox
 from apps.traffic.models import TrafficSource
 from apps.updates.services.host import HostUpdater
@@ -37,6 +40,8 @@ from apps.updates.services.updates import PanelUpdate
 PAYMENT_SOON_DAYS = 7
 # Failed operations older than this are history, not something to look at.
 _FAILED_WITHIN = timedelta(days=1)
+# An outage open this long while its server answers was closed by no reading: a race or a bug.
+_STUCK_AFTER = timedelta(days=1)
 
 
 @dataclass(frozen=True)
@@ -186,6 +191,24 @@ class Attention:
             if repair.gave_up
         ]
 
+    def stuck_servers(self) -> list[Server]:
+        """Servers answering now whose outage told over a day ago is still open."""
+        stuck = self._stuck_outages(Event.SERVER_DOWN)
+        return [server for server in self.servers if server.pk in stuck and server.online]
+
+    def stuck_relays(self) -> list[Relay]:
+        """Relays read fine now whose outage told over a day ago is still open."""
+        stuck = self._stuck_outages(Event.RELAY_DOWN)
+        fresh = self._now - timedelta(seconds=2 * settings.RELAY_MONITOR_INTERVAL)
+        return [
+            relay
+            for relay in self.relays
+            if relay.pk in stuck
+            and not relay.read_error
+            and relay.read_at
+            and relay.read_at > fresh
+        ]
+
     def without_ifb(self) -> list[Server]:
         """Servers whose speed limits drop upload over them: the host has no ifb module."""
         sources = TrafficSource.objects.filter(upload_policed=True).values_list("source", flat=True)
@@ -198,6 +221,12 @@ class Attention:
             ).values_list("server_id", flat=True)
         )
         return [server for server in self.servers if server.pk in ids]
+
+    def unmasked(self) -> list[tuple[Server, int]]:
+        """Servers whose last masking check found something to fix, with how much."""
+        reports = StealthReport.objects.filter(server__in=self.servers)
+        warnings = {report.server_id: report.warnings for report in reports}
+        return [(server, warnings[server.pk]) for server in self.servers if warnings.get(server.pk)]
 
     def payment_due(self) -> list[Server]:
         if not self._access.allows(Section.SERVERS):
@@ -262,6 +291,31 @@ class Attention:
             )
             for relay in self.mismatched_relays()
         ]
+        notices += [
+            Notice(
+                "warning",
+                "server",
+                _("%(name)s answers, but its outage is still open: a reading did not close it")
+                % {"name": server.name},
+                self._server_url(server),
+                f"stuck-outage:{server.pk}",
+            )
+            for server in self.stuck_servers()
+        ]
+        notices += [
+            Notice(
+                "warning",
+                "server",
+                _(
+                    "Relay %(name)s answers, but its outage is still open: "
+                    "a reading did not close it"
+                )
+                % {"name": relay.server.name},
+                reverse("servers:detail", args=[relay.server_id]),
+                f"stuck-relay-outage:{relay.pk}",
+            )
+            for relay in self.stuck_relays()
+        ]
         notices += [self._overload(server) for server in self.overloaded()]
         notices += [self._busy_address(server) for server in self.busy_addresses()]
         notices += [
@@ -274,6 +328,21 @@ class Attention:
                 f"no-ifb:{server.pk}",
             )
             for server in self.without_ifb()
+        ]
+        notices += [
+            Notice(
+                "warning",
+                "eye-off",
+                ngettext(
+                    "%(name)s: the masking check found %(count)d thing to fix",
+                    "%(name)s: the masking check found %(count)d things to fix",
+                    count,
+                )
+                % {"name": server.name, "count": count},
+                self._server_url(server),
+                f"stealth:{server.pk}",
+            )
+            for server, count in self.unmasked()
         ]
         notices += [self._payment(server) for server in self.payment_due()]
         if self.failed_operations:
@@ -419,6 +488,24 @@ class Attention:
             f"payment:{server.pk}",
             server.payment_url,
         )
+
+    @cached_property
+    def _old_outages(self) -> list[str]:
+        """Keys of the server and relay outages open for longer than `_STUCK_AFTER`."""
+        kinds = Q(key__startswith=f"{Event.SERVER_DOWN}:") | Q(
+            key__startswith=f"{Event.RELAY_DOWN}:"
+        )
+        old = Trouble.objects.filter(kinds, started_at__lt=self._now - _STUCK_AFTER)
+        return list(old.values_list("key", flat=True))
+
+    def _stuck_outages(self, event: Event) -> set[int]:
+        """The pks of the objects of `event`'s old outages: its key is `<event>:<pk>:<moment>`."""
+        prefix = f"{event}:"
+        return {
+            int(key.removeprefix(prefix).split(":", 1)[0])
+            for key in self._old_outages
+            if key.startswith(prefix)
+        }
 
     @cached_property
     def _sees_every_server(self) -> bool:

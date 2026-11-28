@@ -76,7 +76,8 @@ def restart_lost_interface(ctx: OperationContext) -> None:
     with ExitStack() as stack:
         with ctx.step(_("Connect to the server")):
             host = stack.enter_context(connect(server))
-        LostInterfaceRestart(host, ctx.params["container"], ctx).restart()
+        lost_after = ctx.params.get("lost_after")
+        LostInterfaceRestart(host, ctx.params["container"], ctx, lost_after).restart()
 
 
 @contextmanager

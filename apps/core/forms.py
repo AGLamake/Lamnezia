@@ -56,6 +56,7 @@ class SiteSettingsForm(forms.ModelForm):  # type: ignore[type-arg]
             "load_repeat_hours",
             "address_keys",
             "address_daily_gb",
+            "mass_snis",
             "report_frequency",
             "smtp_host",
             "smtp_port",

@@ -259,12 +259,14 @@ def test_containers_without_awg_are_read_with_wg(tmp_path: Path) -> None:
     )
 
     dumps = split_dumps(completed.stdout)
-    # No container here has the script of the speed limits.
+    # No container here has the script or the nft file of the speed limits.
     assert dumps == {
         "amnezia-awg2": Dump(0, "awg show all dump", shaping="missing"),
         "amnezia-awg": Dump(0, "wg show all dump", shaping="missing"),
         "amnezia-wireguard": Dump(0, "wg show all dump", shaping="missing"),
-        "amnezia-xray": Dump(0, "xray api statsquery --server=127.0.0.1:10085 -pattern user>>>"),
+        "amnezia-xray": Dump(
+            0, "xray api statsquery --server=127.0.0.1:10085 -pattern user>>>", shaping="missing"
+        ),
     }
 
 

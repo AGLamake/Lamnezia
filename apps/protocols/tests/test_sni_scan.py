@@ -8,12 +8,14 @@ from ipaddress import IPv4Network
 from typing import Any
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.test import Client
 
 from amnezia_core.xray import DEFAULT_SITE, XRAY_CONTAINER
 from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.audit.models import AuditEvent
+from apps.core.models import SiteSettings
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.operations.tests.factories import OperationFactory
@@ -234,6 +236,37 @@ def test_default_site_is_a_widely_used_sni() -> None:
     assert is_mass_sni(DEFAULT_SITE)
     assert is_mass_sni(" WWW.Microsoft.com ")
     assert not is_mass_sni("shop.example.net")
+
+
+def test_the_site_settings_add_widely_used_sni() -> None:
+    site = SiteSettings.load()
+    site.mass_snis = "Shop.example.net,\nvpn.example.org"
+    site.full_clean()
+    site.save()
+
+    assert is_mass_sni("shop.example.net")
+    assert is_mass_sni(DEFAULT_SITE)
+    site.mass_snis = "shop.example.net not_a_domain!"
+    with pytest.raises(ValidationError, match="not_a_domain!"):
+        site.full_clean()
+
+
+def test_the_server_card_warns_of_a_widely_used_sni(admin_client: Client, server: Server) -> None:
+    xray_instance(server)
+
+    card = admin_client.get(f"/servers/{server.pk}/").content.decode()
+
+    assert f"The SNI {DEFAULT_SITE} is widely used" in card
+
+
+def test_the_server_card_is_quiet_about_an_sni_of_a_neighbour(
+    admin_client: Client, server: Server
+) -> None:
+    xray_instance(server, "shop.example.net")
+
+    card = admin_client.get(f"/servers/{server.pk}/").content.decode()
+
+    assert "is widely used" not in card
 
 
 def test_advice_warns_of_an_sni_of_another_server(server: Server) -> None:

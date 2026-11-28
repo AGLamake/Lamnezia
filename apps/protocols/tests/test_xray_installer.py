@@ -13,6 +13,7 @@ from amnezia_core.xray import (
     XrayServerConfig,
     XraySettings,
 )
+from apps.core.models import SiteSettings
 from apps.operations.models import Operation
 from apps.operations.services.context import OperationContext
 from apps.operations.tests.factories import OperationFactory
@@ -177,6 +178,17 @@ def test_xray_that_does_not_start_fails_the_install() -> None:
         install(server)
 
     assert caught.value.code == SetupErrorCode.XRAY_NOT_RUNNING
+
+
+def test_install_page_warns_while_the_site_is_a_widely_used_sni(admin_client: Client) -> None:
+    server = ServerFactory()
+    SiteSettings.objects.update_or_create(pk=1, defaults={"mass_snis": "shop.example.net"})
+
+    page = admin_client.get(f"/protocols/install/{server.pk}/").content.decode()
+
+    assert 'x-model="site"' in page
+    assert "&#x27;shop.example.net&#x27;" in page
+    assert "This site is a widely used SNI" in page
 
 
 def test_install_page_passes_the_masking_site(admin_client: Client) -> None:

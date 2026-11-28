@@ -3,13 +3,14 @@
 A domain that many Reality servers share, the Amnezia default among them, singles a server out
 by itself; one SNI on several servers of the panel ties them together, so a block found on one
 reaches the others. The list of widely used SNI is the ones guides and defaults hand out; it is
-not complete.
+not complete, so the administrator adds more in the site settings.
 """
 
 from collections import defaultdict
 from dataclasses import dataclass
 
 from amnezia_core.xray import DEFAULT_SITE, XRAY_CONTAINER
+from apps.core.models import SiteSettings, parse_domains
 from apps.protocols.models import ProtocolInstance, SniScan
 from apps.protocols.services.sni_scan import SniCandidate, candidates_of
 from apps.protocols.services.xray_settings import XrayPanelSettings
@@ -37,9 +38,17 @@ MASS_SNIS = frozenset(
 )
 
 
-def is_mass_sni(sni: str) -> bool:
-    """Many Reality servers use this SNI: a guide or a default hands it out."""
-    return sni.strip().lower() in MASS_SNIS
+def mass_snis() -> frozenset[str]:
+    """The built-in list with the domains added in the site settings."""
+    return MASS_SNIS | parse_domains(SiteSettings.load().mass_snis)
+
+
+def is_mass_sni(sni: str, mass: frozenset[str] | None = None) -> bool:
+    """Many Reality servers use this SNI: a guide or a default hands it out.
+
+    `mass` is the list read once with `mass_snis` when many domains are looked at.
+    """
+    return sni.strip().lower() in (mass_snis() if mass is None else mass)
 
 
 @dataclass(frozen=True)
@@ -48,10 +57,7 @@ class SniOption:
 
     candidate: SniCandidate
     shared_with: list[str]
-
-    @property
-    def mass(self) -> bool:
-        return is_mass_sni(self.candidate.domain)
+    mass: bool = False
 
 
 class SniReuse:
@@ -72,7 +78,13 @@ class SniReuse:
         return sorted(self._servers.get(sni.strip().lower(), ()))
 
     def options(self, candidates: list[SniCandidate]) -> list[SniOption]:
-        return [SniOption(candidate, self.servers(candidate.domain)) for candidate in candidates]
+        mass = mass_snis()
+        return [
+            SniOption(
+                candidate, self.servers(candidate.domain), is_mass_sni(candidate.domain, mass)
+            )
+            for candidate in candidates
+        ]
 
 
 class SniAdvice:

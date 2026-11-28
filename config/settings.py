@@ -330,6 +330,8 @@ RELOCATION_SETTLE_SECONDS = 5
 DOMAIN_RESOLVERS = env.list("DOMAIN_RESOLVERS", default=["system", "1.1.1.1", "8.8.8.8"])
 # Seconds between server health readings; a server is offline after two intervals without an answer.
 MONITOR_INTERVAL = env.int("MONITOR_INTERVAL", default=60)
+# Seconds between masking checks of every ready server that answers; 0 turns them off.
+STEALTH_CHECK_INTERVAL = env.int("STEALTH_CHECK_INTERVAL", default=24 * 60 * 60)
 # Days of server readings and relay load readings; readings older than MONITOR_DETAIL_DAYS keep
 # one per quarter of an hour.
 MONITOR_HISTORY_DAYS = env.int("MONITOR_HISTORY_DAYS", default=7)
@@ -397,6 +399,8 @@ CELERY_BEAT_SCHEDULE = {
     },
     "notifications-recover-stuck": {"task": "notifications.recover_stuck", "schedule": 10 * 60},
     "servers-thin-history": {"task": "servers.thin_history", "schedule": 60 * 60},
+    # Hourly, so a restart of beat does not put a check off; each server is due by its report.
+    "servers-check-stealth": {"task": "servers.check_stealth", "schedule": 60 * 60},
     "relays-thin-history": {"task": "relays.thin_history", "schedule": 60 * 60},
     # Hourly, so a restart of beat does not put the daily update off; each source is due once a
     # day, a failed one at the next run.

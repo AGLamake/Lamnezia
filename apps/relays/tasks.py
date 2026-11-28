@@ -11,6 +11,7 @@ from apps.relays.services.deployment import sync_relays
 from apps.relays.services.load import prune_load
 from apps.relays.services.monitor import RelayMonitor, report_caught_up, report_lagging
 from apps.relays.services.split_lists import SourceUpdate
+from apps.servers.services.poll_guard import PollGuard
 from apps.servers.services.thinning import HistoryThinner
 
 
@@ -33,9 +34,11 @@ def monitor() -> None:
 
 @shared_task(name="relays.monitor_relay")
 def monitor_relay(relay_id: int) -> None:
+    """Skipped while the previous reading of the relay is still under way."""
     relay = Relay.objects.select_related("server").filter(pk=relay_id).first()
     if relay is not None:
-        RelayMonitor(timedelta(seconds=settings.RELAY_MONITOR_INTERVAL)).poll(relay)
+        monitor = RelayMonitor(timedelta(seconds=settings.RELAY_MONITOR_INTERVAL))
+        PollGuard.over_ssh(f"relay:{relay_id}").run(lambda: monitor.poll(relay))
 
 
 @shared_task(name="relays.thin_history")

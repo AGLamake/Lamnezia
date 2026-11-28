@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 
 import pytest
+from django.template.defaultfilters import filesizeformat
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
@@ -103,6 +104,21 @@ def test_traffic_counts_both_ways_in_the_last_24_hours(server: Server) -> None:
     traffic(ServerFactory(), now - HOUR, 9.0)
 
     assert AddressLoad(server, now).daily_gb() == 2
+    assert AddressLoad(server, now).daily_bytes() == round(2.5 * GB)
+
+
+def test_the_card_shows_the_load_of_the_address_with_the_thresholds_off(
+    client: Client, server: Server
+) -> None:
+    traffic(server, timezone.now() - HOUR, 1.5)
+    keys(server, 2)
+    client.force_login(UserFactory(role=Role.ADMIN))
+
+    card = client.get(reverse("servers:detail", args=[server.pk])).content.decode()
+
+    assert "Traffic in 24 hours" in card
+    assert filesizeformat(round(1.5 * GB)) in card
+    assert "Active keys</dt><dd>2</dd>" in card
 
 
 def test_too_many_keys_are_told_once_and_shown(server: Server) -> None:

@@ -61,11 +61,14 @@ class AddressLoad:
 
     def daily_gb(self) -> int:
         """Whole gigabytes both ways in the last 24 hours, the current hour included."""
+        return self.daily_bytes() // GB
+
+    def daily_bytes(self) -> int:
+        """Bytes both ways in the last 24 hours, the current hour included: one query."""
         hours = TrafficHourly.objects.filter(
             source__in=self._sources, hour__gt=self._now - _DAY, hour__lte=self._now
         )
-        total = hours.aggregate(total=Sum(F("rx_bytes") + F("tx_bytes")))["total"] or 0
-        return int(total // GB)
+        return int(hours.aggregate(total=Sum(F("rx_bytes") + F("tx_bytes")))["total"] or 0)
 
 
 class AddressWatch:

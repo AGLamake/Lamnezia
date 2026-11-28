@@ -49,6 +49,9 @@ msgstr "Токен Discord-бота"
 msgid "Discord client secret"
 msgstr "Секрет клиента Discord"
 
+msgid "Domains to warn about as the SNI of XRay, besides the built-in list: one per line."
+msgstr "Домены, о которых предупреждать как об SNI для XRay, сверх встроенного списка: по одному в строке."
+
 msgid "Enter port numbers from 1 to 65535."
 msgstr "Введите номера портов от 1 до 65535."
 
@@ -84,6 +87,10 @@ msgstr "Укажите порты, которые пользователи мо�
 
 msgid "None"
 msgstr "Нет"
+
+#, python-format
+msgid "Not a domain name: %(domains)s."
+msgstr "Не доменное имя: %(domains)s."
 
 msgid "OAuth2 page of the Discord application."
 msgstr "Страница OAuth2 приложения Discord."
@@ -219,6 +226,9 @@ msgstr "ключи в ботах"
 
 msgid "memory alert, %"
 msgstr "предупреждение о памяти, %"
+
+msgid "more widely used SNI"
+msgstr "дополнительные массовые SNI"
 
 msgid "notifications to private networks"
 msgstr "уведомления в частные сети"

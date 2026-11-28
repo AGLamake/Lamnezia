@@ -1,7 +1,9 @@
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -14,6 +16,26 @@ from apps.ssh.services import SshCredentials
 SSH_PORT = 22
 # The reachability probe (services/probe.py): the monitor watches it with the Amnezia containers.
 PROBE_CONTAINER = "lamnezia-probe"
+_OWN_PORT = re.compile(r"(\d{1,5})(?:/(tcp|udp))?")
+_MAX_PORT = 65535
+
+
+def parse_own_ports(text: str) -> set[tuple[int, str]]:
+    """(port, transport) of a list like `8080/tcp, 9000/udp, 3000`; a bare port is both."""
+    pairs: set[tuple[int, str]] = set()
+    for item in re.split(r"[\s,]+", text.strip().lower()):
+        if not item:
+            continue
+        match = _OWN_PORT.fullmatch(item)
+        if not match or not 0 < int(match[1]) <= _MAX_PORT:
+            raise ValidationError(_("Enter ports like 8080/tcp, 9000/udp or 3000."))
+        transports = (match[2],) if match[2] else ("tcp", "udp")
+        pairs.update((int(match[1]), transport) for transport in transports)
+    return pairs
+
+
+def validate_own_ports(text: str) -> None:
+    parse_own_ports(text)
 
 
 class AuthMethod(models.TextChoices):
@@ -86,6 +108,16 @@ class Server(models.Model):
     )
     # UDP port of the STUN responder clients' browsers probe; empty while it is not installed.
     probe_port = models.PositiveIntegerField(_("reachability probe port"), null=True, blank=True)
+    own_ports = models.CharField(
+        _("own ports"),
+        max_length=500,
+        blank=True,
+        validators=[validate_own_ports],
+        help_text=_(
+            "Ports of your own services on the server, like 8080/tcp, 9000/udp or 3000 (both). "
+            "The masking check does not count them as extra ports."
+        ),
+    )
     status = models.CharField(
         _("status"), max_length=16, choices=ServerStatus, default=ServerStatus.UNCHECKED
     )

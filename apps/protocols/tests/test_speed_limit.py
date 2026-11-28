@@ -8,9 +8,11 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.audit.models import AuditEvent
 from apps.groups.models import GroupMember, ServerGroup
+from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.servers.tests.factories import ServerFactory
-from apps.traffic.models import TrafficSource
+from apps.traffic.models import Shaping, TrafficSource
+from apps.traffic.services.speed import SPEED_APPLY
 
 pytestmark = pytest.mark.django_db
 
@@ -124,3 +126,45 @@ def test_server_card_shows_the_limit_and_the_missing_ifb(instance: ProtocolInsta
 
     assert "download 100 Mbit/s, upload 20 Mbit/s" in html
     assert "No ifb module on the server" in html
+
+
+def applied(instance: ProtocolInstance, rules: list[dict[str, object]]) -> None:
+    Operation.objects.create(
+        kind=SPEED_APPLY,
+        params={"source": instance.source, "rules": rules},
+        status=OperationStatus.SUCCEEDED,
+    )
+
+
+def found(instance: ProtocolInstance, shaping: Shaping) -> None:
+    TrafficSource.objects.update_or_create(
+        source=instance.source, defaults={"shaping": shaping, "checked_at": timezone.now()}
+    )
+
+
+def test_server_card_tells_of_limits_gone_from_the_container(instance: ProtocolInstance) -> None:
+    applied(instance, [{"ip": "10.8.1.2", "speed": 10}])
+    found(instance, Shaping.LOST)
+
+    assert "Speed limits are not in the container: tc rules missing" in render_line(instance)
+
+    found(instance, Shaping.OK)
+    assert "not in the container" not in render_line(instance)
+
+
+def test_a_container_without_limits_is_not_warned_of(instance: ProtocolInstance) -> None:
+    found(instance, Shaping.MISSING)
+    assert "not in the container" not in render_line(instance)
+
+    applied(instance, [])
+    assert "not in the container" not in render_line(instance)
+
+
+def test_xray_limits_are_told_in_their_own_words() -> None:
+    xray = ProtocolInstance.objects.create(
+        server=ServerFactory(), container="amnezia-xray", port=443
+    )
+    applied(xray, [{"email": "alice", "speed": 10}])
+    found(xray, Shaping.LOST)
+
+    assert "nftables table missing" in render_line(xray)

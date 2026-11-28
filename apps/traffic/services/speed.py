@@ -7,7 +7,8 @@ Each run compares the rules an instance should have with those of its latest ope
 starts a new one only when they differ, so a change is applied within one run. A failed
 operation is not repeated by itself: it is retried from the journal or replaced by the next
 change. An XRay instance whose statistics went away after the latest operation is limited
-again: the app re-created the container or rebuilt server.json and dropped the limits with them.
+again: the app re-created the container or rebuilt server.json and dropped the limits with them;
+so is one whose nft file or table the poll finds gone (`TrafficSource.shaping`).
 A WireGuard-family instance is limited again when the poll finds its container started anew
 since the latest operation: a container re-created by the app or by a change of its settings
 has lost the tc rules and the script that brings them back. After a plain restart start.sh has
@@ -150,7 +151,9 @@ class SpeedLimiter:
         if not limited or latest.status != OperationStatus.SUCCEEDED:
             return False
         if isinstance(instance.container, XrayContainer):
-            return _statistics_lost(instance.source, after=latest)
+            return _statistics_lost(instance.source, after=latest) or _shaping_lost(
+                instance.source, after=latest
+            )
         restarted = latest.params.get("started") != params["started"]
         return restarted or _shaping_lost(instance.source, after=latest)
 

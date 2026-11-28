@@ -6,7 +6,9 @@ from django.utils import timezone
 
 from apps.core.models import Cleanup
 from apps.servers.models import Server
+from apps.servers.services import stealth
 from apps.servers.services.monitor import ServerMonitor
+from apps.servers.services.poll_guard import PollGuard
 from apps.servers.services.thinning import HistoryThinner
 
 
@@ -24,9 +26,16 @@ def monitor_servers() -> None:
 
 @shared_task(name="servers.monitor_server")
 def monitor_server(server_id: int) -> None:
+    """Skipped while the previous reading of the server is still under way."""
     server = Server.objects.select_related("latest_sample").filter(pk=server_id).first()
     if server is not None:
-        _monitor().poll(server)
+        PollGuard.over_ssh(f"server:{server_id}").run(lambda: _monitor().poll(server))
+
+
+@shared_task(name="servers.check_stealth")
+def check_stealth() -> int:
+    """Starts the masking checks that are due; returns how many."""
+    return len(stealth.start_due(timezone.now()))
 
 
 @shared_task(name="servers.thin_history")

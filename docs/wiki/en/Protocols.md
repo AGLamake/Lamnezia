@@ -493,7 +493,9 @@ A widely used SNI is easy to tell apart: when a server in some data centre prete
 `www.googletagmanager.com` (the default of the app), `www.microsoft.com` or another domain that
 guides hand out, the pair "address and SNI" stands out by itself. The settings page of XRay warns
 when the current SNI is one of these, and when another server of the panel has the same SNI: one
-SNI ties the servers together, so a block found for one reaches the others.
+SNI ties the servers together, so a block found for one reaches the others. The server card
+warns about a widely used SNI too, and the install wizard of XRay warns while the masking site is
+one. **Settings → More widely used SNI** adds domains to the built-in list, one per line.
 
 The **SNI from the neighbours of the server** card finds a better domain the way RealiTLScanner
 (XTLS) does. **Scan the neighbours** starts an operation: the server itself connects to port 443

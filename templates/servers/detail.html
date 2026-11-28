@@ -58,6 +58,12 @@
             <div><dt>{% translate "Amnezia containers" %}</dt><dd>{{ sample.containers|length }}</dd></div>
           </dl>
         {% endif %}{% endwith %}
+        {% if address_load %}
+          <dl class="facts">
+            <div><dt>{% translate "Traffic in 24 hours" %}</dt><dd>{{ address_load.daily_bytes|filesizeformat }}</dd></div>
+            <div><dt>{% translate "Active keys" %}</dt><dd>{{ address_load.active_keys }}</dd></div>
+          </dl>
+        {% endif %}
       </div>
     </section>
     {% if history %}{% health_trends history %}{% endif %}
@@ -178,6 +184,9 @@
                     <button type="submit" class="text-link hover:underline">{% translate "Move to AmneziaWG 3.1" %}</button>
                   </form>
                 {% endif %}
+                {% with sni=row.mass_sni %}{% if sni %}
+                  <p class="help-text text-warning dark:text-warning-soft-fg">{% blocktranslate %}The SNI {{ sni }} is widely used: many Reality servers have it. Pick a domain of a neighbour in the protocol settings.{% endblocktranslate %}</p>
+                {% endif %}{% endwith %}
                 {% with waiting=row.xray_waiting %}{% if waiting and manage %}
                   <form method="post" action="{% url 'protocols:xray-profiles' row.instance.pk %}" class="flex flex-wrap items-center gap-x-3 gap-y-1 help-text">
                     {% csrf_token %}

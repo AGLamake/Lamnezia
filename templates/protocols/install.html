@@ -11,7 +11,7 @@
 </div>
 
 {% if form.fields.container.choices %}
-  <form method="post" class="card space-y-4" x-data="{ container: '{{ form.container.value|default_if_none:''|escapejs }}' }">
+  <form method="post" class="card space-y-4" x-data="{ container: '{{ form.container.value|default_if_none:''|escapejs }}', site: '{{ form.site.value|default_if_none:''|escapejs }}', massSnis: {{ form.mass_snis }} }">
     {% csrf_token %}
     {{ form.container.as_field_group }}
     {% for container, description in form.descriptions %}
@@ -28,7 +28,9 @@
     </div>
     {{ form.logs.as_field_group }}
     {% for field, condition in form.installer_fields %}
-      <div x-show="{{ condition }}" x-cloak>{{ field.as_field_group }}</div>
+      <div x-show="{{ condition }}" x-cloak>{{ field.as_field_group }}{% if field.name == "site" %}
+        <p x-show="massSnis.includes(site.trim().toLowerCase())" x-cloak class="help-text text-warning dark:text-warning-soft-fg">{% translate "This site is a widely used SNI: guides and defaults hand it out, so many Reality servers have it. A domain of a neighbour of the server is safer; the settings of the protocol can find one after the install." %}</p>
+      {% endif %}</div>
     {% endfor %}
     <div class="flex gap-2">
       <button type="submit" class="btn btn-primary">{% translate "Install" %}</button>

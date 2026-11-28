@@ -7,3 +7,6 @@
   <p class="help-text text-warning dark:text-warning-soft-fg">{% translate "No ifb module on the server: upload over the speed limits is dropped, not delayed, and the upload limit of the server does not apply." %}
     <a href="{% url 'protocols:settings' instance.pk %}" class="text-link hover:underline">{% translate "Settings" %}</a></p>
 {% endif %}
+{% if shaping_lost %}
+  <p class="help-text text-warning dark:text-warning-soft-fg">{% blocktranslate with reason=shaping_lost %}Speed limits are not in the container: {{ reason }}. The panel applies them again.{% endblocktranslate %}</p>
+{% endif %}

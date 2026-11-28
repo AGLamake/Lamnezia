@@ -46,6 +46,8 @@ NETWORKS = ("bridge", AMNEZIA_NETWORK)
 _TIMER_LINE = "timer "
 _JUMP_LINE = "jump "
 _CLOSED_LINE = "closed "
+_CLOSED6_LINE = "closed6 "
+_BACKEND_LINE = "backend "
 
 _FUNCTIONS = (
     r"""
@@ -174,7 +176,8 @@ DISABLE = (
 )
 
 # `jump` says that a forward hook leads to the rules: DOCKER-USER to the chain, or the forward
-# chain of the table; `closed` lines name the bridges closed to 169.254.0.0/16.
+# chain of the table; `closed` lines name the bridges closed to 169.254.0.0/16, `closed6` those
+# closed to the IPv6 address; `backend` names the firewall the rules are in.
 STATUS = (
     f'echo "{_TIMER_LINE}$(systemctl is-active {UNIT}.timer 2>/dev/null || true)"\n'
     f"if iptables -C DOCKER-USER -j {CHAIN} 2>/dev/null"
@@ -186,34 +189,57 @@ STATUS = (
     f"nft list chain inet {TABLE} forward 2>/dev/null"
     ' | awk \'$1 == "iifname" && $3 == "ip" { gsub(/"/, "", $2); '
     f'print "{_CLOSED_LINE}" $2 }}\'\n'
+    f"if iptables -C DOCKER-USER -j {CHAIN} 2>/dev/null; then echo '{_BACKEND_LINE}iptables';"
+    f" elif nft list chain inet {TABLE} forward >/dev/null 2>&1;"
+    f" then echo '{_BACKEND_LINE}nftables'; fi\n"
+    f"ip6tables -S {CHAIN} 2>/dev/null"
+    ' | awk \'$1 == "-A" { for (i = 1; i < NF; i++) if ($i == "-i") '
+    f'print "{_CLOSED6_LINE}" $(i + 1) }}\'\n'
+    f"nft list chain inet {TABLE} forward 2>/dev/null"
+    ' | awk \'$1 == "iifname" && $3 == "ip6" { gsub(/"/, "", $2); '
+    f'print "{_CLOSED6_LINE}" $2 }}\'\n'
 )
 
 _INTERFACE = re.compile(r"^[\w.@-]+$")
+_BACKENDS = ("iptables", "nftables")
 
 
 @dataclass(frozen=True)
 class MetadataReading:
     """What STATUS printed: whether the timer runs, DOCKER-USER leads to the chain of the block,
-    and the bridges the chain closes."""
+    the bridges the chain closes for IPv4 and for IPv6 (none when Docker keeps no ip6tables), and
+    the firewall of the rules: `iptables`, `nftables` or empty."""
 
     timer_active: bool
     jumped: bool
     bridges: tuple[str, ...]
+    ipv6_bridges: tuple[str, ...] = ()
+    backend: str = ""
 
     @classmethod
     def parse(cls, text: str) -> Self:
         timer_active = jumped = False
-        bridges = []
+        backend = ""
+        bridges: dict[str, list[str]] = {_CLOSED_LINE: [], _CLOSED6_LINE: []}
         for line in map(str.strip, text.splitlines()):
             if line.startswith(_TIMER_LINE):
                 timer_active = line.removeprefix(_TIMER_LINE) == "active"
             elif line.startswith(_JUMP_LINE):
                 jumped = line.removeprefix(_JUMP_LINE) == "yes"
-            elif line.startswith(_CLOSED_LINE):
-                bridge = line.removeprefix(_CLOSED_LINE)
-                if _INTERFACE.match(bridge):
-                    bridges.append(bridge)
-        return cls(timer_active, jumped, tuple(bridges))
+            elif line.startswith(_BACKEND_LINE):
+                found = line.removeprefix(_BACKEND_LINE)
+                backend = found if found in _BACKENDS else backend
+            for prefix, names in bridges.items():
+                bridge = line.removeprefix(prefix)
+                if line.startswith(prefix) and _INTERFACE.match(bridge):
+                    names.append(bridge)
+        return cls(
+            timer_active,
+            jumped,
+            tuple(bridges[_CLOSED_LINE]),
+            tuple(bridges[_CLOSED6_LINE]),
+            backend,
+        )
 
     @property
     def closed(self) -> bool:

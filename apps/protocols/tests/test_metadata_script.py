@@ -90,8 +90,9 @@ def test_iptables_closes_both_bridges_for_ipv4_and_ipv6(host: dict[str, str]) ->
         "ip6tables DOCKER-USER: LAMNEZIA-METADATA added",
     ]
     assert run(scripts.SCRIPT, env) == ""
+    bridges = ("docker0", "br-1a2b3c4d5e6f")
     assert MetadataReading.parse(run(scripts.STATUS, env)) == MetadataReading(
-        True, True, ("docker0", "br-1a2b3c4d5e6f")
+        True, True, bridges, bridges, "iptables"
     )
 
 
@@ -109,11 +110,26 @@ def test_nftables_backend_gets_a_table_of_its_own(host: dict[str, str]) -> None:
         "br-1a2b3c4d5e6f: fd00:ec2::254 closed",
     ]
     assert run(scripts.SCRIPT, env) == ""
+    bridges = ("docker0", "br-1a2b3c4d5e6f")
     assert MetadataReading.parse(run(scripts.STATUS, env)) == MetadataReading(
-        True, True, ("docker0", "br-1a2b3c4d5e6f")
+        True, True, bridges, bridges, "nftables"
     )
 
 
 def test_nothing_is_added_before_docker_starts(host: dict[str, str]) -> None:
     assert run(scripts.SCRIPT, host) == ""
     assert not MetadataReading.parse(run(scripts.STATUS, host)).closed
+
+
+def test_iptables_without_ip6tables_rules_leaves_ipv6_open(host: dict[str, str]) -> None:
+    """Docker with `ip6tables: false` makes no DOCKER-USER for IPv6."""
+    env = {**host, "DOCKER_USER": "1"}
+    tools = Path(env["PATH"].split(os.pathsep)[0])
+    (tools / "ip6tables").write_text("#!/bin/sh\nexit 1\n", newline="\n")
+
+    run(scripts.SCRIPT, env)
+    reading = MetadataReading.parse(run(scripts.STATUS, env))
+
+    assert reading.closed
+    assert reading.ipv6_bridges == ()
+    assert reading.backend == "iptables"

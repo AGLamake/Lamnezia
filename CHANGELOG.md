@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Masking check on a schedule**: the panel checks every ready server that answers once a day
+  (`LAMNEZIA_STEALTH_CHECK_INTERVAL`, `0` turns it off), and **Needs attention** names a server
+  whose latest check found something to fix, with how many items. The server settings get **Own
+  ports**: ports of your own services that the check does not count as extra.
+- **Widely used SNI**: **Settings** take more domains to treat as widely used SNI, besides the
+  built-in list. The server card warns when XRay has such an SNI, and the install wizard warns
+  while the masking site is one of them.
+- **Server card**: traffic in 24 hours and active keys are always shown, not only with the
+  thresholds of the load on the address; the metadata block says for which Docker bridges IPv6
+  is closed and whether the rules are in iptables or nftables; the speed limit card warns when
+  the latest reading found the applied limits gone from the container.
+- **Needs attention**: a server or a relay that answers, while its outage reported over a day
+  ago is still open.
+
 - **Staff and API tokens**: **Change the password at the next sign-in** when adding a staff member
   (on by default). The permission builder of API tokens starts with one row and **Add a row** adds
   more. **Events in the log** next to a token opens the audit log filtered by its prefix. API calls
@@ -709,6 +723,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with one `syncconf` instead of one per key.
 
 ### Fixed
+
+- A slow poll (traffic, health, relays) is not started while the previous one still runs.
+- The traffic poll checks the XRay speed limits too: a missing nft file or a table not loaded
+  after the container was re-created is applied again, as for WireGuard-family containers.
+- The cloud metadata block is put on a server that did not answer when the panel tried it, once
+  the server answers again, instead of never.
+- Before restarting a container with a lost interface, the operation log keeps only the OOM
+  killer lines of `dmesg` written since the interface was lost, not older ones.
+- **Masking check**: extra open ports are compared by port and transport (UDP 443 of AmneziaWG
+  does not cover TCP 443), from what the protocols and services of the server really use.
+  docker-proxy on a local or Docker address is not counted.
 
 - **Staff, staff notifications and the API**: the admin site checks the quotas against a role
   changed in the same form. A moderator an administrator made and gave a server administrator's

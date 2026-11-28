@@ -92,5 +92,22 @@ def speed_nft(rules: Iterable[XraySpeedRule]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def xray_shaping_probe() -> str:
+    """A command for the XRay container that prints what is left of its speed limits.
+
+    `missing`: no nft file (the app re-created the container or its volume); `lost`: the file
+    limits keys, but the table is not loaded (a re-created container has no nftables, and
+    start.sh skipped the file); `ok` otherwise, as for a file that only removes the table.
+    The words are those of `shaping_probe` for a WireGuard-family container.
+    """
+    return (
+        f"f={SPEED_NFT_PATH}\n"
+        'if [ ! -f "$f" ]; then echo missing\n'
+        "elif grep -q 'chain out' \"$f\" &&"
+        f" ! nft list table {_TABLE} >/dev/null 2>&1; then echo lost\n"
+        "else echo ok; fi\n"
+    )
+
+
 def _police(rule: XraySpeedRule) -> str:
     return f"limit rate over {rule.rate} burst {rule.burst} drop"

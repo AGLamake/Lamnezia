@@ -48,6 +48,7 @@ are derived from the domain and the database password. After editing `.env`: `do
 | `LAMNEZIA_UPDATE_CHECK` | `True` | Ask GitHub twice a day for a new release of the panel and offer the update ([Update from the panel](Upgrade.md#update-from-the-panel)). Only the release tag is fetched; nothing is sent. |
 | `LAMNEZIA_BACKUP_DIR` | `./backups` | Host directory for the backups. |
 | `LAMNEZIA_MONITOR_INTERVAL` | `60` | Seconds between server health readings. A server that does not answer for two intervals is shown offline. |
+| `LAMNEZIA_STEALTH_CHECK_INTERVAL` | `86400` | Seconds between scheduled masking checks of a server; `0` turns them off. |
 | `LAMNEZIA_METRICS_TOKEN` | empty | Token for the Prometheus endpoint `/metrics`. Empty keeps it off. |
 | `LAMNEZIA_OPERATION_TIMEOUT` | `3600` | Seconds after which a waiting or running operation counts as interrupted. |
 | `LAMNEZIA_MONITOR_HISTORY_DAYS` | `7` | Days of server health readings and relay load readings kept. |

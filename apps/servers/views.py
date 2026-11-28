@@ -29,6 +29,7 @@ from apps.servers.forms import (
 )
 from apps.servers.models import CheckWarning, Server, ServerAddress, StealthReport
 from apps.servers.services import probe, stealth
+from apps.servers.services.address_load import AddressLoad
 from apps.servers.services.addresses import ServerAddresses
 from apps.servers.services.check import start_check
 from apps.servers.services.history import latest_operation
@@ -82,6 +83,7 @@ class ServerDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-a
             host_key=trusted_host_key(server),
             ipsec=IpsecIdentity.of(server),
             speed_history=speed_summary(server, timezone.now()),
+            address_load=AddressLoad(server, timezone.now()),
             stealth=StealthReport.objects.filter(server=server).first(),
             **(progress_context(latest) if latest else {}),
             **kwargs,

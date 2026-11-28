@@ -73,6 +73,7 @@ from apps.protocols.services.xray_settings import (
 )
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
+from apps.ssh.errors import SshError
 from apps.ssh.services import RemoteHost
 
 
@@ -157,8 +158,13 @@ def enable_metadata_block(ctx: OperationContext) -> None:
     gettext_lazy("Close the cloud metadata service after an import or a panel update"),
 )
 def ensure_metadata_block(ctx: OperationContext) -> None:
-    with _metadata_blocker(ctx) as blocker:
-        blocker.ensure()
+    try:
+        with _metadata_blocker(ctx) as blocker:
+            blocker.ensure()
+    except SshError:
+        # `ensure` keeps its own failures; this one is the connection.
+        metadata_block.missed(Server.objects.get(pk=ctx.params["server_id"]))
+        raise
 
 
 @operations.register(

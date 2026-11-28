@@ -55,6 +55,7 @@ class ServerForm(forms.ModelForm):  # type: ignore[type-arg]
             "paid_until",
             "payment_url",
             "maintenance",
+            "own_ports",
         )
         widgets: ClassVar = {
             "auth_method": forms.Select(attrs={"x-model": "method"}),

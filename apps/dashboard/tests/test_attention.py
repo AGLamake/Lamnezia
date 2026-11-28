@@ -14,6 +14,7 @@ from apps.accounts.tests.factories import UserFactory
 from apps.dashboard.services.attention import Attention
 from apps.groups.models import GroupMember, MemberState, ServerGroup
 from apps.groups.services.membership import JOIN_KIND, LEAVE_KIND
+from apps.notifications.models import Trouble
 from apps.operations.models import Operation, OperationStatus
 from apps.operations.tests.factories import FailedOperationFactory
 from apps.protocols.models import ProtocolInstance
@@ -286,3 +287,55 @@ def test_a_container_the_restarts_did_not_bring_back_needs_attention() -> None:
 
     assert notice.text == "Germany: amnezia-awg2 has no VPN interface, restarts did not help"
     assert (notice.level, notice.url) == ("danger", reverse("servers:detail", args=[server.pk]))
+
+
+def answering(**fields: Any) -> Server:
+    server = ServerFactory(**fields)
+    sample = ServerSample.objects.create(server=server, at=timezone.now())
+    Server.objects.filter(pk=server.pk).update(latest_sample=sample, last_seen_at=sample.at)
+    return server
+
+
+def opened(key: str, ago: timedelta) -> None:
+    Trouble.objects.create(key=key)
+    Trouble.objects.filter(key=key).update(started_at=timezone.now() - ago)
+
+
+def test_an_outage_open_for_over_a_day_while_the_server_answers_is_suspicious() -> None:
+    admin = UserFactory(role=Role.ADMIN)
+    server = answering(name="msk")
+    opened(f"server_down:{server.pk}:2026-11-24T23:37:10+00:00", timedelta(hours=20))
+    assert Attention(admin).notices() == [], "not a day yet"
+
+    Trouble.objects.update(started_at=timezone.now() - timedelta(days=2))
+    notices = Attention(admin).notices()
+
+    assert [notice.key for notice in notices] == [f"stuck-outage:{server.pk}"]
+    assert notices[0].text == (
+        "msk answers, but its outage is still open: a reading did not close it"
+    )
+
+
+def test_an_old_outage_of_a_silent_server_is_only_an_outage() -> None:
+    server = ServerFactory(name="msk")
+    sample = ServerSample.objects.create(server=server, at=timezone.now(), error="timeout")
+    Server.objects.filter(pk=server.pk).update(latest_sample=sample)
+    opened(f"server_down:{server.pk}:never", timedelta(days=3))
+
+    keys = [notice.key for notice in Attention(UserFactory(role=Role.ADMIN)).notices()]
+
+    assert keys == [f"offline:{server.pk}"]
+
+
+def test_an_outage_of_a_relay_read_fine_for_long_is_suspicious() -> None:
+    relayed_group(alive=["de1"], down=[])
+    relay = Relay.objects.get()
+    Relay.objects.update(read_at=timezone.now())
+    opened(f"relay_down:{relay.pk}:", timedelta(days=2))
+
+    notices = Attention(UserFactory(role=Role.ADMIN)).notices()
+
+    assert [notice.key for notice in notices] == [f"stuck-relay-outage:{relay.pk}"]
+    Relay.objects.update(read_error="stale")
+    keys = [notice.key for notice in Attention(UserFactory(role=Role.ADMIN)).notices()]
+    assert f"stuck-relay-outage:{relay.pk}" not in keys

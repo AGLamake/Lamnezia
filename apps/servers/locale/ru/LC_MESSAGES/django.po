@@ -110,6 +110,9 @@ msgstr "Docker не установлен: панель установит его
 msgid "Enter a host name or an IP address, without a user name, port or protocol."
 msgstr "Введите имя хоста или IP-адрес без имени пользователя, порта и протокола."
 
+msgid "Enter ports like 8080/tcp, 9000/udp or 3000."
+msgstr "Укажите порты вида 8080/tcp, 9000/udp или 3000."
+
 msgid "Enter the password."
 msgstr "Введите пароль."
 
@@ -183,6 +186,9 @@ msgstr "Пароль"
 
 msgid "Paste the private key."
 msgstr "Вставьте приватный ключ."
+
+msgid "Ports of your own services on the server, like 8080/tcp, 9000/udp or 3000 (both). The masking check does not count them as extra ports."
+msgstr "Порты ваших собственных служб на сервере, например 8080/tcp, 9000/udp или 3000 (оба протокола). Проверка маскировки не считает их лишними."
 
 #, python-format
 msgid "Ports that no protocol of the panel uses are open: %(facts)s."
@@ -438,6 +444,9 @@ msgstr "не проверен"
 
 msgid "operating system"
 msgstr "операционная система"
+
+msgid "own ports"
+msgstr "свои порты"
 
 msgid "password"
 msgstr "пароль"

@@ -1,13 +1,17 @@
+from datetime import timedelta
 from ipaddress import ip_address
 from typing import Any
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.test import Client
+from django.utils import timezone
 
 from amnezia_core.keys import KeyPair
 from apps.accounts.models import Role
 from apps.accounts.tests.factories import UserFactory
 from apps.backups.tests.helpers import awg_instance
+from apps.dashboard.services.attention import Attention
 from apps.groups.models import GroupMember, ServerGroup
 from apps.operations.models import Operation
 from apps.operations.services.context import OperationContext
@@ -15,13 +19,17 @@ from apps.operations.tests.factories import OperationFactory
 from apps.protocols.models import InstanceOrigin, ProtocolInstance
 from apps.servers.models import (
     Server,
+    ServerSample,
+    ServerStatus,
     StealthFinding,
     StealthItem,
     StealthReport,
     StealthStatus,
+    parse_own_ports,
 )
 from apps.servers.services import stealth
 from apps.servers.services.stealth import HostFacts, Listener, StealthCheck
+from apps.servers.tasks import check_stealth
 from apps.servers.tests.factories import ServerFactory
 from apps.ssh.services import RemoteHost
 from apps.ssh.tests.fakes import TIMEOUTS, FakeRunner, result
@@ -193,15 +201,51 @@ def test_parameters_copied_from_another_server_are_reported_but_not_in_a_group(
     assert run(server)[StealthItem.AWG_SHARED].status == StealthStatus.OK
 
 
-def test_ports_of_the_panel_are_expected(server: Server) -> None:
+def test_ports_of_the_panel_and_own_ports_are_expected(server: Server) -> None:
     awg_instance(server)
-    server.probe_port = 8080
+    server.own_ports = "8080/tcp, 9001"
     server.save()
-    ServerGroup.objects.create(name="Asia", port=9001, relay=server)
 
     found = run(server)
 
     assert found[StealthItem.PORTS].status == StealthStatus.OK
+
+
+def test_a_known_port_on_another_transport_is_extra(server: Server) -> None:
+    server.probe_port = 8080
+    server.save()
+    ServerGroup.objects.create(name="Asia", port=9001, relay=server)
+    ServerGroup.objects.create(name="Europe", port=40001, relay=server)
+
+    found = run(server)
+
+    assert found[StealthItem.PORTS].facts == "tcp 8080 (nginx), tcp 9001 (tor)"
+
+
+def test_docker_proxy_on_a_local_address_is_not_public(server: Server) -> None:
+    server.own_ports = "40001/udp"
+    server.save()
+    local = (
+        'tcp LISTEN 0 4096 172.17.0.1:8443 0.0.0.0:* users:(("docker-proxy",pid=6,fd=4))\n'
+        'tcp LISTEN 0 4096 [fd00::1]:8443 [::]:* users:(("docker-proxy",pid=7,fd=4))\n'
+    )
+    output = HOST_OUTPUT.replace(
+        "tcp LISTEN 0 4096 0.0.0.0:8080", "tcp LISTEN 0 4096 127.0.0.1:8080"
+    ).replace(f"tcp LISTEN 0 4096 {SERVER_IP}:9001", "tcp LISTEN 0 4096 10.0.0.5:9001")
+
+    found = run(server, output.replace("#containers", local + "#containers"))
+
+    assert found[StealthItem.PORTS].status == StealthStatus.OK
+
+
+@pytest.mark.parametrize("text", ["8080/sctp", "70000", "ssh"])
+def test_own_ports_must_be_ports_with_a_transport(text: str) -> None:
+    with pytest.raises(ValidationError):
+        parse_own_ports(text)
+
+
+def test_a_bare_own_port_is_both_transports() -> None:
+    assert parse_own_ports(" 3000,\n53/UDP ") == {(3000, "tcp"), (3000, "udp"), (53, "udp")}
 
 
 def test_without_ss_the_ports_are_not_checked(server: Server) -> None:
@@ -248,3 +292,48 @@ def test_the_card_shows_the_findings_with_advice(admin_client: Client, server: S
     assert "tcp 8080 (nginx)" in html
     assert "close their ports in the firewall" in html
     assert "1 to fix" in html
+
+
+def answering(name: str, status: ServerStatus = ServerStatus.READY) -> Server:
+    server = ServerFactory(name=name, status=status)
+    server.record_sample(ServerSample.objects.create(server=server, at=timezone.now()))
+    return server
+
+
+def test_due_checks_start_for_ready_servers_that_answer(settings: Any) -> None:
+    settings.STEALTH_CHECK_INTERVAL = 24 * 60 * 60
+    now = timezone.now()
+    answering("due")
+    stealth.save(answering("fresh"), [])
+    OperationFactory(kind=stealth.KIND, params={"server_id": answering("busy").pk})
+    answering("failed", ServerStatus.FAILED)
+    ServerFactory(name="silent", status=ServerStatus.READY)
+    old = answering("old")
+    stealth.save(old, [])
+    StealthReport.objects.filter(server=old).update(checked_at=now - timedelta(days=2))
+
+    started = stealth.start_due(now)
+
+    assert sorted(operation.subject for operation in started) == ["due", "old"]
+    assert check_stealth.run() == 0
+
+
+def test_due_checks_are_off_with_a_zero_interval(settings: Any) -> None:
+    settings.STEALTH_CHECK_INTERVAL = 0
+    answering("due")
+
+    assert stealth.start_due(timezone.now()) == []
+
+
+def test_a_server_with_findings_needs_attention() -> None:
+    admin = UserFactory(role=Role.ADMIN)
+    server = ServerFactory(name="Germany")
+    warn = StealthFinding(StealthItem.PORTS, StealthStatus.WARN, "tcp 8080")
+    stealth.save(server, [warn, StealthFinding(StealthItem.STUB, StealthStatus.WARN)])
+    stealth.save(ServerFactory(name="Clean"), [StealthFinding(StealthItem.IPV6, StealthStatus.OK)])
+
+    notices = [n for n in Attention(admin).notices() if n.key.startswith("stealth:")]
+
+    assert [notice.text for notice in notices] == [
+        "Germany: the masking check found 2 things to fix"
+    ]

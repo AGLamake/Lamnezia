@@ -12,6 +12,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.db.models import Q
 
 from amnezia_core.containers import WG_CONTAINERS
@@ -92,9 +93,15 @@ class InterfaceWatch:
         repair.attempts += 1
         repair.next_attempt_at = now + self._rules.pause_after(repair.attempts)
         server = repair.server
+        # The interface went away between the previous reading and the one that found it gone.
+        lost_after = repair.missing_since - timedelta(seconds=settings.MONITOR_INTERVAL)
         launch(
             RESTART_KIND,
-            {"server_id": server.pk, "container": repair.container},
+            {
+                "server_id": server.pk,
+                "container": repair.container,
+                "lost_after": lost_after.timestamp(),
+            },
             subject=f"{server} · {repair.container}",
         )
 

@@ -2,13 +2,18 @@
 
 One read-only pass over the server (addresses, listening ports, running containers, server.json
 of XRay) and over what the panel knows (the keys' addresses, the AmneziaWG parameters of all
-servers, its own address). The findings replace the previous report of the server.
+servers, its own address). The findings replace the previous report of the server. A listening
+port is extra unless the panel knows something on it with the same transport (TCP or UDP), or the
+administrator listed it among the server's own ports. docker-proxy of a port published on a local
+address only is not public, so it is not counted. The panel checks every server once in
+STEALTH_CHECK_INTERVAL on its own (`start_due`).
 """
 
 import re
 import socket
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from ipaddress import IPv4Address, IPv6Address, ip_address, ip_interface
 from urllib.parse import urlsplit
 
@@ -24,21 +29,24 @@ from amnezia_core.awg_fingerprint import (
 )
 from amnezia_core.containers import AWG2, AWG_LEGACY
 from amnezia_core.errors import ConfigFormatError
-from amnezia_core.ipsec import IPSEC_CONTAINER, IPSEC_PORTS
 from amnezia_core.proxies import MTPROXY_CONTAINER, SOCKS5_CONTAINER, TELEMT_CONTAINER
 from amnezia_core.xray import XRAY_CONFIG_PATH, XRAY_CONTAINER, mux_enabled
 from apps.accounts.models import User
-from apps.operations.models import Operation
+from apps.operations.models import Operation, OperationStatus
 from apps.operations.services.context import OperationContext
 from apps.operations.services.launcher import launch
 from apps.protocols.models import ProtocolInstance
+from apps.protocols.services.installation import used_ports
+from apps.protocols.services.installer import installers
 from apps.relays.models import Relay
 from apps.servers.models import (
     Server,
+    ServerStatus,
     StealthFinding,
     StealthItem,
     StealthReport,
     StealthStatus,
+    parse_own_ports,
 )
 from apps.ssh.errors import DockerError, RemoteFileNotFoundError, SshCommandError
 from apps.ssh.services import RemoteHost
@@ -57,6 +65,7 @@ _WEB_PORTS = (80, 443)
 _STUB_PORT = 443
 _DNS_PORT = 53
 _TOR_PROCESS = "tor"
+_TRANSPORTS = ("tcp", "udp")
 _PUBLIC_PROXIES = (SOCKS5_CONTAINER, MTPROXY_CONTAINER, TELEMT_CONTAINER)
 _AWG_CONTAINERS = (AWG2.name, AWG_LEGACY.name)
 _WILDCARDS = ("*", "0.0.0.0", "::")
@@ -97,6 +106,11 @@ class Listener:
             return ip_address(self.host).is_global
         except ValueError:
             return False
+
+    @property
+    def key(self) -> tuple[int, str]:
+        """(port, transport), as the panel keeps the ports it knows."""
+        return self.port, self.proto
 
     def __str__(self) -> str:
         return f"{self.proto} {self.port}" + (f" ({self.process})" if self.process else "")
@@ -187,21 +201,26 @@ class StealthCheck:
         if not listeners:  # sshd always listens: ss is missing
             return [_skip(StealthItem.PORTS), _skip(StealthItem.STUB)]
         expected = self._expected_ports()
-        extra = sorted({str(item) for item in listeners if item.port not in expected})
+        extra = sorted({str(item) for item in listeners if item.key not in expected})
         stub = any(item.proto == "tcp" and item.port == _STUB_PORT for item in listeners)
         return [_verdict(StealthItem.PORTS, extra), _flag(StealthItem.STUB, not stub)]
 
-    def _expected_ports(self) -> set[int]:
+    def _expected_ports(self) -> set[tuple[int, str]]:
+        """(port, transport) of what the panel knows on the server and of its own ports."""
         server = self._server
-        ports = {server.port, *_WEB_PORTS, *(instance.port for instance in self._instances)}
-        ports.update(port for port in server.services.values_list("port", flat=True) if port)
-        ports.update(server.relayed_groups.values_list("port", flat=True))
-        if server.probe_port:
-            ports.add(server.probe_port)
-        if any(instance.container == IPSEC_CONTAINER for instance in self._instances):
-            ports.update(IPSEC_PORTS)
+        ports = used_ports(server) | parse_own_ports(server.own_ports)
+        ports.update((port, "tcp") for port in (server.port, *_WEB_PORTS))
+        for service in server.services.all():
+            if service.port is None:
+                continue
+            installer = installers.find(service.container)
+            if installer:
+                ports |= installer.ports_of(service.port, {})
+            else:
+                ports.update((service.port, transport) for transport in _TRANSPORTS)
+        ports.update((port, "udp") for port in server.relayed_groups.values_list("port", flat=True))
         if Relay.objects.filter(server=server).exists():
-            ports.add(_DNS_PORT)
+            ports.update((_DNS_PORT, transport) for transport in _TRANSPORTS)
         return ports
 
     def _proxies(self, facts: HostFacts) -> StealthFinding:
@@ -284,6 +303,26 @@ def save(server: Server, findings: list[StealthFinding]) -> StealthReport:
 
 def start(server: Server, user: User | None) -> Operation:
     return launch(KIND, {"server_id": server.pk}, user=user, subject=server.name)
+
+
+def start_due(now: datetime) -> list[Operation]:
+    """Checks of the ready servers that answer, not checked in STEALTH_CHECK_INTERVAL.
+
+    A server with a check waiting or under way is left to it.
+    """
+    if not settings.STEALTH_CHECK_INTERVAL:
+        return []
+    fresh = now - timedelta(seconds=settings.STEALTH_CHECK_INTERVAL)
+    busy = Operation.objects.filter(
+        kind=KIND, status__in=(OperationStatus.PENDING, OperationStatus.RUNNING)
+    ).values_list("params__server_id", flat=True)
+    servers = (
+        Server.objects.filter(status=ServerStatus.READY)
+        .exclude(stealth_report__checked_at__gte=fresh)
+        .exclude(pk__in=list(busy))
+        .select_related("latest_sample")
+    )
+    return [start(server, None) for server in servers if server.online]
 
 
 def _addresses(lines: list[str]) -> Iterable[IPAddress]:

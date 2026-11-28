@@ -10,6 +10,8 @@
     <p>
       {% if block.checked_at %}<span class="help-text">{% blocktranslate with date=block.checked_at|date:"SHORT_DATETIME_FORMAT" %}Checked {{ date }}.{% endblocktranslate %}</span>{% else %}<span class="help-text">{% translate "Not checked yet." %}</span>{% endif %}
       {% if block.bridges %}<span class="help-text">{% blocktranslate with bridges=block.bridges|join:", " %}Closed for: {{ bridges }}.{% endblocktranslate %}</span>{% endif %}
+      {% if block.enabled %}<span class="help-text">{% if block.ipv6_bridges %}{% blocktranslate with bridges=block.ipv6_bridges|join:", " %}IPv6 closed for: {{ bridges }}.{% endblocktranslate %}{% else %}{% translate "IPv6 is not closed: Docker keeps no IPv6 rules on this server." %}{% endif %}</span>{% endif %}
+      {% if block.backend %}<span class="help-text">{% blocktranslate with backend=block.backend %}Rules in {{ backend }}.{% endblocktranslate %}</span>{% endif %}
     </p>
     <div class="flex flex-wrap gap-2">
       <form method="post" action="{% url 'protocols:metadata_block' server.pk 'check' %}">

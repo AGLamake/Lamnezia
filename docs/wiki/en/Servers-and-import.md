@@ -109,10 +109,15 @@ knows, and changes nothing on the server. The card keeps the latest report; each
 **fine**, **to fix** with what was found and what to do, or **not checked** when it does not
 apply (no AmneziaWG, no XRay, `ss` missing, the panel address does not resolve).
 
+The panel also checks on its own every ready server that answers, once a day
+(`LAMNEZIA_STEALTH_CHECK_INTERVAL` in [Configuration](Configuration.md), `0` turns it off).
+A server whose latest check found something to fix is in **Needs attention** with the number
+of items.
+
 | Item | Warns when | What to do |
 |---|---|---|
 | IPv6 | the server has a global IPv6 address that neither its address nor its **Other addresses** use | turn IPv6 off (`sysctl net.ipv6.conf.all.disable_ipv6=1`) or add the address for the keys |
-| Open ports | something listens on a public address on a port no protocol, service, probe or relayed group of the panel uses (SSH, 80 and 443 are expected) | stop the service or close the port in the firewall |
+| Open ports | something listens on a public address on a port and transport (TCP or UDP) that no protocol, service, probe or relayed group of the panel uses (SSH, 80 and 443 are expected); docker-proxy on a local or Docker address is not counted | stop the service, close the port in the firewall, or list it in **Own ports** of the server settings (`8080/tcp, 9000/udp`; a bare port means both) |
 | Site on port 443 | nothing listens on TCP 443 | put XRay on 443 (Reality answers as its masking site) or a web server with a plain site |
 | Tor and public proxies | a SOCKS5, MTProxy or Telemt container runs, or Tor listens on a public port | move the proxy to another server or close it to strangers |
 | Panel address | the address of `SITE_URL` is one of the server's | move the panel to another server or address |
@@ -186,7 +191,7 @@ background job of its own, so a server that does not answer does not delay the o
   container with a background operation under the server lock, at most 3 times with a pause of
   5, 10 and 20 minutes; the card shows how many restarts it took. Before each restart the
   operation log keeps the last 30 lines of `docker logs` (when the container log is on) and the
-  OOM killer lines of `dmesg`, since the restart wipes the reason. If the interface is still not
+  OOM killer lines of `dmesg` written since the interface was lost, since the restart wipes the reason. If the interface is still not
   back, the panel stops, says so on the card and keeps the container in **Needs attention**
   until the interface returns or the container is stopped. Nothing is restarted while an operation on the
   server, its protocols or services is running, and a container stopped by the administrator is
@@ -195,7 +200,9 @@ background job of its own, so a server that does not answer does not delay the o
 The servers are shown as cards on the **Overview** (moderators see the servers of their zone, without links to the
 server pages), the status is also in the server list. Above the cards the overview shows the key
 numbers (servers online, active keys, clients, online now), the traffic for 7 days and the
-**Needs attention** list: servers that do not answer, server groups where no member answers the
+**Needs attention** list: servers that do not answer, servers and relays that answer while
+their outage reported over a day ago is still open, servers whose masking check found something
+to fix, server groups where no member answers the
 relay at its last reading, relays whose state cannot be read and relays that keep other settings
 after the panel wrote them again (with a link to the group or
 server page, administrators only), VPS payments due within 7 days or overdue (administrators only),

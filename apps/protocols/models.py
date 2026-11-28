@@ -315,6 +315,8 @@ class MetadataBlock(models.Model):
     timer runs. `turned_off` is the choice of an administrator: install and import then leave the
     server open, for a client that needs the local services of the hoster on 169.254.0.0/16.
     `script_version` is the VERSION of the script the panel last tried to put on the server.
+    `ipv6_bridges` are the bridges closed to the IPv6 address of the service, `backend` the
+    firewall of the rules (iptables or nftables), both from the latest reading.
     """
 
     server = models.OneToOneField(
@@ -326,6 +328,8 @@ class MetadataBlock(models.Model):
     enabled = models.BooleanField(_("metadata service closed"), default=False)
     turned_off = models.BooleanField(_("turned off by an administrator"), default=False)
     bridges = models.JSONField(_("closed bridges"), default=list, blank=True)
+    ipv6_bridges = models.JSONField(_("bridges closed for IPv6"), default=list, blank=True)
+    backend = models.CharField(_("firewall"), max_length=16, blank=True)
     checked_at = models.DateTimeField(_("checked at"), null=True, blank=True)
     script_version = models.PositiveSmallIntegerField(_("script version"), default=0)
 

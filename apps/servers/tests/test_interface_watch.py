@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
+from django.conf import settings
 from django.test import Client
 from django.utils import timezone
 
@@ -97,7 +98,13 @@ def test_a_lost_interface_is_told_and_the_container_restarted(readings: Readings
     readings.lost(3)
 
     (restart,) = restarts()
-    assert restart.params == {"server_id": readings.server.pk, "container": AWG2}
+    repair = InterfaceRepair.objects.get()
+    lost_after = repair.missing_since - timedelta(seconds=settings.MONITOR_INTERVAL)
+    assert restart.params == {
+        "server_id": readings.server.pk,
+        "container": AWG2,
+        "lost_after": lost_after.timestamp(),
+    }
     (notice,) = Notification.objects.all()
     assert notice.event == Event.INTERFACE_LOST
     assert notice.data["container"] == AWG2

@@ -50,10 +50,9 @@ LOG_LINES = 200
 # Lines of `docker logs` and of kernel OOM messages kept before a lost interface is restarted.
 DIAGNOSIS_LINES = 30
 # Kernel messages of the OOM killer; `dmesg` needs root, which the panel's commands have.
-_OOM_LINES = (
-    "dmesg 2>/dev/null | grep -iE 'out of memory|oom-kill|killed process'"
-    f" | tail -n {DIAGNOSIS_LINES}"
-)
+_OOM_GREP = f"grep -iE 'out of memory|oom-kill|killed process' | tail -n {DIAGNOSIS_LINES}"
+# Keeps the dmesg lines logged at or after `up - ago` seconds since boot.
+_SINCE_BOOT_FILTER = r"""'{ t = $0; sub(/^\[ */, "", t); sub(/\].*/, "", t) } t + 0 >= up - ago'"""
 # A container run with `--log-driver none` (as Amnezia does); docker logs then answers with this.
 _NO_LOG_MARKER = "does not support reading"
 _PROTOCOL_NO_LOG_HINT = gettext_lazy(
@@ -143,20 +142,38 @@ class ContainerControl:
         return stack
 
 
+def oom_lines(after: float | None = None) -> str:
+    """The command that prints the OOM messages of the kernel; with `after` (Unix time) only
+    those logged since then. A dmesg line starts with the seconds since boot, the same on every
+    version of dmesg (`--since` is not), so the moment is turned into such seconds."""
+    if after is None:
+        return f"dmesg 2>/dev/null | {_OOM_GREP}"
+    return (
+        "dmesg 2>/dev/null"
+        " | awk -v up=\"$(cut -d' ' -f1 /proc/uptime)\""
+        f' -v ago="$(( $(date +%s) - {int(after)} ))" {_SINCE_BOOT_FILTER}'
+        f" | {_OOM_GREP}"
+    )
+
+
 class LostInterfaceRestart(ContainerControl):
     """Restart of a running WireGuard-family container whose interface is gone.
 
     The monitor asks for it; under the server lock the container is checked again, so one the
     administrator stopped meanwhile or one that has its interface back is left as it is. Before
     the restart the tail of the container log and the kernel's OOM messages go to the operation
-    log, since the restart wipes what is left of the reason.
+    log, since the restart wipes what is left of the reason. With `lost_after` (Unix time) only
+    the kernel messages since then are read: older ones tell of something else.
     """
 
     no_log_hint = _PROTOCOL_NO_LOG_HINT
 
-    def __init__(self, host: RemoteHost, name: str, ctx: OperationContext) -> None:
+    def __init__(
+        self, host: RemoteHost, name: str, ctx: OperationContext, lost_after: float | None = None
+    ) -> None:
         super().__init__(host, name, ctx)
         self._awg = AwgContainer(host, ctx, WG_CONTAINERS[name])
+        self._lost_after = lost_after
 
     def restart(self) -> None:
         with self._locked():
@@ -166,7 +183,7 @@ class LostInterfaceRestart(ContainerControl):
                     return
             with self._ctx.step(_("Read why the interface is gone")):
                 self._log_tail(DIAGNOSIS_LINES)
-                oom = self._host.sh(_OOM_LINES).output.rstrip()
+                oom = self._host.sh(oom_lines(self._lost_after)).output.rstrip()
                 self._ctx.log(oom or _("The kernel log has no OOM messages."))
             with self._ctx.step(_("Restart the container")):
                 self._host.docker("restart", self._name)

@@ -21,6 +21,7 @@ from apps.protocols.catalog import ContainerGroup
 from apps.protocols.masking import masking_field
 from apps.protocols.services.installation import InstallChoice, InstallRequest, used_ports
 from apps.protocols.services.installer import InstallerClass, installers
+from apps.protocols.services.sni_choice import mass_snis
 from apps.servers.models import Server
 
 _TEXT = forms.TextInput(attrs={"spellcheck": "false", "autocomplete": "off"})
@@ -152,6 +153,7 @@ class InstallForm(forms.Form):
             if any(c.group == group for c in offered)
         ]
         self.descriptions = [(c.container, c.description) for c in offered]
+        self.fields["site"].widget.attrs["x-model"] = "site"
 
     @cached_property
     def taken(self) -> set[tuple[int, str]]:
@@ -166,6 +168,14 @@ class InstallForm(forms.Form):
             if port is not None:
                 advice.append((installer.container, installer.default_port, port))
         return advice
+
+    @property
+    def mass_snis(self) -> str:
+        """Widely used SNI as a list for Alpine: the page warns while the site is one of them.
+
+        The domains are checked names, so they need no escaping inside the quotes.
+        """
+        return repr(sorted(mass_snis()))
 
     @property
     def installer_fields(self) -> list[tuple[BoundField, str]]:
