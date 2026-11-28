@@ -2,16 +2,19 @@
 
 import json
 from collections.abc import Callable
+from datetime import timedelta
 from typing import Any
 
 import pytest
+from django.utils import timezone
 from pytest import MonkeyPatch
 
 from amnezia_core.awg import AWG_CONFIG_PATH, AwgServerConfig
 from amnezia_core.keys import KeyPair
 from apps.accounts.models import User
 from apps.accounts.tests.factories import UserFactory
-from apps.groups.models import GroupMember, ServerGroup
+from apps.groups.models import GroupMember, GroupRouting, ServerGroup
+from apps.groups.services import replication
 from apps.groups.services.addressing import GroupKeyAddress
 from apps.groups.services.replication import catch_up_lagging
 from apps.groups.tests.conftest import JOINER_HOST, LEADER_HOST, PORT, Fakes, succeeded
@@ -27,13 +30,13 @@ from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
 from apps.protocols.tests.fake_awg import FakeAwgServer
 from apps.relays.errors import RelayError, RelayErrorCode
-from apps.relays.models import Relay, ServicePeer, SyncSkip
+from apps.relays.models import PeerRole, Relay, ServicePeer, SyncSkip
 from apps.relays.services import config, deployment, image
 from apps.relays.services.container import FOLDER
 from apps.relays.services.deployment import INSTALL_KIND, REMOVE_KIND, UPDATE_KIND, sync_relays
 from apps.relays.tests.conftest import RELAY_HOST
 from apps.relays.tests.fake_relay import FakeRelayServer
-from apps.servers.models import Server
+from apps.servers.models import Server, ServerSample
 from apps.ssh.errors import ErrorCode, ServerLockError
 
 pytestmark = pytest.mark.django_db
@@ -638,3 +641,81 @@ def test_a_leader_down_at_removal_keeps_the_service_peer_on_every_member(
     assert nobody_lags()
     assert public_key in peers_of(servers[JOINER_HOST])
     assert ServicePeer.objects.exists()
+
+
+def heard(server: Server, *, ago: timedelta) -> None:
+    """The monitor last heard the server `ago`."""
+    at = timezone.now() - ago
+    sample = ServerSample.objects.create(server=server, at=at)
+    Server.objects.filter(pk=server.pk).update(latest_sample=sample, last_seen_at=at)
+
+
+@pytest.mark.usefixtures("relayed")
+def test_sync_places_the_probe_once_the_leader_answers_again(  # noqa: PLR0913, PLR0917
+    relay_server: Server,
+    servers: Fakes,
+    down: set[str],
+    admin: User,
+    start: Start,
+    django_capture_on_commit_callbacks: OnCommit,
+) -> None:
+    down.add(LEADER_HOST)
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    assert not ServicePeer.objects.exists()
+    leader_server = leading().instance.server
+
+    heard(leader_server, ago=timedelta(hours=1))
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+    assert not Operation.objects.filter(kind=UPDATE_KIND).exists(), "the leader is still down"
+
+    down.discard(LEADER_HOST)
+    heard(leader_server, ago=timedelta(0))
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+
+    succeeded(Operation.objects.get(kind=UPDATE_KIND))
+    probe = ServicePeer.objects.get(role=PeerRole.PROBE)
+    assert all(probe.public_key in peers_of(fake) for fake in servers.values())
+
+
+@pytest.mark.usefixtures("relayed")
+def test_sync_with_every_service_peer_connects_nowhere(
+    relay_server: Server,
+    admin: User,
+    start: Start,
+    monkeypatch: MonkeyPatch,
+    django_capture_on_commit_callbacks: OnCommit,
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    heard(leading().instance.server, ago=timedelta(0))
+
+    def no_connection(*args: object, **kwargs: object) -> None:
+        raise AssertionError("the sync must not connect")
+
+    monkeypatch.setattr(deployment, "connect", no_connection)
+    monkeypatch.setattr(replication, "connect", no_connection)
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+
+    assert not Operation.objects.filter(kind=UPDATE_KIND).exists()
+
+
+def test_sync_places_the_uplink_a_split_group_lacks(
+    relayed: ServerGroup,
+    relay_server: Server,
+    admin: User,
+    start: Start,
+    django_capture_on_commit_callbacks: OnCommit,
+) -> None:
+    succeeded(run(INSTALL_KIND, relay_server, admin, start))
+    ServerGroup.objects.filter(pk=relayed.pk).update(routing=GroupRouting.SPLIT)
+    relay = Relay.objects.get(server=relay_server)
+    plan = config.RelayPlan.of(relay_server)
+    Relay.objects.filter(pk=relay.pk).update(synced=plan.digest(plan.config()))
+    assert not ServicePeer.objects.filter(role=PeerRole.UPLINK).exists()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sync_relays()
+
+    assert Operation.objects.filter(kind=UPDATE_KIND).exists()

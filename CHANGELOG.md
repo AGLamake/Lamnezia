@@ -676,6 +676,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A relay gets the service peer it missed**: when the leading server of a group was down at an
+  install or update of the relay, the probe peer (or the uplink peer of a split group) was left for
+  later, but the sync saw no change and never tried again. Now the first sync after the monitor
+  hears the leading server again runs an update that adds the missing peer. A relay whose groups
+  have all their peers costs no extra connections. Nothing to do on upgrade.
 - **The Telegram staff menu follows the role and the link**: a member who got the administrator
   or moderator role or linked Telegram saw `/admin`, `/overview`, `/today` and `/incidents` only
   after the bots restarted, and a member who lost the role kept them; the panel now sets the menu

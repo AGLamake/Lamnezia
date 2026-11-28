@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 
 from amnezia_core.awg import Peer
 from amnezia_core.keys import KeyPair
-from apps.groups.models import ServerGroup
+from apps.groups.models import GroupRouting, ServerGroup
 from apps.groups.services.replication import GroupReplicas
 from apps.keys.models import DISABLED_STATUSES, AccessKey
 from apps.keys.services.peers import PeerManager
@@ -191,6 +191,24 @@ class ServicePeerPlacement:
         with self._ctx.step(_("Leave %(server)s to catch up later") % {"server": server.name}):
             self._ctx.log(reason)
         self._replicas.fall_behind(server)
+
+
+def wanted_roles(group: ServerGroup) -> list[PeerRole]:
+    """Every group has a probe; a split group has an uplink too."""
+    roles = [PeerRole.PROBE]
+    if group.routing == GroupRouting.SPLIT:
+        roles.append(PeerRole.UPLINK)
+    return roles
+
+
+def lacks_service_peers(group: ServerGroup) -> bool:
+    """The group lacks a peer it needs and its leading server answers the monitor now, so a
+    placement left for later can be done. Only the database is read: no server is asked."""
+    leader = group.leader
+    if leader is None or leader.instance.server.online is False:
+        return False
+    placed = set(ServicePeer.objects.filter(group=group).values_list("role", flat=True))
+    return not set(wanted_roles(group)) <= placed
 
 
 def _reserved(source: str) -> list[IPv4Address]:

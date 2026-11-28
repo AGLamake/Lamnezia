@@ -7,7 +7,9 @@ when the relay server itself no longer answers. A key
 or list change of a split group needs only its files: a lighter operation writes just them. The
 relay server is locked only for its own container: a member on the same server takes the same
 lock for its peers. An operation that found a server busy is synced again as soon as an
-operation that ran meanwhile is over, not at the next minute.
+operation that ran meanwhile is over, not at the next minute. A service peer left for later
+because the leading server was down is placed by the first sync after the monitor hears that
+server again.
 """
 
 from collections.abc import Iterable, Iterator, Mapping
@@ -34,7 +36,11 @@ from apps.relays.services.clone import peers_digest
 from apps.relays.services.config import RelayPlan, members_on_relay
 from apps.relays.services.container import RESERVED_PORTS, RelayContainer
 from apps.relays.services.image import IMAGE_VERSION, agent_digest
-from apps.relays.services.service_peers import ServicePeerPlacement
+from apps.relays.services.service_peers import (
+    ServicePeerPlacement,
+    lacks_service_peers,
+    wanted_roles,
+)
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.ssh.errors import ErrorCode, SshError
@@ -157,11 +163,8 @@ class RelayDeployment:
         server does not answer is left for the next sync; a failure on an answering leader
         fails the operation, so the relay keeps the members it has."""
         for group, _members in RelayPlan.of(self._relay.server).groups:
-            roles = [PeerRole.PROBE]
-            if group.routing == GroupRouting.SPLIT:
-                roles.append(PeerRole.UPLINK)
             try:
-                ServicePeerPlacement(group, self._ctx).place(roles)
+                ServicePeerPlacement(group, self._ctx).place(wanted_roles(group))
             except RelayError as error:
                 if error.code != RelayErrorCode.LEADER_UNREACHABLE:
                     raise
@@ -278,7 +281,9 @@ def _sync(relay: Relay) -> None:
         _skip(relay, SyncSkip.HOST_NOT_RESOLVED, str(error))
         return
     _skip(relay, SyncSkip.NONE, "")
-    if plan.digest(config) != relay.synced:
+    # A service peer left for later when the leading server was down is not in the digest.
+    lacking = any(lacks_service_peers(group) for group, _members in plan.groups)
+    if lacking or plan.digest(config) != relay.synced:
         kind = UPDATE_KIND
     elif peers_digest(plan.split_files(config)) != relay.peers_synced:
         kind = PEERS_KIND
