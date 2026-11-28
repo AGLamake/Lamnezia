@@ -1,5 +1,5 @@
 #!/bin/sh
-# Updates the panel on its host. It runs in one of two ways:
+# Updates the panel on its host. It runs in one of three ways:
 #
 #   deploy <commit>  forced command of the deploy SSH key (the Deploy workflow): moves the
 #                    checkout to that commit of the development branch (BRANCH, dev). The GitHub
@@ -10,8 +10,11 @@
 #                    release, and goes back to the previous version when the panel does not come
 #                    up healthy.
 #                    The status and the log are written to UPDATE_DIR/status on any exit.
+#   summary          run by lamnezia-summary.service of install.sh when install-summary.txt
+#                    changes or goes away: tells the panel whether the file still holds the
+#                    installer's password (UPDATE_DIR/status/summary). A release run tells it too.
 #
-# Neither runs while the panel moves to another machine (move_under_way below).
+# Neither deploy nor release runs while the panel moves to another machine (move_under_way below).
 #
 # Install as /usr/local/sbin/lamnezia-deploy (install.sh does it). For the SSH key allow only this
 # command in ~/.ssh/authorized_keys:
@@ -165,6 +168,15 @@ write_status() {
     mv -f "$status_dir/.status" "$status_dir/status"
 }
 
+# The panel reminds to delete install-summary.txt while it holds the installer's password.
+report_summary() {
+    if grep -qs '^Password:' "$LAMNEZIA_DIR/install-summary.txt"; then
+        : >"$status_dir/summary"
+    else
+        rm -f "$status_dir/summary"
+    fi
+}
+
 finish() {
     code=$?
     if [ "$state" = running ]; then
@@ -172,6 +184,7 @@ finish() {
         reason=${reason:-interrupted}
     fi
     finished=$(date +%s)
+    report_summary
     write_status
     if [ -n "$work" ]; then
         rm -rf "$work"
@@ -366,6 +379,10 @@ release() {
 
 case "${1:-}" in
     release) release ;;
+    summary)
+        status_dir=$UPDATE_DIR/status
+        report_summary
+        ;;
     *)
         # shellcheck disable=SC2086  # the command is split into words on purpose
         set -- ${SSH_ORIGINAL_COMMAND:-}

@@ -98,6 +98,9 @@ class Host:
 
     def run(self, request: str, **env: str) -> subprocess.CompletedProcess[str]:
         (self.update / "request" / "update").write_text(request + "\n", newline="\n")
+        return self.call("release", **env)
+
+    def call(self, mode: str, **env: str) -> subprocess.CompletedProcess[str]:
         environment = {
             **os.environ,
             "PATH": f"{(self.root / 'bin').as_posix()}{os.pathsep}{os.environ['PATH']}",
@@ -109,7 +112,7 @@ class Host:
             "FAKE_REPO_DIGEST": f"{REPOSITORY}@{DIGEST}",
             **env,
         }
-        command = [shutil.which("sh") or "sh", SCRIPT.as_posix(), "release"]
+        command = [shutil.which("sh") or "sh", SCRIPT.as_posix(), mode]
         return subprocess.run(command, env=environment, capture_output=True, text=True, check=False)
 
     def status(self) -> dict[str, str]:
@@ -356,3 +359,24 @@ def test_the_release_workflow_signs_what_the_host_checks() -> None:
     assert "deploy/update/release-signers" in script
     assert f"-n {NAMESPACE}" in workflow and "-f deploy/update/release-signers" in workflow
     assert '"$RUNNER_TEMP/lamnezia-release.txt.sig"' in workflow
+
+
+def test_the_panel_learns_whether_the_summary_still_holds_the_password(host: Host) -> None:
+    summary = host.panel / "install-summary.txt"
+    marker = host.update / "status" / "summary"
+    summary.write_text("Panel: https://example.com\nPassword: secret\n", newline="\n")
+
+    host.call("summary")
+    assert marker.is_file()
+
+    summary.unlink()
+    host.call("summary")
+    assert not marker.exists()
+
+
+def test_a_release_refreshes_the_summary_marker(host: Host) -> None:
+    (host.panel / "install-summary.txt").write_text("Password: secret\n", newline="\n")
+
+    host.run(f"v1.1.0 {RUN}")
+
+    assert (host.update / "status" / "summary").is_file()

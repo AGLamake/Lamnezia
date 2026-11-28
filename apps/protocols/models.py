@@ -145,7 +145,9 @@ class ServiceInstance(models.Model):
     mode, the TLS domain and the public host, or the domain of TProxy. For SOCKS5 it keeps the
     size of the 3proxy.log the app left (`APP_LOG_SETTING`), which the panel offers to delete;
     for AmneziaDNS, that its config leaves the query logs as the image has them
-    (`DNS_LOGS_SETTING`), and the panel offers to rebuild it.
+    (`DNS_LOGS_SETTING`), and the panel offers to rebuild it. `extra_secrets` are the additional
+    secrets of MTProxy and Telemt, separated by commas; they open the proxy like `secret`, so
+    they are stored encrypted too.
     """
 
     server = models.ForeignKey(
@@ -158,6 +160,7 @@ class ServiceInstance(models.Model):
     port = models.PositiveIntegerField(_("port"), null=True, blank=True)
     login = models.CharField(_("login"), max_length=64, blank=True)
     secret = EncryptedTextField(_("password or address"), blank=True)
+    extra_secrets = EncryptedTextField(_("additional secrets"), blank=True, default="")
     settings = models.JSONField(_("settings"), default=dict, blank=True)
     origin = models.CharField(_("origin"), max_length=16, choices=InstanceOrigin)
     created_at = models.DateTimeField(_("added at"), auto_now_add=True)

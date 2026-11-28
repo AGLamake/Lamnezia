@@ -4,9 +4,10 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator, validate_email
+from django.core.validators import validate_email
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.fields import http_url
 from apps.notifications.events import routable_events
 from apps.notifications.models import Channel, ChannelKind, DeliveryStatus
 from apps.notifications.services.addresses import AddressGuard, BlockedAddressError
@@ -15,8 +16,6 @@ from apps.notifications.services.delivery import set_routes
 
 if TYPE_CHECKING:
     from django_stubs_ext import StrOrPromise
-
-_http_url = URLValidator(schemes=["http", "https"])
 
 
 class ChannelForm(forms.ModelForm):  # type: ignore[type-arg]
@@ -121,7 +120,7 @@ class DiscordChannelForm(ChannelForm):
     def clean_secret(self) -> str:
         url: str = self.cleaned_data["secret"]
         if url:
-            _http_url(url)
+            http_url(url)
             _public_url(url)
         return url
 
@@ -157,7 +156,7 @@ class WebhookChannelForm(ChannelForm):
 
     def clean_target(self) -> str:
         url: str = self.cleaned_data["target"].strip()
-        _http_url(url)
+        http_url(url)
         _public_url(url)
         return url
 

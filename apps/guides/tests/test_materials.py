@@ -7,9 +7,16 @@ from typing import Any
 import pytest
 from django.test import Client
 
+from apps.accounts.tests.registration import configure as configure_site
 from apps.core.tests.proxies import web_server
 from apps.guides.models import MaterialTopic, UsefulMaterial
-from apps.guides.services.materials import LinkChecker, MaterialLinkCheck, sections_by_topic
+from apps.guides.services.materials import (
+    GuardedRedirects,
+    LinkChecker,
+    MaterialLinkCheck,
+    sections_by_topic,
+)
+from apps.notifications.services.addresses import AddressGuard
 
 pytestmark = pytest.mark.django_db
 
@@ -114,6 +121,7 @@ def test_the_check_goes_through_the_proxy_of_the_settings(settings: Any) -> None
 
 
 def test_without_a_proxy_the_check_goes_directly(settings: Any) -> None:
+    configure_site(webhooks_private_networks=True)
     with web_server() as (port, seen):
         settings.MATERIALS_PROXY = ""
 
@@ -121,6 +129,25 @@ def test_without_a_proxy_the_check_goes_directly(settings: Any) -> None:
 
     assert status.ok
     assert seen.paths == ["/guide"]
+
+
+def test_a_link_into_a_private_network_is_not_opened(settings: Any) -> None:
+    settings.MATERIALS_PROXY = ""
+    with web_server() as (port, seen):
+        status = LinkChecker.from_settings().check(f"http://127.0.0.1:{port}/guide")
+
+    assert status.error == "127.0.0.1 is not a public address"
+    assert seen.paths == []
+
+
+def test_a_redirect_into_a_private_network_is_not_followed() -> None:
+    redirects = GuardedRedirects(AddressGuard(allow_private=False))
+    request = urllib.request.Request("https://example.com/guide")
+    args = (request, None, 302, "Found", Message())
+
+    with pytest.raises(urllib.error.URLError, match=r"10\.0\.0\.5 is not a public address"):
+        redirects.redirect_request(*args, "http://10.0.0.5/admin")
+    assert redirects.redirect_request(*args, "https://8.8.8.8/guide") is not None
 
 
 def test_page_hides_broken_and_unpublished_materials(client: Client) -> None:

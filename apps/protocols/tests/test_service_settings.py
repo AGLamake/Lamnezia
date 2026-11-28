@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 from cryptography.fernet import Fernet
 from django.core.management import call_command
+from django.db import connection
 from django.test import Client
 
 from amnezia_core.proxies import (
@@ -227,6 +228,20 @@ def test_mtproxy_additional_secrets_are_removed_with_the_check_box(
 
     assert operation.status == OperationStatus.SUCCEEDED, log_of(operation)
     assert "additional=\n" in mtproxy_meta(host)
+
+
+def test_the_service_keeps_the_additional_secrets_encrypted(
+    install: Callable[..., ServiceInstance],
+) -> None:
+    service = install(MTPROXY_CONTAINER, proxy=replace(FAKETLS, additional_secrets=(EXTRA,)))
+
+    with connection.cursor() as cursor:
+        table = ServiceInstance._meta.db_table
+        cursor.execute(f"SELECT extra_secrets, settings FROM {table}")
+        stored = cursor.fetchone()
+    assert service.extra_secrets == EXTRA
+    assert "additional_secrets" not in service.settings
+    assert EXTRA not in str(stored)
 
 
 def test_mtproxy_additional_secrets_are_kept_with_an_empty_field(
@@ -588,7 +603,8 @@ class TestSettingsPageSecrets:
             container=MTPROXY_CONTAINER,
             port=443,
             secret=SECRET,
-            settings={"mode": "faketls", "tls_domain": "example.com", "additional_secrets": EXTRA},
+            settings={"mode": "faketls", "tls_domain": "example.com"},
+            extra_secrets=EXTRA,
             origin=InstanceOrigin.INSTALLED,
         )
 
@@ -631,7 +647,8 @@ class TestSettingsPageSecrets:
     def test_a_proxy_without_additional_secrets_has_none_to_show(
         self, admin_client: Client, mtproxy: ServiceInstance, socks5: ServiceInstance
     ) -> None:
-        ServiceInstance.objects.filter(pk=mtproxy.pk).update(settings={"mode": "faketls"})
+        mtproxy.extra_secrets = ""
+        mtproxy.save(update_fields=["extra_secrets"])
 
         for service in (mtproxy, socks5):
             url = f"/protocols/services/{service.pk}/extra-secrets/"

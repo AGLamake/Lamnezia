@@ -108,6 +108,9 @@ def test_with_systemd_the_timers_are_installed_and_started(host: Host) -> None:
     assert "enable --now lamnezia-update.path" in host.calls()
     deploy = (host.root / "lamnezia-deploy").as_posix()
     assert f"ExecStart={deploy} release" in (host.units / "lamnezia-update.service").read_text()
+    assert "enable --now lamnezia-summary.path" in host.calls()
+    assert "install-summary.txt" in (host.units / "lamnezia-summary.path").read_text()
+    assert f"ExecStart={deploy} summary" in (host.units / "lamnezia-summary.service").read_text()
     assert (host.units / "lamnezia-stop.timer").exists()
     assert "no systemd" not in done.stderr
 

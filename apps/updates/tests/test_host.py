@@ -87,3 +87,9 @@ def test_an_unknown_status_is_ignored() -> None:
     assert HostStatus.parse("state=exploded\n") is None
     assert HostStatus.parse("") is None
     assert host_reason("something_new") == "something_new"
+
+
+def test_the_host_tells_whether_the_summary_still_holds_the_password(update_dir: Path) -> None:
+    assert not host(update_dir).summary_left()
+    (update_dir / "status" / "summary").touch()
+    assert host(update_dir).summary_left()

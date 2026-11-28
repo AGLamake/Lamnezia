@@ -1,20 +1,22 @@
 """Useful materials: the public list grouped by topic and the weekly check that links still open.
 
 The check goes through `MATERIALS_PROXY` when it is set, so a site blocked where the panel runs
-does not count as broken.
+does not count as broken. A link, or a redirect, into a private network is not opened unless the
+panel settings allow such addresses (`AddressGuard`), as for webhooks.
 """
 
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Self
+from typing import Any, Self
 
 from django.conf import settings
 from django.utils import timezone
 
-from apps.core.services.outbound import OutboundProxy, url_opener
+from apps.core.services.outbound import OutboundProxy, proxied_opener
 from apps.guides.models import MaterialTopic, UsefulMaterial
+from apps.notifications.services.addresses import AddressGuard, BlockedAddressError
 
 _USER_AGENT = "Lamnezia"
 
@@ -81,9 +83,28 @@ class LinkStatus:
 Opener = Callable[[urllib.request.Request, float], object]
 
 
-def status_opener(proxy: OutboundProxy | None) -> Opener:
-    """Opens a request, through the proxy when there is one, and gives the answer status."""
-    open_url = url_opener(proxy)
+class GuardedRedirects(urllib.request.HTTPRedirectHandler):
+    """Follows a redirect only to an address the guard lets pass."""
+
+    def __init__(self, guard: AddressGuard) -> None:
+        self._guard = guard
+
+    def redirect_request(self, *args: Any) -> urllib.request.Request | None:
+        # urllib passes (req, fp, code, msg, headers, newurl).
+        newurl: str = args[-1]
+        try:
+            self._guard.check(newurl)
+        except BlockedAddressError as error:
+            raise urllib.error.URLError(_blocked(error)) from None
+        return super().redirect_request(*args)
+
+
+def status_opener(proxy: OutboundProxy | None, guard: AddressGuard | None = None) -> Opener:
+    """Opens a request, through the proxy when there is one, and gives the answer status.
+
+    With a guard, a redirect into a private network is refused.
+    """
+    open_url = proxied_opener(proxy, *([GuardedRedirects(guard)] if guard else []))
 
     def open_status(request: urllib.request.Request, timeout: float) -> object:
         with open_url(request, timeout=timeout) as response:
@@ -95,16 +116,28 @@ def status_opener(proxy: OutboundProxy | None) -> Opener:
 class LinkChecker:
     """Opens a link with HEAD and, if the site refuses HEAD, with GET; redirects are followed."""
 
-    def __init__(self, timeout: float = 15, opener: Opener | None = None) -> None:
+    def __init__(
+        self,
+        timeout: float = 15,
+        opener: Opener | None = None,
+        guard: AddressGuard | None = None,
+    ) -> None:
         self._timeout = timeout
-        self._opener = opener or status_opener(None)
+        self._opener = opener or status_opener(None, guard)
+        self._guard = guard
 
     @classmethod
     def from_settings(cls) -> Self:
         proxy = OutboundProxy.parse(settings.MATERIALS_PROXY)
-        return cls(timeout=settings.MATERIALS_CHECK_TIMEOUT, opener=status_opener(proxy))
+        guard = AddressGuard.from_settings()
+        return cls(settings.MATERIALS_CHECK_TIMEOUT, status_opener(proxy, guard), guard)
 
     def check(self, url: str) -> LinkStatus:
+        if self._guard:
+            try:
+                self._guard.check(url)
+            except BlockedAddressError as error:
+                return LinkStatus(_blocked(error))
         status = self._try(url, "HEAD")
         return status if status.ok else self._try(url, "GET")
 
@@ -118,6 +151,10 @@ class LinkChecker:
             reason = getattr(exc, "reason", exc)
             return LinkStatus(str(reason)[:200] or type(exc).__name__)
         return LinkStatus()
+
+
+def _blocked(error: BlockedAddressError) -> str:
+    return f"{error.address} is not a public address"
 
 
 class MaterialLinkCheck:

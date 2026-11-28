@@ -58,7 +58,8 @@ from apps.ssh.services import RemoteHost, ShellTarget
 @dataclass(frozen=True, repr=False)
 class ServiceFiles:
     """What one service container shows; `secret` is a password, the onion address or the
-    secret of a Telegram proxy, `settings` what the links of a Telegram proxy need besides it.
+    secret of a Telegram proxy, `settings` what the links of a Telegram proxy need besides it,
+    `extra_secrets` the additional secrets of MTProxy and Telemt, separated by commas.
     """
 
     container: str
@@ -66,6 +67,7 @@ class ServiceFiles:
     login: str = ""
     secret: str = ""
     settings: dict[str, str] = field(default_factory=dict)
+    extra_secrets: str = ""
 
     @classmethod
     def read(cls, host: RemoteHost, running: RunningContainer) -> "ServiceFiles":
@@ -111,14 +113,20 @@ class ServiceFiles:
     @classmethod
     def _mtproxy(cls, shell: ShellTarget, running: RunningContainer) -> "ServiceFiles":
         meta = parse_meta(read_text(shell, MTPROXY_META_PATH))
+        options = TelegramProxyOptions.from_mtproxy_meta(meta)
         settings = {
             "mode": meta.get("mode") or STANDARD,
             "tls_domain": meta.get("domain", ""),
             "public_host": meta.get("public_host", ""),
-            **option_settings(TelegramProxyOptions.from_mtproxy_meta(meta)),
+            **option_settings(options),
         }
-        secret = proxy_secret(read_text(shell, SECRET_PATH))
-        return cls(running.name, running.port, secret=secret, settings=settings)
+        return cls(
+            running.name,
+            running.port,
+            secret=proxy_secret(read_text(shell, SECRET_PATH)),
+            settings=settings,
+            extra_secrets=",".join(options.additional_secrets),
+        )
 
     @classmethod
     def _telemt(cls, shell: ShellTarget, running: RunningContainer) -> "ServiceFiles":
@@ -135,6 +143,7 @@ class ServiceFiles:
             config.user,
             proxy_secret(read_text(shell, SECRET_PATH)) or config.secret,
             settings,
+            ",".join(config.additional_secrets),
         )
 
     @classmethod
@@ -157,6 +166,7 @@ class ServiceFiles:
             "login": self.login,
             "secret": self.secret,
             "settings": self.settings,
+            "extra_secrets": self.extra_secrets,
         }
         service, _created = ServiceInstance.objects.update_or_create(
             server=server,
@@ -168,10 +178,12 @@ class ServiceFiles:
 
 
 def option_settings(options: TelegramProxyOptions) -> dict[str, str]:
-    """The settings of a Telegram proxy its links do not need, for its settings page."""
+    """The settings of a Telegram proxy its links do not need, for its settings page.
+
+    The additional secrets are not among them: the service keeps them encrypted.
+    """
     return {
         "tag": options.tag,
-        "additional_secrets": ",".join(options.additional_secrets),
         "nat_internal_ip": options.nat_internal_ip,
         "nat_external_ip": options.nat_external_ip,
         "workers": options.workers,

@@ -147,7 +147,8 @@ also creates the first administrator with a generated password, so step 4 is not
 address, the administrator and the password are written to `/opt/lamnezia/install-summary.txt`,
 readable by root only; the password does not appear in the output. This password is temporary:
 at the first sign-in the panel opens only the page to choose a new one. Then set up two-factor
-login and delete the file, it still holds the old password. Running the script again does not touch the file or
+login and delete the file, it still holds the old password; until then **Needs attention** on the
+administrator's dashboard reminds of it. Running the script again does not touch the file or
 the accounts. With a terminal everything works as before, the file only tells the address and the
 next step.
 

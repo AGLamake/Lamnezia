@@ -3,7 +3,8 @@
 The panel has no access to Docker or to the host. It writes `request/update` with
 "vX.Y.Z <run>", and lamnezia-update.path of install.sh starts deploy/update/lamnezia-deploy.sh
 release, which writes `status/status`, `status/log` and `status/agent` (the branch the
-installation follows). `status` is mounted read-only into the panel.
+installation follows). The same script keeps `status/summary` while install-summary.txt still
+holds the first password. `status` is mounted read-only into the panel.
 """
 
 import os
@@ -116,6 +117,10 @@ class HostUpdater:
         """The branch the installation follows: releases, or dev for a development one."""
         line = _read(self._agent).strip()
         return line if _CHANNEL.fullmatch(line) else ""
+
+    def summary_left(self) -> bool:
+        """install-summary.txt on the host still holds the first administrator password."""
+        return (self._status / "summary").is_file()
 
     def status(self) -> HostStatus | None:
         return HostStatus.parse(_read(self._status / "status"))

@@ -880,6 +880,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the SOCKS5 password, and no longer write them to the audit log. `rotate_encryption_key`
   re-encrypts them, so a retry after the rotation works; operations started earlier are retried
   as before.
+- **Additional MTProxy and Telemt secrets encrypted in the database**: the service keeps them in
+  an encrypted column instead of its settings, and `rotate_encryption_key` re-encrypts them. A
+  migration moves them there, seals the plain ones left in older operations so a retry still
+  works, and drops them from older audit records.
+- **SOCKS5 password field**: the password field of the SOCKS5 settings is a password input, and a
+  rejected form no longer puts the typed password back in the page.
+- **Useful material links and private networks**: the weekly link check does not open a link or
+  follow a redirect into a private network (`127.0.0.1`, `10.0.0.0/8`, `169.254.169.254` and the
+  like), as webhooks; such a link is marked broken. **Settings → Integrations → Notifications to
+  private networks** allows it.
+- **Reminder to delete install-summary.txt**: while the file of an unattended install still holds
+  the first password, **Needs attention** of the administrator asks to delete it. The update agent
+  (`lamnezia-summary.path`, `lamnezia-deploy summary`) tells the panel when the file goes away;
+  an installation from before this version gets the unit with the next run of `install.sh`.
 - **Proxy settings on the error page**: the Django error page (`LAMNEZIA_DEBUG`) and error mails
   hide `TELEGRAM_PROXY`, `GITHUB_PROXY` and other settings with PROXY in the name, as they may
   hold a proxy password.

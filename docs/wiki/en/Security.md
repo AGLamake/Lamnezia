@@ -90,8 +90,8 @@ Neither the password nor a 2FA code ever gets into a notification or the audit l
 
 ## Encryption of secrets
 
-SSH passwords and keys, client private keys, copies of the server files, SMTP passwords, bot tokens
-and webhook secrets are stored in the database encrypted with `LAMNEZIA_ENCRYPTION_KEY`. Forms never
+SSH passwords and keys, client private keys, copies of the server files, SMTP passwords, bot tokens,
+webhook secrets, the SOCKS5 password and the additional MTProxy and Telemt secrets are stored in the database encrypted with `LAMNEZIA_ENCRYPTION_KEY`. Forms never
 show a saved secret again, and secrets are never written to logs or to the audit log.
 
 Generate the key once:

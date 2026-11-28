@@ -62,7 +62,6 @@ from apps.protocols.services.awg_migration import (
 )
 from apps.protocols.services.awg_upgrade import can_upgrade, start_awg_upgrade
 from apps.protocols.services.dns_rebuild import start_dns_rebuild
-from apps.protocols.services.extra_secrets import EXTRA_SECRETS_FIELD
 from apps.protocols.services.importer import start_import
 from apps.protocols.services.installation import InstallChoice, install_choices, start_install
 from apps.protocols.services.ipsec_reissue import IpsecIdentity, start_reissue
@@ -591,7 +590,7 @@ class ServiceExtraSecretsView(_ServiceRevealView):
     template_name = "protocols/_extra_secrets.html"
 
     def reveal(self, service: ServiceInstance) -> dict[str, Any] | None:
-        secrets = service.settings.get(EXTRA_SECRETS_FIELD)
+        secrets = service.extra_secrets
         return {"secrets": secrets} if secrets else None
 
 

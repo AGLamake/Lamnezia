@@ -1,6 +1,7 @@
 """What needs a staff member's attention: VPS payments, failed operations, relays and groups."""
 
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -67,6 +68,18 @@ def test_a_moderator_is_not_told_about_payments() -> None:
     paid_in(1)
 
     assert Attention(UserFactory(role=Role.MODERATOR)).payment_due() == []
+
+
+def test_the_admin_is_reminded_to_delete_the_install_summary(settings: Any, tmp_path: Path) -> None:
+    (tmp_path / "status").mkdir()
+    (tmp_path / "status" / "summary").touch()
+    settings.UPDATE_DIR = tmp_path
+    reminder = "Delete install-summary.txt: it still holds the first password"
+
+    assert reminder in texts(Attention(UserFactory(role=Role.ADMIN)))
+    assert reminder not in texts(Attention(UserFactory(role=Role.MODERATOR)))
+    (tmp_path / "status" / "summary").unlink()
+    assert reminder not in texts(Attention(UserFactory(role=Role.ADMIN)))
 
 
 def test_failed_operations_of_the_last_day_count() -> None:

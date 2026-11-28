@@ -88,7 +88,8 @@ class Socks5SettingsForm(ServiceSettingsForm):
         label=_("Password"),
         max_length=64,
         required=False,
-        widget=_TEXT,
+        # A rejected form does not put the typed password back in the page.
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
         help_text=_("Empty: keep the current password."),
     )
 
@@ -144,9 +145,7 @@ class MtProtoSettingsForm(ServiceSettingsForm):
                 )
 
     def initial_of(self, service: ServiceInstance) -> dict[str, Any]:
-        return {
-            name: value for name, value in service.settings.items() if name != EXTRA_SECRETS_FIELD
-        }
+        return dict(service.settings)
 
     def reveals(self) -> dict[str, str]:
         if not self._current_secrets:
@@ -155,7 +154,7 @@ class MtProtoSettingsForm(ServiceSettingsForm):
 
     @property
     def _current_secrets(self) -> str:
-        return str(self.service.settings.get(EXTRA_SECRETS_FIELD) or "")
+        return str(self.service.extra_secrets)
 
     @property
     def _keeps_secrets(self) -> bool:
@@ -187,7 +186,7 @@ class MtProtoSettingsForm(ServiceSettingsForm):
     @property
     def settings(self) -> ServiceSettings:
         params = self._options().to_params()
-        known = self.service.settings
+        known = {*self.service.settings, EXTRA_SECRETS_FIELD}
         options = {
             name: params[name]
             for name in self.installer.install_fields

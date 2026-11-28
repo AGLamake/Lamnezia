@@ -86,7 +86,9 @@ the error text and disappears from the public page. In the admin such links are 
 "broken link" filter, next to the date of the last check. Fix or replace the link and the mark is
 cleared at the next check. While such links exist, the administrator's dashboard says how many
 published materials are hidden and links to the filtered list. The check only visits links from the list and records nothing about
-visitors.
+visitors. Like webhooks, it does not open a link or follow a redirect into a private network
+(`127.0.0.1`, `10.0.0.0/8`, `169.254.169.254` and the like): such a link is marked broken unless
+**Settings → Integrations → Notifications to private networks** is on.
 
 ## Suggestions from users
 

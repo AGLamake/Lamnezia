@@ -122,6 +122,9 @@ msgstr "День"
 msgid "Days"
 msgstr "Дней"
 
+msgid "Delete install-summary.txt: it still holds the first password"
+msgstr "Удалите install-summary.txt: в нём остался первый пароль"
+
 msgid "Device"
 msgstr "Устройство"
 

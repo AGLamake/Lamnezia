@@ -29,6 +29,7 @@ from apps.relays.models import Relay
 from apps.servers.models import InterfaceRepair, Server
 from apps.support.services.inbox import Inbox
 from apps.traffic.models import TrafficSource
+from apps.updates.services.host import HostUpdater
 from apps.updates.services.releases import PanelRelease
 from apps.updates.services.updates import PanelUpdate
 
@@ -159,6 +160,11 @@ class Attention:
         if not self._zone.is_whole:
             return None
         return PanelUpdate.from_settings().offer().release
+
+    @cached_property
+    def summary_left(self) -> bool:
+        """install-summary.txt on the host still holds the first password; for an administrator."""
+        return self._zone.is_whole and HostUpdater.from_settings().summary_left()
 
     def offline(self) -> list[Server]:
         return [server for server in self.servers if server.online is False]
@@ -350,6 +356,16 @@ class Attention:
                     _("Lamnezia %(version)s is released") % {"version": version},
                     reverse("updates:update"),
                     f"panel-release:{version}",
+                )
+            )
+        if self.summary_left:
+            notices.append(
+                Notice(
+                    "warning",
+                    "key",
+                    _("Delete install-summary.txt: it still holds the first password"),
+                    reverse("updates:update"),
+                    "install-summary",
                 )
             )
         return notices

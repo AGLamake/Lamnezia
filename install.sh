@@ -507,6 +507,33 @@ UNIT
     git -C "$DIR" symbolic-ref -q --short HEAD >"$DIR/update/status/agent" ||
         echo releases >"$DIR/update/status/agent"
     enable_unit lamnezia-update.path
+    install_summary_unit
+}
+
+# The panel reminds to delete install-summary.txt while it holds the password; the panel cannot
+# see the file, so lamnezia-summary.path tells it whenever the file changes or goes away.
+install_summary_unit() {
+    local unit=$SYSTEMD_DIR/lamnezia-summary
+    cat >"$unit.service" <<UNIT
+[Unit]
+Description=Lamnezia: tell the panel whether $SUMMARY_FILE still holds the password
+
+[Service]
+Type=oneshot
+Environment=LAMNEZIA_DIR=$DIR
+ExecStart=$DEPLOY_SCRIPT summary
+UNIT
+    cat >"$unit.path" <<UNIT
+[Unit]
+Description=Lamnezia: watch $SUMMARY_FILE
+
+[Path]
+PathChanged=$DIR/$SUMMARY_FILE
+
+[Install]
+WantedBy=paths.target
+UNIT
+    enable_unit lamnezia-summary.path
 }
 
 # Unattended, a new panel gets its first administrator at once: nobody is there to run
@@ -546,6 +573,10 @@ write_summary() {
         } >"$file"
     )
     chmod 600 "$file"
+    # What lamnezia-deploy summary reports: the panel reminds to delete the file.
+    if [ -n "$ADMIN_PASSWORD" ] && [ -d "$DIR/update/status" ]; then
+        : >"$DIR/update/status/summary"
+    fi
     log "Summary saved to $file"
 }
 

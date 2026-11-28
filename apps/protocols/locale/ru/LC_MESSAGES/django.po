@@ -1371,6 +1371,9 @@ msgstr "XRay с REALITY маскирует VPN-трафик под веб-тра
 msgid "added at"
 msgstr "добавлен"
 
+msgid "additional secrets"
+msgstr "дополнительные секреты"
+
 msgid "answered"
 msgstr "ответил"
 
