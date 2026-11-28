@@ -47,7 +47,13 @@ from apps.protocols.service_settings_forms import (
     Socks5SettingsForm,
     TProxySettingsForm,
 )
-from apps.protocols.services import metadata_block, offload, speed_results, speed_test
+from apps.protocols.services import (
+    metadata_block,
+    offload,
+    sni_scan,
+    speed_results,
+    speed_test,
+)
 from apps.protocols.services.awg_migration import (
     MigrationState,
     can_migrate,
@@ -76,9 +82,15 @@ from apps.protocols.services.proxy_secret import renews_secret, start_secret_ren
 from apps.protocols.services.readdress import ServerReaddress
 from apps.protocols.services.service_removal import start_service_removal
 from apps.protocols.services.settings_info import SettingsInfo
+from apps.protocols.services.sni_choice import SniAdvice
 from apps.protocols.services.speed_limit import ServerSpeedLimit
 from apps.protocols.services.speed_test import RunningTest
-from apps.protocols.settings_forms import OpenVpnSettingsForm, SettingsForm, XraySettingsForm
+from apps.protocols.settings_forms import (
+    OpenVpnSettingsForm,
+    SettingsForm,
+    XraySettingsForm,
+    XraySniForm,
+)
 from apps.servers.models import Server
 from config.security import policy_allowing
 
@@ -334,10 +346,49 @@ class ProtocolSettingsView(SectionRequiredMixin, InstanceMixin, FormView):  # ty
             group=self.group,
             speed_form=SpeedLimitForm(instance=self.instance) if speed.applies else None,
             upload_policed=speed.applies and speed.upload_policed,
+            **self._sni_context(),
             **kwargs,
         )
 
+    def _sni_context(self) -> dict[str, Any]:
+        if self.instance.container != XRAY_CONTAINER:
+            return {}
+        advice = SniAdvice(self.instance)
+        form = XraySniForm(instance=self.instance, domains=advice.domains)
+        return {"sni": advice, "sni_form": form}
+
     def form_valid(self, form: SettingsForm) -> HttpResponse:
+        operation = form.start(self.member)
+        return redirect("operations:detail", pk=operation.pk)
+
+
+class SniScanView(SectionRequiredMixin, InstanceMixin, View):
+    """Starts the scan of the neighbours of the server for a Reality SNI."""
+
+    section = Section.SERVERS
+
+    containers = (XRAY_CONTAINER,)
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        operation = sni_scan.start(self.instance.server, self.member, ip=self.client_ip)
+        return redirect("operations:detail", pk=operation.pk)
+
+
+class SniApplyView(SectionRequiredMixin, InstanceMixin, View):
+    """Applies a domain of the latest scan as the masking site and the SNI of XRay."""
+
+    section = Section.SERVERS
+
+    containers = (XRAY_CONTAINER,)
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        domains = SniAdvice(self.instance).domains
+        form = XraySniForm(request.POST, instance=self.instance, domains=domains)
+        if not form.is_valid():
+            for errors in form.errors.as_data().values():
+                for error in errors:
+                    messages.error(request, " ".join(error.messages))
+            return redirect("protocols:settings", pk=pk)
         operation = form.start(self.member)
         return redirect("operations:detail", pk=operation.pk)
 

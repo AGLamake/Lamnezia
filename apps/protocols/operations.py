@@ -18,7 +18,7 @@ from apps.operations.services.registry import operations
 from apps.operations.services.subjects import subjects
 from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.protocols.models import InstanceOrigin, ProtocolInstance, ServiceInstance
-from apps.protocols.services import metadata_block, offload, speed_test
+from apps.protocols.services import metadata_block, offload, sni_scan, speed_test
 from apps.protocols.services.awg_migration import (
     FINISH_KIND,
     MIGRATE_KIND,
@@ -35,7 +35,7 @@ from apps.protocols.services.awg_upgrade import UPGRADE_KIND
 from apps.protocols.services.dns_rebuild import REBUILD_DNS_KIND, DnsRebuild
 from apps.protocols.services.importer import IMPORT_KIND, ServerImporter
 from apps.protocols.services.installation import INSTALL_KIND
-from apps.protocols.services.installer import installers
+from apps.protocols.services.installer import installers, resolve_server_ip
 from apps.protocols.services.ipsec_reissue import REISSUE_KIND, IpsecProfiles, ServerCertificate
 from apps.protocols.services.lifecycle import (
     LOGS_KIND,
@@ -167,6 +167,16 @@ def ensure_metadata_block(ctx: OperationContext) -> None:
 def disable_metadata_block(ctx: OperationContext) -> None:
     with _metadata_blocker(ctx) as blocker:
         blocker.disable()
+
+
+@operations.register(sni_scan.SCAN_KIND, gettext_lazy("Scan the neighbours for a Reality SNI"))
+def scan_sni(ctx: OperationContext) -> None:
+    server = Server.objects.get(pk=ctx.params["server_id"])
+    server_ip = resolve_server_ip(ctx, server.host)
+    with ExitStack() as stack:
+        with ctx.step(_("Connect to the server")):
+            host = stack.enter_context(connect(server))
+        sni_scan.SniScanner(server, host, ctx).scan(server_ip)
 
 
 @operations.register(speed_test.START_KIND, gettext_lazy("Start the port speed test"))

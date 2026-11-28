@@ -44,6 +44,8 @@
   {% endif %}
 </form>
 
+{% if sni and not group %}{% include "protocols/_sni_scan.html" %}{% endif %}
+
 {% if speed_form %}
 <form method="post" action="{% url 'protocols:speed-limit' instance.pk %}" class="card space-y-4">
   {% csrf_token %}

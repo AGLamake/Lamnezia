@@ -487,6 +487,36 @@ old settings.
 IPsec, AmneziaDNS, SFTP and Tor have no settings in the app either. Their page explains why and
 shows what the app shows: the IPsec ports, the DNS address, the SFTP account, the onion address.
 
+### Reality SNI from the neighbours
+
+A widely used SNI is easy to tell apart: when a server in some data centre pretends to be
+`www.googletagmanager.com` (the default of the app), `www.microsoft.com` or another domain that
+guides hand out, the pair "address and SNI" stands out by itself. The settings page of XRay warns
+when the current SNI is one of these, and when another server of the panel has the same SNI: one
+SNI ties the servers together, so a block found for one reaches the others.
+
+The **SNI from the neighbours of the server** card finds a better domain the way RealiTLScanner
+(XTLS) does. **Scan the neighbours** starts an operation: the server itself connects to port 443
+of every address of its /24 with `openssl` (installed if missing), 4 at a time, each after a
+pause of half a second and cut off after 3 seconds, and reads the certificate of those that
+finish a TLS 1.3 handshake with h2. Only that /24 is touched, and the panel itself connects to
+nothing, but the hoster may still take it for a port scan and send a complaint: scan only when
+needed. The card keeps the latest result, one neighbour per domain; wildcard certificates and
+addresses are skipped. A domain that another server of the panel already uses is marked.
+
+**Apply the domain** makes it the masking site and the SNI, through the same operation as the
+form above: XRay restarts and every client must import the key again, so the change needs the
+confirmation. The fingerprint is not touched: `chrome` is the default, and the app passes it to
+xray-core from the profile.
+
+Whether a foreign SNI is the right choice is disputed. For a neighbour's domain: it is a real
+site with a real certificate in the same network, so the address and the SNI look like one
+hoster, and nothing has to be set up. Against it, for self-steal (Reality points at a site of
+your own domain on the same server): an observer who resolves the SNI gets a different address
+than the one the client connects to, while with self-steal the domain does resolve to the server.
+Self-steal needs your own domain and a web server with a certificate on the server; the panel does
+not set them up, but the masking site and the SNI of the form above can point at it.
+
 ## Container: restart, stop, log, removal
 
 Under the protocol on the server page there are actions for its container. Each one runs as an

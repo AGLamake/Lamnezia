@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Reality SNI from the neighbours of the server**: the XRay settings page scans the /24 of the
+  server for neighbours that answer TLS 1.3 with h2 and offers their domains; **Apply the domain**
+  makes one the masking site and the SNI. The scan runs on the server with a rate limit and warns
+  that the hoster may take it for a port scan. The page warns of a widely used SNI, the default
+  `www.googletagmanager.com` among them, and of an SNI another server of the panel uses.
 - **Peers missing from the clone of a split group**: on **Keys → Differences with servers** the
   peers of the leading server that the panel does not hold as active keys (added outside the
   panel, or off in the panel) are marked "not in the clone" when the server leads a split group:

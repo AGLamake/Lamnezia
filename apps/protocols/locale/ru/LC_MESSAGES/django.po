@@ -322,6 +322,13 @@ msgstr "Не удалось установить Docker."
 msgid "Docker is installed but does not run."
 msgstr "Docker установлен, но не запускается."
 
+msgid "Domain"
+msgstr "Домен"
+
+#, python-format
+msgid "Domains with TLS 1.3 and h2: %(count)d."
+msgstr "Доменов с TLS 1.3 и h2: %(count)d."
+
 msgid "Download limit of the server"
 msgstr "Предел скачивания на сервере"
 
@@ -482,6 +489,9 @@ msgstr "Установка ethtool"
 
 msgid "Install on the server"
 msgstr "Установка на сервер"
+
+msgid "Install openssl"
+msgstr "Установка openssl"
 
 msgid "Installer's client"
 msgstr "Клиент установщика"
@@ -828,6 +838,12 @@ msgstr "SNI должен быть доменом или IP-адресом."
 msgid "SNI must not contain *."
 msgstr "SNI не может содержать *."
 
+msgid "SNI scan"
+msgstr "Скан SNI"
+
+msgid "SNI scans"
+msgstr "Сканы SNI"
+
 msgid "SOCKS5 proxy server"
 msgstr "Прокси-сервер SOCKS5"
 
@@ -850,6 +866,13 @@ msgstr "Сохранение файлов сервера"
 msgid "Save the settings files"
 msgstr "Сохранение файлов настроек"
 
+#, python-format
+msgid "Scan %(network)s"
+msgstr "Скан %(network)s"
+
+msgid "Scan the neighbours for a Reality SNI"
+msgstr "Поиск SNI Reality у соседей"
+
 msgid "Secondary DNS"
 msgstr "Запасной DNS"
 
@@ -870,6 +893,9 @@ msgstr "Посмотрите журнал шага и повторите: нед
 
 msgid "See the step log for the Docker error."
 msgstr "Ошибка Docker — в логе шага."
+
+msgid "See the step log, then try again."
+msgstr "Посмотрите журнал шага и попробуйте снова."
 
 msgid "See the step log. Check that Docker works and the server can reach Docker Hub."
 msgstr "Смотрите журнал шага. Проверьте, что Docker работает и сервер видит Docker Hub."
@@ -1146,6 +1172,9 @@ msgstr "В прокси остался 3proxy.log от приложения Amne
 msgid "The reachability probe of the server uses this port."
 msgstr "Этот порт занят проверкой доступности сервера."
 
+msgid "The scan of the server's neighbours stopped with an error."
+msgstr "Сканирование соседей сервера остановилось с ошибкой."
+
 msgid "The secret of the proxy is ready."
 msgstr "Секрет прокси готов."
 
@@ -1381,6 +1410,9 @@ msgstr "интерфейсы контейнеров"
 msgid "container removed at"
 msgstr "контейнер удалён"
 
+msgid "domains found"
+msgstr "найденные домены"
+
 msgid "download limit"
 msgstr "предел скачивания"
 
@@ -1439,6 +1471,9 @@ msgstr "переведённые ключи"
 msgid "moves to AmneziaWG 3.1"
 msgstr "переводы на AmneziaWG 3.1"
 
+msgid "network"
+msgstr "сеть"
+
 msgid "none"
 msgstr "нет"
 
@@ -1455,6 +1490,9 @@ msgstr "выкл"
 msgctxt "toggle"
 msgid "on"
 msgstr "вкл"
+
+msgid "openssl could not be installed for the SNI scan."
+msgstr "Не удалось установить openssl для сканирования SNI."
 
 msgid "origin"
 msgstr "происхождение"
@@ -1479,6 +1517,9 @@ msgstr "параметры протокола"
 
 msgid "read at"
 msgstr "прочитан"
+
+msgid "scanned at"
+msgstr "время скана"
 
 msgid "script version"
 msgstr "версия скрипта"

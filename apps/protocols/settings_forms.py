@@ -173,6 +173,32 @@ class XraySettingsForm(SettingsForm):
         return self.settings.changes_server(XrayPanelSettings.of(self.instance))
 
 
+class XraySniForm(forms.Form):
+    """A domain of the latest scan of the neighbours as the masking site and the SNI of XRay."""
+
+    domain = forms.ChoiceField(label=_("Domain"), widget=forms.RadioSelect)
+    reissue = SettingsForm.base_fields["reissue"]
+    confirm = forms.BooleanField(
+        label=_("I understand that every client must import the key again"),
+        error_messages={"required": _("Confirm that the keys must be imported again.")},
+    )
+
+    def __init__(self, *args: Any, instance: ProtocolInstance, domains: list[str], **kwargs: Any):
+        self.instance = instance
+        super().__init__(*args, **kwargs)
+        field = self.fields["domain"]
+        assert isinstance(field, forms.ChoiceField)
+        field.choices = [(domain, domain) for domain in domains]
+
+    @property
+    def settings(self) -> XrayPanelSettings:
+        return XrayPanelSettings.of(self.instance).with_site(self.cleaned_data["domain"])
+
+    def start(self, user: User) -> Operation:
+        reissue = self.cleaned_data["reissue"]
+        return start_settings_change(self.instance, self.settings, user, reissue=reissue)
+
+
 class OpenVpnSettingsForm(SettingsForm):
     """Transport, port, subnet, encryption and TLS auth of OpenVPN, as on the app's page."""
 

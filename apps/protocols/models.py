@@ -280,6 +280,31 @@ class OffloadWorkaround(models.Model):
         return f"{self.server} · TSO/GSO"
 
 
+class SniScan(models.Model):
+    """The latest scan of the /24 of a server for Reality SNI (services/sni_scan.py).
+
+    `candidates` are the neighbours that answer TLS 1.3 with h2, one per domain.
+    """
+
+    server = models.OneToOneField(
+        "servers.Server",
+        verbose_name=_("server"),
+        on_delete=models.CASCADE,
+        related_name="sni_scan",
+    )
+    network = models.CharField(_("network"), max_length=18)
+    # [{"ip", "domain"}]: SniCandidate.to_json(), sorted by domain.
+    candidates = models.JSONField(_("domains found"), default=list, blank=True)
+    scanned_at = models.DateTimeField(_("scanned at"))
+
+    class Meta:
+        verbose_name = _("SNI scan")
+        verbose_name_plural = _("SNI scans")
+
+    def __str__(self) -> str:
+        return f"{self.server} · {self.network}"
+
+
 class MetadataBlock(models.Model):
     """Whether the VPN clients of a server are kept from the cloud metadata service.
 

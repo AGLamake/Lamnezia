@@ -22,6 +22,8 @@ from apps.protocols.views import (
     ServiceRemoveView,
     ServiceSecretView,
     ServiceSettingsView,
+    SniApplyView,
+    SniScanView,
     SpeedLimitView,
     SpeedTestResultView,
     SpeedTestStopView,
@@ -52,6 +54,8 @@ urlpatterns = [
     path("<int:pk>/settings/", ProtocolSettingsView.as_view(), name="settings"),
     path("<int:pk>/speed-limit/", SpeedLimitView.as_view(), name="speed-limit"),
     path("<int:pk>/xray-profiles/", XrayProfilesView.as_view(), name="xray-profiles"),
+    path("<int:pk>/sni-scan/", SniScanView.as_view(), name="sni-scan"),
+    path("<int:pk>/sni-apply/", SniApplyView.as_view(), name="sni-apply"),
     path("<int:pk>/awg-upgrade/", AwgUpgradeView.as_view(), name="awg-upgrade"),
     path("<int:pk>/awg-migration/", AwgMigrationView.as_view(), name="awg-migration"),
     path(

@@ -322,6 +322,9 @@ msgstr "Тестовое уведомление отправлено."
 msgid "A user cannot be their own moderator."
 msgstr "Пользователь не может быть своим же модератором."
 
+msgid "A widely used SNI is easy to tell apart from the network of the server. The domain of a neighbour in the same /24 that answers TLS 1.3 with h2 fits Reality better."
+msgstr "Массовый SNI легко отличить по сети сервера. Для Reality лучше подходит домен соседа из той же /24, который отвечает по TLS 1.3 с h2."
+
 msgid "API token"
 msgstr "Токен API"
 
@@ -561,6 +564,9 @@ msgstr "Применить"
 
 msgid "Apply the action to the ticked keys?"
 msgstr "Применить действие к отмеченным ключам?"
+
+msgid "Apply the domain"
+msgstr "Применить домен"
 
 #, python-format
 msgid "Apply the settings on %(server)s"
@@ -2210,6 +2216,10 @@ msgstr "Нужно приложение 3.1+"
 msgid "Needs attention"
 msgstr "Требует внимания"
 
+#, python-format
+msgid "Network %(network)s, scanned %(when)s."
+msgstr "Сеть %(network)s, просканирована %(when)s."
+
 msgid "Network list"
 msgstr "Список сетей"
 
@@ -2356,6 +2366,9 @@ msgstr "Списка нет: ретранслятор отправляет вс�
 
 msgid "No materials yet."
 msgstr "Материалов пока нет."
+
+msgid "No neighbour answers TLS 1.3 with h2 and a certificate for a domain."
+msgstr "Ни один сосед не отвечает по TLS 1.3 с h2 и сертификатом на домен."
 
 msgid "No newer release is known. The panel checks GitHub twice a day."
 msgstr "Более нового релиза нет. Панель проверяет GitHub дважды в день."
@@ -3217,6 +3230,9 @@ msgstr "Работает %(ago)s."
 msgid "Russian"
 msgstr "Русский"
 
+msgid "SNI from the neighbours of the server"
+msgstr "SNI от соседей сервера"
+
 msgid "SSH connection failed."
 msgstr "Не удалось подключиться по SSH."
 
@@ -3255,11 +3271,18 @@ msgstr "Сохранено."
 msgid "Saving…"
 msgstr "Сохраняем…"
 
+msgid "Scan again"
+msgstr "Просканировать снова"
+
 msgid "Scan all codes one after another in the Amnezia app."
 msgstr "Отсканируйте все коды по очереди в приложении Amnezia."
 
 msgid "Scan the QR code with the app or enter the key by hand."
 msgstr "Отсканируйте QR-код в приложении или введите ключ вручную."
+
+#
+msgid "Scan the neighbours"
+msgstr "Просканировать соседей"
 
 msgid "Screenshot"
 msgstr "Скриншот"
@@ -3731,6 +3754,14 @@ msgstr "Сертификат сервера IPsec выпущен для %(ip)s. 
 msgid "The IPsec server certificate is issued for %(ip)s. On a VPS with another IP, reissue it on this card after the restore, or IPsec clients are refused."
 msgstr "Сертификат сервера IPsec выпущен для %(ip)s. На VPS с другим IP перевыпустите его на этой карточке после восстановления, иначе клиенты IPsec не подключатся."
 
+#, python-format
+msgid "The SNI %(sni)s is also used by XRay on: %(servers)s. One SNI ties the servers together: a block found for one reaches the others."
+msgstr "SNI %(sni)s также стоит у XRay на серверах: %(servers)s. Общий SNI связывает серверы: блокировка, найденная для одного, достаёт и остальные."
+
+#, python-format
+msgid "The SNI %(sni)s is widely used: guides and defaults hand it out, so many Reality servers have it. Pick a domain of a neighbour instead."
+msgstr "SNI %(sni)s массовый: его дают инструкции и умолчания, поэтому он стоит у многих серверов Reality. Лучше выберите домен соседа."
+
 msgid "The VPN service is stopped."
 msgstr "VPN-сервис остановлен."
 
@@ -3862,6 +3893,9 @@ msgstr "Устройство сразу потеряет доступ. Это н
 
 msgid "The device name"
 msgstr "Название устройства"
+
+msgid "The domain becomes the masking site and the SNI. XRay restarts, and every client must import the key again."
+msgstr "Домен станет сайтом маскировки и SNI. XRay перезапустится, и все клиенты должны заново импортировать ключ."
 
 msgid "The domain points to the new machine. This copy stops once the copy there answers."
 msgstr "Домен указывает на новую машину. Эта копия остановится, как только ответит копия там."
@@ -4471,6 +4505,9 @@ msgstr "Сервер отвечает."
 
 msgid "The server becomes the leading one: keys of the group are issued on it, and the current leading server may then leave. The panel first checks that the server is a clone of the group. Continue?"
 msgstr "Сервер станет ведущим: ключи группы будут выдаваться на нём, а текущий ведущий сможет выйти. Сначала панель проверит, что сервер — клон группы. Продолжить?"
+
+msgid "The server connects to port 443 of every address of its /24, a few at a time and with a pause. Only that /24 is touched, but the hoster may take it for a port scan and send a complaint."
+msgstr "Сервер подключается к порту 443 каждого адреса своей /24, по несколько сразу и с паузой. Затрагивается только эта /24, но хостер может принять это за сканирование портов и прислать жалобу."
 
 msgid "The server could not understand the request. Go back and try again."
 msgstr "Сервер не понял запрос. Вернитесь назад и попробуйте ещё раз."
@@ -5290,6 +5327,10 @@ msgstr "адреса домена"
 msgid "agent digest"
 msgstr "хеш агента"
 
+#, python-format
+msgid "also on %(servers)s"
+msgstr "также на %(servers)s"
+
 msgid "an FAQ article"
 msgstr "статья FAQ"
 
@@ -5388,6 +5429,9 @@ msgstr "создан"
 
 msgid "created by"
 msgstr "создал"
+
+msgid "current"
+msgstr "текущий"
 
 msgid "delegations of the RIPE NCC to Russia"
 msgstr "делегирования RIPE NCC по России"
@@ -6273,6 +6317,9 @@ msgstr "почему отстаёт"
 
 msgid "why the sync skipped"
 msgstr "почему синхронизация пропущена"
+
+msgid "widely used"
+msgstr "массовый"
 
 msgid "workaround off"
 msgstr "обход выключен"

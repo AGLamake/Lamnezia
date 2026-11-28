@@ -94,6 +94,10 @@ class XrayPanelSettings:
         instance.container_logs = self.logs
         instance.save(update_fields=["port", "params", "container_logs"])
 
+    def with_site(self, domain: str) -> "XrayPanelSettings":
+        """The same settings with `domain` as the masking site and the SNI."""
+        return replace(self, server=replace(self.server, site=domain, sni=domain))
+
     def changes_server(self, other: "XrayPanelSettings") -> bool:
         """server.json differs: xray restarts and every client reconnects."""
         return self._server_side() != other._server_side()

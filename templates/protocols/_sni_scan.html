@@ -1,0 +1,49 @@
+{% load i18n ui %}
+<section class="card space-y-4">
+  <h2 class="card-title">{% icon "search" "icon-sm" %}{% translate "SNI from the neighbours of the server" %}</h2>
+  <p class="help-text">{% translate "A widely used SNI is easy to tell apart from the network of the server. The domain of a neighbour in the same /24 that answers TLS 1.3 with h2 fits Reality better." %}</p>
+
+  {% if sni.mass %}
+    {% blocktranslate asvar mass with sni=sni.sni %}The SNI {{ sni }} is widely used: guides and defaults hand it out, so many Reality servers have it. Pick a domain of a neighbour instead.{% endblocktranslate %}
+    {% include "components/alert.html" with level="warning" text=mass %}
+  {% endif %}
+  {% if sni.shared_with %}
+    {% blocktranslate asvar shared with sni=sni.sni servers=sni.shared_with|join:", " %}The SNI {{ sni }} is also used by XRay on: {{ servers }}. One SNI ties the servers together: a block found for one reaches the others.{% endblocktranslate %}
+    {% include "components/alert.html" with level="warning" text=shared %}
+  {% endif %}
+
+  <form method="post" action="{% url 'protocols:sni-scan' instance.pk %}" class="space-y-3">
+    {% csrf_token %}
+    {% blocktranslate asvar risk %}The server connects to port 443 of every address of its /24, a few at a time and with a pause. Only that /24 is touched, but the hoster may take it for a port scan and send a complaint.{% endblocktranslate %}
+    {% include "components/alert.html" with level="info" text=risk %}
+    <button type="submit" class="btn btn-secondary">{% if sni.scan %}{% translate "Scan again" %}{% else %}{% translate "Scan the neighbours" %}{% endif %}</button>
+  </form>
+
+  {% if sni.scan %}
+    <p class="help-text">{% blocktranslate with network=sni.scan.network when=sni.scan.scanned_at %}Network {{ network }}, scanned {{ when }}.{% endblocktranslate %}</p>
+    {% if sni.options %}
+      <form method="post" action="{% url 'protocols:sni-apply' instance.pk %}" class="space-y-3">
+        {% csrf_token %}
+        <fieldset class="space-y-2">
+          <legend class="font-medium">{% translate "Domain" %}</legend>
+          {% for option in sni.options %}
+            <label class="flex items-start gap-2">
+              <input type="radio" name="{{ sni_form.domain.html_name }}" value="{{ option.candidate.domain }}" required>
+              <span><span class="font-medium">{{ option.candidate.domain }}</span> <span class="text-muted">{{ option.candidate.ip }}</span>
+                {% if option.candidate.domain == sni.sni %}<span class="badge badge-muted">{% translate "current" %}</span>{% endif %}
+                {% if option.mass %}<span class="badge badge-warning">{% translate "widely used" %}</span>{% endif %}
+                {% if option.shared_with %}<span class="badge badge-warning">{% blocktranslate with servers=option.shared_with|join:", " %}also on {{ servers }}{% endblocktranslate %}</span>{% endif %}
+              </span>
+            </label>
+          {% endfor %}
+        </fieldset>
+        <p class="help-text">{% translate "The domain becomes the masking site and the SNI. XRay restarts, and every client must import the key again." %}</p>
+        {% if imported %}{{ sni_form.reissue.as_field_group }}{% endif %}
+        {{ sni_form.confirm.as_field_group }}
+        <div><button type="submit" class="btn btn-primary">{% translate "Apply the domain" %}</button></div>
+      </form>
+    {% else %}
+      <p class="help-text">{% translate "No neighbour answers TLS 1.3 with h2 and a certificate for a domain." %}</p>
+    {% endif %}
+  {% endif %}
+</section>

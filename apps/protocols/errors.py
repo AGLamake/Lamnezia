@@ -50,6 +50,8 @@ class SetupErrorCode(StrEnum):
     METADATA_NO_SYSTEMD = "metadata_no_systemd"
     SPEED_TEST_PORT_BUSY = "speed_test_port_busy"
     SPEED_TEST_FAILED = "speed_test_failed"
+    SNI_SCAN_TOOLS_FAILED = "sni_scan_tools_failed"
+    SNI_SCAN_FAILED = "sni_scan_failed"
     MIGRATION_TARGET_REMOVED = "migration_target_removed"
     MIGRATION_TARGET_OUTDATED = "migration_target_outdated"
     MIGRATION_TARGET_MISSING = "migration_target_missing"
@@ -266,6 +268,14 @@ SETUP_ERRORS: dict[SetupErrorCode, ErrorDescription] = {
     SetupErrorCode.SPEED_TEST_FAILED: ErrorDescription(
         _("The speed test container could not be built or started."),
         _("See the step log. Check that Docker works and the server can reach Docker Hub."),
+    ),
+    SetupErrorCode.SNI_SCAN_TOOLS_FAILED: ErrorDescription(
+        _("openssl could not be installed for the SNI scan."),
+        _("See the step log. Check that the server has internet access, then try again."),
+    ),
+    SetupErrorCode.SNI_SCAN_FAILED: ErrorDescription(
+        _("The scan of the server's neighbours stopped with an error."),
+        _("See the step log, then try again."),
     ),
     SetupErrorCode.MIGRATION_TARGET_REMOVED: ErrorDescription(
         _("AmneziaWG 2.0 is removed from the server, its backup is kept."),
