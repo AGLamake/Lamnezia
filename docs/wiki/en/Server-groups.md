@@ -278,8 +278,9 @@ reaches the relay within seconds.
 - **Own entries.** An IPv4 network, an address or a domain that always goes one way:
   **straight from the relay** or **abroad through the uplink**. An entry wins over the lists in
   both modes, and an entry abroad wins over an entry straight out.
-  Domains are looked up by the relay itself, every 10 minutes and right after a change; a name that
-  does not resolve keeps its last addresses. The panel resolves no domains, and the relay logs
+  Domains are looked up by the relay itself through its own resolver (see "DNS" below), the one
+  that answers the clients, every 10 minutes and right after a change; a name that does not
+  resolve keeps its last addresses. The panel resolves no domains, and the relay logs
   neither the names nor their addresses. A site behind a CDN may share addresses with other sites:
   they then go the same way.
 
@@ -311,6 +312,11 @@ uplink mode, show the state of the resolver:
 - *no resolver in the image* — the container has no unbound: reinstall the relay;
 - *resolver off* — no group is split now (or each has fallen back to forwarding);
 - *resolver state unknown* — the relay agent is older: press **Update**.
+
+When the resolver fails the lookups of the own domains, *own domains not resolved* shows next to
+it with the number of failed lookups and the reason (no names). The domains keep the addresses of
+the last lookup that worked, and the lookup is tried again in a minute. While the resolver is not
+running, the domains are not looked up at all: the agent does not use the DNS of Docker for them.
 
 The agent tells only the state, no queries or answers.
 

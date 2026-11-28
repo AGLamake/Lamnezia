@@ -500,23 +500,26 @@ class ResolverStatus(StrEnum):
 
 @dataclass(frozen=True)
 class ResolverState:
-    """The status of the relay's resolver and, when it failed, why."""
+    """The status of the relay's resolver and, when it failed, why; `lookup_error` says why the
+    agent's last lookups of the own domains through it failed."""
 
     status: ResolverStatus = ResolverStatus.UNKNOWN
     error: str = ""
+    lookup_error: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {"status": str(self.status), "error": self.error}
+        return {"status": str(self.status), "error": self.error, "lookup_error": self.lookup_error}
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any] | None) -> "ResolverState":
         """None, as an older agent writes, is `unknown`."""
         if data is None:
             return cls()
-        error = data.get("error", "")
-        if not isinstance(error, str):
-            raise RelayFormatError("Resolver error must be a string.")
-        return cls(_choice(ResolverStatus, data.get("status"), "resolver status"), error)
+        error, lookup_error = data.get("error", ""), data.get("lookup_error", "")
+        if not isinstance(error, str) or not isinstance(lookup_error, str):
+            raise RelayFormatError("Resolver errors must be strings.")
+        status = _choice(ResolverStatus, data.get("status"), "resolver status")
+        return cls(status, error, lookup_error)
 
 
 @dataclass(frozen=True)

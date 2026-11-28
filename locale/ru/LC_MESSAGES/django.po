@@ -4075,6 +4075,9 @@ msgstr "Старый ключ отозван. Новый будет готов �
 msgid "The operation has no author to issue the group keys."
 msgstr "У операции нет автора, от имени которого выдать ключи группы."
 
+msgid "The own domains of the groups keep the addresses of the last lookups that worked."
+msgstr "Собственные домены групп сохраняют адреса последнего удачного разрешения."
+
 msgid "The owners are notified that their keys must be imported again."
 msgstr "Владельцы получат уведомление, что ключи нужно импортировать заново."
 
@@ -5753,6 +5756,9 @@ msgid_plural "overdue by %(days)s days"
 msgstr[0] "просрочено на %(days)s день"
 msgstr[1] "просрочено на %(days)s дня"
 msgstr[2] "просрочено на %(days)s дней"
+
+msgid "own domains not resolved"
+msgstr "собственные домены не разрешены"
 
 msgid "own entries"
 msgstr "свои записи"

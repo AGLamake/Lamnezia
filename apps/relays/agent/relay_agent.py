@@ -32,8 +32,10 @@ go straight out or always over the uplink. The names and addresses are not logge
 The clients of a split group ask its keys' DNS addresses; the relay answers those queries with
 its own resolver (`Resolver`), which asks 1.1.1.1 over DNS-over-TLS straight from the relay: the
 answers are those for Russia, and the network does not see the names. The resolver writes no
-log of queries or answers, and runs only while some group is split. The state tells only its
-status: off, running, failed with the reason, or missing from the image.
+log of queries or answers, and runs only while some group is split. The agent looks up the own
+domains through the same resolver, never the DNS of Docker. The state tells only its status:
+off, running, failed with the reason, or missing from the image, and why the last lookups of
+the own domains failed.
 
 The speed limits of the keys of a split group are a tc script the panel writes next to the
 clone peers; the agent runs it on the clone after every change of the clone or of the script.
@@ -44,6 +46,7 @@ import ipaddress
 import json
 import os
 import socket
+import struct
 import subprocess
 import sys
 import time
@@ -106,6 +109,24 @@ RESOLVER_RUNNING = "running"
 RESOLVER_FAILED = "failed"
 RESOLVER_MISSING = "missing"
 DNS_PORT = 53
+# The agent asks the same resolver for its own domains, on the loopback of the container.
+RESOLVER_ADDRESS = ("127.0.0.1", DNS_PORT)
+LOOKUP_TIMEOUT = 3.0
+# Seconds before a round of lookups the resolver failed is tried again.
+LOOKUP_RETRY = 60
+# DNS message layout (RFC 1035 4.1): the header, a question's type and class, a record's head.
+_HEADER_SIZE = 12
+_QUESTION_TAIL = 4
+_RECORD_HEAD = 10
+_IPV4_SIZE = 4
+_UDP_ANSWER_SIZE = 65535
+_RECURSION_DESIRED = 0x0100
+_TRUNCATED = 0x0200
+_RCODE = 0x000F
+_NXDOMAIN = 3
+_POINTER = 0xC0
+_TYPE_A = 1
+_CLASS_IN = 1
 # Directions of an own domain (`amnezia_core.split_lists.Direction`).
 LOCAL = "local"
 ABROAD = "abroad"
@@ -662,10 +683,96 @@ def parse_domains(text: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
     return tuple(sorted(found[LOCAL])), tuple(sorted(found[ABROAD]))
 
 
-def resolve(name: str) -> tuple[str, ...]:
-    """The IPv4 addresses of a name, by the resolver of the relay."""
-    found = socket.getaddrinfo(name, None, socket.AF_INET, socket.SOCK_STREAM)
-    return tuple(sorted({str(item[4][0]) for item in found}))
+class ResolverError(Exception):
+    """The relay's resolver did not answer a lookup or failed it; never names the domain."""
+
+
+def dns_query(name: str, ident: int) -> bytes:
+    """A DNS query for the A records of a name, asking for recursion."""
+    labels = b"".join(
+        bytes([len(label)]) + label for label in name.rstrip(".").encode("idna").split(b".")
+    )
+    header = struct.pack("!6H", ident, _RECURSION_DESIRED, 1, 0, 0, 0)
+    return header + labels + b"\0" + struct.pack("!2H", _TYPE_A, _CLASS_IN)
+
+
+def dns_addresses(packet: bytes, ident: int) -> tuple[str, ...]:
+    """The A records of an answer to the query `ident`; none for a name that does not exist.
+
+    ResolverError for an answer to another query, a failure code or a broken packet.
+    """
+    try:
+        answer_id, flags, questions, answers = struct.unpack_from("!4H", packet)
+        if answer_id != ident:
+            raise ResolverError("the resolver answered another query")
+        code = flags & _RCODE
+        if code == _NXDOMAIN:
+            return ()
+        if code:
+            raise ResolverError(f"the resolver failed the lookup with code {code}")
+        offset = _HEADER_SIZE
+        for _ in range(questions):
+            offset = _skip_name(packet, offset) + _QUESTION_TAIL
+        found = set()
+        for _ in range(answers):
+            offset = _skip_name(packet, offset)
+            kind, klass, _ttl, length = struct.unpack_from("!2HIH", packet, offset)
+            offset += _RECORD_HEAD
+            if kind == _TYPE_A and klass == _CLASS_IN and length == _IPV4_SIZE:
+                found.add(socket.inet_ntoa(packet[offset : offset + length]))
+            offset += length
+    except (struct.error, IndexError, OSError) as error:
+        raise ResolverError("the resolver sent a broken answer") from error
+    return tuple(sorted(found))
+
+
+def _skip_name(packet: bytes, offset: int) -> int:
+    """The offset after a name: its labels up to the root or a compression pointer."""
+    while True:
+        length = packet[offset]
+        if length & _POINTER == _POINTER:
+            return offset + 2
+        if length == 0:
+            return offset + 1
+        offset += length + 1
+
+
+def resolve(
+    name: str, server: tuple[str, int] = RESOLVER_ADDRESS, timeout: float = LOOKUP_TIMEOUT
+) -> tuple[str, ...]:
+    """The IPv4 addresses of a name, by the relay's resolver, the one its clients ask: never
+    the DNS of Docker, whose answers may differ for a site with geo DNS. An answer cut short
+    over UDP is asked again over TCP. ResolverError when the resolver does not answer."""
+    ident = int.from_bytes(os.urandom(2), "big")
+    query = dns_query(name, ident)
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp:
+            udp.settimeout(timeout)
+            udp.connect(server)
+            udp.send(query)
+            packet = udp.recv(_UDP_ANSWER_SIZE)
+        if len(packet) >= _HEADER_SIZE and struct.unpack_from("!H", packet, 2)[0] & _TRUNCATED:
+            packet = _ask_over_tcp(query, server, timeout)
+    except OSError as error:
+        raise ResolverError(f"the resolver does not answer: {error}") from error
+    return dns_addresses(packet, ident)
+
+
+def _ask_over_tcp(query: bytes, server: tuple[str, int], timeout: float) -> bytes:
+    with socket.create_connection(server, timeout) as tcp:
+        tcp.sendall(struct.pack("!H", len(query)) + query)
+        (length,) = struct.unpack("!H", _receive(tcp, 2))
+        return _receive(tcp, length)
+
+
+def _receive(connection: socket.socket, size: int) -> bytes:
+    data = b""
+    while len(data) < size:
+        chunk = connection.recv(size - len(data))
+        if not chunk:
+            raise ConnectionError("the resolver closed the connection")
+        data += chunk
+    return data
 
 
 class Pool(Protocol):
@@ -675,10 +782,12 @@ class Pool(Protocol):
 class Domains:
     """The own domains of the split groups and their addresses.
 
-    The names are looked up in the background, all at once every `interval` seconds and right
-    after a group gets a new list, so a slow resolver never holds up the probes. A name that
-    does not resolve keeps the addresses it had. Nothing about the names is logged: they are
-    resources the users visit.
+    The names are looked up in the background through the relay's own resolver, the one the
+    clients ask, all at once every `interval` seconds and right after a group gets a new list,
+    so a slow resolver never holds up the probes. No round starts while the resolver is not
+    `ready`. A name that does not resolve keeps the addresses it had; when the resolver fails,
+    `failure` says so and the round is tried again a minute later. Nothing about the
+    names is logged or kept in the failure: they are resources the users visit.
     """
 
     def __init__(
@@ -687,11 +796,14 @@ class Domains:
         lookup: Callable[[str], tuple[str, ...]] = resolve,
         pool: Pool | None = None,
         interval: float = RESOLVE_INTERVAL,
+        ready: Callable[[], bool] = lambda: True,
     ) -> None:
         self._clock = clock
         self._lookup = lookup
         self._pool = pool if pool is not None else ThreadPoolExecutor(RESOLVE_WORKERS)
         self._interval = interval
+        self._ready = ready
+        self.failure = ""
         self._lists: dict[int, tuple[tuple[str, ...], tuple[str, ...]]] = {}
         self._addresses: dict[str, tuple[str, ...]] = {}
         self._round: dict[str, Future[Any]] = {}
@@ -713,7 +825,7 @@ class Domains:
         changed = False
         if self._round and all(future.done() for future in self._round.values()):
             changed = self._take()
-        if not self._round and self._lists and self._clock() >= self._due:
+        if not self._round and self._lists and self._clock() >= self._due and self._ready():
             names = sorted(
                 {name for pair in self._lists.values() for part in pair for name in part}
             )
@@ -735,22 +847,36 @@ class Domains:
 
     def _take(self) -> bool:
         before = {port: self.addresses(port) for port in self._lists}
+        failures = []
         for name, future in self._round.items():
-            found = None if future.exception() is not None else future.result()
-            if found:
+            error = future.exception()
+            if isinstance(error, ResolverError):
+                failures.append(str(error))
+            elif error is None and (found := future.result()):
                 self._addresses[name] = found
+        self.failure = self._failure(failures, len(self._round))
+        if failures:
+            self._due = min(self._due, self._clock() + LOOKUP_RETRY)
         self._round = {}
         wanted = {name for pair in self._lists.values() for part in pair for name in part}
         for name in set(self._addresses) - wanted:
             del self._addresses[name]
         return any(self.addresses(port) != addresses for port, addresses in before.items())
 
+    @staticmethod
+    def _failure(failures: list[str], total: int) -> str:
+        if not failures:
+            return ""
+        return f"{len(failures)} of {total} lookups failed: {failures[0]}"[:RESOLVER_ERROR_LIMIT]
+
 
 def resolver_config(subnets: Iterable[str]) -> str:
     """The unbound config: answers the clients of these subnets only, asks the upstreams over
     DNS-over-TLS and logs nothing of the queries and answers, not even to the standard output.
     """
-    allowed = [f"\taccess-control: {subnet} allow" for subnet in sorted(set(subnets))]
+    # The agent itself asks on the loopback for the own domains of the groups.
+    clients = ["127.0.0.0/8", *sorted(set(subnets))]
+    allowed = [f"\taccess-control: {subnet} allow" for subnet in clients]
     upstreams = [f"\tforward-addr: {upstream}" for upstream in RESOLVER_UPSTREAMS]
     lines = [
         "server:",
@@ -867,6 +993,9 @@ class Resolver:
             return True
         return self._wanted and self._process is None and self._clock() >= self._retry_at
 
+    def running(self) -> bool:
+        return self._process is not None and self._process.poll() is None
+
     def state(self) -> dict[str, str]:
         """The status for the state file and, when it failed, why; never what it answered."""
         if not self._wanted:
@@ -926,8 +1055,10 @@ class Agent:
         self._watches: dict[int, Watch] = {}
         self._lanes: dict[int, Lane] = {}
         self._networks: dict[int, tuple[str, ...]] = {}
-        self._domains = domains if domains is not None else Domains(clock)
         self._resolver = resolver if resolver is not None else Resolver(folder, clock, log)
+        self._domains = (
+            domains if domains is not None else Domains(clock, ready=self._resolver.running)
+        )
         # Modification times of the split groups' files as last taken.
         self._seen: dict[str, float | None] = {}
         # Ports whose routing changed: their clients' conntrack entries go with the new rules.
@@ -1206,7 +1337,7 @@ class Agent:
             "version": FORMAT_VERSION,
             "updated_at": now,
             "groups": groups,
-            "resolver": self._resolver.state(),
+            "resolver": self._resolver_state(),
         }
         if self._answer is not None:
             data["switch"] = self._answer
@@ -1214,6 +1345,12 @@ class Agent:
         temporary = self._state.with_suffix(".tmp")
         temporary.write_text(text + "\n", encoding="utf-8")
         temporary.replace(self._state)
+
+    def _resolver_state(self) -> dict[str, str]:
+        state = self._resolver.state()
+        if self._domains.failure:
+            state["lookup_error"] = self._domains.failure
+        return state
 
     def _split_state(self, port: int) -> dict[str, Any]:
         lane = self._lanes.get(port)

@@ -177,6 +177,15 @@ def test_a_failed_resolver_shows_why(browser: Client, watched: Relay) -> None:
     assert "resolver error" in detail and "resolver stopped with code 1" in detail
 
 
+def test_failed_lookups_of_the_own_domains_show_why(browser: Client, watched: Relay) -> None:
+    failure = "1 of 2 lookups failed: the resolver does not answer: timed out"
+    group = split_with_resolver(watched, {"status": "running", "lookup_error": failure})
+
+    detail = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert "own domains not resolved" in detail and failure in detail
+
+
 def test_a_relay_without_split_groups_shows_no_resolver(browser: Client, watched: Relay) -> None:
     page = browser.get(reverse("servers:detail", args=[watched.server.pk])).content.decode()
 

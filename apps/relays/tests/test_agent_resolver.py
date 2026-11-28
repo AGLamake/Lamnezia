@@ -137,7 +137,21 @@ def test_the_config_asks_over_tls_and_answers_only_the_clients() -> None:
     upstreams = [line for line in lines if line.startswith("forward-addr:")]
     assert upstreams and all(line.endswith("@853#cloudflare-dns.com") for line in upstreams)
     access = [line for line in lines if line.startswith("access-control:")]
-    assert access == ["access-control: 0.0.0.0/0 refuse", f"access-control: {SUBNET} allow"]
+    assert access == [
+        "access-control: 0.0.0.0/0 refuse",
+        "access-control: 127.0.0.0/8 allow",
+        f"access-control: {SUBNET} allow",
+    ]
+
+
+def test_a_resolver_runs_only_while_its_process_lives(tmp_path: Path, unbound: Unbound) -> None:
+    resolver = Resolver(tmp_path, Clock(), lambda line: None, unbound)
+    assert not resolver.running()
+
+    resolver.serve([SUBNET])
+    assert resolver.running()
+    unbound.running[0].code = 1
+    assert not resolver.running()
 
 
 def test_the_resolver_restarts_only_for_other_subnets(tmp_path: Path, unbound: Unbound) -> None:

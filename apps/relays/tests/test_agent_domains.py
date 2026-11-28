@@ -7,7 +7,8 @@ from typing import Any
 
 import pytest
 
-from apps.relays.agent.relay_agent import Agent, Domains, parse_domains
+from amnezia_core.relay import RelayState
+from apps.relays.agent.relay_agent import Agent, Domains, ResolverError, parse_domains
 from apps.relays.tests.test_agent import PORT, A, B, C, Clock, FakeNetwork
 from apps.relays.tests.test_agent_split import write_config, write_file
 
@@ -21,6 +22,7 @@ class Resolver:
         self.answers = answers
         self.asked: list[str] = []
         self.held = False
+        self.down = False
         self._waiting: list[tuple[Future[Any], str]] = []
 
     def submit(self, fn: Callable[[str], tuple[str, ...]], name: str, /) -> Future[Any]:
@@ -38,6 +40,8 @@ class Resolver:
         self._waiting = []
 
     def lookup(self, name: str) -> tuple[str, ...]:
+        if self.down:
+            raise ResolverError("the resolver does not answer: timed out")
         if name not in self.answers:
             raise OSError("no such name")
         return self.answers[name]
@@ -45,7 +49,7 @@ class Resolver:
     def _answer(self, future: Future[Any], name: str) -> None:
         try:
             future.set_result(self.lookup(name))
-        except OSError as error:
+        except (OSError, ResolverError) as error:
             future.set_exception(error)
 
 
@@ -62,8 +66,10 @@ def resolver() -> Resolver:
     return Resolver({"example.ru": ("93.184.215.14",), "video.example": ("5.8.1.1", "5.8.1.2")})
 
 
-def domains(resolver: Resolver, clock: Callable[[], float]) -> Domains:
-    return Domains(clock, lookup=resolver.lookup, pool=resolver, interval=600)
+def domains(
+    resolver: Resolver, clock: Callable[[], float], ready: Callable[[], bool] = lambda: True
+) -> Domains:
+    return Domains(clock, lookup=resolver.lookup, pool=resolver, interval=600, ready=ready)
 
 
 def test_parse_domains_splits_the_directions() -> None:
@@ -111,6 +117,56 @@ def test_a_name_that_fails_keeps_its_addresses(resolver: Resolver) -> None:
     clock.now += 600
     assert not found.poll()
     assert found.addresses(PORT) == (("93.184.215.14",), ())
+
+
+def test_a_failed_resolver_is_told_and_the_addresses_stay(resolver: Resolver) -> None:
+    clock = Moment()
+    found = domains(resolver, clock)
+    found.set(PORT, ("example.ru",), ("video.example",))
+    found.poll()
+    resolver.down = True
+
+    clock.now += 600
+    assert not found.poll()
+    assert found.addresses(PORT) == (("93.184.215.14",), ("5.8.1.1", "5.8.1.2"))
+    assert found.failure == "2 of 2 lookups failed: the resolver does not answer: timed out"
+    assert "example" not in found.failure
+
+
+def test_a_failed_round_is_tried_again_soon(resolver: Resolver) -> None:
+    clock = Moment()
+    found = domains(resolver, clock)
+    resolver.down = True
+    found.set(PORT, ("example.ru",), ())
+    found.poll()
+    resolver.down = False
+
+    clock.now += 59
+    assert not found.poll()
+    clock.now += 1
+    assert found.poll()
+    assert found.addresses(PORT) == (("93.184.215.14",), ())
+    assert found.failure == ""
+
+
+def test_a_name_that_does_not_exist_is_no_failure(resolver: Resolver) -> None:
+    found = domains(resolver, Moment())
+    found.set(PORT, ("gone.example",), ())
+    found.poll()
+
+    assert found.failure == ""
+
+
+def test_no_lookups_while_the_resolver_is_not_ready(resolver: Resolver) -> None:
+    ready = False
+    found = domains(resolver, Moment(), lambda: ready)
+    found.set(PORT, ("example.ru",), ())
+
+    assert not found.poll()
+    assert resolver.asked == []
+    ready = True
+    assert found.poll()
+    assert resolver.asked == ["example.ru"]
 
 
 def test_a_slow_lookup_does_not_hold_up_the_poll(resolver: Resolver) -> None:
@@ -223,3 +279,18 @@ def test_a_removed_network_list_empties_the_set(
     relay.tick()
 
     assert "5.8.0.0/16" not in network.rules
+
+
+def test_the_state_tells_why_the_lookups_failed(
+    network: FakeNetwork, folder: Path, resolver: Resolver
+) -> None:
+    log: list[str] = []
+    relay = agent(network, folder, resolver, log)
+    resolver.down = True
+    write_file(folder, DOMAINS, "local example.ru\n", 10)
+
+    relay.tick()
+
+    state = RelayState.parse((folder / "state.json").read_text()).resolver
+    assert state.lookup_error == "1 of 1 lookups failed: the resolver does not answer: timed out"
+    assert not any("example" in line for line in log)

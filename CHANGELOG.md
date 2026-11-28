@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The relay looks up the own domains through its own resolver**: the agent asks the resolver
+  that answers the split groups' clients, not the DNS of Docker, so the addresses match what the
+  clients get. When the resolver fails the lookups, the relay card and the group page show *own
+  domains not resolved* with the reason; the domains keep their last addresses and the lookup is
+  tried again in a minute. Needs **Update** of the relay agent.
 - **State of the relay's DNS resolver**: the relay card and the page of a split group show whether
   the resolver of the split groups' clients works, failed (with the reason), is missing from the
   image or is off. Only the state is reported, never the queries. A relay agent of an older release
