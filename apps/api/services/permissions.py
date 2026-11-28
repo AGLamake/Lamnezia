@@ -26,7 +26,7 @@ class Rule:
 
     actions: frozenset[str]
     bindings: frozenset[str]
-    # The panel section whose level the owner needs to manage the resource.
+    # The panel section the owner needs to see the resource in, and to manage it to change it.
     section: str = ""
 
 
@@ -34,10 +34,10 @@ _READ = frozenset({Action.READ.value})
 _BOTH = frozenset({Action.READ.value, Action.MANAGE.value})
 
 RULES: dict[str, Rule] = {
-    Resource.SERVERS: Rule(_READ, frozenset({SERVER})),
+    Resource.SERVERS: Rule(_READ, frozenset({SERVER}), section="servers"),
     Resource.USERS: Rule(_BOTH, frozenset({USER}), section="users"),
     Resource.KEYS: Rule(_BOTH, frozenset({SERVER, USER, KEY}), section="keys"),
-    Resource.TRAFFIC: Rule(_READ, frozenset({SERVER, USER, KEY})),
+    Resource.TRAFFIC: Rule(_READ, frozenset({SERVER, USER, KEY}), section="stats"),
     Resource.OPERATIONS: Rule(_READ, frozenset()),
 }
 
@@ -128,7 +128,8 @@ class TokenGrants:
     def reach(self, resource: str, action: str = Action.READ) -> Reach:
         """The objects the call may touch; 403 when no permission gives the action.
 
-        Managing also needs the owner to manage the resource's section of the panel now.
+        Reading needs the owner to see the resource's section of the panel now, managing to
+        manage it; the status of the token's own operations needs no section.
         """
         actions = {Action.MANAGE} if action == Action.MANAGE else {Action.READ, Action.MANAGE}
         rows = [
@@ -137,6 +138,8 @@ class TokenGrants:
         if not rows:
             raise ForbiddenError
         section = RULES[resource].section
+        if section and not Access(self._owner).allows(section, Level.VIEW):
+            raise ForbiddenError("The token's owner may not see this in the panel.")
         if action == Action.MANAGE and not Access(self._owner).allows(section, Level.MANAGE):
             raise ForbiddenError("The token's owner may not manage this in the panel.")
         return Reach.of(rows)

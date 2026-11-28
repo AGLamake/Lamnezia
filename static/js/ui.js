@@ -189,6 +189,33 @@
     },
   });
 
+  // Rows of a Django formset added on the page: x-data="formRows" data-prefix="<prefix>", the
+  // rows in x-ref="rows", the empty form in <template x-ref="blank">, a button @click="add".
+  const formRows = () => ({
+    full: false,
+    init() {
+      this.full = this.count() >= this.limit();
+    },
+    field(name) {
+      return this.$el.querySelector(`[name="${this.$el.dataset.prefix}-${name}"]`);
+    },
+    count() {
+      return Number(this.field("TOTAL_FORMS").value);
+    },
+    limit() {
+      return Number(this.field("MAX_NUM_FORMS").value);
+    },
+    add() {
+      const index = this.count();
+      if (index >= this.limit()) return;
+      const html = this.$refs.blank.innerHTML.replace(/__prefix__/g, String(index));
+      this.$refs.rows.insertAdjacentHTML("beforeend", html);
+      this.field("TOTAL_FORMS").value = String(index + 1);
+      this.full = index + 1 >= this.limit();
+      focusFirst(this.$refs.rows.lastElementChild);
+    },
+  });
+
   document.addEventListener("alpine:init", () => {
     const Alpine = window.Alpine;
     Alpine.data("drawer", drawer);
@@ -198,6 +225,7 @@
     Alpine.data("toast", toast);
     Alpine.data("barChart", barChart);
     Alpine.data("linkOffer", linkOffer);
+    Alpine.data("formRows", formRows);
   });
 
   // ---- Toasts from scripts and HTMX (`HX-Trigger: {"toast": {"level": …, "text": …}}`) -------
@@ -543,7 +571,8 @@
   // ---- Notifications in the browser (profile, <div data-push>) ------------------------------
   // The browser subscribes with the panel's key, the panel keeps the subscription
   // (apps/notifications/views_push.py), the service worker shows the pushes. Children with
-  // data-push-show="on off …" are shown in those states; buttons data-push-action="on|off|test".
+  // data-push-show="on off …" are shown in those states; buttons data-push-action="on|off|test";
+  // the list form of this browser (data-push-forget-current) also unsubscribes it here.
 
   const b64url = (buffer) =>
     btoa(String.fromCharCode(...new Uint8Array(buffer)))
@@ -636,6 +665,17 @@
         .finally(() => button.removeAttribute("aria-busy"));
     });
     refresh().catch(() => show("off"));
+    // «Turn off» in the list for this very browser: drop the browser's own subscription too.
+    box.querySelectorAll("form[data-push-forget-current]").forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        if (!supported) return;
+        event.preventDefault();
+        current()
+          .then((subscription) => subscription?.unsubscribe())
+          .catch(() => {})
+          .finally(() => form.submit());
+      });
+    });
   }
 
   document.querySelectorAll("[data-push]").forEach(browserPush);

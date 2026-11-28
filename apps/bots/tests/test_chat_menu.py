@@ -114,3 +114,14 @@ def test_linking_and_unlinking_telegram_refresh_the_menu_of_a_staff_member(
         links.link(UserFactory(role=Role.USER), Messenger.TELEGRAM, "4004")
 
     assert refreshed == ["2002", "2002"]
+
+
+def test_a_link_moved_to_another_chat_takes_the_staff_menu_off_the_old_one(
+    refreshed: list[str], django_capture_on_commit_callbacks: OnCommit
+) -> None:
+    user = linked(Role.MODERATOR, "1001")
+
+    with django_capture_on_commit_callbacks(execute=True):
+        AccountLinks().link(user, Messenger.TELEGRAM, "5005")
+
+    assert refreshed == ["5005", "1001"]

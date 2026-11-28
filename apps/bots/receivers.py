@@ -1,8 +1,9 @@
 """Model signals that keep the Telegram menus in step, connected in `BotsConfig`.
 
 A staff role given or taken away and a staff member's Telegram account linked or unlinked set
-the menu of that chat again once the change is committed. Other users keep the common menu, so
-their changes send nothing.
+the menu of that chat again once the change is committed; a link moved to another chat also
+takes the staff menu off the old one. Other users keep the common menu, so their changes send
+nothing.
 """
 
 from functools import partial
@@ -15,9 +16,20 @@ from apps.accounts.models import STAFF_ROLES, LinkedAccount, Messenger, User
 from apps.bots.tasks import refresh_chat_menu
 
 
+def on_account_saving(sender: object, instance: LinkedAccount, **kwargs: Any) -> None:
+    """Remember the chat the link leaves, if the save moves it to another one."""
+    was: str | None = None
+    if instance.pk is not None:
+        saved = LinkedAccount.objects.filter(pk=instance.pk)
+        was = saved.values_list("external_id", flat=True).first()
+    instance._left_chat = was if was != instance.external_id else None  # type: ignore[attr-defined]
+
+
 def on_account_changed(sender: object, instance: LinkedAccount, **kwargs: Any) -> None:
     if instance.messenger == Messenger.TELEGRAM and instance.user.role in STAFF_ROLES:
         _refresh(instance.external_id)
+        if left := getattr(instance, "_left_chat", None):
+            _refresh(left)
 
 
 def on_user_saving(
@@ -46,6 +58,7 @@ def _refresh(chat_id: str) -> None:
 
 
 def connect() -> None:
+    pre_save.connect(on_account_saving, LinkedAccount, dispatch_uid="bots.account_saving")
     post_save.connect(on_account_changed, LinkedAccount, dispatch_uid="bots.account_saved")
     post_delete.connect(on_account_changed, LinkedAccount, dispatch_uid="bots.account_deleted")
     pre_save.connect(on_user_saving, User, dispatch_uid="bots.user_saving")

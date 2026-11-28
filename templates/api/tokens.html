@@ -1,5 +1,5 @@
 {% extends "layouts/admin.html" %}
-{% load i18n ui %}
+{% load access i18n ui %}
 {% block nav %}{% include "components/admin_nav.html" with active="api-tokens" %}{% endblock %}
 {% block title %}{% translate "API tokens" %} · Lamnezia{% endblock %}
 
@@ -24,6 +24,7 @@
 {% endif %}
 
 {% if tokens %}
+  {% can "audit" as journal %}
   <div class="table-wrap">
     <table class="table table-cards">
       <thead>
@@ -54,12 +55,15 @@
             </td>
             <td data-label="{% translate 'Expires' %}">{% if token.expires_at %}{{ token.expires_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% translate "no end" %}{% endif %}</td>
             <td data-label="{% translate 'Last used' %}">{% if token.last_used_at %}{{ token.last_used_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}—{% endif %}</td>
-            <td class="text-right">
-              {% if token.is_active %}
-                <form method="post" action="{% url 'api-tokens:deactivate' token.pk %}" data-confirm="{% translate 'Disable this token? It stops working at once and cannot be enabled again.' %}" data-confirm-button="{% translate 'Disable' %}">
-                  {% csrf_token %}<button class="btn btn-secondary btn-sm">{% translate "Disable" %}</button>
-                </form>
-              {% endif %}
+            <td>
+              <div class="flex flex-wrap justify-end gap-2">
+                {% if journal %}<a href="{% url 'audit:list' %}?token={{ token.prefix|urlencode }}" class="btn btn-ghost btn-sm">{% translate "Events in the log" %}</a>{% endif %}
+                {% if token.is_active %}
+                  <form method="post" action="{% url 'api-tokens:deactivate' token.pk %}" data-confirm="{% translate 'Disable this token? It stops working at once and cannot be enabled again.' %}" data-confirm-button="{% translate 'Disable' %}">
+                    {% csrf_token %}<button class="btn btn-secondary btn-sm">{% translate "Disable" %}</button>
+                  </form>
+                {% endif %}
+              </div>
             </td>
           </tr>
         {% endfor %}
@@ -80,21 +84,16 @@
     {{ form.name.as_field_group }}
     {{ form.expires_at.as_field_group }}
   </div>
-  <fieldset class="space-y-3">
+  <fieldset class="space-y-3" x-data="formRows" data-prefix="{{ permissions.prefix }}">
     <legend class="font-medium">{% translate "Permissions" %}</legend>
     <p class="text-sm text-muted">{% blocktranslate trimmed %}One row is one permission. Without an object it covers the resource in your whole zone; with one, only that server, user or key. Users and keys can also be managed: issuing and revoking keys, extending access and changing the plan. Empty rows are skipped.{% endblocktranslate %}</p>
     {{ permissions.management_form }}
     {% for error in permissions.non_form_errors %}{% include "components/alert.html" with level="error" text=error %}{% endfor %}
-    {% for row in permissions %}
-      <div class="grid gap-3 sm:grid-cols-5">
-        {% for error in row.non_field_errors %}<div class="sm:col-span-5">{% include "components/alert.html" with level="error" text=error %}</div>{% endfor %}
-        {{ row.resource.as_field_group }}
-        {{ row.action.as_field_group }}
-        {{ row.server.as_field_group }}
-        {{ row.user.as_field_group }}
-        {{ row.key.as_field_group }}
-      </div>
-    {% endfor %}
+    <div class="space-y-3" x-ref="rows">
+      {% for row in permissions %}{% include "api/permission_row.html" %}{% endfor %}
+    </div>
+    <template x-ref="blank">{% include "api/permission_row.html" with row=permissions.empty_form %}</template>
+    <button type="button" class="btn btn-secondary btn-sm" @click="add" :disabled="full">{% icon "plus" "icon-sm" %}{% translate "Add a row" %}</button>
   </fieldset>
   <button type="submit" class="btn btn-primary">{% icon "plus" %}{% translate "Create token" %}</button>
 </form>

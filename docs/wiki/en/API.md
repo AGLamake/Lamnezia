@@ -29,7 +29,7 @@ instead.
 ## Permissions
 
 A permission is a resource, an action and, if needed, one object. The permission rows of the
-builder add up; at least one is needed.
+builder add up; at least one is needed. The builder starts with one row: **Add a row** adds more.
 
 | Resource | Actions | Object |
 |---|---|---|
@@ -43,8 +43,10 @@ builder add up; at least one is needed.
 - **Without an object** a permission covers your whole zone. With one it covers only that object:
   a keys permission with a server gives the keys on that server, with a user that user's keys.
 - The builder offers only the servers, users and keys of your zone.
-- Managing through the API works only while you manage that section in the panel yourself: if your
-  role was left with view only in **Keys**, the token cannot change keys either.
+- Reading through the API works only while you see that section in the panel yourself, managing
+  only while you manage it: if your role was left with view only in **Keys**, the token cannot
+  change keys either, and without **Servers** it does not read servers. Traffic follows
+  **Statistics**; the status of the token's own operations needs no section.
 - Tokens created before permissions came read every resource without an object: their access did
   not change.
 
@@ -91,7 +93,7 @@ All under `/api/v1/`:
 | `users`, `users/<id>` | Role, status, plan, moderators (`moderator_ids`; `moderator_id` is the first of them), effective limits and usage of the period and in total. |
 | `keys`, `keys/<id>` | Owner, server, protocol, status, dates. Filters: `user`, `server`, `status`. |
 | `traffic` | Traffic by hour (`period=day`) or by day (`week`, `month`) and per key. Filters: `server`, `user`, `key`. When the traffic permission has an object, name it in a filter. |
-| `operations/<id>` | The status of an operation this token started: `pending`, `running`, `succeeded`, `failed`, times and the error. |
+| `operations/<id>` | The status of an operation this token started, or of a retry of one: `pending`, `running`, `succeeded`, `failed`, times and the error. |
 
 Changes (`POST`). Each answers `202` at once with `operation_ids`: the work on the server goes on in
 the background, see its outcome at `operations/<id>`.
@@ -124,6 +126,8 @@ the client address, so guessing tokens gets nowhere.
 Every call with a working token goes to the [Audit log](Audit.md) as **API call** with the token
 prefix, the path and the status. A call with a disabled or expired token is **API call with a
 disabled token**. Calls with unknown tokens are not written, so guessing does not flood the log.
-Creating and disabling a token are written too. **API call** records are kept for 30 days
+Creating and disabling a token are written too. **Events in the log** next to a token opens the
+log already filtered by its prefix. **API call** records are kept for 30 days
 (`LAMNEZIA_API_CALL_RETENTION_DAYS`, [Configuration](Configuration.md)); older ones are deleted
-once a day. Other records of the log, calls with a disabled token included, are not deleted.
+once a day; how many there are is a row of **Statistics → Storage**. Other records of the log,
+calls with a disabled token included, are not deleted.

@@ -228,6 +228,8 @@ def test_the_profile_lists_the_browsers_without_their_addresses() -> None:
     assert page.count("/forget/") == 2
     assert "Firefox" in page
     assert "this one" in page
+    # Only this browser's form unsubscribes the browser itself too (static/js/ui.js).
+    assert page.count("data-push-forget-current") == 1
     assert "nothing delivered yet" in page
     assert OLD not in page
     assert NEW not in page

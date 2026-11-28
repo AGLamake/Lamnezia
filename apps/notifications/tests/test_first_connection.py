@@ -7,6 +7,7 @@ import pytest
 from django.utils import timezone
 
 from apps.accounts.tests.factories import UserFactory
+from apps.backups.tests.helpers import awg_instance
 from apps.keys.models import AccessKey, KeyStatus
 from apps.notifications.events import EVENTS, Event
 from apps.notifications.models import Notification
@@ -57,8 +58,27 @@ def test_the_first_handshake_after_the_issue_is_told_once() -> None:
     assert key.user is not None
     assert (data["user"], data["key"], data["key_id"]) == (key.user.username, "iPhone", key.pk)
     assert data["url"].endswith(f"/keys/{key.pk}/")
+    # No such instance in the panel: no server to zone the event by.
+    assert data["server_id"] is None
     key.refresh_from_db()
     assert key.connected_at is not None
+
+
+def test_the_event_names_the_server_the_instance_runs_on() -> None:
+    instance = awg_instance()
+    key = AccessKey.objects.create(
+        source=instance.source,
+        name="iPhone",
+        public_key="pk",
+        user=UserFactory(),
+        status=KeyStatus.ACTIVE,
+    )
+    counter(key, latest_handshake=after(key))
+
+    [data] = tell()
+
+    assert data["server_id"] == instance.server_id
+    assert instance.server.name in data["server"]
 
 
 def test_counters_that_grew_count_without_a_handshake() -> None:

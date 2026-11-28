@@ -6,6 +6,7 @@ import pytest
 from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.notifications.events import Event
+from apps.notifications.models import Notification
 from apps.notifications.services.audience import StaffAudience
 from apps.notifications.services.channels import Message
 from apps.servers.models import Server
@@ -82,6 +83,31 @@ def test_an_event_outside_any_zone_stays_with_the_administrators(
 
     assert not audience.reaches(owner_of(server))
     assert audience.reaches(UserFactory(role=Role.ADMIN))
+
+
+def test_a_key_connected_reaches_the_staff_of_the_server_the_instance_runs_on() -> None:
+    server, other = ServerFactory(), ServerFactory()
+    mine, theirs = owner_of(server), owner_of(other)
+
+    audience = StaffAudience(
+        message(Event.KEY_CONNECTED, server="AWG on Amsterdam", server_id=server.pk, key="phone")
+    )
+
+    assert audience.reaches(mine)
+    assert not audience.reaches(theirs)
+
+
+def test_the_member_the_event_is_about_is_not_told_twice() -> None:
+    about, other = UserFactory(role=Role.ADMIN), UserFactory(role=Role.ADMIN)
+    for member in (about, other):
+        member.push_subscriptions.create(endpoint=f"https://push.example.com/{member.pk}")
+    notification = Notification.objects.create(event=Event.STAFF_REPORT, user=about)
+    notification.deliveries.create(to_user=True, to_browser=True, channel_name="")
+    told = Message(
+        str(notification.uid), Event.STAFF_REPORT, datetime(2026, 1, 1, tzinfo=UTC), "T", "X", {}
+    )
+
+    assert StaffAudience(told).members() == [other]
 
 
 def test_only_the_active_staff_with_a_browser_are_listed() -> None:

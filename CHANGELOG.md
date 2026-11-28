@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Staff and API tokens**: **Change the password at the next sign-in** when adding a staff member
+  (on by default). The permission builder of API tokens starts with one row and **Add a row** adds
+  more. **Events in the log** next to a token opens the audit log filtered by its prefix. API calls
+  are a row of **Statistics → Storage**.
 - **Masking check**: a background check from the server card reports what gives the server
   away — unused IPv6, extra open ports, nothing on 443, Tor or a public proxy on the same IP, the
   panel on the server address, AmneziaWG parameters at their defaults or shared with another
@@ -584,6 +588,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **API reads follow the owner's sections**: a token reads servers, users, keys and traffic only
+  while its owner sees **Servers**, **Users**, **Keys** and **Statistics** in the panel, as
+  managing already followed **Manage**. A moderator's token no longer reads servers until the
+  moderator is given **Servers**.
 - **Service copies no longer sit in the panel memory**: the copy of the Tor site, the SFTP uploads
   and the other services comes from the server into a temporary file and is checked, hashed and
   encrypted from it a chunk at a time, so the memory a read takes no longer grows with the size of
@@ -702,6 +710,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Staff, staff notifications and the API**: the admin site checks the quotas against a role
+  changed in the same form. A moderator an administrator made and gave a server administrator's
+  server has that administrator's quotas as a ceiling. A Telegram link moved to another chat takes
+  the staff menu off the old one. `key_connected` reaches the staff of the server the key's protocol
+  runs on (`server_id` in its details) instead of matching the instance title to a server name.
+  The staff member an event is about no longer gets it twice in the browser. A retry of an
+  operation an API token started is visible to that token. **Turn off** in the profile list for
+  this very browser also drops the browser's own push subscription.
 - **Traffic of split groups**: a key issued in a group counts from its first byte on every member
   the panel has read before, also on a member with no peers yet. A switch back to forwarding whose
   relay update failed keeps reading the clone until the relay forwards the group, and the update

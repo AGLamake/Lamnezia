@@ -106,7 +106,13 @@ class StaffCreateView(_StaffView, FormView):  # type: ignore[type-arg]
 
     def form_valid(self, form: StaffCreateForm) -> HttpResponse:
         data = form.cleaned_data
-        member = self.desk.create(data["username"], data["email"], data["password1"], data["role"])
+        member = self.desk.create(
+            data["username"],
+            data["email"],
+            data["password1"],
+            data["role"],
+            temporary=data["must_change_password"],
+        )
         messages.success(self.request, _("The staff member is added: set their rights and links."))
         return redirect("accounts:staff-edit", pk=member.pk)
 

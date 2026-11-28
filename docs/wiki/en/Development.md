@@ -146,6 +146,7 @@ state, and Tailwind 4 builds the CSS from `assets/css/app.css` (`make css`).
   | `data-optimistic="remove"` on an HTMX form | hides its target at once, shows it again if the request fails |
   | `data-chat-send` on a chat reply box | `static/js/chat-send.js`: shows the message at once in the thread's `[data-chat-pending]` and sends it in the background, with a retry |
   | `data-push` with `data-push-key` and the `push:*` addresses | turns notifications in this browser on and off (the profile) |
+  | `x-data="formRows"` + `data-prefix` | adds rows to a Django formset: copies `<template x-ref="blank">` (the `empty_form`) into `x-ref="rows"` on `@click="add"`, up to `max_num` |
 
   While a request the user started is on its way, the bar at the top of the page runs and the
   `.btn` that sent it gets `aria-busy="true"` (a spinner) — for ordinary forms, links and HTMX

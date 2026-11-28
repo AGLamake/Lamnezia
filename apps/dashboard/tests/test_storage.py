@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from apps.accounts.models import Role
 from apps.accounts.tests.factories import UserFactory
+from apps.audit.services import journal as audit
 from apps.core.models import Cleanup
 from apps.dashboard.services.storage import StorageReport
 from apps.operations import tasks as operation_tasks
@@ -67,3 +68,17 @@ def test_statistics_page_shows_the_storage(client: Client) -> None:
     assert "Notification deliveries" in html
     assert "4 rows removed" in html
     assert "not yet" in html
+
+
+def test_api_calls_are_a_row_of_their_own() -> None:
+    admin = UserFactory(role=Role.ADMIN)
+    audit.log("api.call", actor=admin, data={"token": "lmz_x"})
+    audit.log("api.call", actor=admin, data={"token": "lmz_x"})
+    audit.log("staff.create", actor=admin)
+    Cleanup.record("audit.prune_api_calls", 7)
+
+    calls = {str(row.title): row for row in StorageReport().rows()}["API calls"]
+
+    assert (calls.rows, calls.removed) == (2, 7)
+    # Only a part of the audit table: its size would mislead.
+    assert calls.size is None

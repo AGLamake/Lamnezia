@@ -159,7 +159,7 @@
                 {% if browser.delivered_at %}{% blocktranslate with when=browser.delivered_at|date:"SHORT_DATETIME_FORMAT" %}last delivered {{ when }}{% endblocktranslate %}{% else %}{% translate "nothing delivered yet" %}{% endif %}
               </span>
             </span>
-            <form method="post" action="{% url 'push:forget' browser.pk %}">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm">{% translate "Turn off" %}</button></form>
+            <form method="post" action="{% url 'push:forget' browser.pk %}"{% if push_endpoint and browser.endpoint == push_endpoint %} data-push-forget-current{% endif %}>{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm">{% translate "Turn off" %}</button></form>
           </li>
         {% endfor %}
       </ul>

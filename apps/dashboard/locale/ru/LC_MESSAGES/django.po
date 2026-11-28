@@ -82,6 +82,9 @@ msgstr[2] "%(name)s: оплатите VPS в течение %(days)d дней"
 msgid "A new subscription link is ready."
 msgstr "Новая ссылка-подписка готова."
 
+msgid "API calls"
+msgstr "Вызовы API"
+
 msgid "Access has no end date."
 msgstr "Доступ без срока окончания."
 

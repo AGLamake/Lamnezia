@@ -18,10 +18,13 @@ class ManagementInline(admin.TabularInline):  # type: ignore[type-arg]
 
 
 class AccountChangeForm(UserChangeForm):  # type: ignore[type-arg]
-    """A moderator's quotas are no higher than the server administrator's who made them."""
+    """A moderator's quotas are no higher than their server administrator's (`User.quota_owner`)."""
 
     def clean(self) -> dict[str, Any]:
         data = super().clean() or {}
+        # The ceiling depends on the role, which the same form may change: check the new one.
+        if "role" in data:
+            self.instance.role = data["role"]
         for name in ("user_quota", "key_quota"):
             if name in data and (error := self.instance.quota_error(name, data[name])):
                 self.add_error(name, error)
@@ -41,7 +44,7 @@ class AccountAdmin(UserAdmin):  # type: ignore[type-arg]
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         (_("Personal info"), {"fields": ("first_name", "last_name", "email")}),
-        (_("Access"), {"fields": ("role", "is_active")}),
+        (_("Access"), {"fields": ("role", "is_active", "must_change_password")}),
         (
             _("Moderator's zone"),
             {"fields": ("moderated_servers", "user_quota", "key_quota")},

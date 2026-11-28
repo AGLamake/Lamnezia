@@ -1,12 +1,16 @@
 """The staff members a routed event reaches in their browsers: the administrators hear of all of
 it, a moderator or an owner of what happened in their zone, in a section of the panel they open.
 
-An event names its server or its user in a detail (`server` is a server's name, `user` a
-username); that detail decides whose zone it is in, and the section decides who may see it at all.
+An event names its server or its user in a detail (`server` is a server's name, `server_id` the
+pk of the server an instance runs on, `user` a username); that detail decides whose zone it is
+in, and the section decides who may see it at all.
 An event of no section here (relays and groups, reports, the panel's own archive) stays with the
-administrators, as the objects it is about do (`Zone.groups`).
+administrators, as the objects it is about do (`Zone.groups`). The member the event is about
+hears of it in their own browsers already (a delivery `to_browser`), so the staff channel skips
+them.
 """
 
+import uuid
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -16,6 +20,7 @@ from apps.accounts.models import STAFF_ROLES, User
 from apps.accounts.services.access import Access, Section
 from apps.accounts.services.zone import Zone
 from apps.notifications.events import Event
+from apps.notifications.models import Delivery
 from apps.notifications.services.channels import Message
 
 
@@ -33,6 +38,11 @@ class Scope:
     @classmethod
     def user(cls, section: Section) -> "Scope":
         return cls(section, "user")
+
+    @classmethod
+    def instance(cls, section: Section) -> "Scope":
+        """By the server the instance runs on: its title is not a server name."""
+        return cls(section, "server_id")
 
 
 class StaffAudience:
@@ -52,7 +62,7 @@ class StaffAudience:
         Event.INTERFACE_REPAIR_FAILED: Scope.server(Section.SERVERS),
         Event.INCIDENT_OPENED: Scope.server(Section.INBOX),
         Event.INCIDENT_CLOSED: Scope.server(Section.INBOX),
-        Event.KEY_CONNECTED: Scope.user(Section.KEYS),
+        Event.KEY_CONNECTED: Scope.instance(Section.KEYS),
         Event.KEYS_CHANGED: Scope.user(Section.KEYS),
         Event.KEYS_REVOKED: Scope.user(Section.KEYS),
         Event.KEYS_MOVED: Scope.user(Section.KEYS),
@@ -75,9 +85,13 @@ class StaffAudience:
         self._message = message
 
     def members(self) -> list[User]:
-        subscribed: QuerySet[User] = User.objects.filter(
-            role__in=STAFF_ROLES, is_active=True, push_subscriptions__isnull=False
-        ).distinct()
+        subscribed: QuerySet[User] = (
+            User.objects.filter(
+                role__in=STAFF_ROLES, is_active=True, push_subscriptions__isnull=False
+            )
+            .distinct()
+            .exclude(pk__in=self._told_in_person())
+        )
         return [member for member in subscribed.order_by("pk") if self.reaches(member)]
 
     def reaches(self, member: User) -> bool:
@@ -90,6 +104,17 @@ class StaffAudience:
         if not named:
             return False
         zone = Zone(member)
+        if scope.detail == "server_id":
+            return isinstance(named, int) and zone.has_server(named)
         if scope.detail == "server":
             return zone.servers().filter(name=named).exists()
         return zone.users().filter(username=named).exists()
+
+    def _told_in_person(self) -> list[int]:
+        """The user whose own browsers get this notification."""
+        try:
+            uid = uuid.UUID(self._message.uid)
+        except ValueError:
+            return []
+        own = Delivery.objects.filter(notification__uid=uid, to_browser=True)
+        return [pk for pk in own.values_list("notification__user", flat=True) if pk is not None]

@@ -16,7 +16,7 @@ pytestmark = pytest.mark.django_db
 _PASSWORD = "Long-enough-pass-42"
 
 
-def _create(client: Client, username: str, role: str) -> User | None:
+def _create(client: Client, username: str, role: str, **extra: object) -> User | None:
     client.post(
         reverse("accounts:staff-add"),
         {
@@ -25,9 +25,24 @@ def _create(client: Client, username: str, role: str) -> User | None:
             "password1": _PASSWORD,
             "password2": _PASSWORD,
             "role": role,
+            **extra,
         },
     )
     return User.objects.filter(username=username).first()
+
+
+def test_a_new_member_may_be_asked_to_change_the_password(client: Client) -> None:
+    client.force_login(UserFactory(role=Role.ADMIN))
+
+    page = client.get(reverse("accounts:staff-add")).content.decode()
+    asked = _create(client, "asked", Role.OWNER, must_change_password="on")
+    trusted = _create(client, "trusted", Role.OWNER)
+
+    assert 'name="must_change_password"' in page
+    assert asked is not None
+    assert asked.must_change_password
+    assert trusted is not None
+    assert not trusted.must_change_password
 
 
 def _edit(client: Client, member: User, **data: object) -> int:

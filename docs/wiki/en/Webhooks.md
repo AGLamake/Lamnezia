@@ -42,7 +42,7 @@ zone), `data` depends on the event.
 | `interface_lost` | A WireGuard-family container of a server runs, but its VPN interface is gone for several readings in a row; the panel restarts the container. Once, until the interface is back. | `server` name, `host`, `container`, `since` — the first reading without the interface, `attempts` — restarts made |
 | `interface_restored` | The interface of `interface_lost` is back. Once. | the same as `interface_lost` |
 | `interface_repair_failed` | The restarts after `interface_lost` did not bring the interface back; the panel stops restarting. Once. | the same as `interface_lost` |
-| `key_connected` | A new key connected for the first time after its issue; once per key, not after a reissue for the same device. | `user`, `key` — device name, `key_id`, `server`, `url` — the key in the portal |
+| `key_connected` | A new key connected for the first time after its issue; once per key, not after a reissue for the same device. | `user`, `key` — device name, `key_id`, `server`, `server_id` — the panel server of the instance or `null`, `url` — the key in the portal |
 | `limit_reached` | A user's keys are turned off by a limit. | `user`, `reason`: `traffic`, `total_traffic` or `expired` |
 | `access_expiring` | The access term of a user ends within three days. Once per term. | `user`, `until` — date `YYYY-MM-DD` |
 | `traffic_low` | A user has used the share of a traffic limit set in **Settings** (80% by default). Once per period of that limit; not sent once the limit is reached. Also sent to the user. | `user`, `percent` — share used, `used`, `limit_bytes` — bytes, `limit` (`of the period`, `of the plan`), `incomplete` — traffic of some keys is not counted now, `note`, `url` — usage page of the portal |
@@ -305,6 +305,7 @@ may be added: ignore what you do not know.
       "properties": {
         "user": {"type": "string"}, "key": {"type": "string"},
         "key_id": {"type": "integer"}, "server": {"type": "string"},
+        "server_id": {"type": ["integer", "null"]},
         "url": {"type": "string", "format": "uri"}
       }
     },

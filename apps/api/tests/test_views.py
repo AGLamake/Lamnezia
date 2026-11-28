@@ -72,9 +72,12 @@ def make_key(instance: ProtocolInstance, user: User | None, name: str = "phone")
 
 
 def moderated(moderator: User) -> tuple[Server, User, AccessKey]:
-    """A server the moderator looks after, a user of theirs and the user's key on it."""
+    """A server the moderator looks after and sees in the panel, a user of theirs and the user's
+    key on it."""
     instance = awg_instance()
     moderator.moderated_servers.add(instance.server)
+    moderator.access = {**moderator.access, "servers": "view"}
+    moderator.save(update_fields=["access"])
     user = UserFactory(managers=[moderator])
     return instance.server, user, make_key(instance, user)
 

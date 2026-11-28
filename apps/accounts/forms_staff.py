@@ -35,6 +35,12 @@ class StaffCreateForm(RegistrationForm):
     """Account data and the role of a new staff member; `StaffDesk.create` makes the account."""
 
     role = forms.ChoiceField(label=_("Role"))
+    must_change_password = forms.BooleanField(
+        label=_("Change the password at the next sign-in"),
+        required=False,
+        initial=True,
+        help_text=_("Until then the panel opens only the page to choose a new password."),
+    )
 
     class Meta(RegistrationForm.Meta):
         fields = ("username", "email")

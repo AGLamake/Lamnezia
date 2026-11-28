@@ -1,10 +1,11 @@
 """Size of the tables the housekeeping tasks keep short, and when each task last ran.
 
-The size is measured on PostgreSQL only; another database shows the rows without it.
+The size is measured on PostgreSQL only; another database shows the rows without it. Data that is
+only a part of its table (API calls in the audit journal) shows the rows alone too.
 """
 
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import datetime
 
 from django.db import connection
@@ -12,6 +13,8 @@ from django.db.models import Model
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
+from apps.audit.models import AuditEvent
+from apps.audit.services.retention import API_CALL
 from apps.core.models import Cleanup
 from apps.notifications.models import Delivery, Notification
 from apps.operations.models import Operation, OperationStep
@@ -23,11 +26,19 @@ from apps.traffic.models import TrafficHourly
 
 @dataclass(frozen=True)
 class StoredData:
-    """Data a beat task cleans: the rows are counted in the first model, the size in all."""
+    """Data a beat task cleans: the rows are counted in the first model, the size in all.
+
+    With `only`, the rows of the first model that match it: the size of a part of a table is
+    not measured.
+    """
 
     title: Promise
     models: tuple[type[Model], ...]
     task: str
+    only: Mapping[str, object] = field(default_factory=dict)
+
+    def count(self) -> int:
+        return self.models[0]._default_manager.filter(**self.only).count()
 
 
 @dataclass(frozen=True)
@@ -46,6 +57,7 @@ STORED_DATA = (
     StoredData(_("Server monitoring history"), (ServerSample,), "servers.thin_history"),
     StoredData(_("Relay load history"), (RelaySample, SplitSample), "relays.thin_history"),
     StoredData(_("Speed tests by port"), (SpeedTestResult,), "protocols.prune_speed_results"),
+    StoredData(_("API calls"), (AuditEvent,), "audit.prune_api_calls", only={"action": API_CALL}),
 )
 
 
@@ -63,8 +75,8 @@ class StorageReport:
             report.append(
                 StorageRow(
                     title=data.title,
-                    rows=data.models[0]._default_manager.count(),
-                    size=self._size(data.models),
+                    rows=data.count(),
+                    size=None if data.only else self._size(data.models),
                     cleaned_at=cleanup.ran_at if cleanup else None,
                     removed=cleanup.removed if cleanup else None,
                 )

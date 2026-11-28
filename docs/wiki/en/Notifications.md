@@ -236,7 +236,7 @@ Each browser is turned on separately, up to 10 per user; **Send a test** checks 
 **Turn off in this browser** stops it. Below the buttons the profile lists the user's browsers:
 the browser and system they subscribed from, when, and when the push service last took a
 notification for them; **Turn off** next to one stops notifications there, for instance in a
-lost phone. The push address of a browser is not shown. Signing out of the panel turns notifications off in that
+lost phone; for this very browser it also drops the browser's own subscription. The push address of a browser is not shown. Signing out of the panel turns notifications off in that
 browser, so the next person to use it does not get them. When the browser renews its subscription
 by itself, the panel's service worker sends the new one in place of the old, and notifications go on
 without a visit to the profile; this needs the user to be signed in to the panel in that browser.
@@ -252,12 +252,14 @@ active staff members who turned notifications on in their profile — for exampl
 pending registration or an incident. An administrator gets every routed event. A moderator or an
 owner gets only the events about their zone ([roles and access](Roles-and-access.md)): about the
 servers they run or were given, and about the users they serve. Each event also belongs to a section
-of the panel, and a member with **No access** there does not get it: a moderator, for one, hears of
+of the panel, and a member with **No access** there does not get it (a new key connected
+counts by the server its protocol runs on): a moderator, for one, hears of
 servers only once given the **Servers** section. A server event is in **Servers** (an incident in
 **Inbox**); a key event in **Keys**; limits, traffic, access ending and sign-ins in **Users**; a
 registration in **Registration**; a request or a chat message in **Inbox**; a suggestion in
 **Articles**; a payment in **Orders**. Events about relays and server groups, the reports and a
-failed panel archive go to administrators only.
+failed panel archive go to administrators only. A staff member an event is about, who gets it
+in their own browsers already, does not get it a second time through this channel.
 
 The panel makes its own VAPID key pair on first use; the private key is stored encrypted, like the
 other secrets. Pushes go only from the background worker, through the browser's push service

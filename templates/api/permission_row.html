@@ -1,0 +1,9 @@
+{# One row of the permission builder in templates/api/tokens.html; also the blank row it copies. #}
+<div class="grid gap-3 sm:grid-cols-5">
+  {% for error in row.non_field_errors %}<div class="sm:col-span-5">{% include "components/alert.html" with level="error" text=error %}</div>{% endfor %}
+  {{ row.resource.as_field_group }}
+  {{ row.action.as_field_group }}
+  {{ row.server.as_field_group }}
+  {{ row.user.as_field_group }}
+  {{ row.key.as_field_group }}
+</div>

@@ -71,9 +71,11 @@ class FirstConnections:
     @staticmethod
     def _tell(key: AccessKey) -> None:
         try:
-            server = instances.get(key.source).title
+            instance = instances.get(key.source)
         except UnknownInstanceError:
-            server = key.source
+            server, server_id = key.source, None
+        else:
+            server, server_id = instance.title, instance.server_id
         delivery.emit(
             Event.KEY_CONNECTED,
             {
@@ -81,6 +83,7 @@ class FirstConnections:
                 "key": key.name,
                 "key_id": key.pk,
                 "server": server,
+                "server_id": server_id,
                 "url": settings.SITE_URL.rstrip("/") + reverse("portal:key", args=[key.pk]),
             },
             key=f"key_connected:{key.pk}",

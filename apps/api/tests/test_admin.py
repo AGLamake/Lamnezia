@@ -30,7 +30,8 @@ def signed_in(user: User) -> Client:
 
 
 def form(name: str = "monitoring", *rows: dict[str, Any], **extra: Any) -> dict[str, Any]:
-    """The POST of the page: the token fields and permission rows, four empty ones by default."""
+    """The POST of the page: the token fields and permission rows, four empty ones by default
+    (rows the page added)."""
     data: dict[str, Any] = {
         "name": name,
         "permissions-TOTAL_FORMS": max(len(rows), 4),
@@ -81,6 +82,29 @@ def test_the_builder_offers_only_servers_of_the_zone() -> None:
     refused = signed_in(moderator).post(URL, form("x", {"resource": "servers", "server": other.pk}))
     assert refused.context["issued"] is None
     assert not ApiToken.objects.exists()
+
+
+def test_the_builder_starts_with_one_row_and_adds_more_on_the_page(admin: User) -> None:
+    page = signed_in(admin).get(URL).content.decode()
+
+    assert 'name="permissions-TOTAL_FORMS" value="1"' in page
+    assert 'name="permissions-__prefix__-resource"' in page
+    assert "Add a row" in page
+    rows = [{"resource": ""}] * 5 + [{"resource": "servers"}, {"resource": "traffic"}]
+    signed_in(admin).post(URL, form("added", *rows))
+    resources = ApiToken.objects.get().permissions.values_list("resource", flat=True)
+    assert sorted(resources) == ["servers", "traffic"]
+
+
+def test_a_token_links_to_its_events_in_the_log(admin: User) -> None:
+    moderator = UserFactory(role=Role.MODERATOR)
+    issued = ApiTokens().issue(name="x", owner=admin, by=admin, permissions=[])
+    ApiTokens().issue(name="y", owner=moderator, by=moderator, permissions=[])
+
+    link = f"/audit/?token={issued.token.prefix}"
+    assert link in signed_in(admin).get(URL).content.decode()
+    # A moderator does not open the log by default: no link for them.
+    assert "/audit/?token=" not in signed_in(moderator).get(URL).content.decode()
 
 
 def test_a_server_permission_is_kept() -> None:

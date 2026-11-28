@@ -70,10 +70,19 @@ class StaffDesk:
         top = min(self.access.level(section), Access(target).ceiling(section))
         return [level for level in Level if level <= top]
 
-    def create(self, username: str, email: str, password: str, role: str) -> User:
+    def create(
+        self, username: str, email: str, password: str, role: str, *, temporary: bool = False
+    ) -> User:
+        """A new member; with `temporary` they choose their own password at the first sign-in."""
         if role not in self.roles():
             raise NotAllowedError(role)
-        member = User(username=username, email=email, role=role, created_by=self._actor)
+        member = User(
+            username=username,
+            email=email,
+            role=role,
+            created_by=self._actor,
+            must_change_password=temporary,
+        )
         member.set_password(password)
         member.save()
         self._log("staff.create", member, role=role)

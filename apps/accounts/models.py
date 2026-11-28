@@ -143,11 +143,17 @@ class User(AbstractUser):
 
     @property
     def quota_owner(self) -> "User | None":
-        """The server administrator whose quotas bound this moderator's: the one who made them."""
+        """The server administrator whose quotas bound this moderator's: the one who made them,
+        or else one whose servers the moderator was given."""
+        if self.role != Role.MODERATOR:
+            return None
         owner = self.created_by
-        if self.role == Role.MODERATOR and owner is not None and owner.role == Role.OWNER:
+        if owner is not None and owner.role == Role.OWNER:
             return owner
-        return None
+        if self.pk is None:
+            return None
+        sharing = User.objects.filter(role=Role.OWNER, moderated_servers__moderators=self)
+        return sharing.order_by("pk").first()
 
     def quota_ceiling(self, name: str) -> int | None:
         """The owner's quota `name` this moderator's may not exceed; None: no ceiling."""

@@ -10,6 +10,7 @@ from apps.accounts.models import Role, User
 from apps.accounts.tests.factories import UserFactory
 from apps.keys.services.zone import KeyQuota
 from apps.keys.tests.test_views import issued_key
+from apps.servers.tests.factories import ServerFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -93,3 +94,35 @@ def test_the_admin_site_refuses_a_quota_above_the_owners(owner: User, moderator:
 
     assert set(over.errors) == {"user_quota"}
     assert within.is_valid(), within.errors
+
+
+def test_the_admin_site_checks_the_role_the_same_form_gives(owner: User) -> None:
+    form_class = modelform_factory(
+        User, form=AccountChangeForm, fields=("username", "role", "user_quota", "key_quota")
+    )
+    member = UserFactory(role=Role.USER, created_by=owner)
+    data = {"username": member.username, "user_quota": 4, "key_quota": 5}
+
+    as_moderator = form_class({**data, "role": Role.MODERATOR}, instance=member)
+    stays_user = UserFactory(role=Role.USER, created_by=owner)
+    as_user = form_class(
+        {**data, "username": stays_user.username, "role": Role.USER}, instance=stays_user
+    )
+
+    assert set(as_moderator.errors) == {"user_quota"}
+    assert as_user.is_valid(), as_user.errors
+
+
+def test_a_moderator_of_the_administrator_on_an_owners_server_has_the_owners_ceiling(
+    owner: User,
+) -> None:
+    server = ServerFactory()
+    owner.moderated_servers.add(server)
+    member = UserFactory(role=Role.MODERATOR, created_by=UserFactory(role=Role.ADMIN))
+    assert member.quota_owner is None
+
+    member.moderated_servers.add(server)
+
+    assert member.quota_owner == owner
+    assert member.effective_quota("key_quota") == 5
+    assert member.quota_error("key_quota", 6) is not None

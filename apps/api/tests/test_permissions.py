@@ -27,7 +27,8 @@ from apps.api.tests.test_views import body, call, make_key, moderated
 from apps.audit.models import AuditEvent
 from apps.backups.tests.helpers import awg_instance
 from apps.keys.models import AccessKey, KeyStatus
-from apps.operations.models import Operation
+from apps.operations.models import Operation, OperationStatus
+from apps.operations.services.launcher import retry
 from apps.plans.models import UserLimits
 from apps.plans.tests.factories import PlanFactory, UserLimitsFactory
 from apps.servers.tests.factories import ServerFactory
@@ -250,6 +251,16 @@ class TestKeyChanges:
         assert post(f"keys/{key.pk}/revoke", token).status_code == 403
         assert call(f"keys/{key.pk}", token).status_code == 200
 
+    def test_reading_needs_the_owner_to_see_the_section_in_the_panel(self) -> None:
+        moderator = UserFactory(role=Role.MODERATOR)
+        server, _user, key = moderated(moderator)
+        token = issue(moderator, Permission("servers"), Permission("keys"))
+        moderator.access = {"servers": "none", "keys": "view"}
+        moderator.save(update_fields=["access"])
+
+        assert call(f"servers/{server.pk}", token).status_code == 403
+        assert call(f"keys/{key.pk}", token).status_code == 200
+
     def test_the_status_of_another_tokens_operation_is_hidden(self, admin: User) -> None:
         key = make_key(awg_instance(), UserFactory())
         first = issue(admin, Permission("keys", "manage"), Permission("operations"))
@@ -259,6 +270,21 @@ class TestKeyChanges:
         reader = issue(admin, Permission("keys"))
         assert call(f"operations/{operation_id}", second).status_code == 404
         assert call(f"operations/{operation_id}", reader).status_code == 403
+
+    def test_the_token_sees_a_retry_of_its_operation(self, admin: User) -> None:
+        key = make_key(awg_instance(), UserFactory())
+        token = issue(admin, Permission("keys", "manage"), Permission("operations"))
+        other = issue(admin, Permission("operations"))
+        operation = Operation.objects.get(
+            pk=body(post(f"keys/{key.pk}/revoke", token))["operation_ids"][0]
+        )
+        operation.status = OperationStatus.FAILED
+        operation.save(update_fields=["status"])
+
+        repeat = retry(operation, user=admin)
+
+        assert body(call(f"operations/{repeat.pk}", token))["id"] == repeat.pk
+        assert call(f"operations/{repeat.pk}", other).status_code == 404
 
 
 class TestUserChanges:

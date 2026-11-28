@@ -122,5 +122,5 @@ class BasePermissionFormSet(forms.BaseFormSet):  # type: ignore[type-arg]
 
 
 PermissionFormSet = forms.formset_factory(
-    PermissionForm, formset=BasePermissionFormSet, extra=4, max_num=40, validate_max=True
+    PermissionForm, formset=BasePermissionFormSet, extra=1, max_num=40, validate_max=True
 )

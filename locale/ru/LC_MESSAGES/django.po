@@ -388,6 +388,9 @@ msgstr "Добавить канал"
 msgid "Add a plan"
 msgstr "Добавить тариф"
 
+msgid "Add a row"
+msgstr "Добавить строку"
+
 msgid "Add a server"
 msgstr "Добавить сервер"
 
@@ -811,6 +814,9 @@ msgstr "Сменить почту"
 
 msgid "Change the mode"
 msgstr "Сменить режим"
+
+msgid "Change the password at the next sign-in"
+msgstr "Сменить пароль при следующем входе"
 
 msgid "Change the protocol settings of a group"
 msgstr "Смена настроек протокола группы"
@@ -1359,6 +1365,9 @@ msgstr "Событие"
 
 msgid "Events"
 msgstr "События"
+
+msgid "Events in the log"
+msgstr "События в журнале"
 
 msgid "Every active key had traffic."
 msgstr "Трафик был у всех активных ключей."
@@ -4967,6 +4976,9 @@ msgstr "Отвязать этот аккаунт?"
 
 msgid "Unlinked."
 msgstr "Отвязано."
+
+msgid "Until then the panel opens only the page to choose a new password."
+msgstr "До этого панель открывает только страницу выбора нового пароля."
 
 msgid "Up"
 msgstr "Выше"

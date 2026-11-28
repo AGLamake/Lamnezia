@@ -146,6 +146,7 @@ uv run python manage.py compilemessages --ignore=.venv   # или: make compilem
   | `data-optimistic="remove"` на HTMX-форме | сразу скрывает её цель и возвращает, если запрос не удался |
   | `data-chat-send` у поля ответа чата | `static/js/chat-send.js`: сразу показывает сообщение в `[data-chat-pending]` переписки и отправляет его в фоне, с повтором |
   | `data-push` с `data-push-key` и адресами `push:*` | включает и выключает уведомления в этом браузере (профиль) |
+  | `x-data="formRows"` + `data-prefix` | добавляет строки в формсет Django: копирует `<template x-ref="blank">` (`empty_form`) в `x-ref="rows"` по `@click="add"`, не больше `max_num` |
 
   Пока идёт запрос, начатый пользователем, вверху страницы бежит полоса, а `.btn`, который его
   отправил, получает `aria-busy="true"` (спиннер) — для обычных форм, ссылок и HTMX, без
