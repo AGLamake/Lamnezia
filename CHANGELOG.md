@@ -676,6 +676,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Traffic of split groups**: a key issued in a group counts from its first byte on every member
+  the panel has read before, also on a member with no peers yet. A switch back to forwarding whose
+  relay update failed keeps reading the clone until the relay forwards the group, and the update
+  that does it reads the clone first, so no traffic of the clone is lost. The uplink peer on the
+  members no longer counts as a client in the server check of a support request.
 - **A relay gets the service peer it missed**: when the leading server of a group was down at an
   install or update of the relay, the probe peer (or the uplink peer of a split group) was left for
   later, but the sync saw no change and never tried again. Now the first sync after the monitor

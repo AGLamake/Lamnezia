@@ -7,8 +7,11 @@ for a source of its own, the exit load of the group, and not for the keys. The m
 as before: a key still on the old address, or the forward fallback of the agent, sends its
 traffic there, and a byte takes one path only.
 
-A change of routing reads the clone with the members first. A group that goes back to forward
-leaves its clone counters at zero, so a later split counts its clients from the first byte.
+A change of routing reads the clone with the members first. The clone is read as long as its
+group has the uplink: a group saved as forwarded keeps it until the relay forwards it indeed,
+so an update that failed after the change loses no traffic of the clone. The update that
+forwards it reads the clone once more, and once the uplink is off, the clone counters are left
+at zero, so a later split counts its clients from the first byte.
 """
 
 from collections.abc import Iterator, Sequence
@@ -26,6 +29,7 @@ from apps.relays.services.container import NAME
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.traffic.models import TrafficCounter, TrafficSource
+from apps.traffic.services.poller import TrafficPoller
 from apps.traffic.services.recorder import TrafficRecorder
 from apps.traffic.services.targets import PollTarget, peer_owners, poll_targets
 
@@ -46,9 +50,9 @@ def relay_target_name(server: Server) -> str:
 
 
 def split_groups() -> list[tuple[ServerGroup, str]]:
-    """The split groups on installed relays with their uplink, and the source of their keys."""
+    """The groups with an uplink on installed relays, and the source of their keys: those the
+    relay splits, or may split still while it has not taken a change to forward."""
     groups = ServerGroup.objects.filter(
-        routing=GroupRouting.SPLIT,
         relay__relay_role__installed_at__isnull=False,
         service_peers__role=PeerRole.UPLINK,
     ).distinct()
@@ -108,8 +112,21 @@ def expect_group_on_clone(group: ServerGroup) -> None:
     _expect(group.pk, keys_source, list(keys.values_list("public_key", flat=True)))
 
 
+def leaving_clone(group: ServerGroup) -> bool:
+    """The group is saved as forwarded, but its uplink is on: the relay may split it still."""
+    uplink = ServicePeer.objects.filter(group=group, role=PeerRole.UPLINK)
+    return group.routing == GroupRouting.FORWARD and uplink.exists()
+
+
+def read_clones(server: Server) -> None:
+    """Read the clones on the relay now; raises `SshError` when it does not answer."""
+    target = poll_targets.get(relay_target_name(server))
+    if target is not None:
+        TrafficPoller().poll(target)
+
+
 def reset_clone(group: ServerGroup) -> None:
-    """The group is forwarded again: the clone goes, and a later one counts from zero."""
+    """The group lost its uplink: the clone is gone, and a later one counts from zero."""
     source = clone_source(group.pk)
     TrafficCounter.objects.filter(source=source).update(rx_bytes=0, tx_bytes=0, present=False)
     TrafficSource.objects.filter(source=source).update(available=True, started="")

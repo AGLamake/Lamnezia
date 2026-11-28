@@ -3,8 +3,8 @@
 A background operation: it reads the client counters of the members and of the clone first,
 so the traffic of the old path is counted up to the change, gives a split group its uplink on
 every member, saves the routing and updates the relay. The clone counts the keys from their
-first byte, and a group forwarded again leaves its clone counters at zero
-(services/traffic.py). The agent then moves the tunnel of the clients to
+first byte, and the clone of a group forwarded again is read until the relay forwards it
+indeed, then left at zero (services/traffic.py). The agent then moves the tunnel of the clients to
 the clone or back; each client makes one new handshake. A group that goes back to forward
 loses its uplink only after the agent stops using it.
 """
@@ -24,11 +24,7 @@ from apps.relays.models import PeerRole, Relay
 from apps.relays.services.deployment import KINDS, ROUTING_KIND, RelayDeployment
 from apps.relays.services.service_peers import ServicePeerPlacement
 from apps.relays.services.split_lists import add_default_source, update_soon
-from apps.relays.services.traffic import (
-    expect_group_on_clone,
-    relay_target_name,
-    reset_clone,
-)
+from apps.relays.services.traffic import expect_group_on_clone, relay_target_name
 from apps.ssh.errors import SshError
 from apps.traffic.services.poller import TrafficPoller
 from apps.traffic.services.targets import poll_targets
@@ -93,9 +89,6 @@ class RoutingChange:
             self._group.routing = self._routing
             self._group.save(update_fields=["routing"])
             self._ctx.log(self._group.get_routing_display())
-        if not split:
-            # Read just before, and no longer polled: the routing is saved.
-            reset_clone(self._group)
         RelayDeployment(self._relay, self._ctx).update()
 
     def _read_counters(self) -> None:

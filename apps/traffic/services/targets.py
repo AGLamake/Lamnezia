@@ -45,5 +45,9 @@ class PeerOwners(Providers[tuple[str, str]]):
     Usage: ``@peer_owners.register`` on a function that yields the pairs.
     """
 
+    def public_keys(self) -> set[str]:
+        """The peers that are not clients: the statistics of a server leave them out."""
+        return {public_key for public_key, _source in self}
+
 
 peer_owners = PeerOwners()

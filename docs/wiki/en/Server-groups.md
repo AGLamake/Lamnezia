@@ -335,11 +335,15 @@ poll as the servers, counted for the keys of the leading server. The members are
 client that has not reconnected yet, or the group in its fallback to forwarding, sends its traffic
 there, and a byte takes only one of the two paths, so nothing is counted twice. The uplink peer on
 the members carries all the clients once more; its traffic is counted for a source of its own, the
-exit load of the group (series `uplink:<group>` in the metrics), and not for any key.
+exit load of the group (series `uplink:<group>` in the metrics), and not for any key. Nor is it a
+client of the server: the server check of a support request does not take its handshakes for the
+latest connection of the clients.
 
 On a switch to split routing every live key counts on the clone from zero, and a key issued while
 the group is split counts from its first byte, as on a server. On the switch back the clone is read
-one last time, and its counters are left at zero: a later split counts from zero again. A clone the
+one last time, and its counters are left at zero: a later split counts from zero again. If the
+relay does not answer once the routing is saved, the clone is read on while the uplink stays on the
+members: the update that does forward the group reads the clone first. A clone the
 relay creates anew (after a restart of the container) also counts from zero.
 
 The limits act on the clone too:

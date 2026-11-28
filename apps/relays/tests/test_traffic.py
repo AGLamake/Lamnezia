@@ -8,15 +8,16 @@ from apps.groups.tests.conftest import succeeded
 from apps.keys.models import AccessKey
 from apps.keys.services.actions import KeyActions
 from apps.keys.services.limits import disable_by_limit
-from apps.operations.models import Operation
+from apps.operations.models import Operation, OperationStatus
 from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import Start, issued_key
 from apps.relays.models import PeerRole, ServicePeer
 from apps.relays.services import deployment
 from apps.relays.services.container import FOLDER, NAME
-from apps.relays.services.deployment import INSTALL_KIND
+from apps.relays.services.deployment import INSTALL_KIND, UPDATE_KIND
 from apps.relays.services.routing import start_routing
 from apps.relays.services.traffic import relay_target_name
+from apps.relays.tests.conftest import RELAY_HOST
 from apps.relays.tests.fake_relay import FakeRelayServer
 from apps.servers.models import Server
 from apps.traffic.models import TrafficCounter
@@ -75,6 +76,7 @@ def test_the_uplink_counts_for_the_exit_load(
 
     uplink = ServicePeer.objects.get(role=PeerRole.UPLINK)
     assert dict(peer_owners)[uplink.public_key] == f"uplink:{installed.pk}"
+    assert uplink.public_key in peer_owners.public_keys(), "not a client of the members"
 
 
 def test_the_keys_count_on_the_clone_from_the_first_byte(
@@ -176,3 +178,65 @@ def test_forward_again_drops_the_speed_script(
     route(installed, GroupRouting.FORWARD, admin, start)
 
     assert SPEED not in relay_fake.files
+
+
+@pytest.fixture
+def polled(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """The names of the targets read, with no reading taken."""
+    names: list[str] = []
+    monkeypatch.setattr(
+        "apps.traffic.services.poller.TrafficPoller.poll",
+        lambda self, target: names.append(target.name),
+    )
+    return names
+
+
+@pytest.fixture
+def forward_failed(  # noqa: PLR0913, PLR0917
+    installed: ServerGroup,
+    leader: ProtocolInstance,
+    down: set[str],
+    admin: User,
+    start: Start,
+    polled: list[str],
+) -> AccessKey:
+    """A split group saved as forwarded while the relay did not answer; its key."""
+    key = issued_key(leader)
+    route(installed, GroupRouting.SPLIT, admin, start)
+    TrafficCounter.objects.filter(source=f"clone:{installed.pk}").update(
+        rx_bytes=500, tx_bytes=900, present=True
+    )
+    down.add(RELAY_HOST)
+    operation = start(lambda: start_routing(installed, GroupRouting.FORWARD, user=admin))
+    assert operation.status == OperationStatus.FAILED
+    down.discard(RELAY_HOST)
+    return key
+
+
+def test_a_failed_forward_keeps_the_clone_polled(
+    forward_failed: AccessKey, installed: ServerGroup, relay_server: Server
+) -> None:
+    target = poll_targets.get(relay_target_name(relay_server))
+
+    assert target is not None
+    assert f"clone:{installed.pk}" in target.containers
+    counter = clone_counter(installed, forward_failed)
+    assert (counter.rx_bytes, counter.tx_bytes) == (500, 900)
+
+
+def test_the_update_that_forwards_reads_the_clone_first(  # noqa: PLR0913, PLR0917
+    forward_failed: AccessKey,
+    installed: ServerGroup,
+    relay_server: Server,
+    admin: User,
+    start: Start,
+    polled: list[str],
+) -> None:
+    polled.clear()
+
+    succeeded(start(lambda: deployment.start(UPDATE_KIND, relay_server, user=admin)))
+
+    assert polled == [relay_target_name(relay_server)]
+    assert poll_targets.get(relay_target_name(relay_server)) is None
+    counter = clone_counter(installed, forward_failed)
+    assert (counter.rx_bytes, counter.tx_bytes, counter.present) == (0, 0, False)

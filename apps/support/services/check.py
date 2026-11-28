@@ -19,6 +19,7 @@ from apps.servers.services.connection import connect
 from apps.servers.services.monitor import Connect, ServerMonitor
 from apps.support.models import Conversation
 from apps.traffic.models import TrafficCounter
+from apps.traffic.services.targets import peer_owners
 
 CHECK_KIND = "support.check_server"
 
@@ -92,9 +93,12 @@ def start_check(conversation: Conversation, user: User) -> Operation:
 
 
 def _last_seen(server: Server, user: User | None = None) -> str:
-    """The latest handshake or, for XRay clients that have none, the latest traffic."""
+    """The latest handshake or, for XRay clients that have none, the latest traffic of a client:
+    the uplink of a split group on a member is none."""
     sources = ProtocolInstance.sources_of(server)
-    peers = TrafficCounter.objects.filter(source__in=sources)
+    peers = TrafficCounter.objects.filter(source__in=sources).exclude(
+        public_key__in=peer_owners.public_keys()
+    )
     if user is not None:
         keys = user.access_keys.filter(source__in=peers.values("key_source")).values("public_key")
         peers = peers.filter(public_key__in=keys)

@@ -71,6 +71,14 @@ class TrafficRecorder:
             defaults={"collected_at": at, "key_source": key_source or source},
         )
 
+    def expect_member_peer(
+        self, source: str, public_key: str, at: datetime, key_source: str
+    ) -> None:
+        """`expect_peer` on a member of a group, only once a reading of it succeeded: the first
+        reading of a member is a baseline for all its peers, an expected one among them too."""
+        if TrafficSource.objects.filter(source=source, available=True).exists():
+            self.expect_peer(source, public_key, at, key_source)
+
     def record(  # noqa: PLR0913  a reading, its moment and whose traffic it is
         self,
         source: str,

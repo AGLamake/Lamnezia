@@ -29,6 +29,7 @@ from apps.support.services.tickets import (
     TooManyRequestsError,
 )
 from apps.traffic.models import TrafficCounter
+from apps.traffic.services.targets import peer_owners
 
 pytestmark = pytest.mark.django_db
 
@@ -240,6 +241,24 @@ class TestServerDown:
 
         assert report.user_seen == now - timedelta(minutes=3)
         assert report.server_seen == now - timedelta(minutes=3)
+
+    def test_a_peer_that_is_no_client_is_not_seen(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        server = ServerFactory()
+        instance = instance_on(server)
+        conversation = MyRequests(subscriber(server)).report_server(server)
+        now = timezone.now()
+        for public_key, ago in (("client", 30), ("uplink", 1)):
+            TrafficCounter.objects.create(
+                source=instance.source,
+                public_key=public_key,
+                latest_handshake=now - timedelta(minutes=ago),
+                collected_at=now,
+            )
+        monkeypatch.setattr(peer_owners, "public_keys", lambda: {"uplink"})
+
+        report = RequestServerCheck(FakeServers().connect).run(conversation, server)
+
+        assert report.server_seen == now - timedelta(minutes=30)
 
     def test_a_silent_server_is_reported_as_not_answering(self) -> None:
         server = ServerFactory(name="down")

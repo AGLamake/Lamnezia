@@ -2,7 +2,8 @@
 
 An update gives every group of the relay its service peers on the members first, then writes
 the clone peers of the split groups and the members in order to the agent, and only then takes
-the uplink peer off the groups that are forwarded again; a removal takes the peers off, even
+the uplink peer off the groups that are forwarded again, with the counters of their clones
+read just before (services/traffic.py); a removal takes the peers off, even
 when the relay server itself no longer answers. A key
 or list change of a split group needs only its files: a lighter operation writes just them. The
 relay server is locked only for its own container: a member on the same server takes the same
@@ -41,6 +42,7 @@ from apps.relays.services.service_peers import (
     lacks_service_peers,
     wanted_roles,
 )
+from apps.relays.services.traffic import leaving_clone, read_clones, reset_clone
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
 from apps.ssh.errors import ErrorCode, SshError
@@ -95,6 +97,7 @@ class RelayDeployment:
             _refuse(plan, self._relay.server)
             config = self._config(plan)
             peers = plan.split_files(config)
+            self._read_leaving_clones(plan)
             with self._lock(host):
                 container = RelayContainer(host, self._ctx)
                 with self._ctx.step(_("Check the ports of the groups")):
@@ -180,6 +183,19 @@ class RelayDeployment:
             uplink = ServicePeer.objects.filter(group=group, role=PeerRole.UPLINK)
             if forwarded and uplink.exists():
                 ServicePeerPlacement(group, self._ctx).withdraw([PeerRole.UPLINK])
+                if not uplink.exists():
+                    reset_clone(group)
+
+    def _read_leaving_clones(self, plan: RelayPlan) -> None:
+        """Count the traffic of the clones the update takes away up to it; a relay that does
+        not answer fails the update next anyway."""
+        if not any(leaving_clone(group) for group, _members in plan.groups):
+            return
+        with self._ctx.step(_("Read the traffic counters of the clones")):
+            try:
+                read_clones(self._relay.server)
+            except SshError as error:
+                self._ctx.log(error.message)
 
     def _config(self, plan: RelayPlan) -> RelayConfig:
         with self._ctx.step(_("Prepare the list of members")):

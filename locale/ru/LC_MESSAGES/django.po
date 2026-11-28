@@ -2941,6 +2941,9 @@ msgstr "Прочитать состояние ретранслятора"
 msgid "Read the server files"
 msgstr "Прочитать файлы сервера"
 
+msgid "Read the traffic counters of the clones"
+msgstr "Снять счётчики трафика клонов"
+
 msgid "Read the traffic counters of the members"
 msgstr "Снять счётчики трафика участников"
 
