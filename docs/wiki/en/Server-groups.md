@@ -239,8 +239,15 @@ When the group goes back to forwarding, the relay stops using the clone first, a
 uplink peer is taken off the members. While a group is split, issuing, revoking and editing its
 keys reaches the clone too: the relay gets the new peers within seconds, and the sync by the minute
 catches what was missed. The clone has the keys the panel knows; peers added on the server by hand
-are not copied. The switch is refused while another operation on the relay runs. The agent needs
-the new relay image: use **Reinstall** on the relay card once.
+are not copied. The switch is refused while another operation on the relay runs.
+
+Split routing needs the new relay image (iproute2, the unbound resolver, a loose reverse path
+check of the container): **Update** brings only the agent. The panel remembers the image a relay was
+installed with; a relay installed by an older release shows **needs reinstall** on its card with a
+**Reinstall** button. Until then the switch to split routing is refused, and the group page says why
+with a link to the relay card. The switch is refused also while the relay has an agent of an older
+release: press **Update**. Going back to forwarding is always allowed. A reinstall starts the
+container again: clients lose the connection for a few seconds.
 
 #### Network list
 

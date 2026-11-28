@@ -37,7 +37,8 @@ from apps.traffic.services.targets import poll_targets
 def start_routing(
     group: ServerGroup, routing: GroupRouting, *, user: User, ip: str | None = None
 ) -> Operation:
-    """Start moving the group to `routing`; refused while another relay operation runs.
+    """Start moving the group to `routing`; refused while another relay operation runs, and
+    a split on a relay whose image or agent is older than this release.
 
     A group split for the first time gets the default source of its network list.
     """
@@ -49,6 +50,9 @@ def start_routing(
             raise RelayError(RelayErrorCode.NOT_INSTALLED, group.name)
         if group.routing == routing:
             raise RelayError(RelayErrorCode.ROUTING_SAME, group.name)
+        refusal = relay.split_refusal
+        if routing == GroupRouting.SPLIT and refusal is not None:
+            raise RelayError(refusal, str(relay.server))
         running = Operation.objects.filter(
             kind__in=KINDS,
             status__in=(OperationStatus.PENDING, OperationStatus.RUNNING),

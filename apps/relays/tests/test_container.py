@@ -8,7 +8,8 @@ from apps.operations.services.context import OperationContext
 from apps.operations.tests.factories import OperationFactory
 from apps.protocols.errors import SetupError, SetupErrorCode
 from apps.relays.errors import RelayError, RelayErrorCode
-from apps.relays.services.container import FOLDER, NAME, RelayContainer, agent_source
+from apps.relays.services.container import FOLDER, NAME, RelayContainer
+from apps.relays.services.image import agent_source
 from apps.relays.tests.fake_relay import FakeRelayServer
 from apps.traffic.services.shaping import SpeedRule, TotalSpeed, speed_script
 

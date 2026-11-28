@@ -135,9 +135,10 @@
       <button type="submit" class="btn btn-secondary">{% translate "Switch to forwarding" %}</button>
       {% else %}
       <input type="hidden" name="routing" value="split">
-      <button type="submit" class="btn btn-secondary">{% translate "Switch to split routing" %}</button>
+      <button type="submit" class="btn btn-secondary"{% if split_refusal %} disabled{% endif %}>{% translate "Switch to split routing" %}</button>
       {% endif %}
     </form>{% endif %}
+    {% if split_refusal and group.routing != "split" %}<p id="split-refusal" class="help-text text-warning-soft-fg">{{ split_refusal.message }} {{ split_refusal.hint }} <a href="{% url 'servers:detail' relay.server_id %}#relay" class="text-link hover:underline">{% translate "Open the relay card" %}</a></p>{% endif %}
   </div>
   {% endif %}
   {% if last_switch %}

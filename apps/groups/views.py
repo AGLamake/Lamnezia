@@ -119,8 +119,9 @@ class GroupDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-ar
 
     The operations under way that a change of the group waits for are listed with links: joins
     and installs, the catch-ups of lagging members, and the key operations that hold the lead;
-    the last planned switch of the relay is shown with its result, and a split group shows its
-    network list with the moment a list was last taken. `?leader_leaves=1` (after a leading
+    the last planned switch of the relay is shown with its result, a split the relay cannot take
+    yet says why, and a split group shows its network list with the moment a list was last
+    taken. `?leader_leaves=1` (after a leading
     server was asked to leave) offers to hand the lead to another member first.
     """
 
@@ -141,6 +142,7 @@ class GroupDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-ar
         ]
         relay = Relay.objects.filter(server_id=group.relay_id).first() if group.relay_id else None
         health = relay.group_health(group.port) if relay else None
+        refusal = relay.split_refusal if relay and relay.installed else None
         members = list(group.members.select_related("instance__server"))
         leader = next((member for member in members if member.leading), None)
         catching_up = catch_ups(group)
@@ -162,6 +164,7 @@ class GroupDetailView(SectionRequiredMixin, DetailView):  # type: ignore[type-ar
             key_operations=list(key_operations(leader.instance.source)) if leader else [],
             relay=relay,
             health=health,
+            split_refusal=RelayError(refusal) if refusal else None,
             last_switch=last_switch(group),
             client_host=client_host(group),
             domain_checking=domain_checking,

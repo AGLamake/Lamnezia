@@ -9,7 +9,6 @@ agent works on without the panel.
 import re
 import shlex
 from collections.abc import Iterable, Mapping
-from pathlib import Path
 
 from django.utils.translation import gettext as _
 
@@ -18,6 +17,7 @@ from amnezia_core.relay import clone_peers_file, domains_file, networks_file, sp
 from apps.operations.services.context import OperationContext
 from apps.protocols.services.container import ProtocolContainer, Transport, log_arguments
 from apps.relays.errors import RelayError, RelayErrorCode
+from apps.relays.services import image
 from apps.ssh.errors import RemoteFileNotFoundError
 from apps.ssh.services import RemoteHost
 from apps.traffic.services.shaper import LOAD_IFB
@@ -31,19 +31,10 @@ VOLUME = f"{NAME}-data"
 # The panel's web server: HTTP, HTTPS and HTTP/3 (UDP 443) on the panel machine.
 RESERVED_PORTS = frozenset({80, 443})
 
-_HERE = Path(__file__).resolve().parent.parent
 _PUBLISHED_UDP = re.compile(r":(\d+)->\d+/udp")
 # `docker inspect --format` of the ports the container was started to publish.
 PORT_BINDINGS = "{{json .HostConfig.PortBindings}}"
 _BOUND_UDP = re.compile(r'"(\d+)/udp"')
-
-
-def dockerfile() -> str:
-    return (_HERE / "container" / "Dockerfile").read_text(encoding="utf-8")
-
-
-def agent_source() -> bytes:
-    return (_HERE / "agent" / "relay_agent.py").read_bytes()
 
 
 def published_udp(port_bindings: str) -> frozenset[int]:
@@ -100,7 +91,7 @@ class RelayContainer:
     def install(self, ports: Iterable[int]) -> None:
         """Build the image and start the container; an old container goes first."""
         with self._ctx.step(_("Build the relay image")):
-            self._docker.build(dockerfile())
+            self._docker.build(image.dockerfile())
         with self._ctx.step(_("Start the relay container")):
             self._start(ports)
 
@@ -182,7 +173,7 @@ class RelayContainer:
 
     def _put_agent(self) -> None:
         """Write the agent if it changed; a running one is restarted to load the new code."""
-        shell, path, source = self._docker.shell, f"{FOLDER}/agent.py", agent_source()
+        shell, path, source = self._docker.shell, f"{FOLDER}/agent.py", image.agent_source()
         try:
             current: bytes | None = shell.read_file(path)
         except RemoteFileNotFoundError:

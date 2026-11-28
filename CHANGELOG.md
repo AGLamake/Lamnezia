@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The relay card says when the relay needs a reinstall**: split routing needs the new relay
+  image, and **Update** brings only the agent. The panel now remembers the image a relay was
+  installed with; a relay of an older image shows **needs reinstall** with a **Reinstall** button,
+  and a switch to split routing on it, or on a relay whose agent is older than the panel, is refused
+  with the reason and a link to the relay card. On upgrade every installed relay shows **needs
+  reinstall** once, since the panel does not know its image yet; forwarding keeps working without it.
 - **Whitelist for split routing**: the network list of a split group now has a mode. In the
   blacklist (as before) the networks of the list go straight out and everything else abroad; in
   the whitelist only the networks of the list and the own entries abroad go abroad, and DNS

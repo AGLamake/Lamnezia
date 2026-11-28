@@ -35,7 +35,7 @@ from apps.groups.services.replication import backends
 from apps.protocols.services.installer import ipv4_addresses
 from apps.relays.models import PeerRole, Relay, ServicePeer
 from apps.relays.services.clone import clone_peers
-from apps.relays.services.container import agent_source
+from apps.relays.services.image import agent_digest
 from apps.relays.services.split_lists import GroupList
 from apps.servers.models import Server
 from apps.traffic.services.speed import SpeedLimiter, clone_speed_script
@@ -67,8 +67,7 @@ class RelayPlan:
         """The digest of `config` of this plan, of the ports the relay publishes and of the
         agent code: it changes with a port, a member, its order or address, the service peer,
         the agent settings or a panel version with another agent, which the update writes."""
-        agent = hashlib.sha256(agent_source()).hexdigest()
-        data = [sorted(self.ports), config.to_json(), agent]
+        data = [sorted(self.ports), config.to_json(), agent_digest()]
         return hashlib.sha256(json.dumps(data).encode()).hexdigest()
 
     def config(self) -> RelayConfig:

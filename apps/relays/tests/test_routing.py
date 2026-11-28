@@ -18,10 +18,17 @@ from apps.protocols.models import ProtocolInstance
 from apps.protocols.tests.awg_case import OnCommit, Start, issued_key
 from apps.protocols.tests.fake_awg import FakeAwgServer
 from apps.relays.errors import RelayError, RelayErrorCode
-from apps.relays.models import PeerRole, ServicePeer
+from apps.relays.models import PeerRole, Relay, ServicePeer
 from apps.relays.services import deployment
 from apps.relays.services.container import FOLDER
-from apps.relays.services.deployment import INSTALL_KIND, PEERS_KIND, ROUTING_KIND, sync_relays
+from apps.relays.services.deployment import (
+    INSTALL_KIND,
+    PEERS_KIND,
+    ROUTING_KIND,
+    UPDATE_KIND,
+    sync_relays,
+)
+from apps.relays.services.image import IMAGE_VERSION, agent_digest
 from apps.relays.services.routing import start_routing
 from apps.relays.tests.fake_relay import FakeRelayServer
 from apps.servers.models import Server
@@ -192,6 +199,51 @@ def test_the_same_routing_is_refused(installed: ServerGroup, admin: User) -> Non
         start_routing(installed, GroupRouting.FORWARD, user=admin)
 
     assert error.value.code == RelayErrorCode.ROUTING_SAME
+
+
+def test_the_install_records_the_image_and_the_agent(installed: ServerGroup) -> None:
+    relay = Relay.objects.get(server=installed.relay)
+
+    assert (relay.image_version, relay.agent_digest) == (IMAGE_VERSION, agent_digest())
+    assert relay.split_refusal is None
+
+
+@pytest.mark.parametrize(
+    ("change", "code"),
+    [
+        ({"image_version": IMAGE_VERSION - 1}, RelayErrorCode.SPLIT_IMAGE_OUTDATED),
+        ({"agent_digest": ""}, RelayErrorCode.SPLIT_AGENT_OUTDATED),
+    ],
+)
+def test_a_split_on_an_older_relay_is_refused(
+    installed: ServerGroup, admin: User, change: dict[str, Any], code: RelayErrorCode
+) -> None:
+    Relay.objects.update(**change)
+
+    with pytest.raises(RelayError) as error:
+        start_routing(installed, GroupRouting.SPLIT, user=admin)
+
+    assert error.value.code == code
+    assert not Operation.objects.filter(kind=ROUTING_KIND).exists()
+
+
+def test_forward_again_on_an_older_image_is_allowed(installed: ServerGroup, admin: User) -> None:
+    ServerGroup.objects.filter(pk=installed.pk).update(routing=GroupRouting.SPLIT)
+    Relay.objects.update(image_version=0, agent_digest="")
+
+    start_routing(installed, GroupRouting.FORWARD, user=admin)
+
+    assert Operation.objects.filter(kind=ROUTING_KIND).exists()
+
+
+def test_an_update_records_the_agent(
+    installed: ServerGroup, relay_server: Server, admin: User, start: Start
+) -> None:
+    Relay.objects.update(agent_digest="")
+
+    succeeded(start(lambda: deployment.start(UPDATE_KIND, relay_server, user=admin)))
+
+    assert Relay.objects.get(server=installed.relay).agent_digest == agent_digest()
 
 
 def test_a_busy_relay_is_refused(installed: ServerGroup, admin: User) -> None:

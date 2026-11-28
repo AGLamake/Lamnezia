@@ -23,6 +23,8 @@ class RelayErrorCode(StrEnum):
     SWITCH_NO_ANSWER = "switch_no_answer"
     ROUTING_SAME = "routing_same"
     RELAY_BUSY = "relay_busy"
+    SPLIT_IMAGE_OUTDATED = "split_image_outdated"
+    SPLIT_AGENT_OUTDATED = "split_agent_outdated"
 
 
 RELAY_ERRORS: dict[RelayErrorCode, ErrorDescription] = {
@@ -105,6 +107,18 @@ RELAY_ERRORS: dict[RelayErrorCode, ErrorDescription] = {
     RelayErrorCode.RELAY_BUSY: ErrorDescription(
         _("Another operation on the relay is running."),
         _("Wait for it to finish, see the operations page, then try again."),
+    ),
+    RelayErrorCode.SPLIT_IMAGE_OUTDATED: ErrorDescription(
+        _("The relay runs an older image without what split routing needs."),
+        _(
+            "Update brings only the agent; the resolver and policy routing come with the image. "
+            "Reinstall the relay on the server card, then switch again. Its clients lose the "
+            "connection for a few seconds while the container starts again."
+        ),
+    ),
+    RelayErrorCode.SPLIT_AGENT_OUTDATED: ErrorDescription(
+        _("The relay agent is of an older release."),
+        _("Update the relay on the server card, then switch again."),
     ),
 }
 

@@ -14,6 +14,7 @@ from apps.groups.models import GroupMember, ServerGroup
 from apps.operations.models import Operation, OperationStatus
 from apps.relays.models import Relay, SyncSkip
 from apps.relays.services.deployment import INSTALL_KIND, ROUTING_KIND, UPDATE_KIND
+from apps.relays.services.image import IMAGE_VERSION, agent_digest
 from apps.relays.services.switch import SWITCH_KIND
 from apps.servers.models import Server
 from apps.servers.tests.factories import ServerFactory
@@ -91,6 +92,8 @@ def watched(relayed: ServerGroup) -> Relay:
     return Relay.objects.create(
         server=relayed.relay,
         installed_at=timezone.now(),
+        image_version=IMAGE_VERSION,
+        agent_digest=agent_digest(),
         health=health_of(relayed, active=joiner, down=leader),
         read_at=timezone.now(),
         rate_from_clients=2048.0,
@@ -253,6 +256,43 @@ def test_routing_starts_an_operation(browser: Client, watched: Relay) -> None:
     assert response.url == reverse("groups:detail", args=[group.pk])  # type: ignore[attr-defined]
     params = Operation.objects.get(kind=ROUTING_KIND).params
     assert (params["group_id"], params["routing"]) == (group.pk, "split")
+
+
+def test_an_older_image_asks_for_a_reinstall(browser: Client, watched: Relay) -> None:
+    group = watched.server.relayed_groups.get()
+    Relay.objects.update(image_version=IMAGE_VERSION - 1)
+
+    card = browser.get(reverse("servers:detail", args=[watched.server_id])).content.decode()
+    page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert "needs reinstall" in card
+    assert 'id="relay-reinstall"' in card
+    assert reverse("relays:install", args=[watched.server_id]) in card
+    assert 'id="split-refusal"' in page
+    assert "older image" in page
+    assert f"{reverse('servers:detail', args=[watched.server_id])}#relay" in page
+
+
+def test_a_current_relay_offers_the_split(browser: Client, watched: Relay) -> None:
+    group = watched.server.relayed_groups.get()
+
+    card = browser.get(reverse("servers:detail", args=[watched.server_id])).content.decode()
+    page = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert "needs reinstall" not in card
+    assert 'id="split-refusal"' not in page
+    assert "Switch to split routing" in page
+
+
+def test_a_split_on_an_older_agent_says_why(browser: Client, watched: Relay) -> None:
+    group = watched.server.relayed_groups.get()
+    Relay.objects.update(agent_digest="")
+
+    url = reverse("groups:routing", args=[group.pk])
+    response = browser.post(url, {"routing": "split"}, follow=True)
+
+    assert not Operation.objects.filter(kind=ROUTING_KIND).exists()
+    assert "agent is of an older release" in response.content.decode()
 
 
 def test_the_same_routing_says_why(browser: Client, watched: Relay) -> None:

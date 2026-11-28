@@ -33,6 +33,7 @@ from apps.relays.models import SKIP_DETAIL_LENGTH, PeerRole, Relay, ServicePeer,
 from apps.relays.services.clone import peers_digest
 from apps.relays.services.config import RelayPlan, members_on_relay
 from apps.relays.services.container import RESERVED_PORTS, RelayContainer
+from apps.relays.services.image import IMAGE_VERSION, agent_digest
 from apps.relays.services.service_peers import ServicePeerPlacement
 from apps.servers.models import Server
 from apps.servers.services.connection import connect
@@ -74,6 +75,7 @@ class RelayDeployment:
                 container.install(plan.ports)
                 container.apply(plan.ports, config.to_json().encode(), peers)
         self._relay.installed_at = timezone.now()
+        self._relay.image_version = IMAGE_VERSION
         self._synced(plan, config, peers)
         self._withdraw_uplinks(plan)
 
@@ -193,10 +195,13 @@ class RelayDeployment:
             self._relay.synced = plan.digest(config)
             self._relay.peers_synced = peers_digest(peers)
             self._relay.synced_at = timezone.now()
+            self._relay.agent_digest = agent_digest()
             self._relay.sync_skipped = SyncSkip.NONE
             self._relay.sync_skipped_detail = ""
             fields = [
                 "installed_at",
+                "image_version",
+                "agent_digest",
                 "synced",
                 "peers_synced",
                 "synced_at",

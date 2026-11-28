@@ -2641,6 +2641,9 @@ msgstr "Откройте страницу заново: панель предл�
 msgid "Open the panel, choose a server and your device. You get a vpn:// link and a QR code."
 msgstr "Откройте панель, выберите сервер и устройство. Вы получите ссылку vpn:// и QR-код."
 
+msgid "Open the relay card"
+msgstr "Открыть карточку ретранслятора"
+
 msgid "Open the relay of the server and update it, then start the move again."
 msgstr "Откройте ретранслятор сервера и обновите его, затем начните перенос снова."
 
@@ -4261,6 +4264,9 @@ msgstr "Снова работает предыдущая версия."
 msgid "The protocol container is removed from the server."
 msgstr "Контейнер протокола удалён с сервера."
 
+msgid "The relay agent is of an older release."
+msgstr "Агент ретранслятора из старой версии."
+
 msgid "The relay already sends the clients to this server."
 msgstr "Ретранслятор уже отправляет клиентов на этот сервер."
 
@@ -4321,6 +4327,12 @@ msgstr "Ретранслятора или участника больше нет
 
 msgid "The relay publishes the port of the group, which every member listens on, so they cannot share a machine. Pick a relay on another server for the group, or let the member on this server leave the group."
 msgstr "Ретранслятор публикует порт группы, а его же слушает каждый участник, поэтому на одной машине они не уживутся. Выберите для группы ретранслятор на другом сервере или выведите участника на этом сервере из группы."
+
+msgid "The relay runs an older image without what split routing needs."
+msgstr "Ретранслятор работает на старом образе, в нём нет того, что нужно раздельной маршрутизации."
+
+msgid "The relay runs an older image: split routing needs the resolver and policy routing of the new one, and Update brings only the agent. Its clients lose the connection for a few seconds while the container starts again."
+msgstr "Ретранслятор работает на старом образе: раздельной маршрутизации нужны резолвер и маршрутизация по правилам из нового, а «Обновить» привозит только агент. Пока контейнер перезапускается, клиенты на несколько секунд теряют связь."
 
 msgid "The relay runs with its ports."
 msgstr "Ретранслятор работает со своими портами."
@@ -4837,6 +4849,9 @@ msgstr "До четырёх портов. Сравните порт до 9999 с
 msgid "Update"
 msgstr "Обновить"
 
+msgid "Update brings only the agent; the resolver and policy routing come with the image. Reinstall the relay on the server card, then switch again. Its clients lose the connection for a few seconds while the container starts again."
+msgstr "«Обновить» привозит только агент, резолвер и маршрутизация по правилам приходят с образом. Переустановите ретранслятор в карточке сервера и переключите ещё раз. Пока контейнер перезапускается, клиенты на несколько секунд теряют связь."
+
 msgid "Update the app first"
 msgstr "Сначала обновите приложение"
 
@@ -5205,6 +5220,9 @@ msgstr "адрес новой машины"
 msgid "addresses of the domain"
 msgstr "адреса домена"
 
+msgid "agent digest"
+msgstr "хеш агента"
+
 msgid "an FAQ article"
 msgstr "статья FAQ"
 
@@ -5393,6 +5411,9 @@ msgstr "нет A-записи"
 msgid "health"
 msgstr "состояние"
 
+msgid "image version"
+msgstr "версия образа"
+
 #, python-format
 msgid "in %(days)s day"
 msgid_plural "in %(days)s days"
@@ -5545,6 +5566,9 @@ msgstr "имя в мессенджере"
 
 msgid "name me as the author"
 msgstr "указать меня автором"
+
+msgid "needs reinstall"
+msgstr "нужна переустановка"
 
 msgid "network list source"
 msgstr "источник списка сетей"

@@ -10,7 +10,9 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from amnezia_core.relay import DEFAULT_CHECK_INTERVAL, DEFAULT_FAILURES
+from apps.relays.errors import RelayErrorCode
 from apps.relays.services.health import GroupHealth, RelayHealth
+from apps.relays.services.image import IMAGE_VERSION, agent_digest
 from apps.relays.services.mismatch import RelayMismatch
 from apps.ssh.encryption import EncryptedTextField
 
@@ -37,6 +39,10 @@ class Relay(models.Model):
         related_name="relay_role",
     )
     installed_at = models.DateTimeField(_("installed at"), null=True, blank=True)
+    # The image version the container was last built with and the digest of the agent the
+    # panel last wrote (services/image.py); a relay of an older release has 0 and empty.
+    image_version = models.PositiveSmallIntegerField(_("image version"), default=0)
+    agent_digest = models.CharField(_("agent digest"), max_length=64, blank=True)
     # Digest of the groups and backends the relay last got; a sync compares it with the panel.
     synced = models.CharField(_("synced digest"), max_length=64, blank=True)
     synced_at = models.DateTimeField(_("synced at"), null=True, blank=True)
@@ -85,6 +91,22 @@ class Relay(models.Model):
     @property
     def installed(self) -> bool:
         return self.installed_at is not None
+
+    @property
+    def image_outdated(self) -> bool:
+        """The container was built from an older image: only a reinstall brings what split
+        routing needs."""
+        return self.installed and self.image_version < IMAGE_VERSION
+
+    @property
+    def split_refusal(self) -> RelayErrorCode | None:
+        """Why a group cannot be split on this relay now: an older image, or an agent the
+        panel has not written since its release; None when it can."""
+        if self.image_outdated:
+            return RelayErrorCode.SPLIT_IMAGE_OUTDATED
+        if self.agent_digest != agent_digest():
+            return RelayErrorCode.SPLIT_AGENT_OUTDATED
+        return None
 
     @property
     def settings_mismatch(self) -> RelayMismatch:
