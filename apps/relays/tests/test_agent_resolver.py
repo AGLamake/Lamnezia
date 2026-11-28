@@ -63,6 +63,35 @@ def test_the_queries_to_the_key_dns_go_to_the_resolver(
     assert f"access-control: {SUBNET} allow" in config
 
 
+def test_with_dns_all_every_query_to_port_53_goes_to_the_resolver(
+    network: FakeNetwork, folder: Path, unbound: Unbound
+) -> None:
+    write_config(folder, dns_all=True)
+
+    started(network, folder, unbound)
+
+    for proto in ("udp", "tcp"):
+        assert f'iifname "lg{PORT}" {proto} dport 53 redirect to :53' in network.rules
+    assert UDP not in network.rules and TCP not in network.rules
+    assert "dport 853" not in network.rules and "dport 443 redirect" not in network.rules
+
+
+def test_dns_all_is_off_until_the_group_asks(
+    network: FakeNetwork, folder: Path, unbound: Unbound
+) -> None:
+    started(network, folder, unbound)
+
+    assert f'iifname "lg{PORT}" udp dport 53 redirect' not in network.rules
+
+
+def test_without_unbound_dns_all_redirects_nothing(network: FakeNetwork, folder: Path) -> None:
+    write_config(folder, dns_all=True)
+
+    started(network, folder, Unbound(missing=True))
+
+    assert "dport 53" not in network.rules
+
+
 def test_a_forwarded_group_has_no_redirect_and_no_resolver(
     network: FakeNetwork, folder: Path, unbound: Unbound
 ) -> None:

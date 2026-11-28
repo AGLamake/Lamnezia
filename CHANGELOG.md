@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A split group can answer all DNS of its clients**: the **Answer all DNS** button on the group
+  page sends every query of the clients to port 53 (UDP and TCP) to the relay's resolver, not only
+  those to the keys' DNS addresses, so a DNS server set on a device answers from the relay too.
+  DNS-over-HTTPS and DNS-over-TLS stay as they are. Off by default; needs **Update** of the relay
+  agent.
 - **The relay looks up the own domains through its own resolver**: the agent asks the resolver
   that answers the split groups' clients, not the DNS of Docker, so the addresses match what the
   clients get. When the resolver fails the lookups, the relay card and the group page show *own

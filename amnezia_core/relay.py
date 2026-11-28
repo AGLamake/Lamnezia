@@ -167,8 +167,9 @@ class SplitRouting:
     group that the relay connects to the active member with.
 
     `dns` are the DNS addresses of the group's keys: the relay answers the clients' queries to
-    them with its own resolver, so Russian names resolve to Russian addresses. `list_mode` says
-    what the network list of the group holds.
+    them with its own resolver, so Russian names resolve to Russian addresses. With `dns_all`
+    it answers every plain DNS query of the clients, to a DNS server set on a device too.
+    `list_mode` says what the network list of the group holds.
     """
 
     clone: Clone
@@ -176,6 +177,7 @@ class SplitRouting:
     kind: UplinkKind = UplinkKind.AWG
     dns: tuple[IPv4Address, ...] = ()
     list_mode: ListMode = ListMode.EXCLUDE
+    dns_all: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -184,16 +186,21 @@ class SplitRouting:
             "uplink": self.uplink.to_dict(),
             "dns": [str(address) for address in self.dns],
             "list_mode": str(self.list_mode),
+            "dns_all": self.dns_all,
         }
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "SplitRouting":
+        dns_all = data.get("dns_all", False)
+        if not isinstance(dns_all, bool):
+            raise RelayFormatError("Split routing needs a boolean dns_all.")
         return cls(
             clone=Clone.from_dict(_object(data, "clone")),
             uplink=ServicePeer.from_dict(_object(data, "uplink")),
             kind=_choice(UplinkKind, data.get("kind", UplinkKind.AWG), "uplink kind"),
             dns=_addresses(data, "dns"),
             list_mode=_choice(ListMode, data.get("list_mode", ListMode.EXCLUDE), "list mode"),
+            dns_all=dns_all,
         )
 
 

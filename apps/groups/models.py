@@ -58,6 +58,14 @@ class ServerGroup(models.Model):
     list_mode = models.CharField(
         _("list mode"), max_length=16, choices=GroupListMode, default=GroupListMode.EXCLUDE
     )
+    dns_all = models.BooleanField(
+        _("answer all DNS"),
+        default=False,
+        help_text=_(
+            "The relay's resolver answers every DNS query of the clients on port 53, whatever "
+            "server a device asks."
+        ),
+    )
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
 
     class Meta:

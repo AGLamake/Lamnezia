@@ -1,4 +1,4 @@
-"""The network list of a split group on the group page: its mode, sources and own entries."""
+"""The network list of a split group on the group page: its mode, DNS, sources and own entries."""
 
 import pytest
 from django.test import Client
@@ -193,3 +193,29 @@ def test_the_group_page_offers_the_mode_and_explains_the_whitelist(
     assert reverse("relays:list_mode", args=[split.pk]) in page
     assert 'name="list_mode"' in page
     assert "Whitelist:" in page
+
+
+def test_the_dns_of_all_queries_is_turned_on_and_off(browser: Client, split: ServerGroup) -> None:
+    page = browser.get(reverse("groups:detail", args=[split.pk])).content.decode()
+    assert reverse("relays:split_dns", args=[split.pk]) in page
+    assert not split.dns_all
+
+    response = browser.post(reverse("relays:split_dns", args=[split.pk]))
+    split.refresh_from_db()
+    assert split.dns_all
+    browser.post(reverse("relays:split_dns", args=[split.pk]))
+
+    assert response["Location"] == lists_url(split)
+    split.refresh_from_db()
+    assert not split.dns_all
+    events = AuditEvent.objects.filter(action="relays.split_dns").order_by("pk")
+    assert [event.data for event in events] == [{"dns_all": True}, {"dns_all": False}]
+
+
+def test_only_admins_change_the_dns(client: Client, split: ServerGroup) -> None:
+    client.force_login(UserFactory(role=Role.USER))
+
+    client.post(reverse("relays:split_dns", args=[split.pk]))
+
+    split.refresh_from_db()
+    assert not split.dns_all

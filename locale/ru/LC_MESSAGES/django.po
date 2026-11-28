@@ -544,6 +544,12 @@ msgstr "Его слушает другая программа или конте�
 msgid "Another test of this server is running. Try again in a few minutes."
 msgstr "Сейчас идёт другой замер этого сервера. Попробуйте через несколько минут."
 
+msgid "Answer all DNS"
+msgstr "Отвечать на все DNS"
+
+msgid "Answer only the group's DNS"
+msgstr "Отвечать только на DNS группы"
+
 msgid "Anyone with the link gets your keys. If it leaked, make a new one: the old link stops working."
 msgstr "Кто знает ссылку, тот получает ваши ключи. Если она утекла, сделайте новую: старая перестанет работать."
 
@@ -1064,6 +1070,9 @@ msgstr "DNS и MTU попадают только в профили клиент�
 
 msgid "DNS of the split groups:"
 msgstr "DNS раздельных групп:"
+
+msgid "DNS over HTTPS and over TLS stays as it is."
+msgstr "DNS-over-HTTPS и DNS-over-TLS остаются как есть."
 
 msgid "Danger"
 msgstr "Опасная"
@@ -4383,6 +4392,12 @@ msgstr "Ретранслятор принимает клиентов групп,
 msgid "The relay takes the UDP port of the group on its server, and every member listens on that same port. Take a server other than the relay, or pick another relay."
 msgstr "Ретранслятор занимает UDP-порт группы на своём сервере, а каждый участник слушает тот же порт. Возьмите другой сервер или выберите другой ретранслятор."
 
+msgid "The relay's resolver answers every DNS query of the clients on port 53, whatever server a device asks."
+msgstr "Резолвер ретранслятора отвечает на все DNS-запросы клиентов на порт 53, к какому бы серверу ни обращалось устройство."
+
+msgid "The relay's resolver answers only the queries to the group's DNS addresses; a query to a device's own DNS server goes on like other traffic."
+msgstr "Резолвер ретранслятора отвечает только на запросы к DNS-адресам группы; запрос к DNS-серверу, заданному на устройстве, идёт дальше как обычный трафик."
+
 msgid "The relay's resolver answers the clients from Moscow, so a site behind a CDN may resolve to Russian nodes that are not in the list; add such a site as an own domain abroad. DNS queries the resolver does not answer go abroad."
 msgstr "Резолвер ретранслятора отвечает клиентам из Москвы, поэтому сайт за CDN может получить адреса российских узлов, которых нет в списке; добавьте такой сайт своим доменом за рубеж. DNS-запросы, на которые резолвер не отвечает, идут за рубеж."
 
@@ -5249,6 +5264,9 @@ msgstr "хеш агента"
 
 msgid "an FAQ article"
 msgstr "статья FAQ"
+
+msgid "answer all DNS"
+msgstr "отвечать на все DNS"
 
 msgid "answers of the resolvers"
 msgstr "ответы резолверов"

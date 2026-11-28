@@ -92,6 +92,7 @@ class RelayPlan:
                     _core_peer(uplink, leader),
                     dns=dns,
                     list_mode=ListMode(group.list_mode),
+                    dns_all=group.dns_all,
                 )
             groups.append(
                 RelayGroup(

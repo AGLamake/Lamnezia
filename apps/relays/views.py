@@ -1,5 +1,5 @@
 """Buttons of the relay card on the server page: install, update, remove and the settings; and
-the network list of a split group on the group page: its mode, sources and own entries."""
+the network list of a split group on the group page: its mode, DNS, sources and own entries."""
 
 from typing import Any
 
@@ -168,6 +168,22 @@ class SplitEntryDeleteView(SectionRequiredMixin, View):
             audit.log_request(request, "relays.split_entry_delete", entry, value=entry.value)
             entry.delete()
         return _to_lists(entry.group_id)
+
+
+class SplitDnsView(SectionRequiredMixin, View):
+    """Let the relay's resolver answer every DNS query of the clients on port 53, or only those
+    to the group's DNS addresses; saving the group syncs the relay."""
+
+    section = Section.SERVERS
+    whole_zone_only = True
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        group = get_object_or_404(self.zone.groups(), pk=pk)
+        with transaction.atomic():
+            group.dns_all = not group.dns_all
+            group.save(update_fields=["dns_all"])
+            audit.log_request(request, "relays.split_dns", group, dns_all=group.dns_all)
+        return _to_lists(group.pk)
 
 
 class SplitListModeView(SectionRequiredMixin, View):

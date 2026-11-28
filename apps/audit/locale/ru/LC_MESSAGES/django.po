@@ -51,6 +51,9 @@ msgstr "Выход бота с сервера"
 msgid "Cancel the panel move without the new machine"
 msgstr "Отмена переноса панели без новой машины"
 
+msgid "Change DNS interception of split routing"
+msgstr "Изменение перехвата DNS раздельной маршрутизации"
+
 msgid "Change email"
 msgstr "Смена почты"
 

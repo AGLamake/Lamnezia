@@ -10,6 +10,15 @@
   </form>
   {% endif %}
   {% if group.list_mode == "include" %}<p class="help-text">{% translate "The relay's resolver answers the clients from Moscow, so a site behind a CDN may resolve to Russian nodes that are not in the list; add such a site as an own domain abroad. DNS queries the resolver does not answer go abroad." %}</p>{% endif %}
+  <div class="flex flex-wrap items-center gap-2">
+    <p class="help-text">{% if group.dns_all %}{% translate "The relay's resolver answers every DNS query of the clients on port 53, whatever server a device asks." %}{% else %}{% translate "The relay's resolver answers only the queries to the group's DNS addresses; a query to a device's own DNS server goes on like other traffic." %}{% endif %} {% translate "DNS over HTTPS and over TLS stays as it is." %}</p>
+    {% if manage %}
+    <form method="post" action="{% url 'relays:split_dns' group.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-secondary">{% if group.dns_all %}{% translate "Answer only the group's DNS" %}{% else %}{% translate "Answer all DNS" %}{% endif %}</button>
+    </form>
+    {% endif %}
+  </div>
   <p id="split-summary">{% if health.split %}{% blocktranslate count networks=health.networks %}The relay applies {{ networks }} network.{% plural %}The relay applies {{ networks }} networks.{% endblocktranslate %}{% else %}{% translate "The relay has not told how many networks it applies yet." %}{% endif %} {% if lists_taken %}{% blocktranslate with when=lists_taken|date:"SHORT_DATETIME_FORMAT" %}Lists last taken {{ when }}.{% endblocktranslate %}{% else %}{% translate "No list taken yet." %}{% endif %}</p>
   <div class="table-wrap">
     <table class="table table-cards">

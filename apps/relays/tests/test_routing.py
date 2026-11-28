@@ -87,10 +87,11 @@ def test_split_gives_every_member_the_uplink_and_the_relay_a_clone(  # noqa: PLR
     assert group["split"]["uplink"]["private_key"] == peer.private_key
     assert group["split"]["dns"] == list(leader.dns)
     assert group["split"]["list_mode"] == "exclude"
+    assert group["split"]["dns_all"] is False
     assert f"PublicKey = {key.public_key}" in relay_fake.files[PEERS].decode()
 
 
-def test_the_relay_gets_the_list_mode_of_the_group(
+def test_the_relay_gets_the_list_mode_and_dns_of_the_group(
     installed: ServerGroup,
     leader: ProtocolInstance,
     relay_fake: FakeRelayServer,
@@ -98,11 +99,13 @@ def test_the_relay_gets_the_list_mode_of_the_group(
     start: Start,
 ) -> None:
     installed.list_mode = GroupListMode.INCLUDE
+    installed.dns_all = True
     installed.save()
 
     succeeded(route(installed, GroupRouting.SPLIT, admin, start))
 
     assert written_group(relay_fake)["split"]["list_mode"] == "include"
+    assert written_group(relay_fake)["split"]["dns_all"] is True
     assert not installed.split_sources.exists()
 
 

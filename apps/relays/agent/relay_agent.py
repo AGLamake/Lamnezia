@@ -166,6 +166,7 @@ class Split:
     kind: str = "awg"
     dns: tuple[str, ...] = ()
     list_mode: str = EXCLUDE
+    dns_all: bool = False
 
     @property
     def subnet(self) -> str:
@@ -182,6 +183,7 @@ class Split:
             str(data.get("kind", "awg")),
             dns,
             str(data.get("list_mode", EXCLUDE)),
+            data.get("dns_all") is True,
         )
         if split.kind not in UPLINK_KINDS:
             raise ValueError(f"unknown uplink kind {split.kind!r}")
@@ -480,7 +482,7 @@ class SplitRoute:
     """The nftables part of a split group: its clone's subnet, the networks of its list (sent
     directly in the blacklist mode, the only ones over the uplink in the whitelist mode), the
     addresses of its own domains, sent directly (`local`) or always over the uplink (`abroad`),
-    and the DNS addresses whose queries the relay's resolver answers."""
+    and the DNS addresses whose queries the relay's resolver answers, or all with `dns_all`."""
 
     port: int
     subnet: str
@@ -489,6 +491,7 @@ class SplitRoute:
     abroad: tuple[str, ...] = ()
     dns: tuple[str, ...] = ()
     list_mode: str = EXCLUDE
+    dns_all: bool = False
 
 
 def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] = ()) -> str:
@@ -503,6 +506,8 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
     whitelist mode; so does one to an address of its abroad domains, whatever the list says. A
     DNS query from the clone to one of the group's DNS addresses is redirected to the relay's
     resolver; the local routing table comes before the mark, so the query stays on the relay.
+    With `dns_all` every query from the clone to port 53 is redirected, whatever its address: a
+    DNS server set on a device would answer from abroad. DoH and DoT use other ports and stay.
     In the whitelist mode any other DNS query is marked: plain DNS straight out of the relay
     would show the names to the Russian network and take its answers.
     """
@@ -529,11 +534,10 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
         )
     for split in sorted(splits, key=lambda item: item.port):
         port, clone, uplink = split.port, f"lg{split.port}", f"lu{split.port}"
-        if split.dns:
-            servers = "{ " + ", ".join(split.dns) + " }"
+        if split.dns_all or split.dns:
+            servers = "" if split.dns_all else "ip daddr { " + ", ".join(split.dns) + " } "
             dnat += [
-                f'\t\tiifname "{clone}" ip daddr {servers} {proto} dport {DNS_PORT} '
-                f"redirect to :{DNS_PORT}"
+                f'\t\tiifname "{clone}" {servers}{proto} dport {DNS_PORT} redirect to :{DNS_PORT}'
                 for proto in ("udp", "tcp")
             ]
         sets += _set(f"ru_{port}", split.networks)
@@ -1274,7 +1278,10 @@ class Agent:
         local, abroad = self._domains.addresses(port)
         dns = split.dns if serving else ()
         networks = self._networks.get(port, ())
-        return SplitRoute(port, split.subnet, networks, local, abroad, dns, split.list_mode)
+        dns_all = serving and split.dns_all
+        return SplitRoute(
+            port, split.subnet, networks, local, abroad, dns, split.list_mode, dns_all
+        )
 
     def _take_request(self) -> tuple[str, int, Backend] | None:
         """The switch request of the panel, removed so it is done once; a bad one is dropped."""

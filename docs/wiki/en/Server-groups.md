@@ -301,9 +301,15 @@ container output, and answers no one but the clients of split groups. Keys do no
 The resolver runs only while some group is split. In forwarding, and while a split group has
 fallen back to forwarding, the queries are not intercepted and go to the servers as before. A
 resolver that does not start or stops is started again after a minute; until then the queries go
-where the keys send them. Only the keys' DNS addresses are intercepted: a DNS server set by hand on
-a device is not. The resolver comes with the new relay image: use **Reinstall** on the relay card
-once.
+where the keys send them. The resolver comes with the new relay image: use **Reinstall** on the
+relay card once.
+
+By default only the keys' DNS addresses are intercepted: a query to a DNS server set by hand on a
+device goes on like other traffic. The **Answer all DNS** button in the "Network list" block of the
+group page intercepts every query of the clients to port 53 (UDP and TCP), whatever server it goes
+to: the relay's resolver answers it. **Answer only the group's DNS** turns it back. DNS-over-HTTPS
+and DNS-over-TLS of the devices stay as they are: they use other ports. The option is off by
+default and needs the new agent: use **Update** on the relay card.
 
 The relay card (the line "DNS of the split groups") and the page of a split group, next to the
 uplink mode, show the state of the resolver:

@@ -271,7 +271,7 @@ class TestSwitchRequest:
 CLONE_KEY = KeyPair.generate()
 
 
-def split_group() -> RelayGroup:
+def split_group(*, dns_all: bool = False) -> RelayGroup:
     uplink = ServicePeer(
         private_key=KeyPair.generate().private_key,
         address=IPv4Interface("10.8.1.253/32"),
@@ -281,7 +281,7 @@ def split_group() -> RelayGroup:
     )
     clone = Clone(CLONE_KEY.private_key, IPv4Interface("10.8.1.0/24"), {"Jc": "6", "S1": "12"})
     dns = (IPv4Address("1.1.1.1"), IPv4Address("1.0.0.1"))
-    split = SplitRouting(clone, uplink, dns=dns)
+    split = SplitRouting(clone, uplink, dns=dns, dns_all=dns_all)
     return RelayGroup(55424, (A, B), service(), Routing.SPLIT, split)
 
 
@@ -290,6 +290,13 @@ class TestSplitRouting:
         config = RelayConfig((split_group(),), recovery=4, uplink_check=IPv4Address("9.9.9.9"))
 
         assert RelayConfig.from_json(config.to_json()) == config
+
+    def test_round_trip_of_dns_all(self) -> None:
+        config = RelayConfig((split_group(dns_all=True),))
+
+        parsed = RelayConfig.from_json(config.to_json()).groups[0].split
+
+        assert parsed is not None and parsed.dns_all
 
     def test_file_layout(self) -> None:
         data = json.loads(RelayConfig((split_group(),)).to_json())
@@ -301,14 +308,16 @@ class TestSplitRouting:
         assert group["split"]["clone"]["address"] == "10.8.1.0/24"
         assert group["split"]["uplink"]["address"] == "10.8.1.253/32"
         assert group["split"]["dns"] == ["1.1.1.1", "1.0.0.1"]
+        assert group["split"]["dns_all"] is False
 
     def test_a_split_group_of_an_older_panel_has_no_dns(self) -> None:
         data = json.loads(RelayConfig((split_group(),)).to_json())
-        data["groups"][0]["split"].pop("dns")
+        for key in ("dns", "dns_all"):
+            data["groups"][0]["split"].pop(key)
 
         split = RelayConfig.from_json(json.dumps(data)).groups[0].split
 
-        assert split is not None and split.dns == ()
+        assert split is not None and split.dns == () and not split.dns_all
 
     def test_a_config_of_an_older_panel_forwards(self) -> None:
         data = config_data()
@@ -360,6 +369,7 @@ class TestSplitRouting:
             lambda group: group["split"].pop("uplink"),
             lambda group: group["split"].update(dns="1.1.1.1"),
             lambda group: group["split"].update(dns=["one.one"]),
+            lambda group: group["split"].update(dns_all="yes"),
         ],
     )
     def test_rejects_a_spoiled_group(self, spoil: Any) -> None:

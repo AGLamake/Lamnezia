@@ -78,7 +78,12 @@ class Unbound:
         return [process for _, process in self.started if process.code is None]
 
 
-def group(routing: Routing = Routing.SPLIT, list_mode: ListMode = ListMode.EXCLUDE) -> RelayGroup:
+def group(
+    routing: Routing = Routing.SPLIT,
+    list_mode: ListMode = ListMode.EXCLUDE,
+    *,
+    dns_all: bool = False,
+) -> RelayGroup:
     backends = tuple(core(backend) for backend in (A, B, C))
     if routing == Routing.FORWARD:
         return RelayGroup(PORT, backends, service())
@@ -91,7 +96,7 @@ def group(routing: Routing = Routing.SPLIT, list_mode: ListMode = ListMode.EXCLU
     )
     clone = Clone(KeyPair.generate().private_key, IPv4Interface("10.8.1.1/24"), {"Jc": "4"})
     dns = tuple(map(IPv4Address, DNS))
-    split = SplitRouting(clone, uplink, dns=dns, list_mode=list_mode)
+    split = SplitRouting(clone, uplink, dns=dns, list_mode=list_mode, dns_all=dns_all)
     return RelayGroup(PORT, backends, service(), routing, split)
 
 
@@ -100,8 +105,10 @@ def write_config(
     routing: Routing = Routing.SPLIT,
     moment: int = 1,
     list_mode: ListMode = ListMode.EXCLUDE,
+    *,
+    dns_all: bool = False,
 ) -> None:
-    config = RelayConfig((group(routing, list_mode),), failures=1, recovery=2)
+    config = RelayConfig((group(routing, list_mode, dns_all=dns_all),), failures=1, recovery=2)
     (folder / "config.json").write_text(config.to_json())
     os.utime(folder / "config.json", (moment, moment))
 
