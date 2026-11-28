@@ -4,7 +4,7 @@ import json
 from ipaddress import IPv4Address
 from typing import Any
 
-from amnezia_core.relay import Backend, RelayState, Routing
+from amnezia_core.relay import Backend, RelayState, ResolverState, ResolverStatus, Routing
 from apps.relays.services.health import (
     STEADY_SECONDS,
     AllDown,
@@ -163,6 +163,24 @@ def test_health_stored_before_split_routing_is_a_forwarded_group() -> None:
     group = RelayHealth.load(stored).groups[PORT]  # type: ignore[union-attr]
 
     assert group.routing is Routing.FORWARD and not group.split and group.uplink is None
+
+
+def test_the_resolver_status_is_kept_and_survives_storing() -> None:
+    resolver = {"status": "failed", "error": "resolver stopped with code 1"}
+    text = json.dumps({"version": 1, "updated_at": AT, "groups": [], "resolver": resolver})
+
+    health = RelayHealth.of(RelayState.parse(text), MEMBERS)
+
+    assert health.resolver == ResolverState(ResolverStatus.FAILED, resolver["error"])
+    assert RelayHealth.load(json.loads(json.dumps(health.to_dict()))) == health
+
+
+def test_an_older_agent_or_reading_has_the_resolver_unknown() -> None:
+    stored = reading().to_dict()
+    del stored["resolver"]
+
+    assert reading().resolver.status is ResolverStatus.UNKNOWN
+    assert RelayHealth.load(stored).resolver == ResolverState()  # type: ignore[union-attr]
 
 
 def test_the_agent_moving_a_split_group_to_forward_is_an_emergency() -> None:

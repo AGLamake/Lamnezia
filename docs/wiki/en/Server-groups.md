@@ -302,6 +302,18 @@ where the keys send them. Only the keys' DNS addresses are intercepted: a DNS se
 a device is not. The resolver comes with the new relay image: use **Reinstall** on the relay card
 once.
 
+The relay card (the line "DNS of the split groups") and the page of a split group, next to the
+uplink mode, show the state of the resolver:
+
+- *resolver works* — the relay answers the DNS queries of the clients;
+- *resolver error* — the resolver did not start or stopped, with the reason next to it; the relay
+  starts it again in a minute;
+- *no resolver in the image* — the container has no unbound: reinstall the relay;
+- *resolver off* — no group is split now (or each has fallen back to forwarding);
+- *resolver state unknown* — the relay agent is older: press **Update**.
+
+The agent tells only the state, no queries or answers.
+
 In the whitelist mode a DNS query (port 53) that the resolver does not answer, such as one to a DNS
 server set by hand on a device, goes abroad over the uplink, so the network in Russia sees no names
 in clear text. The resolver still answers from Moscow: a site behind a CDN may resolve to Russian

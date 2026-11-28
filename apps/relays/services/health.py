@@ -5,7 +5,8 @@ keeps member ids and names. Comparing a reading with the previous one gives the 
 docs/FALLBACK.md section 7: a switch, a member the relay cannot reach, a group with none left,
 and the pairs of the last two: the member and the group reachable again. A split group also
 keeps its mode, uplink and network count (docs/SPLIT.md 4.6), and the agent moving it to the
-emergency forward and back is a change too.
+emergency forward and back is a change too. The reading keeps the status of the relay's
+resolver as the agent tells it, nothing of its queries.
 
 A member the relay cannot reach opens an outage that goes on from reading to reading. It ends
 only after the member has failed no probe seen for `STEADY_SECONDS`: a member that answers one
@@ -23,6 +24,7 @@ from amnezia_core.relay import (
     BackendState,
     GroupState,
     RelayState,
+    ResolverState,
     Routing,
     UplinkState,
 )
@@ -260,10 +262,12 @@ type Change = Switched | MemberDown | AllDown | MemberUp | GroupUp | ModeChanged
 
 @dataclass(frozen=True)
 class RelayHealth:
-    """Every group of one reading and the moment the agent wrote it (Unix seconds)."""
+    """Every group of one reading, the moment the agent wrote it (Unix seconds) and the status
+    of the relay's resolver."""
 
     updated_at: int
     groups: dict[int, GroupHealth] = field(default_factory=dict)
+    resolver: ResolverState = field(default_factory=ResolverState)
 
     @classmethod
     def of(
@@ -282,15 +286,17 @@ class RelayHealth:
             )
             for group in state.groups
         }
-        return cls(now, groups)
+        return cls(now, groups, state.resolver)
 
     @classmethod
     def load(cls, data: Mapping[str, Any]) -> "RelayHealth | None":
-        """The stored health; None before the first reading or for a form this code cannot read."""
+        """The stored health; None before the first reading or for a form this code cannot read.
+        A reading stored before the resolver was told has it `unknown`."""
         try:
             updated_at = int(data["updated_at"])
             groups = (GroupHealth.from_dict(item, updated_at) for item in data["groups"])
-            return cls(updated_at, {group.port: group for group in groups})
+            resolver = ResolverState.from_dict(data.get("resolver"))
+            return cls(updated_at, {group.port: group for group in groups}, resolver)
         except (KeyError, TypeError, ValueError):
             return None
 
@@ -298,6 +304,7 @@ class RelayHealth:
         return {
             "updated_at": self.updated_at,
             "groups": [group.to_dict() for _port, group in sorted(self.groups.items())],
+            "resolver": self.resolver.to_dict(),
         }
 
     def changes(self, previous: "RelayHealth | None") -> Iterator[Change]:

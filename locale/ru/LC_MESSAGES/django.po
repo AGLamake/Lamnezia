@@ -1062,6 +1062,9 @@ msgstr "Текущий пароль"
 msgid "DNS and MTU go only into client profiles: changing them alone does not touch the server, but clients get them after importing the key again."
 msgstr "DNS и MTU попадают только в профили клиентов: их смена сама по себе не трогает сервер, но клиенты получат их после повторного импорта ключа."
 
+msgid "DNS of the split groups:"
+msgstr "DNS раздельных групп:"
+
 msgid "Danger"
 msgstr "Опасная"
 
@@ -3688,6 +3691,9 @@ msgstr "Приложение Amnezia записывает каждый адре�
 msgid "The Amnezia app no longer develops legacy AmneziaWG. Move its clients to AmneziaWG 3.1: every client gets a new key on AmneziaWG 2.0 and is told to import it, while this container keeps working."
 msgstr "Приложение Amnezia больше не развивает старый AmneziaWG. Переведите его клиентов на AmneziaWG 3.1: каждый получит новый ключ на AmneziaWG 2.0 и уведомление его импортировать, а этот контейнер пока продолжит работать."
 
+msgid "The DNS queries of the clients go where their keys send them until the relay starts its resolver again."
+msgstr "DNS-запросы клиентов идут туда, куда их направляют ключи, пока ретранслятор не запустит свой резолвер снова."
+
 #, python-format
 msgid "The IPsec server certificate is issued for %(ip)s, but the server address is %(host)s: IPsec clients are refused. Reissue the certificate below."
 msgstr "Сертификат сервера IPsec выпущен для %(ip)s, а адрес сервера — %(host)s: клиенты IPsec не подключатся. Перевыпустите сертификат ниже."
@@ -4267,8 +4273,14 @@ msgstr "Контейнер протокола удалён с сервера."
 msgid "The relay agent is of an older release."
 msgstr "Агент ретранслятора из старой версии."
 
+msgid "The relay agent is older and does not tell it: press Update on the relay card."
+msgstr "Агент ретранслятора старой версии и не сообщает его: нажмите «Обновить» в карточке ретранслятора."
+
 msgid "The relay already sends the clients to this server."
 msgstr "Ретранслятор уже отправляет клиентов на этот сервер."
+
+msgid "The relay answers the DNS queries of the clients with its own resolver."
+msgstr "Ретранслятор отвечает на DNS-запросы клиентов своим резолвером."
 
 #, python-format
 msgid "The relay applies %(networks)s network."
@@ -4312,6 +4324,9 @@ msgstr "Ретранслятор пересылает на IPv4-адрес: пр
 
 msgid "The relay has not told how many networks it applies yet."
 msgstr "Ретранслятор ещё не сообщил, сколько сетей применяет."
+
+msgid "The relay image has no unbound: reinstall the relay."
+msgstr "В образе ретранслятора нет unbound: переустановите ретранслятор."
 
 msgid "The relay on the new machine does not run with its ports after the install."
 msgstr "После установки ретранслятор на новой машине не работает со своими портами."
@@ -4388,6 +4403,9 @@ msgstr "Обращение закрыто: можно добавить толь�
 
 msgid "The request is left for the host; the update starts in a few seconds. The panel restarts during the update and may not answer for a minute."
 msgstr "Запрос передан хосту; обновление начнётся через несколько секунд. Во время обновления панель перезапускается и может не отвечать около минуты."
+
+msgid "The resolver runs only while the relay keeps some group in split routing."
+msgstr "Резолвер работает, только пока ретранслятор держит какую-нибудь группу в раздельном режиме."
 
 msgid "The role is changed."
 msgstr "Роль изменена."
@@ -5624,6 +5642,9 @@ msgstr "нет выхода"
 msgid "no limit"
 msgstr "без ограничения"
 
+msgid "no resolver in the image"
+msgstr "резолвера нет в образе"
+
 msgid "no server reachable"
 msgstr "ни один сервер не доступен"
 
@@ -5873,6 +5894,18 @@ msgstr "репозиторий"
 #, python-format
 msgid "resets on %(date)s"
 msgstr "обнулится %(date)s"
+
+msgid "resolver error"
+msgstr "ошибка резолвера"
+
+msgid "resolver off"
+msgstr "резолвер выключен"
+
+msgid "resolver state unknown"
+msgstr "состояние резолвера неизвестно"
+
+msgid "resolver works"
+msgstr "резолвер работает"
 
 msgid "resource"
 msgstr "ресурс"

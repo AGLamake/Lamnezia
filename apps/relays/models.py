@@ -9,7 +9,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from amnezia_core.relay import DEFAULT_CHECK_INTERVAL, DEFAULT_FAILURES
+from amnezia_core.relay import DEFAULT_CHECK_INTERVAL, DEFAULT_FAILURES, ResolverState
 from apps.relays.errors import RelayErrorCode
 from apps.relays.services.health import GroupHealth, RelayHealth
 from apps.relays.services.image import IMAGE_VERSION, agent_digest
@@ -131,6 +131,13 @@ class Relay(models.Model):
 
     def group_health(self, port: int) -> GroupHealth | None:
         return next((group for group in self.groups_health if group.port == port), None)
+
+    @property
+    def resolver(self) -> ResolverState:
+        """The resolver of the split groups' clients as of the last reading; `unknown` before
+        one."""
+        reading = RelayHealth.load(self.health)
+        return reading.resolver if reading else ResolverState()
 
     @property
     def splits(self) -> bool:

@@ -32,7 +32,8 @@ go straight out or always over the uplink. The names and addresses are not logge
 The clients of a split group ask its keys' DNS addresses; the relay answers those queries with
 its own resolver (`Resolver`), which asks 1.1.1.1 over DNS-over-TLS straight from the relay: the
 answers are those for Russia, and the network does not see the names. The resolver writes no
-log of queries or answers, and runs only while some group is split.
+log of queries or answers, and runs only while some group is split. The state tells only its
+status: off, running, failed with the reason, or missing from the image.
 
 The speed limits of the keys of a split group are a tc script the panel writes next to the
 clone peers; the agent runs it on the clone after every change of the clone or of the script.
@@ -97,6 +98,13 @@ RESOLVER_CERTIFICATES = "/etc/ssl/certs/ca-certificates.crt"
 # Seconds before a resolver that did not start or stopped is started again.
 RESOLVER_RETRY = 60
 RESOLVER_STOP_TIMEOUT = 5
+# Characters of a resolver failure kept in the state: unbound-checkconf may print a lot.
+RESOLVER_ERROR_LIMIT = 300
+# Status of the resolver (`amnezia_core.relay.ResolverStatus`).
+RESOLVER_OFF = "off"
+RESOLVER_RUNNING = "running"
+RESOLVER_FAILED = "failed"
+RESOLVER_MISSING = "missing"
 DNS_PORT = 53
 # Directions of an own domain (`amnezia_core.split_lists.Direction`).
 LOCAL = "local"
@@ -804,7 +812,7 @@ class Resolver:
 
     A resolver that did not start or stopped is started again after `RESOLVER_RETRY` seconds;
     until then the queries are not redirected and go where the keys send them. An old relay
-    image has no unbound: the clients' DNS stays as it was.
+    image has no unbound: the clients' DNS stays as it was, and the state says it is missing.
     """
 
     def __init__(
@@ -823,6 +831,7 @@ class Resolver:
         self._wanted = False
         self._retry_at = 0.0
         self._failure: str | None = None
+        self._missing = False
 
     def serve(self, subnets: Sequence[str]) -> bool:
         """Answer the clients of these subnets, or stop for none; True while it runs."""
@@ -839,10 +848,15 @@ class Resolver:
         _write_secret(self._config, text)
         try:
             self._process = self._start(self._config)
+        except FileNotFoundError:
+            self._missing = True
+            self._fail("resolver not started: unbound is not installed")
+            return False
         except OSError as error:
+            self._missing = False
             self._fail(f"resolver not started: {error}")
             return False
-        self._text, self._failure = text, None
+        self._text, self._failure, self._missing = text, None, False
         return True
 
     def stale(self) -> bool:
@@ -852,6 +866,16 @@ class Resolver:
             self._fail(f"resolver stopped with code {code}")
             return True
         return self._wanted and self._process is None and self._clock() >= self._retry_at
+
+    def state(self) -> dict[str, str]:
+        """The status for the state file and, when it failed, why; never what it answered."""
+        if not self._wanted:
+            return {"status": RESOLVER_OFF}
+        if self._process is not None:
+            return {"status": RESOLVER_RUNNING}
+        if self._missing:
+            return {"status": RESOLVER_MISSING}
+        return {"status": RESOLVER_FAILED, "error": (self._failure or "")[:RESOLVER_ERROR_LIMIT]}
 
     def stop(self) -> None:
         process, self._process, self._text = self._process, None, None
@@ -1178,7 +1202,12 @@ class Agent:
             {**watch.state(self._traffic.total(port, current)), **self._split_state(port)}
             for port, watch in sorted(self._watches.items())
         ]
-        data: dict[str, Any] = {"version": FORMAT_VERSION, "updated_at": now, "groups": groups}
+        data: dict[str, Any] = {
+            "version": FORMAT_VERSION,
+            "updated_at": now,
+            "groups": groups,
+            "resolver": self._resolver.state(),
+        }
         if self._answer is not None:
             data["switch"] = self._answer
         text = json.dumps(data)

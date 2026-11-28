@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **State of the relay's DNS resolver**: the relay card and the page of a split group show whether
+  the resolver of the split groups' clients works, failed (with the reason), is missing from the
+  image or is off. Only the state is reported, never the queries. A relay agent of an older release
+  shows the state as unknown until **Update**.
 - **The relay card says when the relay needs a reinstall**: split routing needs the new relay
   image, and **Update** brings only the agent. The panel now remembers the image a relay was
   installed with; a relay of an older image shows **needs reinstall** with a **Reinstall** button,

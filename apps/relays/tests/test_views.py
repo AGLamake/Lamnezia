@@ -135,6 +135,54 @@ def test_clients_without_an_answer_are_shown_on_both_pages(browser: Client, watc
     assert "the clients get no answer from it" in browser.get(card).content.decode()
 
 
+def split_with_resolver(relay: Relay, resolver: dict[str, str] | None) -> ServerGroup:
+    """The relay's group in split routing, in the panel and in the reading."""
+    group = relay.server.relayed_groups.get()
+    ServerGroup.objects.filter(pk=group.pk).update(routing="split")
+    relay.health["groups"][0].update(routing="split", mode="split")
+    if resolver is not None:
+        relay.health["resolver"] = resolver
+    relay.save(update_fields=["health"])
+    return group
+
+
+@pytest.mark.parametrize(
+    ("resolver", "shown"),
+    [
+        ({"status": "running", "error": ""}, "resolver works"),
+        ({"status": "missing", "error": ""}, "no resolver in the image"),
+        ({"status": "off", "error": ""}, "resolver off"),
+        (None, "resolver state unknown"),
+    ],
+)
+def test_both_pages_show_the_resolver_status(
+    browser: Client, watched: Relay, resolver: dict[str, str] | None, shown: str
+) -> None:
+    group = split_with_resolver(watched, resolver)
+
+    card = browser.get(reverse("servers:detail", args=[watched.server.pk])).content.decode()
+    detail = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert 'id="relay-resolver"' in card and shown in card
+    assert shown in detail
+
+
+def test_a_failed_resolver_shows_why(browser: Client, watched: Relay) -> None:
+    group = split_with_resolver(
+        watched, {"status": "failed", "error": "resolver stopped with code 1"}
+    )
+
+    detail = browser.get(reverse("groups:detail", args=[group.pk])).content.decode()
+
+    assert "resolver error" in detail and "resolver stopped with code 1" in detail
+
+
+def test_a_relay_without_split_groups_shows_no_resolver(browser: Client, watched: Relay) -> None:
+    page = browser.get(reverse("servers:detail", args=[watched.server.pk])).content.decode()
+
+    assert 'id="relay-resolver"' not in page
+
+
 def test_the_card_tells_why_the_sync_skips_the_relay(browser: Client, watched: Relay) -> None:
     watched.sync_skipped = SyncSkip.MEMBER_ON_RELAY
     watched.sync_skipped_detail = "Europe: AmneziaWG"

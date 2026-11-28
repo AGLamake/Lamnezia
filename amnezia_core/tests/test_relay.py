@@ -16,6 +16,8 @@ from amnezia_core.relay import (
     RelayConfig,
     RelayGroup,
     RelayState,
+    ResolverState,
+    ResolverStatus,
     Routing,
     ServicePeer,
     SplitRouting,
@@ -192,6 +194,9 @@ class TestRelayState:
             lambda data: data.update(switch="r1"),
             lambda data: data.update(switch={"id": "r1", "outcome": "maybe"}),
             lambda data: data.update(switch={"outcome": "switched"}),
+            lambda data: data.update(resolver="running"),
+            lambda data: data.update(resolver={"status": "sleeping"}),
+            lambda data: data.update(resolver={"status": "failed", "error": 1}),
         ],
     )
     def test_rejects_a_spoiled_file(self, spoil: Any) -> None:
@@ -210,6 +215,34 @@ class TestRelayState:
         state = RelayState.parse(json.dumps(data))
 
         assert state.switch == SwitchResult("r1", SwitchOutcome.UNREACHABLE)
+
+    def test_an_older_agent_tells_no_resolver(self) -> None:
+        assert RelayState.parse(json.dumps(STATE)).resolver == ResolverState()
+        assert ResolverState().status is ResolverStatus.UNKNOWN
+
+    @pytest.mark.parametrize(
+        ("resolver", "expected"),
+        [
+            ({"status": "running"}, ResolverState(ResolverStatus.RUNNING)),
+            ({"status": "off"}, ResolverState(ResolverStatus.OFF)),
+            ({"status": "missing"}, ResolverState(ResolverStatus.MISSING)),
+            (
+                {"status": "failed", "error": "resolver stopped with code 1"},
+                ResolverState(ResolverStatus.FAILED, "resolver stopped with code 1"),
+            ),
+        ],
+    )
+    def test_reads_the_resolver_status(
+        self, resolver: dict[str, str], expected: ResolverState
+    ) -> None:
+        state = RelayState.parse(json.dumps({**STATE, "resolver": resolver}))
+
+        assert state.resolver == expected
+
+    def test_the_resolver_status_goes_back_and_forth(self) -> None:
+        resolver = ResolverState(ResolverStatus.FAILED, "bad config")
+
+        assert ResolverState.from_dict(resolver.to_dict()) == resolver
 
 
 class TestSwitchRequest:

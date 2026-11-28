@@ -13,7 +13,8 @@ client of the group on the active member. Its list mode says which part the list
 networks sent straight out (blacklist, Russian networks) or the only ones sent abroad
 (whitelist). Its peers, its list of networks and its own domains,
 which the agent resolves, come in files of their own, so issuing a key or a new list does not
-rewrite the config.
+rewrite the config. The state tells the status of the relay's resolver for the split groups'
+clients, never its queries.
 """
 
 import json
@@ -486,6 +487,38 @@ class GroupState:
         )
 
 
+class ResolverStatus(StrEnum):
+    """The relay's resolver: `off` while no group is split, `missing` in an image without
+    unbound, `unknown` from an agent of an older release that does not tell."""
+
+    UNKNOWN = "unknown"
+    OFF = "off"
+    RUNNING = "running"
+    FAILED = "failed"
+    MISSING = "missing"
+
+
+@dataclass(frozen=True)
+class ResolverState:
+    """The status of the relay's resolver and, when it failed, why."""
+
+    status: ResolverStatus = ResolverStatus.UNKNOWN
+    error: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"status": str(self.status), "error": self.error}
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any] | None) -> "ResolverState":
+        """None, as an older agent writes, is `unknown`."""
+        if data is None:
+            return cls()
+        error = data.get("error", "")
+        if not isinstance(error, str):
+            raise RelayFormatError("Resolver error must be a string.")
+        return cls(_choice(ResolverStatus, data.get("status"), "resolver status"), error)
+
+
 @dataclass(frozen=True)
 class SwitchRequest:
     """The panel asks the agent to move a group to one of its members, for server maintenance.
@@ -537,12 +570,14 @@ class SwitchResult:
 
 @dataclass(frozen=True)
 class RelayState:
-    """The agent's state file: when it was written, the state of every group and the answer
-    to the last switch request; an agent of an older release writes no answer."""
+    """The agent's state file: when it was written, the state of every group, the answer to
+    the last switch request and the status of the resolver; an agent of an older release
+    writes no answer and no resolver."""
 
     updated_at: datetime
     groups: tuple[GroupState, ...]
     switch: SwitchResult | None = None
+    resolver: ResolverState = field(default_factory=ResolverState)
 
     @classmethod
     def parse(cls, text: str) -> "RelayState":
@@ -550,11 +585,15 @@ class RelayState:
         switch = data.get("switch")
         if switch is not None and not isinstance(switch, dict):
             raise RelayFormatError("'switch' must be an object or null.")
+        resolver = data.get("resolver")
+        if resolver is not None and not isinstance(resolver, dict):
+            raise RelayFormatError("'resolver' must be an object or null.")
         return _parsed(
             lambda: cls(
                 updated_at=_required_moment(data, "updated_at"),
                 groups=tuple(GroupState.from_dict(item) for item in _objects(data, "groups")),
                 switch=SwitchResult.from_dict(switch) if switch is not None else None,
+                resolver=ResolverState.from_dict(resolver),
             )
         )
 

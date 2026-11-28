@@ -6,8 +6,9 @@ from typing import Any
 
 import pytest
 
-from amnezia_core.relay import Routing
+from amnezia_core.relay import RelayState, ResolverState, ResolverStatus, Routing
 from apps.relays.agent.relay_agent import (
+    RESOLVER_ERROR_LIMIT,
     RESOLVER_RETRY,
     Resolver,
     resolver_config,
@@ -16,6 +17,7 @@ from apps.relays.agent.relay_agent import (
 from apps.relays.tests.test_agent import PORT, A, B, C, FakeNetwork
 from apps.relays.tests.test_agent_split import (
     SUBNET,
+    FakeProcess,
     Unbound,
     started,
     until_forward,
@@ -196,3 +198,68 @@ def test_a_bad_config_is_not_started(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     with pytest.raises(OSError, match="syntax error"):
         start_unbound(tmp_path / "resolver.conf")
+
+
+def resolver_state(folder: Path) -> ResolverState:
+    return RelayState.parse((folder / "state.json").read_text()).resolver
+
+
+def test_the_state_tells_a_running_resolver(
+    network: FakeNetwork, folder: Path, unbound: Unbound
+) -> None:
+    started(network, folder, unbound)
+
+    assert resolver_state(folder) == ResolverState(ResolverStatus.RUNNING)
+
+
+def test_the_state_tells_no_resolver_without_split_groups(
+    network: FakeNetwork, folder: Path, unbound: Unbound
+) -> None:
+    write_config(folder, Routing.FORWARD)
+
+    started(network, folder, unbound)
+
+    assert resolver_state(folder) == ResolverState(ResolverStatus.OFF)
+
+
+def test_the_state_tells_an_image_without_unbound(network: FakeNetwork, folder: Path) -> None:
+    started(network, folder, Unbound(missing=True))
+
+    assert resolver_state(folder) == ResolverState(ResolverStatus.MISSING)
+
+
+def test_the_state_tells_why_the_resolver_failed(
+    network: FakeNetwork, folder: Path, unbound: Unbound
+) -> None:
+    agent = started(network, folder, unbound)
+    unbound.running[0].code = 1
+
+    agent.tick()
+
+    assert resolver_state(folder) == ResolverState(
+        ResolverStatus.FAILED, "resolver stopped with code 1"
+    )
+
+
+def test_a_long_failure_is_cut_in_the_state(tmp_path: Path) -> None:
+    def start(config: Path) -> FakeProcess:
+        raise OSError("bad config: " + "x" * 1000)
+
+    resolver = Resolver(tmp_path, Clock(), lambda line: None, start)
+    resolver.serve([SUBNET])
+
+    state = resolver.state()
+    assert state["status"] == "failed"
+    assert len(state["error"]) == RESOLVER_ERROR_LIMIT
+
+
+def test_a_started_resolver_is_no_longer_missing(tmp_path: Path) -> None:
+    clock, unbound = Clock(), Unbound(missing=True)
+    resolver = Resolver(tmp_path, clock, lambda line: None, unbound)
+    resolver.serve([SUBNET])
+    unbound.missing = False
+    clock.now += RESOLVER_RETRY
+
+    resolver.serve([SUBNET])
+
+    assert resolver.state() == {"status": "running"}
