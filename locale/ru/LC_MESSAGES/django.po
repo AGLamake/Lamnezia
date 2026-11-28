@@ -4712,6 +4712,10 @@ msgstr "Этот ресурс нельзя ограничить таким об�
 msgid "This server is not available to you."
 msgstr "Этот сервер вам недоступен."
 
+#, python-format
+msgid "This server leads a split group: %(copies)s takes its peers from the active keys of the panel, not from the server. A peer marked “not in the clone” works on the server, but its client does not work through the relay until the panel takes the peer as an active key."
+msgstr "Этот сервер ведёт группу в раздельном режиме: %(copies)s берёт пиры из активных ключей панели, а не с сервера. Пир с пометкой «нет в клоне» работает на сервере, но через ретранслятор его клиент не работает, пока панель не примет пир как активный ключ."
+
 msgid "This version is not the latest release newer than the panel."
 msgstr "Эта версия — не последний релиз новее панели."
 
@@ -5717,6 +5721,9 @@ msgstr "не завершена"
 msgid "not imported yet"
 msgstr "ещё не импортирован"
 
+msgid "not in the clone"
+msgstr "нет в клоне"
+
 msgid "not installed"
 msgstr "не установлен"
 
@@ -6141,6 +6148,10 @@ msgstr "текст (русский)"
 
 msgid "the clients get no answer from it"
 msgstr "клиенты не получают от него ответа"
+
+#, python-format
+msgid "the clone of group %(group)s on relay %(relay)s"
+msgstr "клон группы %(group)s на ретрансляторе %(relay)s"
 
 msgid "the copy on the new machine is ready"
 msgstr "копия на новой машине готова"

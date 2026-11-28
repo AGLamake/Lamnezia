@@ -87,3 +87,9 @@ action is recorded in the audit journal.
 
 Sources with differences are shown as cards with a table; those that match the panel share one short
 card — a line per server and protocol with a **Check now** button.
+
+When a server leads a group in [split routing](Server-groups.md#split-routing), the clone on the
+relay takes its peers from the active keys of the panel, not from the server files. So the peers
+"added outside the panel" and "off in the panel, but on the server" are marked "not in the clone":
+they are on the server, but their clients do not work through the relay. After **Add to the
+panel** or **Mark as active** the relay gets the peer at the next sync.

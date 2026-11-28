@@ -240,8 +240,10 @@ The group page shows the routing of a group behind an installed relay and switch
 When the group goes back to forwarding, the relay stops using the clone first, and only then the
 uplink peer is taken off the members. While a group is split, issuing, revoking and editing its
 keys reaches the clone too: the relay gets the new peers within seconds, and the sync by the minute
-catches what was missed. The clone has the keys the panel knows; peers added on the server by hand
-are not copied. The switch is refused while another operation on the relay runs.
+catches what was missed. The clone has the active keys of the panel; peers added on the server by
+hand are not copied, and their clients do not work through the relay. The
+[differences](Keys.md#differences-with-servers) page marks such peers of the leader "not in the
+clone". The switch is refused while another operation on the relay runs.
 
 Split routing needs the new relay image (iproute2, the unbound resolver, a loose reverse path
 check of the container): **Update** brings only the agent. The panel remembers the image a relay was

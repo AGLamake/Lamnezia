@@ -7,13 +7,18 @@ panel's keys and not from awg0.conf of the leader: a sync then needs no SSH to a
 
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+
+from django.utils.translation import gettext as _
 
 from amnezia_core.awg import Peer
 from amnezia_core.relay import ClonePeers
+from apps.groups.models import GroupMember, GroupRouting
 from apps.keys.models import AccessKey, KeyStatus
+from apps.keys.services.key_copies import key_copies
 from apps.keys.services.profile import ServerProfile
 from apps.protocols.models import ProtocolInstance
+from apps.relays.models import PeerRole
 
 
 def clone_peers(leader: ProtocolInstance) -> ClonePeers:
@@ -24,6 +29,28 @@ def clone_peers(leader: ProtocolInstance) -> ClonePeers:
         .order_by("pk")
     )
     return ClonePeers(tuple(_peer(key, leader.preshared_key) for key in keys))
+
+
+@key_copies.register
+def split_clones() -> Iterator[tuple[str, str]]:
+    """The leading server of each group an installed relay splits, with the clone it feeds."""
+    leaders = (
+        GroupMember.objects.filter(
+            leading=True,
+            group__routing=GroupRouting.SPLIT,
+            group__relay__relay_role__installed_at__isnull=False,
+            group__service_peers__role=PeerRole.UPLINK,
+        )
+        .select_related("group__relay")
+        .distinct()
+    )
+    for member in leaders:
+        group = member.group
+        name = _("the clone of group %(group)s on relay %(relay)s") % {
+            "group": group.name,
+            "relay": group.relay.name if group.relay else "",
+        }
+        yield ProtocolInstance.source_for(member.instance_id), name
 
 
 def peers_digest(files: Mapping[str, str]) -> str:

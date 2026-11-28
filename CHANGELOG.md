@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Peers missing from the clone of a split group**: on **Keys → Differences with servers** the
+  peers of the leading server that the panel does not hold as active keys (added outside the
+  panel, or off in the panel) are marked "not in the clone" when the server leads a split group:
+  the relay clone takes its peers from the panel, so their clients do not work through the relay.
 - **Split traffic through the channel and straight out**: the relay card and the group page of a
   split group show how much traffic of the clients goes abroad through the channel and how much
   straight from Russia, with a chart by hour for the day and by six hours for the week. Needs

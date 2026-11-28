@@ -26,6 +26,7 @@ from apps.keys.services.actions import KeyActions
 from apps.keys.services.address import KeyAddress
 from apps.keys.services.drift import ALLOWED_ACTIONS, DriftAction, DriftActions
 from apps.keys.services.instances import instances
+from apps.keys.services.key_copies import LACKED_KINDS, key_copies
 from apps.keys.services.profile import KeyExport
 from apps.keys.services.xray_profiles import request_profiles
 from apps.keys.services.zone import KeyQuotaReachedError, KeyZone
@@ -275,10 +276,12 @@ class DriftListView(_KeysStaffView, TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         drifts = self.key_zone.drifts().select_related("key")
         titles = self.key_zone.titles()
+        copies = key_copies.by_source()
         groups = [
             {
                 "source": source,
                 "title": title,
+                "copies": copies.get(source, []),
                 "drifts": [
                     {
                         "drift": d,
@@ -286,6 +289,8 @@ class DriftListView(_KeysStaffView, TemplateView):
                             (action, *_DRIFT_BUTTONS[(DriftKind(d.kind), action)])
                             for action in ALLOWED_ACTIONS[d.kind]
                         ],
+                        # The peer works on the server but not through its copies.
+                        "lacked": source in copies and d.kind in LACKED_KINDS,
                     }
                     for d in drifts
                     if d.source == source

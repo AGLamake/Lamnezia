@@ -13,6 +13,7 @@ from apps.audit.models import AuditEvent
 from apps.keys.models import AccessKey, Drift, DriftKind, KeyStatus
 from apps.keys.services.drift import RESOLVE, DriftAction, DriftActions, reconcile_all
 from apps.keys.services.instances import Instance, instances
+from apps.keys.services.key_copies import KeyCopies, key_copies
 from apps.keys.tests.conftest import HOST, SOURCE
 from apps.keys.tests.fake_server import FakeAwgServer
 from apps.operations.models import Operation, OperationStatus
@@ -321,3 +322,41 @@ def test_check_button_starts_a_check(awg_server: FakeAwgServer, staff_client: Cl
 
     assert response.status_code == 302
     assert Operation.objects.get().params == {"source": SOURCE}
+
+
+def test_a_peer_missing_from_a_copy_of_the_keys_is_marked(
+    awg_server: FakeAwgServer, actions: DriftActions, run: Any, staff_client: Client
+) -> None:
+    key(ANNA)
+    key(GONE)
+    check(actions, run)
+
+    def copies() -> list[tuple[str, str]]:
+        return [(SOURCE, "the clone of group Edge on relay Moscow")]
+
+    key_copies.register(copies)
+    try:
+        html = staff_client.get("/keys/drift/").content.decode()
+    finally:
+        key_copies.unregister(copies)
+
+    assert "the clone of group Edge on relay Moscow" in html
+    assert html.count("not in the clone") == 2, "the note and the app peer, not the removed one"
+
+
+def test_without_a_copy_no_peer_is_marked(
+    awg_server: FakeAwgServer, actions: DriftActions, run: Any, staff_client: Client
+) -> None:
+    key(ANNA)
+    check(actions, run)
+
+    html = staff_client.get("/keys/drift/").content.decode()
+
+    assert "not in the clone" not in html
+
+
+def test_copies_are_listed_by_source() -> None:
+    copies = KeyCopies()
+    copies.register(lambda: [("awg:1", "b"), ("awg:2", "c"), ("awg:1", "a")])
+
+    assert copies.by_source() == {"awg:1": ["a", "b"], "awg:2": ["c"]}

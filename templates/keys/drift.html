@@ -24,6 +24,9 @@
         <button type="submit" class="btn btn-ghost btn-sm">{% icon "refresh" "icon-sm" %}{% translate "Check now" %}</button>
       </form>
     </div>
+    {% if group.copies %}
+      <p class="help-text px-4 pb-3 sm:px-5">{% blocktranslate with copies=group.copies|join:"; " %}This server leads a split group: {{ copies }} takes its peers from the active keys of the panel, not from the server. A peer marked “not in the clone” works on the server, but its client does not work through the relay until the panel takes the peer as an active key.{% endblocktranslate %}</p>
+    {% endif %}
       <div class="table-wrap rounded-none border-x-0 border-b-0 shadow-none">
         <table class="table table-cards">
           <thead>
@@ -38,7 +41,7 @@
                   <div class="help-text break-all font-mono">{{ item.drift.public_key }}</div>
                 </td>
                 <td data-label="{% translate 'IP address' %}" class="font-mono text-xs">{{ item.drift.client_ip|default:"—" }}</td>
-                <td data-label="{% translate 'Difference' %}"><span class="badge badge-warning">{{ item.drift.get_kind_display }}</span></td>
+                <td data-label="{% translate 'Difference' %}"><span class="badge badge-warning">{{ item.drift.get_kind_display }}</span>{% if item.lacked %} <span class="badge badge-danger">{% translate "not in the clone" %}</span>{% endif %}</td>
                 <td>
                   <div class="flex flex-wrap gap-2 sm:justify-end">
                     {% for action, label, style in item.buttons %}
