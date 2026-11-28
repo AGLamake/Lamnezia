@@ -22,6 +22,9 @@ msgstr "Сводка по утрам: упавшие серверы, трафи�
 msgid "A user hears once a period that this share of their traffic limit is used. 0 turns the warning off."
 msgstr "Пользователь один раз за период узнаёт, что израсходовал эту долю лимита трафика. 0 — не предупреждать."
 
+msgid "Administrators hear when a server has this many active keys or more. Empty turns it off."
+msgstr "Администраторы узнают, когда на сервере столько активных ключей или больше. Пусто — не следить."
+
 msgid "Administrators hear when the CPU of a server stays this busy. 0 turns it off."
 msgstr "Администраторы получают уведомление, когда процессор сервера долго загружен на столько. 0 — выключить."
 
@@ -154,6 +157,9 @@ msgstr "То же для занятого места на диске. 0 — вы
 msgid "The same for the memory used. 0 turns it off."
 msgstr "То же для занятой памяти. 0 — выключить."
 
+msgid "The same for the traffic through a server in the last 24 hours. Empty turns it off."
+msgstr "То же для трафика через сервер за последние 24 часа. Пусто — не следить."
+
 msgid "Up to eight ports."
 msgstr "Не больше восьми портов."
 
@@ -186,6 +192,9 @@ msgstr "Без прав доступа. Повышает лимит GitHub дл�
 
 msgid "Yes, write the plan and we will send the payment details."
 msgstr "Да, напишите тариф, и мы пришлём реквизиты для оплаты."
+
+msgid "active keys per server"
+msgstr "активных ключей на сервер"
 
 msgid "cleanup"
 msgstr "чистка"
@@ -258,6 +267,9 @@ msgstr "подписка без ID устройства"
 
 msgid "task"
 msgstr "задача"
+
+msgid "traffic per server in a day, GB"
+msgstr "трафик сервера за сутки, ГБ"
 
 msgid "traffic warning, %"
 msgstr "предупреждение о трафике, %"

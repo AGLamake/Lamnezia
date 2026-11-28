@@ -151,6 +151,25 @@ class SiteSettings(models.Model):
             "a load back above the threshold sooner is not told again."
         ),
     )
+    address_keys = models.PositiveIntegerField(
+        _("active keys per server"),
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        help_text=_(
+            "Administrators hear when a server has this many active keys or more. "
+            "Empty turns it off."
+        ),
+    )
+    address_daily_gb = models.PositiveIntegerField(
+        _("traffic per server in a day, GB"),
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        help_text=_(
+            "The same for the traffic through a server in the last 24 hours. Empty turns it off."
+        ),
+    )
     report_frequency = models.CharField(
         _("report to the staff"),
         max_length=8,

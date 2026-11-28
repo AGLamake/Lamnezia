@@ -20,6 +20,7 @@ from apps.notifications.services.trouble import (
     report_trouble,
 )
 from apps.servers.models import Server, ServerSample
+from apps.servers.services.address_load import AddressRules, AddressWatch
 from apps.servers.services.connection import connect
 from apps.servers.services.interface_watch import INTERFACE_RULES, InterfaceWatch
 from apps.servers.services.load import LoadRules, LoadWatch
@@ -71,6 +72,7 @@ class ServerMonitor:
         server.record_sample(sample)
         if sample.answered:
             LoadWatch(LoadRules.from_site()).check(server, sample.at)
+            AddressWatch(AddressRules.from_site()).check(server, sample.at)
             InterfaceWatch(INTERFACE_RULES).check(server, sample.at)
         if server.online is False:
             _report_down(server)

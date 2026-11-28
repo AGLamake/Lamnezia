@@ -20,7 +20,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import ReportFrequency
 from apps.groups.models import LagReason
-from apps.servers.models import LoadResource
+from apps.servers.models import AddressMeasure, LoadResource
 from apps.traffic.signals import LimitReason
 
 
@@ -31,6 +31,8 @@ class Event(StrEnum):
     AWG3_RESTORED = "awg3_restored"
     SERVER_LOAD_HIGH = "server_load_high"
     SERVER_LOAD_NORMAL = "server_load_normal"
+    ADDRESS_BUSY = "address_busy"
+    ADDRESS_CALM = "address_calm"
     INTERFACE_LOST = "interface_lost"
     INTERFACE_RESTORED = "interface_restored"
     INTERFACE_REPAIR_FAILED = "interface_repair_failed"
@@ -200,6 +202,27 @@ EVENTS: dict[Event, EventType] = {
             "of {threshold}%. High since {since}."
         ),
         coded={"resource": LoadResource},
+    ),
+    # `measure` is keys or traffic; `value` the latest count (keys, or GB in the last 24 hours),
+    # `since` the first check above the threshold. While the load lasts, the alert is repeated.
+    Event.ADDRESS_BUSY: EventType(
+        _("Much load on a server address"),
+        _("Much load on {server}: {measure} {value}"),
+        _(
+            "{measure} of the server {server} ({host}): {value}, at or above the threshold of "
+            "{threshold}, since {since}. Many users or much traffic through one address may "
+            "draw a block."
+        ),
+        coded={"measure": AddressMeasure},
+    ),
+    Event.ADDRESS_CALM: EventType(
+        _("Load on a server address is back to normal"),
+        _("Load on the address of {server} is back to normal: {measure}"),
+        _(
+            "{measure} of the server {server} ({host}): {value}, below the threshold of "
+            "{threshold}. High since {since}."
+        ),
+        coded={"measure": AddressMeasure},
     ),
     # `container` runs, but its interface is gone; `since` is the first reading without it and
     # `attempts` the restarts the panel made.

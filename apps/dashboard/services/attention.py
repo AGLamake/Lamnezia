@@ -67,7 +67,7 @@ class Attention:
     def servers(self) -> list[Server]:
         servers: QuerySet[Server] = (
             Server.objects.select_related("latest_sample")
-            .prefetch_related("load_alerts", "interface_repairs")
+            .prefetch_related("load_alerts", "address_alerts", "interface_repairs")
             .order_by("name")
         )
         return list(self._zone.narrow(servers, server="pk"))
@@ -167,6 +167,10 @@ class Attention:
         """Answering servers with a resource above its load threshold for a while."""
         return [server for server in self.servers if server.online and server.overloads]
 
+    def busy_addresses(self) -> list[Server]:
+        """Servers with more active keys or traffic in a day than the address load thresholds."""
+        return [server for server in self.servers if server.busy_address]
+
     def failed_repairs(self) -> list[InterfaceRepair]:
         """Containers still without their VPN interface after every restart the monitor tried."""
         return [
@@ -253,6 +257,7 @@ class Attention:
             for relay in self.mismatched_relays()
         ]
         notices += [self._overload(server) for server in self.overloaded()]
+        notices += [self._busy_address(server) for server in self.busy_addresses()]
         notices += [
             Notice(
                 "warning",
@@ -358,6 +363,19 @@ class Attention:
             text % {"name": server.name, "resources": resources},
             self._server_url(server),
             f"overload:{server.pk}",
+        )
+
+    def _busy_address(self, server: Server) -> Notice:
+        measures = ", ".join(
+            f"{alert.get_measure_display()} {alert.value}" for alert in server.busy_address
+        )
+        text = _("%(name)s: much load on the address — %(measures)s")
+        return Notice(
+            "warning",
+            "users",
+            text % {"name": server.name, "measures": measures},
+            self._server_url(server),
+            f"busy-address:{server.pk}",
         )
 
     def _payment(self, server: Server) -> Notice:

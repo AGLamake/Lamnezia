@@ -154,6 +154,7 @@ background job of its own, so a server that does not answer does not delay the o
 - **High load: CPU above the threshold since …** — a resource has stayed above its threshold in
   **Settings → Server load** for several readings in a row; the server is also in **Needs
   attention** until the load is back to normal ([Notifications](Notifications.md)).
+- **Much load on the address: active keys 120, at or above the threshold since …** — the server has reached a threshold of **Settings → Server load** for active keys or traffic in a day (both off by default); the server is also in **Needs attention** ([Notifications](Notifications.md)).
 - **No VPN interface, clients have no connection: amnezia-awg2** — the container runs, but its
   interface is gone, e.g. the kernel killed amneziawg-go when memory ran out. The reading checks
   `awg show` / `wg show` inside every running WireGuard-family container (AmneziaWG, legacy

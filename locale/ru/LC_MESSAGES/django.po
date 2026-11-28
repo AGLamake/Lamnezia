@@ -2048,6 +2048,9 @@ msgstr "Нагрузка канала по часам за последние с
 msgid "Load of the channel by six hours for the last week"
 msgstr "Нагрузка канала по шесть часов за последнюю неделю"
 
+msgid "Load on the address: many users or much traffic through one IP may draw a block. Both thresholds are off by default."
+msgstr "Нагрузка на адрес: много пользователей или большой трафик через один IP может привлечь блокировку. Оба порога по умолчанию выключены."
+
 msgid "Load the ifb module on the host"
 msgstr "Загрузить модуль ifb на хосте"
 
@@ -2185,6 +2188,10 @@ msgstr "Перевести на AmneziaWG 3.1"
 
 msgid "Moves the panel with all its data to another machine. The panel installs itself there, restores its archive and checks the copy. You only point the domain to the new machine."
 msgstr "Переносит панель со всеми данными на другую машину. Панель сама ставится туда, восстанавливает свой архив и проверяет копию. Вам остаётся только направить домен на новую машину."
+
+#, python-format
+msgid "Much load on the address: %(measure)s %(value)s, at or above the threshold since %(since)s."
+msgstr "Большая нагрузка на адрес: %(measure)s %(value)s, не ниже порога с %(since)s."
 
 msgid "My access"
 msgstr "Мой доступ"

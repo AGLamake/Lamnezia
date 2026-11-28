@@ -85,6 +85,9 @@ msgstr "Введите пароль."
 msgid "Free disk space is unknown."
 msgstr "Свободное место узнать не удалось."
 
+msgid "GB in a day"
+msgstr "ГБ за сутки"
+
 msgid "IP or domain"
 msgstr "IP или домен"
 
@@ -224,11 +227,20 @@ msgstr "Вы единственный владелец сервера."
 msgid "You no longer answer for the server."
 msgstr "Вы больше не отвечаете за сервер."
 
+msgid "active keys"
+msgstr "активных ключей"
+
 msgid "added at"
 msgstr "добавлен"
 
 msgid "address"
 msgstr "адрес"
+
+msgid "address load alert"
+msgstr "оповещение о нагрузке на адрес"
+
+msgid "address load alerts"
+msgstr "оповещения о нагрузке на адрес"
 
 msgid "check error"
 msgstr "ошибка проверки"
@@ -292,6 +304,9 @@ msgstr "расположение"
 
 msgid "login with"
 msgstr "вход"
+
+msgid "measure"
+msgstr "показатель"
 
 msgid "memory"
 msgstr "память"
@@ -361,6 +376,9 @@ msgstr "на обслуживании"
 
 msgid "uptime, s"
 msgstr "время работы, с"
+
+msgid "value"
+msgstr "значение"
 
 msgid "warnings"
 msgstr "предупреждения"

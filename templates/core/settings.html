@@ -51,6 +51,11 @@
       {{ form.load_readings.as_field_group }}
       {{ form.load_repeat_hours.as_field_group }}
     </div>
+    <p class="help-text">{% translate "Load on the address: many users or much traffic through one IP may draw a block. Both thresholds are off by default." %}</p>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {{ form.address_keys.as_field_group }}
+      {{ form.address_daily_gb.as_field_group }}
+    </div>
     </div>
   </section>
 

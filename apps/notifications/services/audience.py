@@ -45,6 +45,8 @@ class StaffAudience:
         Event.AWG3_RESTORED: Scope.server(Section.SERVERS),
         Event.SERVER_LOAD_HIGH: Scope.server(Section.SERVERS),
         Event.SERVER_LOAD_NORMAL: Scope.server(Section.SERVERS),
+        Event.ADDRESS_BUSY: Scope.server(Section.SERVERS),
+        Event.ADDRESS_CALM: Scope.server(Section.SERVERS),
         Event.INTERFACE_LOST: Scope.server(Section.SERVERS),
         Event.INTERFACE_RESTORED: Scope.server(Section.SERVERS),
         Event.INTERFACE_REPAIR_FAILED: Scope.server(Section.SERVERS),

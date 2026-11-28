@@ -65,6 +65,10 @@ msgid "%(name)s: high load — %(resources)s"
 msgstr "%(name)s: высокая нагрузка — %(resources)s"
 
 #, python-format
+msgid "%(name)s: much load on the address — %(measures)s"
+msgstr "%(name)s: большая нагрузка на адрес — %(measures)s"
+
+#, python-format
 msgid "%(name)s: no ifb module, upload over the speed limits is dropped"
 msgstr "%(name)s: нет модуля ifb, отдача сверх ограничений скорости отбрасывается"
 

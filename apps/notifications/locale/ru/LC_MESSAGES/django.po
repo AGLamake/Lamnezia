@@ -170,6 +170,13 @@ msgstr "Достигнут лимит"
 msgid "Limit reached: {user}"
 msgstr "Достигнут лимит: {user}"
 
+msgid "Load on a server address is back to normal"
+msgstr "Нагрузка на адрес сервера в норме"
+
+#, python-brace-format
+msgid "Load on the address of {server} is back to normal: {measure}"
+msgstr "Нагрузка на адрес {server} в норме: {measure}"
+
 #, python-brace-format
 msgid "Load on {server} is back to normal: {resource}"
 msgstr "Нагрузка на {server} в норме: {resource}"
@@ -180,6 +187,13 @@ msgstr "Меню"
 #, python-brace-format
 msgid "Message from {user}, chat #{number}"
 msgstr "Сообщение от {user}, чат №{number}"
+
+msgid "Much load on a server address"
+msgstr "Большая нагрузка на адрес сервера"
+
+#, python-brace-format
+msgid "Much load on {server}: {measure} {value}"
+msgstr "Большая нагрузка на {server}: {measure} {value}"
 
 msgid "Network list not updated"
 msgstr "Список сетей не обновлён"
@@ -770,6 +784,14 @@ msgstr "{group}: снова раздельный режим"
 #, python-brace-format
 msgid "{group}: traffic moved to {to}"
 msgstr "{group}: трафик переведён на {to}"
+
+#, python-brace-format
+msgid "{measure} of the server {server} ({host}): {value}, at or above the threshold of {threshold}, since {since}. Many users or much traffic through one address may draw a block."
+msgstr "{measure} сервера {server} ({host}): {value}, не ниже порога {threshold}, с {since}. Много пользователей или большой трафик через один адрес может привлечь блокировку."
+
+#, python-brace-format
+msgid "{measure} of the server {server} ({host}): {value}, below the threshold of {threshold}. High since {since}."
+msgstr "{measure} сервера {server} ({host}): {value}, ниже порога {threshold}. Высокая с {since}."
 
 #, no-python-format, python-brace-format
 msgid "{percent}% of the traffic is used"

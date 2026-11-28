@@ -42,6 +42,8 @@ channels hear each event.
 | AmneziaWG runs with the 3.1 settings again | `awg3_restored` | `server`, `host`, `since` |
 | Server load is high | `server_load_high` | `server`, `host`, `resource` (`cpu`, `memory`, `disk`), `percent`, `threshold`, `since` |
 | Server load is back to normal | `server_load_normal` | `server`, `host`, `resource`, `percent`, `threshold`, `since` |
+| Much load on a server address | `address_busy` | `server`, `host`, `measure` (`keys`, `traffic`), `value`, `threshold`, `since` |
+| Load on a server address is back to normal | `address_calm` | `server`, `host`, `measure`, `value`, `threshold`, `since` |
 | VPN interface lost | `interface_lost` | `server`, `host`, `container`, `since`, `attempts` |
 | VPN interface restored | `interface_restored` | `server`, `host`, `container`, `since`, `attempts` |
 | VPN interface not restored | `interface_repair_failed` | `server`, `host`, `container`, `since`, `attempts` |
@@ -197,6 +199,23 @@ around the threshold changes nothing. While the load stays high, `server_load_hi
 no more often than set (every 6 hours by default); a load that goes back above the threshold
 sooner is not told again. `server_load_normal` comes once per run, only when its start was told.
 Each resource is watched apart. Relays are not watched: the panel reads only their traffic.
+
+**Load on the address.** Many users or much traffic through one IP may draw a block, but the
+link is disputed: an Amnezia developer calls the volume a strong sign, while a test server with
+7.8 GB a day lived for 90 days. So both thresholds in **Settings → Server load** are empty by
+default, and nothing is watched until an administrator sets one: **active keys per server** and
+**traffic per server in a day, GB**. With each answered reading the monitor counts the active keys
+issued on the server and the traffic both ways through its containers in the last 24 hours (whole
+GB). `address_busy` comes when a count reaches its threshold and is repeated no more often than
+the load alert; `address_calm` comes once when the count falls below it, only when its start was
+told. The server is in **Needs attention** and its card says **Much load on the address** until
+then.
+
+In a [server group](Server-groups.md) the keys are counted on the leading server, which they are
+issued to, and the traffic on the member it flowed through. The panel does not spread new keys of
+a group over its members: a group has one identity of the server, every member holds every key,
+and the relay keeps clients on one active member, so the load of the address the clients see is
+the load of the relay.
 
 When a WireGuard-family container runs but its interface is gone for 3 readings in a row (e.g.
 the kernel killed amneziawg-go when memory ran out), `interface_lost` comes once and the panel

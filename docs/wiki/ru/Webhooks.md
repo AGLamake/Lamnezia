@@ -37,6 +37,8 @@
 | `awg3_restored` | amnezia-awg2 снова принимает параметры 3.1 после `awg3_dropped`. Один раз, даже если `awg3_dropped` не получил ни один канал. | `server` — имя, `host`, `since` — с какого замера параметры были отброшены |
 | `server_load_high` | Процессор, память или диск сервера несколько замеров подряд не ниже порога из **Настроек**. Повторяется, пока нагрузка держится, не чаще заданного. | `server` — имя, `host`, `resource` (`cpu`, `memory`, `disk`), `percent` — последний замер, `threshold` — порог в процентах, `since` — первый замер выше порога |
 | `server_load_normal` | Нагрузка из `server_load_high` столько же замеров ниже порога. Один раз и только если о начале сообщили. | как у `server_load_high` |
+| `address_busy` | У сервера не меньше активных ключей или ГБ трафика за последние 24 часа, чем порог в **Настройки → Нагрузка на сервер**. Повторяется, пока нагрузка держится, не чаще оповещения о нагрузке. | `server` — имя, `host`, `measure` (`keys`, `traffic`), `value` — ключи или целые ГБ, `threshold`, `since` — первая проверка выше порога |
+| `address_calm` | Нагрузка из `address_busy` ниже порога. Один раз и только если о начале сообщили. | как у `address_busy` |
 | `interface_lost` | Контейнер WireGuard-семейства на сервере работает, а его VPN-интерфейса нет несколько замеров подряд; панель перезапускает контейнер. Один раз, пока интерфейс не вернётся. | `server` — имя, `host`, `container`, `since` — первый замер без интерфейса, `attempts` — сделанные перезапуски |
 | `interface_restored` | Интерфейс из `interface_lost` вернулся. Один раз. | как у `interface_lost` |
 | `interface_repair_failed` | Перезапуски после `interface_lost` не вернули интерфейс; панель больше не перезапускает. Один раз. | как у `interface_lost` |
@@ -107,6 +109,10 @@
      "then": {"properties": {"data": {"$ref": "#/$defs/server_load_high"}}}},
     {"if": {"properties": {"event": {"const": "server_load_normal"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/server_load_normal"}}}},
+    {"if": {"properties": {"event": {"const": "address_busy"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/address_busy"}}}},
+    {"if": {"properties": {"event": {"const": "address_calm"}}},
+     "then": {"properties": {"data": {"$ref": "#/$defs/address_calm"}}}},
     {"if": {"properties": {"event": {"const": "interface_lost"}}},
      "then": {"properties": {"data": {"$ref": "#/$defs/interface_lost"}}}},
     {"if": {"properties": {"event": {"const": "interface_restored"}}},
@@ -240,6 +246,26 @@
         "server": {"type": "string"}, "host": {"type": "string"},
         "resource": {"enum": ["cpu", "memory", "disk"]},
         "percent": {"type": "integer"}, "threshold": {"type": "integer"},
+        "since": {"type": "string", "format": "date-time"}
+      }
+    },
+    "address_busy": {
+      "type": "object",
+      "required": ["server", "host", "measure", "value", "threshold", "since"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "measure": {"enum": ["keys", "traffic"]},
+        "value": {"type": "integer"}, "threshold": {"type": "integer"},
+        "since": {"type": "string", "format": "date-time"}
+      }
+    },
+    "address_calm": {
+      "type": "object",
+      "required": ["server", "host", "measure", "value", "threshold", "since"],
+      "properties": {
+        "server": {"type": "string"}, "host": {"type": "string"},
+        "measure": {"enum": ["keys", "traffic"]},
+        "value": {"type": "integer"}, "threshold": {"type": "integer"},
         "since": {"type": "string", "format": "date-time"}
       }
     },

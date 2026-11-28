@@ -181,6 +181,13 @@ class Server(models.Model):
         alerts = [alert for alert in self.load_alerts.all() if alert.high_since is not None]
         return sorted(alerts, key=lambda alert: order.index(alert.resource))
 
+    @property
+    def busy_address(self) -> list["AddressAlert"]:
+        """Measures of the address above their threshold now, in the order of `AddressMeasure`."""
+        order = list(AddressMeasure.values)
+        alerts = [alert for alert in self.address_alerts.all() if alert.high_since is not None]
+        return sorted(alerts, key=lambda alert: order.index(alert.measure))
+
     def record_sample(self, sample: "ServerSample") -> None:
         """Keep the reading; only an answer moves the last answer.
 
@@ -320,6 +327,38 @@ class LoadAlert(models.Model):
 
     def __str__(self) -> str:
         return f"{self.server_id} {self.resource}"
+
+
+class AddressMeasure(models.TextChoices):
+    KEYS = "keys", _("active keys")
+    TRAFFIC = "traffic", _("GB in a day")
+
+
+class AddressAlert(models.Model):
+    """The load on a server's address above a threshold: active keys or traffic in a day.
+
+    `value` is the latest count, keys or gigabytes; `high_since` the first check above the
+    threshold, None while the load is normal; `told_at` outlives the run, as in `LoadAlert`
+    (apps/servers/services/address_load.py).
+    """
+
+    server = models.ForeignKey(Server, on_delete=models.CASCADE, related_name="address_alerts")
+    measure = models.CharField(_("measure"), max_length=8, choices=AddressMeasure)
+    value = models.PositiveIntegerField(_("value"), default=0)
+    high_since = models.DateTimeField(_("high since"), null=True, blank=True)
+    told_at = models.DateTimeField(_("told at"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("address load alert")
+        verbose_name_plural = _("address load alerts")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["server", "measure"], name="servers_addressalert_unique_measure"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.server_id} {self.measure}"
 
 
 class InterfaceRepair(models.Model):

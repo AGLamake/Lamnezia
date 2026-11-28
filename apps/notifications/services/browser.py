@@ -189,6 +189,8 @@ class PushMessage:
         Event.AWG3_RESTORED: ("servers:list", None),
         Event.SERVER_LOAD_HIGH: ("servers:list", None),
         Event.SERVER_LOAD_NORMAL: ("servers:list", None),
+        Event.ADDRESS_BUSY: ("servers:list", None),
+        Event.ADDRESS_CALM: ("servers:list", None),
         Event.INTERFACE_LOST: ("servers:list", None),
         Event.INTERFACE_RESTORED: ("servers:list", None),
         Event.INTERFACE_REPAIR_FAILED: ("servers:list", None),

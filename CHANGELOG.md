@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Load on the address**: thresholds of active keys and of GB per day per server in
+  **Settings → Server load**, empty (off) by default. A server at a threshold is in **Needs
+  attention**, its card says so, and `address_busy` / `address_calm` notify the staff.
 - **Reality SNI from the neighbours of the server**: the XRay settings page scans the /24 of the
   server for neighbours that answer TLS 1.3 with h2 and offers their domains; **Apply the domain**
   makes one the masking site and the SNI. The scan runs on the server with a rate limit and warns
