@@ -1,4 +1,5 @@
-"""The channel load history of a relay: buckets of the chart, thinning, pruning and the card."""
+"""The channel load history of a relay and the traffic of its split groups: buckets of the
+charts, thinning, pruning, the card and the group page."""
 
 from datetime import datetime, time, timedelta
 
@@ -8,11 +9,13 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
+from amnezia_core.relay import Routing
 from apps.accounts.models import User
 from apps.core.models import Cleanup
-from apps.groups.models import ServerGroup
-from apps.relays.models import Relay, RelaySample
-from apps.relays.services.load import DAY, LoadHistory, prune_load
+from apps.groups.models import GroupRouting, ServerGroup
+from apps.relays.models import Relay, RelaySample, SplitSample
+from apps.relays.services.health import GroupHealth, RelayHealth, SplitTraffic
+from apps.relays.services.load import DAY, LoadHistory, SplitHistory, prune_load
 from apps.relays.tasks import thin_history
 from apps.relays.templatetags.relays import load_chart
 
@@ -107,3 +110,99 @@ def test_the_load_chart_has_a_bar_per_bucket_from_its_start(relay: Relay) -> Non
     assert len(chart["labels"]) == 24
     assert chart["labels"][-1] == date_format(timezone.localtime(NOW - timedelta(hours=1)), "H:i")
     assert chart["series"] == [[None] * 23 + [100], [None] * 23 + [201]]  # no readings: a gap
+
+
+def split_readings(group: ServerGroup, start: datetime, count: int, abroad: float = 300.0) -> None:
+    SplitSample.objects.bulk_create(
+        SplitSample(group=group, at=start + MINUTE * n, rate_abroad=abroad, rate_direct=100.0)
+        for n in range(count)
+    )
+
+
+def splitting(relay: Relay, group: ServerGroup, traffic: SplitTraffic | None) -> None:
+    """The relay was read with the group split and, when given, its traffic known."""
+    health = GroupHealth(
+        port=group.port,
+        active=None,
+        switched_at=None,
+        alive=(),
+        down=(),
+        bytes_from_clients=0,
+        bytes_to_clients=0,
+        routing=Routing.SPLIT,
+        mode=Routing.SPLIT,
+        traffic=traffic,
+    )
+    relay.health = RelayHealth(int(timezone.now().timestamp()), {group.port: health}).to_dict()
+    relay.read_at = timezone.now()
+    relay.save(update_fields=["health", "read_at"])
+
+
+def test_the_split_groups_of_one_reading_add_up(relay: Relay, relayed: ServerGroup) -> None:
+    other = ServerGroup.objects.create(name="Other", port=relayed.port + 1, relay=relay.server)
+    split_readings(relayed, NOW - timedelta(minutes=30), 2, abroad=300.0)
+    split_readings(other, NOW - timedelta(minutes=30), 1, abroad=500.0)
+
+    series = SplitHistory.of_relay(relay, NOW).series(DAY, 24)
+    only = SplitHistory(relayed.split_samples.all(), NOW).series(DAY, 24)
+
+    # Two readings: 300 + 500 and 300 alone, both with 100 straight out of each group.
+    assert series.abroad == [None] * 23 + [550.0]
+    assert series.direct == [None] * 23 + [150.0]
+    assert only.abroad == [None] * 23 + [300.0]
+    assert only.peak_direct == 100.0
+
+
+def test_split_readings_are_thinned_and_deleted(relay: Relay, relayed: ServerGroup) -> None:
+    today = timezone.make_aware(datetime.combine(timezone.localdate(), time()))
+    split_readings(relayed, today - timedelta(days=9), 3)
+    split_readings(relayed, today - timedelta(days=2), 60)
+
+    prune_load(today - timedelta(days=7))
+    thin_history()
+
+    assert relayed.split_samples.count() == 4
+
+
+def test_the_relay_card_shows_the_split_traffic(
+    client: Client, admin: User, relay: Relay, relayed: ServerGroup
+) -> None:
+    splitting(relay, relayed, SplitTraffic(abroad=3072.0, direct=1024.0))
+    split_readings(relayed, timezone.now() - timedelta(minutes=10), 3)
+    client.force_login(admin)
+
+    page = client.get(reverse("servers:detail", args=[relay.server.pk])).content.decode()
+
+    section = page.split(f'id="relay-{relay.pk}-split"', 1)[1]
+    assert "3.0\xa0KB/s abroad through the channel, 1.0\xa0KB/s straight from Russia" in section
+    assert section.count('class="bar-chart"') == 2  # the day and the week behind the switch
+    assert "Through the channel" in section and "Straight out" in section
+    assert f'name="relay-{relay.pk}-split"' in section
+
+
+def test_the_group_page_shows_its_split_traffic(
+    client: Client, admin: User, relay: Relay, relayed: ServerGroup
+) -> None:
+    relayed.routing = GroupRouting.SPLIT
+    relayed.save(update_fields=["routing"])
+    splitting(relay, relayed, None)
+    split_readings(relayed, timezone.now() - timedelta(minutes=10), 3)
+    client.force_login(admin)
+
+    page = client.get(reverse("groups:detail", args=[relayed.pk])).content.decode()
+
+    section = page.split(f'id="group-{relayed.pk}-split"', 1)[1]
+    assert "is not known yet" in section
+    assert section.count('class="bar-chart"') == 2
+
+
+def test_a_forwarding_relay_shows_no_split_traffic(
+    client: Client, admin: User, relay: Relay
+) -> None:
+    relay.read_at = timezone.now()
+    relay.save(update_fields=["read_at"])
+    client.force_login(admin)
+
+    page = client.get(reverse("servers:detail", args=[relay.server.pk])).content.decode()
+
+    assert "-split" not in page

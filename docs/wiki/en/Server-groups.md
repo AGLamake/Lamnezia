@@ -376,6 +376,14 @@ The panel moves them right after the relay reading that shows the new member or 
   *split routing*, or *emergency forwarding* while the uplink fails, with the moment it changed,
   the member the uplink leads to (the active exit) and whether the uplink works. The network list
   tells how many networks the relay applies and when a list was last taken.
+- **Traffic through the channel and straight out.** The group page and the relay card (the sum of
+  all split groups) show how much traffic of the clients, both directions together, goes abroad
+  through the channel and how much straight from Russia, to the addresses of the network list and
+  the local domains. Under the line a chart shows it by hour for the day and by six hours for the
+  week, with a switch, as the channel load. Straight out is the traffic the relay sent past the
+  uplink; everything else counts as abroad, the emergency forwarding too. The rates appear from the
+  second reading of the state; a relay agent of an older release does not count them until
+  **Update**. The readings are kept and thinned with those of the relay load.
 - **Relay card.** Next to the channel load the card shows the CPU load of the relay server, from
   the server monitoring. Each split group shows its mode, exit and uplink state as on the group
   page.

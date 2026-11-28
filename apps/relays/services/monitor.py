@@ -39,7 +39,7 @@ from apps.notifications.services.trouble import (
     report_trouble,
 )
 from apps.protocols.services.installer import ipv4_addresses
-from apps.relays.models import Relay, RelaySample
+from apps.relays.models import Relay, RelaySample, SplitSample
 from apps.relays.services.config import RelayPlan
 from apps.relays.services.container import FOLDER, NAME, PORT_BINDINGS, published_udp
 from apps.relays.services.health import (
@@ -130,6 +130,16 @@ class RelayMonitor:
                 relay=relay, at=relay.read_at, rate_from_clients=rates[0], rate_to_clients=rates[1]
             )
         groups = {group.port: group for group in ServerGroup.objects.filter(relay=relay.server)}
+        SplitSample.objects.bulk_create(
+            SplitSample(
+                group=groups[port],
+                at=relay.read_at,
+                rate_abroad=traffic.abroad,
+                rate_direct=traffic.direct,
+            )
+            for port, group_health in health.groups.items()
+            if (traffic := group_health.traffic) is not None and port in groups
+        )
         for change in health.changes(previous):
             group = groups.get(change.port)
             if group is not None:

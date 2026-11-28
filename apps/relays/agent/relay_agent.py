@@ -59,6 +59,13 @@ from typing import Any, Protocol
 FORMAT_VERSION = 1
 FOLDER = Path("/opt/amnezia/relay")
 TABLE = "lamnezia_relay"
+# The nft counters of a port, named `<counter>_<port>`: all the bytes of its clients, and of a
+# split group the part of them that goes straight out of the relay, not through its uplink.
+FROM_CLIENTS = "from_clients"
+TO_CLIENTS = "to_clients"
+DIRECT_FROM_CLIENTS = "direct_from_clients"
+DIRECT_TO_CLIENTS = "direct_to_clients"
+COUNTERS = (FROM_CLIENTS, TO_CLIENTS, DIRECT_FROM_CLIENTS, DIRECT_TO_CLIENTS)
 # A live member answers in 0.1-0.3 s, a blocked one not in 3 s (docs/research/relay-fallback.md).
 PROBE_TIMEOUT = 1.0
 _PROBE_POLL = 0.1
@@ -512,10 +519,11 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
     would show the names to the Russian network and take its answers.
     """
     ports = sorted({*routes, *(split.port for split in splits)})
+    split_ports = {split.port for split in splits}
     counters = [
-        line
+        f"\tcounter {name}_{port} {{ }}"
         for port in ports
-        for line in (f"\tcounter from_clients_{port} {{ }}", f"\tcounter to_clients_{port} {{ }}")
+        for name in (COUNTERS if port in split_ports else (FROM_CLIENTS, TO_CLIENTS))
     ]
     sets: list[str] = _set("local", LOCAL_NETWORKS) if splits else []
     dnat: list[str] = []
@@ -558,6 +566,13 @@ def ruleset(routes: Mapping[int, Backend | None], splits: Sequence[SplitRoute] =
         masquerade.append(f'\t\tip saddr {split.subnet} oifname != "{clone}" masquerade')
         count.append(f'\t\tiifname "{clone}" counter name "from_clients_{port}"')
         count.append(f'\t\toifname "{clone}" counter name "to_clients_{port}"')
+        count.append(
+            f'\t\tiifname "{clone}" oifname != "{uplink}" '
+            f'counter name "{DIRECT_FROM_CLIENTS}_{port}"'
+        )
+        count.append(
+            f'\t\tiifname != "{uplink}" oifname "{clone}" counter name "{DIRECT_TO_CLIENTS}_{port}"'
+        )
         count.append(f'\t\toifname "{uplink}" tcp flags syn tcp option maxseg size set rt mtu')
     lines = [
         f"table ip {TABLE}",
@@ -631,8 +646,9 @@ class Network(Protocol):
     def forget(self, port: int) -> None:
         """Drop the conntrack entries of the group port: its clients follow the new rule."""
 
-    def counters(self) -> dict[int, tuple[int, int]]:
-        """Bytes from and to the clients of each port since the rules were last replaced."""
+    def counters(self) -> dict[str, int]:
+        """Bytes of each named counter (`COUNTERS` and a port) since the rules were last
+        replaced."""
         ...
 
     def clone(self, group: Group) -> None:
@@ -655,20 +671,30 @@ class Network(Protocol):
 
 @dataclass
 class Traffic:
-    """Bytes of each port, kept across rule replacements, which reset the nft counters."""
+    """Bytes of each named counter, kept across rule replacements, which reset the nft counters."""
 
-    base: dict[int, tuple[int, int]] = field(default_factory=dict)
+    base: dict[str, int] = field(default_factory=dict)
 
-    def keep(self, current: Mapping[int, tuple[int, int]]) -> None:
-        for port, counted in current.items():
-            self.base[port] = _sum(self.base.get(port, (0, 0)), counted)
+    def keep(self, current: Mapping[str, int]) -> None:
+        for name, counted in current.items():
+            self.base[name] = self.base.get(name, 0) + counted
 
-    def total(self, port: int, current: Mapping[int, tuple[int, int]]) -> tuple[int, int]:
-        return _sum(self.base.get(port, (0, 0)), current.get(port, (0, 0)))
+    def total(self, port: int, current: Mapping[str, int]) -> tuple[int, int]:
+        """Bytes from and to the clients of the port."""
+        return self._pair(FROM_CLIENTS, TO_CLIENTS, port, current)
 
+    def direct(self, port: int, current: Mapping[str, int]) -> tuple[int, int]:
+        """Bytes from and to the clients of a split group that went straight out of the relay."""
+        return self._pair(DIRECT_FROM_CLIENTS, DIRECT_TO_CLIENTS, port, current)
 
-def _sum(left: tuple[int, int], right: tuple[int, int]) -> tuple[int, int]:
-    return left[0] + right[0], left[1] + right[1]
+    def _pair(
+        self, outgoing: str, incoming: str, port: int, current: Mapping[str, int]
+    ) -> tuple[int, int]:
+        return self._bytes(outgoing, port, current), self._bytes(incoming, port, current)
+
+    def _bytes(self, counter: str, port: int, current: Mapping[str, int]) -> int:
+        name = f"{counter}_{port}"
+        return self.base.get(name, 0) + current.get(name, 0)
 
 
 def parse_domains(text: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
@@ -1337,7 +1363,7 @@ class Agent:
     def _write_state(self, now: int) -> None:
         current = self._network.counters()
         groups = [
-            {**watch.state(self._traffic.total(port, current)), **self._split_state(port)}
+            {**watch.state(self._traffic.total(port, current)), **self._split_state(port, current)}
             for port, watch in sorted(self._watches.items())
         ]
         data: dict[str, Any] = {
@@ -1359,11 +1385,14 @@ class Agent:
             state["lookup_error"] = self._domains.failure
         return state
 
-    def _split_state(self, port: int) -> dict[str, Any]:
+    def _split_state(self, port: int, current: Mapping[str, int]) -> dict[str, Any]:
         lane = self._lanes.get(port)
         if lane is None:
             return {"routing": FORWARD, "mode": FORWARD}
+        direct = self._traffic.direct(port, current)
         return {
+            "bytes_direct_from_clients": direct[0],
+            "bytes_direct_to_clients": direct[1],
             "routing": SPLIT,
             "mode": lane.mode,
             "mode_changed_at": lane.changed_at,
@@ -1483,7 +1512,7 @@ class Shell:
         )  # fmt: skip
         return parse_flows(found.stdout)
 
-    def counters(self) -> dict[int, tuple[int, int]]:
+    def counters(self) -> dict[str, int]:
         found = subprocess.run(
             ["nft", "-j", "list", "counters", "table", "ip", TABLE],
             capture_output=True, text=True, check=False,
@@ -1581,16 +1610,15 @@ def parse_flows(text: str) -> list[Flow]:
     return flows
 
 
-def parse_counters(text: str) -> dict[int, tuple[int, int]]:
-    """Bytes by port from `nft -j list counters` of the relay table."""
-    found: dict[int, list[int]] = {}
+def parse_counters(text: str) -> dict[str, int]:
+    """Bytes by counter name from `nft -j list counters` of the relay table."""
+    found: dict[str, int] = {}
     for item in _counters(json.loads(text or "{}").get("nftables", ())):
-        direction, _, port = str(item.get("name", "")).rpartition("_")
-        if not port.isdigit() or direction not in ("from_clients", "to_clients"):
-            continue
-        pair = found.setdefault(int(port), [0, 0])
-        pair[direction == "to_clients"] = int(item.get("bytes", 0))
-    return {port: (pair[0], pair[1]) for port, pair in found.items()}
+        name = str(item.get("name", ""))
+        direction, _, port = name.rpartition("_")
+        if port.isdigit() and direction in COUNTERS:
+            found[name] = int(item.get("bytes", 0))
+    return found
 
 
 def _counters(items: Iterable[Any]) -> Sequence[Mapping[str, Any]]:

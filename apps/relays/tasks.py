@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from apps.core.models import Cleanup
+from apps.groups.models import ServerGroup
 from apps.relays.models import Relay
 from apps.relays.services.deployment import sync_relays
 from apps.relays.services.load import prune_load
@@ -39,9 +40,12 @@ def monitor_relay(relay_id: int) -> None:
 
 @shared_task(name="relays.thin_history")
 def thin_history() -> int:
-    """Old load readings keep one per quarter of an hour, like the server readings."""
+    """Old load readings keep one per quarter of an hour, like the server readings; so do
+    those of the split groups."""
     thinner = HistoryThinner(timedelta(days=settings.MONITOR_DETAIL_DAYS), timezone.now())
     removed = sum(thinner.thin_series(relay.samples.all()) for relay in Relay.objects.all())
+    split = ServerGroup.objects.filter(split_samples__isnull=False).distinct()
+    removed += sum(thinner.thin_series(group.split_samples.all()) for group in split)
     return Cleanup.record("relays.thin_history", removed)
 
 

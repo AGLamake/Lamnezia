@@ -140,6 +140,7 @@
     </form>{% endif %}
     {% if split_refusal and group.routing != "split" %}<p id="split-refusal" class="help-text text-warning-soft-fg">{{ split_refusal.message }} {{ split_refusal.hint }} <a href="{% url 'servers:detail' relay.server_id %}#relay" class="text-link hover:underline">{% translate "Open the relay card" %}</a></p>{% endif %}
   </div>
+  {% if group.routing == "split" and health.split %}{% group_split_traffic group health %}{% endif %}
   {% endif %}
   {% if last_switch %}
     <p id="last-switch" class="help-text">{% blocktranslate with when=last_switch.created_at|date:"SHORT_DATETIME_FORMAT" %}Last planned switch, started {{ when }}:{% endblocktranslate %} <a href="{% url 'operations:detail' last_switch.pk %}" class="font-medium hover:underline">{{ last_switch.subject|default:last_switch.get_status_display }}</a> ({{ last_switch.get_status_display }}){% if last_switch.status == "failed" and last_switch.error_message %}: {{ last_switch.error_message }}{% endif %}</p>

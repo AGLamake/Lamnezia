@@ -427,6 +427,38 @@ def test_split_ruleset_marks_all_but_the_list_and_local_networks() -> None:
     assert "dnat" not in rules
 
 
+def test_split_ruleset_counts_what_goes_past_the_uplink() -> None:
+    rules = ruleset({}, [SplitRoute(PORT, SUBNET, ())])
+
+    assert f"\tcounter direct_from_clients_{PORT} {{ }}" in rules
+    assert (
+        f'iifname "lg{PORT}" oifname != "lu{PORT}" counter name "direct_from_clients_{PORT}"'
+        in rules
+    )
+    assert (
+        f'iifname != "lu{PORT}" oifname "lg{PORT}" counter name "direct_to_clients_{PORT}"' in rules
+    )
+    assert "direct_" not in ruleset({PORT: A})
+
+
+def test_the_state_of_a_split_group_has_its_direct_traffic(
+    network: FakeNetwork, folder: Path
+) -> None:
+    agent = started(network, folder)
+    network.bytes = {
+        f"from_clients_{PORT}": 900,
+        f"to_clients_{PORT}": 5000,
+        f"direct_from_clients_{PORT}": 300,
+        f"direct_to_clients_{PORT}": 1000,
+    }
+
+    agent.tick()
+
+    state = split_state(folder)
+    assert (state.bytes_from_clients, state.bytes_to_clients) == (900, 5000)
+    assert (state.bytes_direct_from_clients, state.bytes_direct_to_clients) == (300, 1000)
+
+
 def test_a_whitelist_group_marks_only_the_networks_of_its_list(
     network: FakeNetwork, folder: Path
 ) -> None:

@@ -449,7 +449,8 @@ class GroupState:
     `unanswered`: clients reach the active backend and none gets an answer. `routing` is what
     the config asks, `mode` what the agent does: a split group in `forward` mode is in the
     emergency forward (docs/SPLIT.md 4.3). `networks` counts the applied list of a split group.
-    An agent of an older release tells none of these.
+    `bytes_direct_*` is the part of the bytes of a split group that went straight out of the
+    relay, not through its uplink. An agent of an older release tells none of these.
     """
 
     port: int
@@ -464,6 +465,8 @@ class GroupState:
     mode_changed_at: datetime | None = None
     uplink: UplinkState | None = None
     networks: int = 0
+    bytes_direct_from_clients: int | None = None
+    bytes_direct_to_clients: int | None = None
 
     @property
     def emergency(self) -> bool:
@@ -491,6 +494,8 @@ class GroupState:
             backends=tuple(BackendState.from_dict(item) for item in _objects(data, "backends")),
             bytes_from_clients=_integer(data, "bytes_from_clients"),
             bytes_to_clients=_integer(data, "bytes_to_clients"),
+            bytes_direct_from_clients=_optional_integer(data, "bytes_direct_from_clients"),
+            bytes_direct_to_clients=_optional_integer(data, "bytes_direct_to_clients"),
         )
 
 
@@ -643,6 +648,10 @@ def _integer(data: Mapping[str, Any], key: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise RelayFormatError(f"{key!r} must be a non-negative integer.")
     return value
+
+
+def _optional_integer(data: Mapping[str, Any], key: str) -> int | None:
+    return _integer(data, key) if data.get(key) is not None else None
 
 
 def _string(data: Mapping[str, Any], key: str) -> str:

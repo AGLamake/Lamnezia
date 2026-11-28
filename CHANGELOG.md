@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Split traffic through the channel and straight out**: the relay card and the group page of a
+  split group show how much traffic of the clients goes abroad through the channel and how much
+  straight from Russia, with a chart by hour for the day and by six hours for the week. Needs
+  **Update** of the relay agent, which now counts the traffic that leaves the relay past the
+  uplink.
 - **A split group can answer all DNS of its clients**: the **Answer all DNS** button on the group
   page sends every query of the clients to port 53 (UDP and TCP) to the relay's resolver, not only
   those to the keys' DNS addresses, so a DNS server set on a device answers from the relay too.

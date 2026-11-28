@@ -16,6 +16,7 @@ from apps.relays.services.health import (
     ModeChanged,
     Outage,
     RelayHealth,
+    SplitTraffic,
     Switched,
     Uplink,
 )
@@ -316,6 +317,38 @@ def test_rates_are_unknown_without_a_previous_reading_or_after_a_restart() -> No
     assert before.rates(None) is None
     assert before.rates(before) is None
     assert reading(at=AT + 10, sent=10, received=10).rates(before) is None
+
+
+def direct(outgoing: int, incoming: int) -> dict[str, Any]:
+    return {
+        "routing": "split",
+        "mode": "split",
+        "bytes_direct_from_clients": outgoing,
+        "bytes_direct_to_clients": incoming,
+    }
+
+
+def test_split_traffic_is_kept_with_the_reading() -> None:
+    before = reading(sent=1000, received=1000, split=direct(0, 0))
+    after = reading(at=AT + 10, sent=2000, received=3000, split=direct(500, 500), previous=before)
+
+    stored = RelayHealth.load(json.loads(json.dumps(after.to_dict())))
+
+    assert stored is not None
+    assert stored.split_traffic == SplitTraffic(abroad=200.0, direct=100.0)
+    assert stored.groups[PORT].bytes_direct_to_clients == 500
+
+
+def test_a_reading_stored_before_split_traffic_has_none() -> None:
+    data = reading().to_dict()
+    for group in data["groups"]:
+        for key in ("bytes_direct_from_clients", "bytes_direct_to_clients", "traffic"):
+            del group[key]
+
+    stored = RelayHealth.load(data)
+
+    assert stored is not None and stored.split_traffic is None
+    assert stored.groups[PORT].bytes_direct_from_clients is None
 
 
 def test_a_group_of_no_backends_has_nothing_down() -> None:

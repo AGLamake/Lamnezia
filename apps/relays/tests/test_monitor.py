@@ -15,8 +15,8 @@ from apps.notifications.events import EVENTS as EVENT_TYPES
 from apps.notifications.events import Event
 from apps.notifications.models import Notification, Route, Trouble
 from apps.notifications.tests.factories import ChannelFactory
-from apps.relays.models import Relay
-from apps.relays.services.health import STEADY_SECONDS
+from apps.relays.models import Relay, SplitSample
+from apps.relays.services.health import STEADY_SECONDS, SplitTraffic
 from apps.relays.services.monitor import (
     BAD_STATE,
     STALE,
@@ -270,6 +270,63 @@ def test_the_load_comes_from_two_readings(
     assert list(relay.samples.values_list("at", "rate_from_clients", "rate_to_clients")) == [
         (NOW + timedelta(seconds=10), 200.0, 400.0)
     ]
+
+
+def direct(outgoing: int, incoming: int) -> dict[str, Any]:
+    return {
+        **split("split", AT - 600),
+        "bytes_direct_from_clients": outgoing,
+        "bytes_direct_to_clients": incoming,
+    }
+
+
+def test_the_split_traffic_comes_from_two_readings(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    watch = monitor(relay_fake, clock)
+    write_state(relay_fake, sent=1000, split=direct(100, 200))
+    watch.poll(relay)
+    # 2000 + 4000 bytes in 10 s, of them 500 + 1500 straight out of the relay.
+    write_state(relay_fake, at=AT + 10, sent=3000, split=direct(600, 1700))
+    clock.now = NOW + timedelta(seconds=10)
+    watch.poll(relay)
+
+    relay.refresh_from_db()
+    assert relay.split_traffic == SplitTraffic(abroad=400.0, direct=200.0)
+    group = relay.server.relayed_groups.get()
+    assert list(group.split_samples.values_list("at", "rate_abroad", "rate_direct")) == [
+        (NOW + timedelta(seconds=10), 400.0, 200.0)
+    ]
+
+
+def test_an_agent_restart_gives_no_split_traffic(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    watch = monitor(relay_fake, clock)
+    write_state(relay_fake, sent=1000, split=direct(500, 500))
+    watch.poll(relay)
+    write_state(relay_fake, at=AT + 10, sent=3000, split=direct(10, 10))
+    clock.now = NOW + timedelta(seconds=10)
+    watch.poll(relay)
+
+    relay.refresh_from_db()
+    assert relay.split_traffic is None
+    assert not SplitSample.objects.exists()
+
+
+def test_an_older_agent_gives_no_split_traffic(
+    relay: Relay, relay_fake: FakeRelayServer, clock: Clock
+) -> None:
+    watch = monitor(relay_fake, clock)
+    write_state(relay_fake, sent=1000, split=split("split", AT - 600))
+    watch.poll(relay)
+    write_state(relay_fake, at=AT + 10, sent=3000, split=split("split", AT - 600))
+    clock.now = NOW + timedelta(seconds=10)
+    watch.poll(relay)
+
+    relay.refresh_from_db()
+    assert relay.rate_from_clients == 200.0
+    assert relay.split_traffic is None
 
 
 @pytest.mark.parametrize(

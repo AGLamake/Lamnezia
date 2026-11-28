@@ -1,5 +1,5 @@
 """Template tags of the relay cards: a moment the agent wrote, the channel load and its chart,
-the settings form."""
+the traffic of split groups abroad and straight out with its chart, the settings form."""
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -10,9 +10,19 @@ from django.utils import timezone
 from django.utils.formats import date_format
 from django.utils.translation import gettext as _
 
+from apps.groups.models import ServerGroup
 from apps.relays.forms import RelaySettingsForm
 from apps.relays.models import Relay
-from apps.relays.services.load import DAY, WEEK, LoadHistory, LoadSeries
+from apps.relays.services.health import GroupHealth, SplitTraffic
+from apps.relays.services.load import (
+    DAY,
+    WEEK,
+    Averages,
+    LoadHistory,
+    LoadSeries,
+    SplitHistory,
+    SplitSeries,
+)
 
 register = template.Library()
 
@@ -52,18 +62,67 @@ def relay_load(relay: Relay) -> dict[str, Any]:
     }
 
 
+@register.inclusion_tag("relays/_split_traffic.html")
+def relay_split_traffic(relay: Relay) -> dict[str, Any]:
+    """The traffic of the split groups of a relay abroad and straight out: now and its chart."""
+    return _split_traffic(
+        SplitHistory.of_relay(relay, timezone.now()), relay.split_traffic, f"relay-{relay.pk}"
+    )
+
+
+@register.inclusion_tag("relays/_split_traffic.html")
+def group_split_traffic(group: ServerGroup, health: GroupHealth | None) -> dict[str, Any]:
+    """The traffic of a split group abroad and straight out: now and its chart."""
+    history = SplitHistory(group.split_samples.all(), timezone.now())
+    return _split_traffic(history, health.traffic if health else None, f"group-{group.pk}")
+
+
+def _split_traffic(history: SplitHistory, now: SplitTraffic | None, key: str) -> dict[str, Any]:
+    day = history.series(DAY, 24)
+    week = history.series(WEEK, 28)
+    return {
+        "now": now,
+        "key": key,
+        "week": week,
+        "day_chart": split_chart(day, DAY, "H:i"),
+        "week_chart": split_chart(week, WEEK, "D H:i"),
+    }
+
+
 def load_chart(series: LoadSeries, period: timedelta, label: str) -> dict[str, Any]:
-    """Arguments of the `bar_chart` tag: a bar per bucket, labelled by its local start; a bucket
-    without readings is a gap, not zero."""
-    width = period / len(series.from_clients)
+    """Arguments of the `bar_chart` tag for the channel load: both directions."""
+    return _chart(
+        series.since,
+        period,
+        label,
+        {_("From clients"): series.from_clients, _("To clients"): series.to_clients},
+    )
+
+
+def split_chart(series: SplitSeries, period: timedelta, label: str) -> dict[str, Any]:
+    """Arguments of the `bar_chart` tag for split groups: abroad and straight out."""
+    return _chart(
+        series.since,
+        period,
+        label,
+        {_("Through the channel"): series.abroad, _("Straight out"): series.direct},
+    )
+
+
+def _chart(
+    since: datetime, period: timedelta, label: str, series: dict[str, Averages]
+) -> dict[str, Any]:
+    """A bar per bucket, labelled by its local start; a bucket without readings is a gap, not
+    zero."""
+    buckets = len(next(iter(series.values())))
+    width = period / buckets
     return {
         "labels": [
-            date_format(timezone.localtime(series.since + width * index), label)
-            for index in range(len(series.from_clients))
+            date_format(timezone.localtime(since + width * index), label)
+            for index in range(buckets)
         ],
         "series": [
-            [None if rate is None else round(rate) for rate in series.from_clients],
-            [None if rate is None else round(rate) for rate in series.to_clients],
+            [None if rate is None else round(rate) for rate in rates] for rates in series.values()
         ],
-        "names": [_("From clients"), _("To clients")],
+        "names": list(series),
     }

@@ -1,0 +1,20 @@
+{% load i18n ui relays %}{# Traffic of split groups (templatetags relay_split_traffic, group_split_traffic): now, abroad through the channel and straight out of the relay, then a chart of both with a day / week switch in CSS, as the channel load. #}
+<div id="{{ key }}-split" class="space-y-3">
+  <p>{% if now %}{% blocktranslate with abroad=now.abroad|per_second direct=now.direct|per_second %}Split routing: {{ abroad }} abroad through the channel, {{ direct }} straight from Russia.{% endblocktranslate %}{% else %}{% translate "Split routing: the traffic through the channel and straight from Russia is not known yet. It takes two readings of the relay; an agent of an older release does not count it until Update." %}{% endif %}</p>
+  {% if not week.empty %}
+  <div class="period-switch space-y-3">
+    <div class="segmented" role="radiogroup" aria-label="{% translate 'Split traffic chart period' %}">
+      <label><input type="radio" class="sr-only" name="{{ key }}-split" value="day" checked>{% translate "24 hours" %}</label>
+      <label><input type="radio" class="sr-only" name="{{ key }}-split" value="week">{% translate "7 days" %}</label>
+    </div>
+    <div data-period="day">
+      {% translate "Traffic through the channel and straight from Russia by hour for the last day" as label %}
+      {% bar_chart day_chart.labels day_chart.series day_chart.names label rate=True %}
+    </div>
+    <div data-period="week">
+      {% translate "Traffic through the channel and straight from Russia by six hours for the last week" as label %}
+      {% bar_chart week_chart.labels week_chart.series week_chart.names label rate=True %}
+    </div>
+  </div>
+  {% endif %}
+</div>

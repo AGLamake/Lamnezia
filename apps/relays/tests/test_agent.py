@@ -43,7 +43,7 @@ class FakeNetwork:
     alive: set[Backend] = field(default_factory=set)
     calls: list[tuple[str, object]] = field(default_factory=list)
     rules: str = ""
-    bytes: dict[int, tuple[int, int]] = field(default_factory=dict)
+    bytes: dict[str, int] = field(default_factory=dict)
     clients: dict[int, list[Flow]] = field(default_factory=dict)
     through: set[Backend] = field(default_factory=lambda: {A, B, C})
     endpoint: Backend | None = None
@@ -66,7 +66,7 @@ class FakeNetwork:
     def forget(self, port: int) -> None:
         self.calls.append(("forget", port))
 
-    def counters(self) -> dict[int, tuple[int, int]]:
+    def counters(self) -> dict[str, int]:
         return dict(self.bytes)
 
     def flows(self, port: int) -> list[Flow]:
@@ -305,11 +305,11 @@ def test_a_group_left_out_of_the_config_is_dropped(network: FakeNetwork, folder:
 def test_traffic_survives_a_rule_replacement(network: FakeNetwork, folder: Path) -> None:
     agent = agent_for(network, folder)
     agent.tick()
-    network.bytes = {PORT: (1000, 3000)}
+    network.bytes = {f"from_clients_{PORT}": 1000, f"to_clients_{PORT}": 3000}
     network.alive.discard(A)
     for _ in range(3):
         agent.tick()
-    network.bytes = {PORT: (10, 30)}
+    network.bytes = {f"from_clients_{PORT}": 10, f"to_clients_{PORT}": 30}
     agent.tick()
 
     group = state(folder).group(PORT)
@@ -551,9 +551,15 @@ def test_parse_counters_reads_nft_json() -> None:
                 {"metainfo": {"version": "1.0.9"}},
                 {"counter": {"name": f"from_clients_{PORT}", "packets": 3, "bytes": 120}},
                 {"counter": {"name": f"to_clients_{PORT}", "packets": 2, "bytes": 80}},
+                {"counter": {"name": f"direct_from_clients_{PORT}", "bytes": 40}},
                 {"counter": {"name": "other", "bytes": 5}},
+                {"counter": {"name": "from_clients_x", "bytes": 5}},
             ]
         }
     )
 
-    assert parse_counters(text) == {PORT: (120, 80)}
+    assert parse_counters(text) == {
+        f"from_clients_{PORT}": 120,
+        f"to_clients_{PORT}": 80,
+        f"direct_from_clients_{PORT}": 40,
+    }

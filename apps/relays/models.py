@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 
 from amnezia_core.relay import DEFAULT_CHECK_INTERVAL, DEFAULT_FAILURES, ResolverState
 from apps.relays.errors import RelayErrorCode
-from apps.relays.services.health import GroupHealth, RelayHealth
+from apps.relays.services.health import GroupHealth, RelayHealth, SplitTraffic
 from apps.relays.services.image import IMAGE_VERSION, agent_digest
 from apps.relays.services.mismatch import RelayMismatch
 from apps.ssh.encryption import EncryptedTextField
@@ -144,6 +144,12 @@ class Relay(models.Model):
         """A group of the last reading is in split routing: the relay works for it."""
         return any(group.split for group in self.groups_health)
 
+    @property
+    def split_traffic(self) -> SplitTraffic | None:
+        """The traffic of the clients of the split groups as of the last reading."""
+        reading = RelayHealth.load(self.health)
+        return reading.split_traffic if reading else None
+
 
 class PeerRole(models.TextChoices):
     """What a service peer of a group is for; neither is ever given to a user."""
@@ -198,6 +204,31 @@ class RelaySample(models.Model):
 
     def __str__(self) -> str:
         return f"{self.relay_id} @ {self.at:%Y-%m-%d %H:%M}"
+
+
+class SplitSample(models.Model):
+    """The traffic of the clients of a split group in one reading of the relay, both directions
+    together: abroad through the channel and straight out of the relay. Kept for the charts of
+    the relay card and the group page."""
+
+    group = models.ForeignKey(
+        "groups.ServerGroup",
+        verbose_name=_("group"),
+        on_delete=models.CASCADE,
+        related_name="split_samples",
+    )
+    at = models.DateTimeField(_("read at"), db_index=True)
+    rate_abroad = models.FloatField(_("bytes per second abroad"))
+    rate_direct = models.FloatField(_("bytes per second straight out"))
+
+    class Meta:
+        verbose_name = _("split group reading")
+        verbose_name_plural = _("split group readings")
+        ordering = ("-at",)
+        indexes = (models.Index(fields=["group", "at"]),)
+
+    def __str__(self) -> str:
+        return f"{self.group_id} @ {self.at:%Y-%m-%d %H:%M}"
 
 
 # Delegations of the RIPE NCC region by country, updated daily: the default source of the list.

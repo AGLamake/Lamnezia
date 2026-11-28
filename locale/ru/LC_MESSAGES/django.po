@@ -3542,6 +3542,16 @@ msgstr "Групп с раздельной маршрутизацией: %(count
 msgid "Split routing encrypts the traffic abroad once more on the relay, so it rests on the processor."
 msgstr "В раздельном режиме ретранслятор ещё раз шифрует зарубежный трафик, поэтому упирается в процессор."
 
+#, python-format
+msgid "Split routing: %(abroad)s abroad through the channel, %(direct)s straight from Russia."
+msgstr "Раздельный режим: %(abroad)s за рубеж через канал, %(direct)s напрямую из России."
+
+msgid "Split routing: the traffic through the channel and straight from Russia is not known yet. It takes two readings of the relay; an agent of an older release does not count it until Update."
+msgstr "Раздельный режим: трафик через канал и напрямую из России пока неизвестен. Нужны два чтения состояния ретранслятора; агент старого выпуска не считает его до «Обновить»."
+
+msgid "Split traffic chart period"
+msgstr "Период графика раздельного трафика"
+
 msgid "Staff"
 msgstr "Сотрудники"
 
@@ -3605,6 +3615,9 @@ msgstr "Остановить эту копию, когда домен укаже
 
 msgid "Storage"
 msgstr "Хранение"
+
+msgid "Straight out"
+msgstr "Напрямую"
 
 msgid "Submit empty to see validation errors."
 msgstr "Отправьте пустой, чтобы увидеть ошибки проверки."
@@ -4705,6 +4718,9 @@ msgstr "Эта версия — не последний релиз новее п
 msgid "This version of the panel no longer ships this entry."
 msgstr "Эта версия панели больше не поставляет эту запись."
 
+msgid "Through the channel"
+msgstr "Через канал"
+
 #, python-format
 msgid "Through the proxy %(proxy)s"
 msgstr "Через прокси %(proxy)s"
@@ -4810,6 +4826,14 @@ msgstr "Трафик за период"
 
 msgid "Traffic this period"
 msgstr "Трафик за период"
+
+#
+msgid "Traffic through the channel and straight from Russia by hour for the last day"
+msgstr "Трафик через канал и напрямую из России по часам за последние сутки"
+
+#
+msgid "Traffic through the channel and straight from Russia by six hours for the last week"
+msgstr "Трафик через канал и напрямую из России по шесть часов за последнюю неделю"
 
 msgid "Try again"
 msgstr "Попробовать ещё раз"
@@ -5296,8 +5320,14 @@ msgstr "встроенные записи"
 msgid "built-in entry"
 msgstr "встроенная запись"
 
+msgid "bytes per second abroad"
+msgstr "байт в секунду за рубеж"
+
 msgid "bytes per second from clients"
 msgstr "байт в секунду от клиентов"
+
+msgid "bytes per second straight out"
+msgstr "байт в секунду напрямую"
 
 msgid "bytes per second to clients"
 msgstr "байт в секунду к клиентам"
@@ -6020,6 +6050,12 @@ msgstr "источник"
 
 msgid "split"
 msgstr "раздельная"
+
+msgid "split group reading"
+msgstr "чтение раздельной группы"
+
+msgid "split group readings"
+msgstr "чтения раздельных групп"
 
 msgid "split routing"
 msgstr "раздельный режим"

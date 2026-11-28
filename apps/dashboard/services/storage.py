@@ -16,7 +16,7 @@ from apps.core.models import Cleanup
 from apps.notifications.models import Delivery, Notification
 from apps.operations.models import Operation, OperationStep
 from apps.protocols.models import SpeedTestResult
-from apps.relays.models import RelaySample
+from apps.relays.models import RelaySample, SplitSample
 from apps.servers.models import ServerSample
 from apps.traffic.models import TrafficHourly
 
@@ -44,7 +44,7 @@ STORED_DATA = (
     StoredData(_("Notification deliveries"), (Delivery, Notification), "notifications.prune"),
     StoredData(_("Hourly traffic"), (TrafficHourly,), "traffic.roll_up"),
     StoredData(_("Server monitoring history"), (ServerSample,), "servers.thin_history"),
-    StoredData(_("Relay load history"), (RelaySample,), "relays.thin_history"),
+    StoredData(_("Relay load history"), (RelaySample, SplitSample), "relays.thin_history"),
     StoredData(_("Speed tests by port"), (SpeedTestResult,), "protocols.prune_speed_results"),
 )
 

@@ -80,6 +80,40 @@ class Uplink:
 
 
 @dataclass(frozen=True)
+class SplitTraffic:
+    """Bytes per second of the clients of split groups, both directions together: abroad
+    through the channel, and straight out of the relay to Russian addresses."""
+
+    abroad: float
+    direct: float
+
+    def __add__(self, other: "SplitTraffic") -> "SplitTraffic":
+        return SplitTraffic(self.abroad + other.abroad, self.direct + other.direct)
+
+    @classmethod
+    def between(cls, now: GroupState, before: "GroupHealth", seconds: int) -> "SplitTraffic | None":
+        """The traffic between two readings `seconds` apart; None when the agent does not count
+        the direct part or restarted, which a counter going down tells."""
+        direct_now, direct_before = _direct(now), _direct(before)
+        if seconds <= 0 or direct_now is None or direct_before is None:
+            return None
+        deltas = (
+            now.bytes_from_clients - before.bytes_from_clients,
+            now.bytes_to_clients - before.bytes_to_clients,
+            direct_now[0] - direct_before[0],
+            direct_now[1] - direct_before[1],
+        )
+        if min(deltas) < 0:
+            return None
+        total, direct = deltas[0] + deltas[1], deltas[2] + deltas[3]
+        return cls(max(total - direct, 0) / seconds, direct / seconds)
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any] | None) -> "SplitTraffic | None":
+        return cls(float(data["abroad"]), float(data["direct"])) if data else None
+
+
+@dataclass(frozen=True)
 class GroupHealth:
     """One group: its active member, when it last switched, who answers and who does not.
 
@@ -87,6 +121,8 @@ class GroupHealth:
     `outages`: the members lost and not steady again yet (see the module docstring).
     `routing` is what the panel asks, `mode` what the agent does; `mode_changed_at` is when it
     last changed the mode, `networks` the size of the list it applies (split groups only).
+    `bytes_direct_*` is the part of the bytes that went straight out of the relay, and
+    `traffic` the traffic since the reading before (split groups of a recent agent only).
     """
 
     port: int
@@ -103,6 +139,9 @@ class GroupHealth:
     mode_changed_at: int | None = None
     uplink: Uplink | None = None
     networks: int = 0
+    bytes_direct_from_clients: int | None = None
+    bytes_direct_to_clients: int | None = None
+    traffic: SplitTraffic | None = None
 
     @classmethod
     def of(
@@ -111,11 +150,13 @@ class GroupHealth:
         members: Mapping[Backend, Member],
         before: "GroupHealth | None" = None,
         now: int = 0,
+        then: int = 0,
     ) -> "GroupHealth":
         """A member the relay probes without the needed failures in a row is still alive.
 
         An address that no member has now (a member left) is not counted. `before` is the
-        previous reading of the group, whose outages go on; `now` is the moment of this one.
+        previous reading of the group, whose outages go on; `now` is the moment of this one,
+        `then` that of `before`.
         """
         known = [(members[b.backend], b) for b in state.backends if b.backend in members]
         alive = [member for member, b in known if _up(b)]
@@ -137,6 +178,9 @@ class GroupHealth:
             mode_changed_at=_seconds(state.mode_changed_at),
             uplink=Uplink.of(state.uplink, members) if state.uplink else None,
             networks=state.networks,
+            bytes_direct_from_clients=state.bytes_direct_from_clients,
+            bytes_direct_to_clients=state.bytes_direct_to_clients,
+            traffic=SplitTraffic.between(state, before, now - then) if before else None,
         )
 
     @property
@@ -180,6 +224,9 @@ class GroupHealth:
             "mode_changed_at": self.mode_changed_at,
             "uplink": self.uplink.to_dict() if self.uplink else None,
             "networks": self.networks,
+            "bytes_direct_from_clients": self.bytes_direct_from_clients,
+            "bytes_direct_to_clients": self.bytes_direct_to_clients,
+            "traffic": vars(self.traffic) if self.traffic else None,
         }
 
     @classmethod
@@ -207,6 +254,9 @@ class GroupHealth:
             mode_changed_at=data.get("mode_changed_at"),
             uplink=Uplink.from_dict(uplink) if uplink else None,
             networks=int(data.get("networks", 0)),
+            bytes_direct_from_clients=_optional_int(data.get("bytes_direct_from_clients")),
+            bytes_direct_to_clients=_optional_int(data.get("bytes_direct_to_clients")),
+            traffic=SplitTraffic.from_dict(data.get("traffic")),
         )
 
 
@@ -282,7 +332,11 @@ class RelayHealth:
         before = previous.groups if previous else {}
         groups = {
             group.port: GroupHealth.of(
-                group, members.get(group.port, {}), before.get(group.port), now
+                group,
+                members.get(group.port, {}),
+                before.get(group.port),
+                now,
+                previous.updated_at if previous else 0,
             )
             for group in state.groups
         }
@@ -354,9 +408,25 @@ class RelayHealth:
         seconds = self.updated_at - previous.updated_at
         return (now[0] - then[0]) / seconds, (now[1] - then[1]) / seconds
 
+    @property
+    def split_traffic(self) -> SplitTraffic | None:
+        """The traffic of the clients of every split group the reading knows it of."""
+        known = [group.traffic for group in self.groups.values() if group.traffic]
+        return sum(known[1:], known[0]) if known else None
+
     def _bytes(self) -> tuple[int, int]:
         groups = self.groups.values()
         return sum(g.bytes_from_clients for g in groups), sum(g.bytes_to_clients for g in groups)
+
+
+def _direct(reading: GroupState | GroupHealth) -> tuple[int, int] | None:
+    """The direct bytes from and to the clients; None when the agent does not count them."""
+    outgoing, incoming = reading.bytes_direct_from_clients, reading.bytes_direct_to_clients
+    return None if outgoing is None or incoming is None else (outgoing, incoming)
+
+
+def _optional_int(value: Any) -> int | None:
+    return int(value) if value is not None else None
 
 
 def _seconds(moment: datetime | None) -> int | None:
